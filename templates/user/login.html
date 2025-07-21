@@ -14,16 +14,22 @@
 <body>
   <div class="login-box text-center">
     <h2 class="mb-4 fw-bold">Login</h2>
-    <form>
+    <form method="POST">
+      {% csrf_token %}
       <div class="mb-3 text-start">
         <label for="email" class="form-label fw-bold small">Email</label>
-        <input type="email" class="form-control" id="email" placeholder="Enter Email" />
+        <input type="email" class="form-control" id="email" name="email" placeholder="Enter Email" />
       </div>
       <div class="mb-4 text-start">
         <label for="password" class="form-label fw-bold small">Password</label>
-        <input type="password" class="form-control" id="password" placeholder="Enter Password" />
+        <input type="password" class="form-control" id="password" name="password" placeholder="Enter Password" />
       </div>
-      <button type="submit" class="btn btn-submit mb-3">Submit</button>
+      {% for message in error %}
+          
+        <div class="text-danger">{{message}}</div>
+          
+      {% endfor %}
+      <button type="submit" class="btn btn-submit bg-dark text-light mb-3">Submit</button>
     </form>
 
     <p>Or</p>

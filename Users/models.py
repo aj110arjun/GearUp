@@ -7,6 +7,7 @@ class User(models.Model):
     email = models.EmailField()
     username = models.CharField(max_length=100)
     is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     password = models.CharField(max_length=50)
 
