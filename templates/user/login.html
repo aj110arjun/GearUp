@@ -14,7 +14,7 @@
 <body>
   <div class="login-box text-center">
     <h2 class="mb-4 fw-bold">Login</h2>
-    <form method="POST">
+    <form method="POST" novalidate>
       {% csrf_token %}
       <div class="mb-3 text-start">
         <label for="email" class="form-label fw-bold small">Email</label>
@@ -24,9 +24,17 @@
         <label for="password" class="form-label fw-bold small">Password</label>
         <input type="password" class="form-control" id="password" name="password" placeholder="Enter Password" />
       </div>
+      {% if error %}
       {% for message in error %}
         <div class="text-danger">{{message}}</div>
       {% endfor %}
+      {% endif %}
+
+      {% if messages.success %}
+        {% for message in messages %}
+        <div class="text-success">{{message}}</div>
+        {% endfor %} 
+      {% endif %}
       <button type="submit" class="btn btn-submit bg-dark text-light mb-3">Submit</button>
     </form>
 
