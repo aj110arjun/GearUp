@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+<body>
+
+<div class="container mt-5">
+  <h3>Email Verification</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="otp">Enter OTP sent to your email</label>
+      <input type="text" name="otp" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-success">Verify</button>
+  </form>
+</div>
+</body>
+</html>

@@ -1,63 +1,79 @@
+import random
+
+from django.core.mail import send_mail
 from django.shortcuts import render, redirect
-from Users.models import User
-from Users.forms import CustomUserLoginForm
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from .forms import EmailUserCreationForm
+from django.contrib.auth import login
+from .forms import EmailLoginForm
+from django.contrib.auth.models import User
 
 
-def user_login(request):
-    error = []
 
-    if request.session.get('user_id'):
+
+def login_view(request):
+    if request.user.is_authenticated:
         return redirect('home')
-
-    form = CustomUserLoginForm()
-
     if request.method == 'POST':
-        form = CustomUserLoginForm(request.POST)
+        form = EmailLoginForm(request.POST)
         if form.is_valid():
-            email = request.POST.get('email')
-            password = request.POST.get('password')
+            login(request, form.user)
+            messages.success(request, "Logged in successfully.")
+            return redirect('home')
+    else:
+        form = EmailLoginForm()
 
-            if not email or not password:
-                error.append('Both Fields are required')
-            elif '@' not in email:
-                error.append('Invalid Email')
-            else:
-                try:
-                    user = User.objects.get(email=email, password=password)
-                    if user.is_active:
-                        request.session['user_id'] = user.id
-                        return redirect('home')
-                    else:
-                        error.append('Account is inactive')
-                except User.DoesNotExist:
-                    error.append('Invalid Credentials')
-        else:
-            error.append('Invalid form submission')
+    return render(request, 'registration/login.html', {'form': form})
 
-    return render(request, 'user/login.html', {'form': form, 'error': error})
-
-def user_signup(request):
-    error=[]
+def signup_view(request):
     if request.method == 'POST':
-        fullname = request.POST.get('fullname')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        cpassword = request.POST.get('cpassword')
+        form = EmailUserCreationForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            password1 = form.cleaned_data['password1']
+            password2 = form.cleaned_data['password2']
 
-        if not fullname or not email or not password or not cpassword:
-            error.append("All fields are required")
-        elif '@' not in email:
-            error.append('Invalid email')
-        elif cpassword != cpassword:
-            error.append("Password Don't Match" )
-        elif User.objects.filter(email=email).exists():
-            error.append('Email already in use')
+            # Generate 6-digit OTP
+            otp = str(random.randint(1000, 9999))
+
+            # Store signup info + OTP in session
+            request.session['signup_data'] = {
+                'email': email,
+                'password1': password1,
+                'password2': password2,
+                'otp': otp,
+            }
+
+            # Send OTP to email
+            send_mail(
+                subject="Your GearUp OTP Code",
+                message=f"Your OTP code is: {otp}",
+                from_email='aj110arjun@gmail.com',
+                recipient_list=[email],
+                fail_silently=False,
+            )
+
+            return redirect('verify_otp')
+    else:
+        form = EmailUserCreationForm()
+    return render(request, 'registration/signup.html', {'form': form})
+
+def verify_otp_view(request):
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp')
+        data = request.session.get('signup_data')
+
+        if data and data['otp'] == entered_otp:
+            email = data['email']
+            password = data['password1']
+
+            # Create user
+            user = User.objects.create_user(username=email, email=email, password=password)
+            del request.session['signup_data']  # cleanup
+            messages.success(request, "Your account has been verified. Please log in.")
+            return redirect('login')
         else:
-            user = User(fullname=fullname, email=email, password=password)
-            user.is_active = True
-            user.save()
-            messages.success(request,'Account created please login')
-            return redirect('user_login')
+            messages.error(request, "Invalid OTP. Please try again.")
 
-    return render(request, 'user/signup.html', {'error': error})
+    return render(request, 'registration/otp/verify_otp.html')
