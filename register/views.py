@@ -33,6 +33,7 @@ def signup_view(request):
             email = form.cleaned_data['email']
             password1 = form.cleaned_data['password1']
             password2 = form.cleaned_data['password2']
+            fullname = form.cleaned_data['fullname']
 
             otp = str(random.randint(1000, 9999))
 

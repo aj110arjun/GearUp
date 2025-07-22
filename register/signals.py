@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 def send_login_email(sender, request, user, **kwargs):
     send_mail(
         subject='New Login Detected',
-        message=f'Hi {user.first_name}, you just logged into your GearUp account.',
+        message=f'Welcome to GearUp,You have logged in Using {user.email}',
         from_email='aj110arjun@gmail.com',
         recipient_list=[user.email],
         fail_silently=True,
