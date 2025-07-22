@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from .forms import EmailUserCreationForm
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from .forms import EmailLoginForm
 from django.contrib.auth.models import User
 
@@ -74,3 +74,7 @@ def verify_otp_view(request):
             messages.error(request, "Invalid OTP. Please try again.")
 
     return render(request, 'registration/otp/verify_otp.html')
+
+def logout_view(request):
+    request.session.flush()
+    return redirect('login')
