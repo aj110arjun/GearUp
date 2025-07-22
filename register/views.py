@@ -34,10 +34,8 @@ def signup_view(request):
             password1 = form.cleaned_data['password1']
             password2 = form.cleaned_data['password2']
 
-            # Generate 6-digit OTP
             otp = str(random.randint(1000, 9999))
 
-            # Store signup info + OTP in session
             request.session['signup_data'] = {
                 'email': email,
                 'password1': password1,
@@ -68,7 +66,6 @@ def verify_otp_view(request):
             email = data['email']
             password = data['password1']
 
-            # Create user
             user = User.objects.create_user(username=email, email=email, password=password)
             del request.session['signup_data']  # cleanup
             messages.success(request, "Your account has been verified. Please log in.")
