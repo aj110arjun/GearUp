@@ -1,0 +1,147 @@
+{% load static %}
+{% load form_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="{% static 'css/style.css' %}" rel="stylesheet">
+  <style>
+    body {
+      background-color: #c4ad8e;
+      font-family: 'Georgia', serif;
+    }
+
+    .account-container {
+      max-width: 1000px;
+      margin: 40px auto;
+      background: #e8dfd4;
+      padding: 30px;
+      border: 1px solid #222;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .side-menu {
+      border-right: 2px solid #ccc;
+    }
+
+    .side-menu h4 {
+      font-weight: bold;
+    }
+
+    .side-menu ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .side-menu li {
+      margin: 10px 0;
+      font-weight: bold;
+    }
+
+    .side-menu li.active {
+      color: orangered;
+      font-size: 1.2rem;
+    }
+
+    .profile-icon {
+      font-size: 60px;
+      color: #000;
+    }
+
+    .edit-btn, .logout-btn {
+      width: 150px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .logout-btn {
+      border: 1px solid #000;
+      background-color: #fff5ef;
+      color: red;
+    }
+
+    .info-label {
+      color: #888;
+      font-weight: bold;
+    }
+
+    .info-value {
+      font-weight: bold;
+      color: #000;
+    }
+
+    .go-back {
+      font-size: 0.9rem;
+      color: #000;
+    }
+
+    .google-logo {
+      height: 18px;
+      margin-right: 8px;
+    }
+
+    .btn-google {
+      background-color: #f2f2f2;
+      border: none;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container account-container">
+    <div class="go-back mb-3"><a href="{% url 'home' %}" class="text-decoration-none text-dark">&larr; Go Back</a></div>
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-md-4 side-menu text-center">
+        <div class="profile-icon mb-2">👤</div>
+        <h4>Arjun AJ</h4>
+        <p class="text-muted small">aj11oorajun@gmail.com</p>
+        <ul>
+          <li class="active">Personal Information</li>
+          <li>Order History</li>
+          <li>Gift Cards</li>
+        </ul>
+        <div class="mt-4">
+          <a href="#" class="btn btn-dark edit-btn mb-2">Edit Info</a>
+          <a href="{% url 'logout' %}" class="btn logout-btn">Logout</a>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="col-md-8">
+        <h3 class="fw-bold mb-4 text-center">Account Information</h3>
+        <div class="border p-4" style="border-color: #007bff;">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="info-label">Address</div>
+              <div class="info-value">Panchami Angavila<br>Vakkom PO</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="info-label">City</div>
+              <div class="info-value">Trivandrum</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="info-label">Landmark</div>
+              <div class="info-value">Near Goodluck mini hall</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="info-label">Street</div>
+              <div class="info-value">Angavila</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="info-label">Pincode</div>
+              <div class="info-value">695308</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -60,9 +60,15 @@
     <h2 class="fw-bold mb-4">Signup</h2>
     
     <div class="container mt-4">
-    <h2>Sign Up</h2>
     <form method="POST">
       {% csrf_token %}
+      <div class="mb-3">
+        {{ form.fullname.label_tag }}
+        {{ form.fullname|add_class:"form-control" }}
+        {% if form.fullname.errors %}
+          <div class="text-danger small">{{ form.fullname.errors.0 }}</div>
+        {% endif %}
+      </div>
       <div class="mb-3">
         {{ form.email.label_tag }}
         {{ form.email|add_class:"form-control" }}
