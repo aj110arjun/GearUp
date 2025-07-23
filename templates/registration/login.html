@@ -16,7 +16,7 @@
 <body>
   <div class="login-box text-center">
     <h2 class="fw-bold mb-3">Login</h2>
-    <form method="POST">
+    <form method="POST" novalidate>
       {% csrf_token %}
       <div class="mb-3 text-start">
         {{ form.email.label_tag }}
@@ -34,6 +34,12 @@
       </div>
       {% if form.non_field_errors %}
         <div class="text-danger small mb-2">{{ form.non_field_errors.0 }}</div>
+      {% endif %}
+      {% if messages %}
+          {% for message in messages %}
+            <div class="text-danger">{{message}}</div>
+          {% endfor %}
+      
       {% endif %}
       <button type="submit" class="btn btn-primary w-100">Login</button>
     </form>
