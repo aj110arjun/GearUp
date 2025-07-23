@@ -1,0 +1,79 @@
+ body {
+      background-color: #c4ad8e;
+      font-family: 'Georgia', serif;
+    }
+
+    .account-container {
+      max-width: 1000px;
+      margin: 40px auto;
+      background: #e8dfd4;
+      padding: 30px;
+      border: 1px solid #222;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .side-menu {
+      border-right: 2px solid #ccc;
+    }
+
+    .side-menu h4 {
+      font-weight: bold;
+    }
+
+    .side-menu ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .side-menu li {
+      margin: 10px 0;
+      font-weight: bold;
+    }
+
+    .side-menu li.active {
+      color: orangered;
+      font-size: 1.2rem;
+    }
+
+    .profile-icon {
+      font-size: 60px;
+      color: #000;
+    }
+
+    .edit-btn, .logout-btn {
+      width: 150px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .logout-btn {
+      border: 1px solid #000;
+      background-color: #fff5ef;
+      color: red;
+    }
+
+    .info-label {
+      color: #888;
+      font-weight: bold;
+    }
+
+    .info-value {
+      font-weight: bold;
+      color: #000;
+    }
+
+    .go-back {
+      font-size: 0.9rem;
+      color: #000;
+    }
+
+    .google-logo {
+      height: 18px;
+      margin-right: 8px;
+    }
+
+    .btn-google {
+      background-color: #f2f2f2;
+      border: none;
+      width: 100%;
+    }

@@ -1,0 +1,45 @@
+body {
+      background-color: #c7b99c;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .hero {
+      padding: 60px 0;
+    }
+    .hero-img {
+      border-radius: 20px;
+      background-color: #97af78;
+      padding: 20px;
+    }
+    .section-header {
+      background-color: #b8b3b5;
+      padding: 20px;
+      text-align: center;
+    }
+    .card {
+      border-radius: 20px;
+      background-color: #a9b584;
+      padding: 10px;
+    }
+    .card img {
+      border-radius: 15px;
+    }
+    .explore-section {
+      padding: 60px 0;
+    }
+    .explore-card {
+      background-color: #a9b584;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    footer {
+      background-color: #5b5b5b;
+      color: white;
+      padding: 30px 0;
+    }
+    .navbar {
+      background-color: #f4f1e9;
+    }
+    .navbar-brand {
+      font-weight: bold;
+    }

@@ -1,86 +1,11 @@
+{% extends "registration/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GearUp - Survival Store</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #c7b99c;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .hero {
-      padding: 60px 0;
-    }
-    .hero-img {
-      border-radius: 20px;
-      background-color: #97af78;
-      padding: 20px;
-    }
-    .section-header {
-      background-color: #b8b3b5;
-      padding: 20px;
-      text-align: center;
-    }
-    .card {
-      border-radius: 20px;
-      background-color: #a9b584;
-      padding: 10px;
-    }
-    .card img {
-      border-radius: 15px;
-    }
-    .explore-section {
-      padding: 60px 0;
-    }
-    .explore-card {
-      background-color: #a9b584;
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    footer {
-      background-color: #5b5b5b;
-      color: white;
-      padding: 30px 0;
-    }
-    .navbar {
-      background-color: #f4f1e9;
-    }
-    .navbar-brand {
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <!-- Header/Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light">
-    <div class="container">
-      <a class="navbar-brand text-success" href="#">GearUp</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link active" href="#">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Shop</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Explore</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'account' %}">Account</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
+{% block title %}GearUp - Home{% endblock title %}
+{% block csslink %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
+{% endblock csslink %}
 
+{% block content %}
   <!-- Hero Section -->
   <div class="container hero">
     <div class="row align-items-center">
@@ -108,22 +33,23 @@
     <h5>New Collections</h5>
     <h6>GearUp With Us.</h6>
   </div>
-
+  {% for product in products %}
   <div class="container my-4">
     <div class="row g-4">
-      <!-- Product Card Example (Repeat) -->
+      
       <div class="col-6 col-md-4 col-lg-3">
         <div class="card text-center">
-          <img src="https://via.placeholder.com/150" class="card-img-top" alt="...">
+          <img src="{{product.image.url}}" class="card-img-top" alt="...">
           <div class="card-body">
-            <h6 class="card-title">Camping Lamp</h6>
+            <h6 class="card-title">{{product.name}}</h6>
             <span class="badge bg-danger">20% OFF</span>
-            <div class="mt-2">$40.00</div>
-            <button class="btn btn-sm btn-dark mt-2">Buy Now</button>
+            <div class="mt-2">₹{{product.price}}</div>
+            <button class="btn btn-sm btn-dark mt-2">View</button>
           </div>
         </div>
       </div>
-      <!-- Duplicate above card for other products -->
+  {% endfor %}
+      
     </div>
   </div>
 
@@ -152,8 +78,7 @@
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer>
+   <footer>
     <div class="container text-center">
       <h4 class="text-success">GEAR UP</h4>
       <div class="row mt-4">
@@ -170,7 +95,7 @@
       <small>&copy; 2025 GearUp. All Rights Reserved.</small>
     </div>
   </footer>
+{% endblock content %}
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+
