@@ -13,18 +13,24 @@ from django.contrib.auth.models import User
 
 
 def login_view(request):
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and not request.user.is_staff:
         return redirect('home')
+
     if request.method == 'POST':
         form = EmailLoginForm(request.POST)
         if form.is_valid():
-            login(request, form.user)
-            messages.success(request, "Logged in successfully.")
-            return redirect('home')
+            user = form.user  # Get the authenticated user from the form
+            if not user.is_staff:
+                login(request, user)
+                messages.success(request, "Logged in successfully.")
+                return redirect('home')
+            else:
+                messages.error(request, 'Admin user cannot log in from this page.')
     else:
         form = EmailLoginForm()
 
     return render(request, 'registration/login.html', {'form': form})
+
 
 def signup_view(request):
     if request.method == 'POST':
