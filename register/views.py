@@ -12,6 +12,10 @@ from django.contrib.auth.models import User
 
 
 
+from django.contrib.auth import login
+from django.contrib import messages
+from django.shortcuts import render, redirect
+
 def login_view(request):
     if request.user.is_authenticated and not request.user.is_staff:
         return redirect('home')
@@ -19,13 +23,13 @@ def login_view(request):
     if request.method == 'POST':
         form = EmailLoginForm(request.POST)
         if form.is_valid():
-            user = form.user  # Get the authenticated user from the form
-            if not user.is_staff:
-                login(request, user)
+            if form.user.is_staff:
+                messages.error(request, 'Admin User Cannot login here.')
+            else:
+                login(request, form.user)
+                request.session['user_logged_in'] = True 
                 messages.success(request, "Logged in successfully.")
                 return redirect('home')
-            else:
-                messages.error(request, 'Admin user cannot log in from this page.')
     else:
         form = EmailLoginForm()
 
