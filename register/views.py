@@ -41,6 +41,7 @@ def signup_view(request):
                 'email': email,
                 'password1': password1,
                 'password2': password2,
+                'fullname': fullname,   
                 'otp': otp,
             }
 
@@ -66,8 +67,9 @@ def verify_otp_view(request):
         if data and data['otp'] == entered_otp:
             email = data['email']
             password = data['password1']
+            fullname = data['fullname']
 
-            user = User.objects.create_user(username=email, email=email, password=password)
+            user = User.objects.create_user(username=email, email=email, password=password, first_name=fullname)
             del request.session['signup_data']  # cleanup
             messages.success(request, "Your account has been verified. Please log in.")
             return redirect('login')

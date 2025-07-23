@@ -1,0 +1,45 @@
+body {
+      background-color: #c9b090;
+      font-family: Arial, sans-serif;
+    }
+    .signup-container {
+      max-width: 400px;
+      margin: 5% auto;
+      background-color: #fefefe;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .form-control {
+      background-color: #e9ecef;
+    }
+    .btn-black {
+      background-color: black;
+      color: white;
+      border-radius: 20px;
+      width: 100%;
+    }
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background-color: #e9ecef;
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      width: 100%;
+    }
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+    .footer-text {
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .footer-text a {
+      color: purple;
+      text-decoration: none;
+    }
