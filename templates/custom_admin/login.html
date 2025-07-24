@@ -64,19 +64,18 @@
   <div class="login-box">
     <div class="brand">GearUp Admin</div>
     <h3>Admin Login</h3>
-    <form method="POST" action="" novalidate>
+    <form method="POST" novalidate>
       {% csrf_token %}
-      <div class="mb-3">
-        <label for="username" class="form-label">Admin Username</label>
-        <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
-      </div>
-      <div class="mb-3">
-        <label for="password" class="form-label">Admin Password</label>
-        <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
-      </div>
-      {% if error %}
-        <div class="text-danger mb-3">{{ error.user }}</div>
+      {{ form.as_p }}
+
+      {% if form.errors %}
+        <div class="text-danger mb-3">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
       {% endif %}
+
       <div class="d-grid">
         <button type="submit" class="btn btn-login">Login</button>
       </div>

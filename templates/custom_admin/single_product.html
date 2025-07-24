@@ -1,0 +1,61 @@
+{% extends "custom_admin/base.html" %}
+{% load static %}
+
+{% block title %}Admin - {{ product.name }}{% endblock title %}
+
+{% block content %}
+<div class="col-md-10 ms-auto p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold">Product Details</h3>
+    <a href="{% url 'admin_product_list' %}" class="btn btn-secondary">← Back to Products</a>
+  </div>
+
+  <div class="card p-4 mb-4">
+    <div class="row">
+      <div class="col-md-4">
+        <img src="{{ product.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ product.name }}">
+      </div>
+      <div class="col-md-8">
+        <h4 class="fw-bold">{{ product.name }}</h4>
+        <p class="text-muted">{{ product.description }}</p>
+
+        <div class="mb-2">
+          <strong>Price:</strong> ₹{{ product.price }}
+        </div>
+        <div class="mb-2">
+          <strong>Category:</strong> {{ product.category.name }}
+        </div>
+        <div class="mb-2">
+          <strong>Stock:</strong> {{ product.stock }}
+        </div>
+        <div class="mb-2">
+          <strong>Status:</strong> 
+          {% if product.is_blocked %}
+            <span class="badge bg-danger">Blocked</span>
+          {% else %}
+            <span class="badge bg-success">Active</span>
+          {% endif %}
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+          <a href="" class="btn btn-warning">Edit</a>
+
+          <form action="" method="post" onsubmit="return confirm('Are you sure you want to delete this product?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </form>
+
+          <form action="" method="post">
+            {% csrf_token %}
+            {% if product.is_blocked %}
+              <button type="submit" class="btn btn-success">Unblock</button>
+            {% else %}
+              <button type="submit" class="btn btn-dark">Block</button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

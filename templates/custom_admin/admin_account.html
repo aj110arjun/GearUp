@@ -1,0 +1,60 @@
+{% extends "custom_admin/base.html" %}
+{% block title %}
+    GearUp - Admin Account
+{% endblock title %}
+
+{% block content %}
+    
+  <div class="container py-5">
+    <!-- Back link -->
+    <div class="mb-4 go-back">
+      <a href="/admin-dashboard">&larr; Back to Dashboard</a>
+    </div>
+
+    <!-- Admin Account Card -->
+    <div class="card shadow-sm p-4">
+      <h3 class="text-center mb-4">Admin Account Information</h3>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="label-text">Full Name:</div>
+          <div class="value-text">{{ user.get_full_name }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="label-text">Email:</div>
+          <div class="value-text">{{ user.email }}</div>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="label-text">Username:</div>
+          <div class="value-text">{{ user.username }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="label-text">Role:</div>
+          <div class="value-text">
+            {% if user.is_superuser %}Superuser{% elif user.is_staff %}Administrator{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="label-text">Last Login:</div>
+          <div class="value-text">{{ user.last_login|date:"F d, Y H:i A" }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="label-text">Date Joined:</div>
+          <div class="value-text">{{ user.date_joined|date:"F d, Y" }}</div>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <a href="{% url 'admin_logout' %}" class="btn btn-logout px-4">Logout</a>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+

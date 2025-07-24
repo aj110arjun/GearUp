@@ -52,3 +52,8 @@ def edit_info(request):
 		return redirect('account')
 	return render(request, 'registration/edit_account.html', {'account': account, 'user': user})
 
+@never_cache
+@login_required(login_url='admin_login')
+def admin_account(request):
+	return render(request, 'custom_admin/admin_account.html')
+
