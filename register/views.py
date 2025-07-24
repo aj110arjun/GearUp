@@ -10,25 +10,22 @@ from .forms import EmailLoginForm
 from django.contrib.auth.models import User
 
 
-
-
-from django.contrib.auth import login
-from django.contrib import messages
-from django.shortcuts import render, redirect
-
 def login_view(request):
-    if request.user.is_authenticated and not request.user.is_staff:
-        return redirect('home')
+    if request.user.is_authenticated:
+        if not request.user.is_staff:
+            return redirect('home')
+        else:
+            messages.error(request, "Unauthorized access.")
+            return redirect('admin_login')
 
     if request.method == 'POST':
         form = EmailLoginForm(request.POST)
         if form.is_valid():
             if form.user.is_staff:
-                messages.error(request, 'Admin User Cannot login here.')
+                messages.error(request, 'Admin user cannot login here.')
             else:
                 login(request, form.user)
-                request.session['user_logged_in'] = True 
-                messages.success(request, "Logged in successfully.")
+                request.session['user_logged_in'] = True
                 return redirect('home')
     else:
         form = EmailLoginForm()
@@ -91,3 +88,29 @@ def verify_otp_view(request):
 def logout_view(request):
     request.session.flush()
     return redirect('login')
+
+def admin_logout(request):
+    request.session.flush()
+    return redirect('admin_login')
+
+def admin_login(request):
+    if request.user.is_authenticated:
+        if request.user.is_staff:
+            return redirect('admin_dashboard')
+        else:
+            messages.error(request, "Unauthorized access.")
+            return redirect('login')
+
+    if request.method == 'POST':
+        form = EmailLoginForm(request.POST)
+        if form.is_valid():
+            if not form.user.is_staff:
+                messages.error(request, 'User cannot login here.')
+            else:
+                login(request, form.user)
+                request.session['admin_logged_in'] = True
+                return redirect('admin_dashboard')
+    else:
+        form = EmailLoginForm()
+
+    return render(request, 'custom_admin/login.html', {'form': form})

@@ -1,0 +1,53 @@
+{% extends "custom_admin/base.html" %}
+
+{% block title %}Admin - Product List{% endblock title %}
+
+{% block header_title %}Product List{% endblock header_title %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>All Products</h4>
+    <a href="" class="btn btn-primary">+ Add Product</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle shadow-sm">
+      <thead class="table-dark">
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Image</th>
+          <th scope="col">Name</th>
+          <th scope="col">Category</th>
+          <th scope="col">Price</th>
+          <th scope="col">Stock</th>
+          <th scope="col" class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <th scope="row">{{ forloop.counter }}</th>
+          <td>
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" width="60" class="rounded shadow-sm">
+          </td>
+          <td>{{ product.name | title }}</td>
+          <td>{{ product.category.name }}</td>
+          <td>₹{{ product.price }}</td>
+          <td>{{ product.stock }}</td>
+          <td class="text-center">
+            <a href="{% url 'admin_product_view' slug=product.slug %}" class="btn btn-sm btn-info me-1">View</a>
+            <!-- <a href="" class="btn btn-sm btn-warning me-1">Edit</a>
+            <a href="" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this product?');">Delete</a> -->
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted">No products found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock content %}
