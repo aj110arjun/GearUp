@@ -23,6 +23,8 @@ def login_view(request):
         if form.is_valid():
             if form.user.is_staff:
                 messages.error(request, 'Admin user cannot login here.')
+            elif not form.user.is_active:
+                messages.error(request, 'User is blocked')
             else:
                 login(request, form.user)
                 request.session['user_logged_in'] = True

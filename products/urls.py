@@ -6,10 +6,11 @@ urlpatterns = [
     path('product/<slug:slug>/', views.product_detail, name='product_detail'),
     path('admin/product/list/', views.admin_product_list, name='admin_product_list'),  # View all products
     path('admin/products/view/<slug:slug>/', views.admin_product_view, name='admin_product_view'),
-    # path('admin/products/view/<slug:slug>/', admin_product_view, name='admin_product_view'),
-    # path('admin/products/edit/<slug:slug>/', admin_product_edit, name='admin_product_edit'),
-    # path('admin/products/delete/<slug:slug>/', admin_product_delete, name='admin_product_delete'),
-    # path('admin/products/block/<slug:slug>/', admin_product_block_toggle, name='admin_product_block'),
+    path('admin/products/edit/<slug:slug>/', views.edit_product, name='edit_product'),
+    path('admin/products/delete/<slug:slug>/', views.delete_product, name='delete_product'),
+    path('admin/product/toggle-status/<slug:slug>/', views.toggle_product_status, name='toggle_product_status'),
+    path('admin/product/add/', views.add_product_view, name='add_product'),
+    path('admin/category/ajax-add/', views.ajax_add_category, name='ajax_add_category'),
 
 
 ] 

@@ -1,0 +1,51 @@
+{% extends "custom_admin/base.html" %}
+
+{% block title %}Add Product{% endblock title %}
+{% block header_title %}Add Product{% endblock header_title %}
+
+{% block content %}
+
+
+
+<div class="container mt-4">
+  <div class="card shadow p-4">
+    <h4 class="mb-4">Add New Product</h4>
+    <form method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <!-- 🔽 Existing Category Dropdown -->
+  <div class="mb-3">
+    <label for="id_category" class="form-label">Select Category</label>
+    {{ form.category }}
+  </div>
+
+  <!-- ➕ New Category Input (Optional) -->
+  <div class="mb-3">
+    <label for="new_category" class="form-label">Or Add New Category</label>
+    <input type="text" name="new_category" id="new_category" class="form-control" placeholder="Enter new category (optional)">
+    <div class="form-text text-muted">If provided, this will override the selected category.</div>
+  </div>
+
+  <!-- 👇 Other Fields -->
+  {% for field in form %}
+    {% if field.name != "category" %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+        {% endif %}
+        {% for error in field.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  <button type="submit" class="btn btn-success">Add Product</button>
+  <a href="{% url 'admin_product_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+
+  </div>
+</div>
+{% endblock %}

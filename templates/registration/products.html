@@ -60,7 +60,7 @@
         <div class="col-sm-6 col-md-4 col-lg-3">
           <div class="product-card h-100 text-center">
             <img src="{{ product.image.url }}" class="product-img mb-3" alt="{{ product.name }}" />
-            <h6 class="mb-1">{{ product.name }}</h6>
+            <h6 class="mb-1 text-dark fw-bold">{{ product.name | title }}</h6>
             <p class="price-tag">₹{{ product.price }}</p>
             <a href="{% url 'product_detail' slug=product.slug %}" class="card-btn mb-2">View</a>
             <div class="rating">★★★★★</div>

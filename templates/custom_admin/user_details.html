@@ -1,0 +1,33 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block title %}User Detail{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <h2 class="mb-4"> User Details</h2>
+  <div class="card">
+    <div class="card-body">
+      <p><strong>Full Name:</strong> {{ user_obj.first_name }}</p>
+      <p><strong>Email:</strong> {{ user_obj.email }}</p>
+      <p><strong>Status:</strong> 
+        {% if user_obj.is_active %}
+          <span class="badge bg-success">Active</span>
+        {% else %}
+          <span class="badge bg-danger">Blocked</span>
+        {% endif %}
+      </p>
+      <p><strong>Date Joined:</strong> {{ user_obj.date_joined|date:"d-m-Y" }}</p>
+      <p><strong>Last Login:</strong> {{ user_obj.last_login|default:"Never" | date:"d-m-Y" }}</p>
+
+      <form action="{% url 'toggle_user_status' user_obj.id %}" method="post" class="mt-4">
+        {% csrf_token %}
+        {% if user_obj.is_active %}
+          <button type="submit" class="btn btn-danger">Block User</button>
+        {% else %}
+          <button type="submit" class="btn btn-success">Unblock User</button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-9o855=3iz$u#qamn1gwh(iu1sp6@h_@m+yr4=epxdk6h0r6&4x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['full-mice-lead.loca.lt', '127.0.0.1']
 
 
 # Application definition
@@ -41,8 +41,19 @@ INSTALLED_APPS = [
     'products',
     'register',
     'account',
+    'users',
+    'social_django',
     
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.github.GithubOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GITHUB_KEY = 'Ov23liyxwy0e40FEzYBP'
+SOCIAL_AUTH_GITHUB_SECRET = '991c3b16f0d4fec8201bab3f840dd702d1ceafaf'
+LOGIN_REDIRECT_URL = '/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -74,6 +85,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },

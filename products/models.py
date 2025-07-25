@@ -29,6 +29,7 @@ class Product(models.Model):
 	stock = models.PositiveIntegerField() 
 	image = models.ImageField(upload_to="products")
 	category = models.ForeignKey(Category, on_delete=models.CASCADE)
+	is_active = models.BooleanField(default=True)
 
 	def save(self, *args, **kwargs):
 		if not self.slug:

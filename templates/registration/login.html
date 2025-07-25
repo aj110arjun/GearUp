@@ -50,14 +50,7 @@
 
     <p class="my-3">Or</p>
 
-    <button class="btn btn-google w-100 mb-3">
-      <img
-        src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
-        alt="Google logo"
-        class="google-logo"
-      />
-      Login with Google
-    </button>
+    <a href="{% url 'social:begin' 'github' %}" class="btn btn-dark">Login with GitHub</a>
 
     <p class="small">
       Don’t have an account?
