@@ -35,10 +35,13 @@ def edit_info(request):
 		if "1234567890" in user.first_name:
 			error['first_name'] = 'Fullname only contain characters'
 
-		if not account.address or not account.city or not account.street or not account.landmark or not account.pincode:
+		if not account.address:
 			error['address'] = 'Address cannot be empty'
+		if not account.city:
 			error['city'] = 'City cannot be empty'
+		if not account.street:
 			error['street'] = 'Street cannot be empty'
+		if not account.landmark:
 			error['landmark'] = 'Landmark cannot be empty'
 		try:
 			int(account.pincode)

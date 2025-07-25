@@ -1,0 +1,59 @@
+{% extends "custom_admin/base.html" %}
+{% load static %}
+{% load form_tags %}
+
+
+{% block content %}
+<div class="container py-5">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">Edit Product - {{ product.name }}</h4>
+    </div>
+    <div class="card-body">
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="id_name" class="form-label">Product Name</label>
+            {{ form.name|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="id_price" class="form-label">Price</label>
+            {{ form.price|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="id_stock" class="form-label">Stock</label>
+            {{ form.stock|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="id_category" class="form-label">Category</label>
+            {{ form.category|add_class:"form-select" }}
+          </div>
+
+          <div class="col-md-12 mb-3">
+            <label for="id_description" class="form-label">Description</label>
+            {{ form.description|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-6 mb-4">
+            <label for="id_image" class="form-label">Product Image</label>
+            {{ form.image|add_class:"form-control" }}
+            {% if product.image %}
+              <img src="{{ product.image.url }}" alt="Product Image" class="img-thumbnail mt-2" width="150">
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-success">Save Changes</button>
+          <a href="{% url 'admin_product_view' product.slug %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

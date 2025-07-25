@@ -30,32 +30,36 @@
         </div>
         <div class="mb-2">
           <strong>Status:</strong> 
-          {% if product.is_blocked %}
-            <span class="badge bg-danger">Blocked</span>
-          {% else %}
+          {% if product.is_active %}
             <span class="badge bg-success">Active</span>
+          {% else %}
+            <span class="badge bg-danger">Blocked</span>
           {% endif %}
         </div>
 
         <div class="mt-4 d-flex gap-2">
-          <a href="" class="btn btn-warning">Edit</a>
+          <a href="{% url 'edit_product' product.slug %}" class="btn btn-warning">Edit</a>
 
-          <form action="" method="post" onsubmit="return confirm('Are you sure you want to delete this product?');">
+          <form action="{% url 'delete_product' product.slug %}" method="post" onsubmit="return confirm('Are you sure you want to delete this product?');">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">Delete</button>
           </form>
 
-          <form action="" method="post">
-            {% csrf_token %}
-            {% if product.is_blocked %}
-              <button type="submit" class="btn btn-success">Unblock</button>
-            {% else %}
-              <button type="submit" class="btn btn-dark">Block</button>
-            {% endif %}
-          </form>
+          {% if product.is_active %}
+            <a href="{% url 'toggle_product_status' product.slug %}" class="btn btn-danger">Block</a>
+          {% else %}
+            <a href="{% url 'toggle_product_status' product.slug %}" class="btn btn-success">Unblock</a>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
+  {% for message in messages %}
+    {% if messages.success %}
+      <div class="text-success">{{messages.success}}</div>
+    {% elif messages.warning %}
+      <div class="text-danger">{{messages.warning }}</div>
+    {% endif %}
+  {% endfor %}
 </div>
 {% endblock content %}

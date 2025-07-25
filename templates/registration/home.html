@@ -29,29 +29,29 @@
   </div>
 
   <!-- New Collections -->
-  <div class="section-header">
-    <h5>New Collections</h5>
-    <h6>GearUp With Us.</h6>
-  </div>
-  {% for product in products %}
-  <div class="container my-4">
-    <div class="row g-4">
-      
+  <div class="section-header text-center my-5">
+  <h5 class="text-uppercase text-muted">New Collections</h5>
+  <h2 class="fw-bold">GearUp With Us</h2>
+</div>
+
+<div class="container">
+  <div class="row g-4">
+    {% for product in products %}
       <div class="col-6 col-md-4 col-lg-3">
-        <div class="card text-center">
-          <img src="{{product.image.url}}" class="card-img-top" alt="...">
+        <div class="card h-100 shadow-sm border-0 text-center">
+          <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
           <div class="card-body">
-            <h6 class="card-title">{{product.name}}</h6>
-            <span class="badge bg-danger">20% OFF</span>
-            <div class="mt-2">₹{{product.price}}</div>
-            <button class="btn btn-sm btn-dark mt-2">View</button>
+            <h6 class="card-title text-truncate">{{ product.name | title }}</h6>
+            <span class="badge bg-danger mb-2">20% OFF</span>
+            <div class="fw-bold text-success">₹{{ product.price }}</div>
+            <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-dark mt-3">View</a>
           </div>
         </div>
       </div>
-  {% endfor %}
-      
-    </div>
+    {% endfor %}
   </div>
+</div>
+
 
   <!-- Explore Section -->
   <div class="container explore-section">

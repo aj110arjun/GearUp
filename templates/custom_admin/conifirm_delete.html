@@ -1,0 +1,23 @@
+{% extends "custom_admin/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-danger text-white">
+      <h4 class="mb-0">Delete Product</h4>
+    </div>
+    <div class="card-body">
+      <p class="fs-5">Are you sure you want to delete <strong>{{ product.name }}</strong>?</p>
+      {% if product.image %}
+        <img src="{{ product.image.url }}" alt="Product Image" class="img-thumbnail mb-3" width="180">
+      {% endif %}
+      <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a href="{% url 'admin_product_view' product.slug %}" class="btn btn-secondary">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
