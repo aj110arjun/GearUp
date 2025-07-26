@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block title %}Admin - {{ product.name }}{% endblock title %}
+{% block csslink %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/single_product.css' %}">
+{% endblock csslink %}
 
 {% block content %}
 <div class="col-md-10 ms-auto p-4">

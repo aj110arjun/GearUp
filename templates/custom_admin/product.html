@@ -51,10 +51,10 @@
     <label class="form-label">Sort By</label>
     <select name="sort" class="form-select">
       <option value="" {% if not filters.sort %}selected{% endif %}>Default</option>
-      <option value="name_asc"  {% if filters.sort == 'name_asc' %}selected{% endif %}>Name ↑</option>
-      <option value="name_desc" {% if filters.sort == 'name_desc'%}selected{% endif %}>Name ↓</option>
-      <option value="price_asc" {% if filters.sort == 'price_asc'%}selected{% endif %}>Price ↑</option>
-      <option value="price_desc"{% if filters.sort == 'price_desc'%}selected{% endif %}>Price ↓</option>
+      <option value="name_asc"  {% if filters.sort == 'name_asc' %}selected{% endif %}>Name A-Z</option>
+      <option value="name_desc" {% if filters.sort == 'name_desc'%}selected{% endif %}>Name Z-A</option>
+      <option value="price_asc" {% if filters.sort == 'price_asc'%}selected{% endif %}>Price Low to High</option>
+      <option value="price_desc"{% if filters.sort == 'price_desc'%}selected{% endif %}>Price High to Low</option>
     </select>
   </div>
 

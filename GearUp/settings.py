@@ -25,7 +25,10 @@ SECRET_KEY = 'django-insecure-9o855=3iz$u#qamn1gwh(iu1sp6@h_@m+yr4=epxdk6h0r6&4x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['full-mice-lead.loca.lt', '127.0.0.1']
+ALLOWED_HOSTS = ['dry-pumas-camp.loca.lt', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = [
+    'https://dry-pumas-camp.loca.lt',
+]
 
 
 # Application definition
@@ -50,10 +53,12 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
 
 SOCIAL_AUTH_GITHUB_KEY = 'Ov23liyxwy0e40FEzYBP'
 SOCIAL_AUTH_GITHUB_SECRET = '991c3b16f0d4fec8201bab3f840dd702d1ceafaf'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'home'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
