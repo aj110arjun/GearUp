@@ -11,6 +11,12 @@ urlpatterns = [
     path('admin/product/toggle-status/<slug:slug>/', views.toggle_product_status, name='toggle_product_status'),
     path('admin/product/add/', views.add_product_view, name='add_product'),
     path('admin/category/ajax-add/', views.ajax_add_category, name='ajax_add_category'),
+    path('admin/product/<slug:slug>/delete-main-image/', views.delete_main_image, name='delete_main_image'),
+    path('admin/product/delete-additional-image/<int:image_id>/', views.delete_additional_image, name='delete_additional_image'),
+    path('admin/products/<slug:slug>/edit/', views.edit_product, name='edit_product'),
+    path('admin/products/additional-image/delete/<int:image_id>/', views.delete_additional_image, name='delete_additional_image'),
+
+
 
 
 ] 

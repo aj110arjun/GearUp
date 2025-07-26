@@ -15,15 +15,15 @@ def user_view(request):
 
 @staff_member_required
 @require_POST
-def toggle_user_status(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+def toggle_user_status(request, id):
+    user = get_object_or_404(User, pk=id)
     user.is_active = not user.is_active
     user.save()
     status = "unblocked" if user.is_active else "blocked"
     messages.success(request, f"User has been {status}.")
-    return redirect('admin_user_detail', user_id=user.id)
+    return redirect('admin_user_detail', id=user.id)
 
 @staff_member_required
-def admin_user_detail(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+def admin_user_detail(request, id):
+    user = get_object_or_404(User, pk=id)
     return render(request, 'custom_admin/user_details.html', {'user_obj': user})

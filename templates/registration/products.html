@@ -5,68 +5,60 @@
 {% block csslink %}
   <link rel="stylesheet" type="text/css" href="{% static 'css/products.css' %}">
   <style>
-    .product-card {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
-      transition: all 0.3s ease;
-      background-color: #fff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .product-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .product-img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      border-radius: 6px;
-    }
-
-    .card-btn {
-      background-color: #212529;
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 5px;
-      display: inline-block;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    .card-btn:hover {
-      background-color: #343a40;
-    }
-
-    .price-tag {
-      font-weight: bold;
-      color: #28a745;
-    }
-
-    .rating {
-      color: #ffc107;
-      font-size: 14px;
-    }
+    
   </style>
 {% endblock csslink %}
 
 {% block content %}
-  <div class="container my-5">
-    <div class="row g-4">
-      {% for product in products %}
-        <div class="col-sm-6 col-md-4 col-lg-3">
-          <div class="product-card h-100 text-center">
-            <img src="{{ product.image.url }}" class="product-img mb-3" alt="{{ product.name }}" />
-            <h6 class="mb-1 text-dark fw-bold">{{ product.name | title }}</h6>
-            <p class="price-tag">₹{{ product.price }}</p>
-            <a href="{% url 'product_detail' slug=product.slug %}" class="card-btn mb-2">View</a>
-            <div class="rating">★★★★★</div>
-          </div>
-        </div>
-      {% endfor %}
+<div class="container my-5">
+
+  <!-- Filter & Sort Form -->
+  <form method="get" class="mb-4">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label text-dark">Search</label>
+        <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Search by name">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label text-dark">Min Price</label>
+        <input type="number" name="min_price" value="{{ min_price }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label text-dark">Max Price</label>
+        <input type="number" name="max_price" value="{{ max_price }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label text-dark">Sort By</label>
+        <select name="sort" class="form-select">
+          <option value="">-- Select --</option>
+          <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+          <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
+          <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-dark w-100">Apply</button>
+        <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">Reset</a>
+      </div>
     </div>
+  </form>
+
+  <!-- Products -->
+  <div class="row g-4 mt-3">
+    {% for product in products %}
+      <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="product-card h-100 text-center">
+          <img src="{{ product.image.url }}" class="product-img mb-3" alt="{{ product.name }}" />
+          <h6 class="mb-1 text-dark fw-bold">{{ product.name | title }}</h6>
+          <p class="price-tag">₹{{ product.price }}</p>
+          <a href="{% url 'product_detail' slug=product.slug %}" class="card-btn mb-2">View</a>
+          <div class="rating">★★★★★</div>
+        </div>
+      </div>
+    {% empty %}
+      <p>No products found matching your criteria.</p>
+    {% endfor %}
   </div>
+</div>
 {% endblock content %}
