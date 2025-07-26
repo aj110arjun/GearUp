@@ -9,30 +9,28 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.conf import settings
+from django.core.paginator import Paginator
 
 
 
 
 def product_list(request):
     products = Product.objects.filter(is_active=True)
-
-    # Get filters
     search_query = request.GET.get('search', '')
     sort_by = request.GET.get('sort', '')
     price_min = request.GET.get('min_price', '')
     price_max = request.GET.get('max_price', '')
+    category_id = request.GET.get('category', '')
 
-    # Search by name
     if search_query:
         products = products.filter(name__icontains=search_query)
-
-    # Filter by price range
     if price_min:
         products = products.filter(price__gte=price_min)
     if price_max:
         products = products.filter(price__lte=price_max)
+    if category_id:
+        products = products.filter(category__id=category_id)
 
-    # Sorting
     if sort_by == 'price_asc':
         products = products.order_by('price')
     elif sort_by == 'price_desc':
@@ -42,12 +40,19 @@ def product_list(request):
     elif sort_by == 'name_desc':
         products = products.order_by('-name')
 
+    # ✅ Add pagination
+    paginator = Paginator(products, 8)  # 8 products per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'products': products,
+        'page_obj': page_obj,
+        'products': page_obj.object_list,
         'search_query': search_query,
         'sort_by': sort_by,
         'min_price': price_min,
         'max_price': price_max,
+        'category_id': category_id,
     }
     return render(request, 'registration/products.html', context)
 
@@ -79,13 +84,12 @@ def admin_product_view(request, slug):
 def admin_product_list(request):
     products = Product.objects.all()
 
-    # Filters
     category   = request.GET.get('category')
     min_price  = request.GET.get('min_price')
     max_price  = request.GET.get('max_price')
     in_stock   = request.GET.get('in_stock')
     search     = request.GET.get('search')
-    sort       = request.GET.get('sort')        # ← New
+    sort       = request.GET.get('sort')        
 
     if category:
         products = products.filter(category__id=category)
@@ -100,7 +104,7 @@ def admin_product_list(request):
     if search:
         products = products.filter(name__icontains=search)
 
-    # Sorting
+    # Sortng
     if sort == 'name_asc':
         products = products.order_by('name')
     elif sort == 'name_desc':
@@ -110,7 +114,6 @@ def admin_product_list(request):
     elif sort == 'price_desc':
         products = products.order_by('-price')
     else:
-        # default sort (e.g. newest first)
         products = products.order_by('-product_id')
 
     categories = Category.objects.all()
@@ -124,7 +127,7 @@ def admin_product_list(request):
             'max_price': max_price,
             'in_stock':  in_stock,
             'search':    search,
-            'sort':      sort,     # ← Pass back to template
+            'sort':      sort,     
         }
     }
     return render(request, 'custom_admin/product.html', context)
@@ -137,7 +140,6 @@ def edit_product(request, slug):
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES, instance=product)
 
-        # handle additional images
         files = request.FILES.getlist('additional_images')
         if form.is_valid():
             form.save()
@@ -183,7 +185,6 @@ def add_product_view(request):
         new_cat_name = request.POST.get('new_category')
 
         if new_cat_name:
-            # Capitalize and check for duplicates
             category, created = Category.objects.get_or_create(name=new_cat_name.strip().title())
             post_data = request.POST.copy()
             post_data['category'] = category.id
@@ -229,6 +230,4 @@ def delete_additional_image(request, image_id):
     product_slug = image.product.slug
     image.delete()
     return redirect('edit_product', slug=product_slug)
-
-
 

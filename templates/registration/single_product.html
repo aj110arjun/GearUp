@@ -11,7 +11,6 @@
     
 <div class="container mt-5">
   <div class="row align-items-start">
-    <!-- Left: Images -->
     <div class="d-flex justify-content-center align-items-start gap-3">
       <div class="image-container position-relative">
         <img id="mainProductImage" src="{{ product.image.url }}" class="img-fluid rounded shadow" alt="Main Product">
@@ -20,7 +19,6 @@
       <div id="zoomResult" class="zoom-result"></div>
     </div>
 
-      <!-- Thumbnails -->
       <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
         <img src="{{ product.image.url }}" class="thumb active-thumb" onclick="switchMainImage(this)" alt="Main Image Thumbnail">
         {% for images in product.additional_images.all %}
@@ -29,9 +27,13 @@
       </div>
     </div>
 
-    <!-- Right: Details -->
     <div class="col-md-6">
       <div class="product-title">{{ product.name|title }}</div>
+       {% if product.stock == 0 %}
+          <span class="badge bg-danger">Out of Stock</span>
+        {% else %}
+          <span class="badge bg-success">In Stock</span>
+        {% endif %}
       <div class="product-category mb-2">{{ product.category.name }}</div>
       <div class="product-description mb-3">{{ product.description }}</div>
       <div class="price mb-4">₹ {{ product.price }}/-</div>
@@ -39,6 +41,8 @@
       <div class="d-flex align-items-center gap-3">
         <button class="btn btn-dark">Add to cart</button>
         <button class="btn-fav">♡</button>
+       
+
       </div>
     </div>
   </div>

@@ -1,10 +1,9 @@
 body {
-  background-color: #a49a86;
+  background-color: #BAA991;
   font-family: 'Segoe UI', sans-serif;
   color: #212529;
 }
 
-/* ---------- Product Section Layout ---------- */
 .container {
   max-width: 1200px;
 }
@@ -16,7 +15,6 @@ body {
   gap: 2rem;
 }
 
-/* ---------- Left Side: Image & Zoom ---------- */
 .image-preview-wrapper {
   display: flex;
   gap: 1.5rem;
@@ -27,10 +25,30 @@ body {
 
 .image-container {
   position: relative;
-  width: 100%;
-  max-width: 480px;
-  overflow: hidden;
+  display: inline-block;
 }
+
+.zoom-lens {
+  position: absolute;
+  border: 1px solid #000;
+  width: 100px;
+  height: 100px;
+  opacity: 0.4;
+  background-color: #fff;
+  cursor: crosshair;
+  display: none;
+}
+
+.zoom-result {
+  width: 300px;
+  height: 300px;
+  border: 1px solid #ddd;
+  background-repeat: no-repeat;
+  background-size: 600px 600px;
+  margin-top: 20px;
+  margin-left: 20px;
+}
+
 
 .image-container img#mainProductImage {
   width: 100%;
@@ -40,7 +58,6 @@ body {
   border: 1px solid #ddd;
 }
 
-/* Zoom lens */
 #zoomLens {
   position: absolute;
   width: 100px;
@@ -52,7 +69,6 @@ body {
   z-index: 2;
 }
 
-/* Zoom result */
 #zoomResult {
   width: 420px;
   height: 420px;
@@ -64,7 +80,6 @@ body {
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Thumbnails */
 .thumb {
   width: 80px;
   height: 80px;
@@ -80,7 +95,6 @@ body {
   border-color: #000;
 }
 
-/* ---------- Right Side: Product Info ---------- */
 .product-title {
   font-size: 2rem;
   font-weight: 700;
@@ -124,7 +138,6 @@ body {
   color: #000;
 }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 992px) {
   #zoomResult {
     display: none !important;
