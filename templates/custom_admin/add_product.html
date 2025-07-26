@@ -13,20 +13,17 @@
     <form method="POST" enctype="multipart/form-data">
   {% csrf_token %}
 
-  <!-- 🔽 Existing Category Dropdown -->
   <div class="mb-3">
     <label for="id_category" class="form-label">Select Category</label>
     {{ form.category }}
   </div>
 
-  <!-- ➕ New Category Input (Optional) -->
   <div class="mb-3">
     <label for="new_category" class="form-label">Or Add New Category</label>
     <input type="text" name="new_category" id="new_category" class="form-control" placeholder="Enter new category (optional)">
     <div class="form-text text-muted">If provided, this will override the selected category.</div>
   </div>
 
-  <!-- 👇 Other Fields -->
   {% for field in form %}
     {% if field.name != "category" %}
       <div class="mb-3">

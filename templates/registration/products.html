@@ -12,7 +12,6 @@
 {% block content %}
 <div class="container my-5">
 
-  <!-- Filter & Sort Form -->
   <form method="get" class="mb-4">
     <div class="row g-2 align-items-end">
       <div class="col-md-3">
@@ -37,6 +36,17 @@
           <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
         </select>
       </div>
+      <div class="col-md-2">
+        <label class="form-label text-dark">Category</label>
+        <select name="category" class="form-select">
+          <option value="">-- All --</option>
+          {% for category in categories %}
+            <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+              {{ category.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
       <div class="col-md-2 d-flex gap-2">
         <button type="submit" class="btn btn-dark w-100">Apply</button>
         <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">Reset</a>
@@ -44,7 +54,6 @@
     </div>
   </form>
 
-  <!-- Products -->
   <div class="row g-4 mt-3">
     {% for product in products %}
       <div class="col-sm-6 col-md-4 col-lg-3">
@@ -60,5 +69,34 @@
       <p>No products found matching your criteria.</p>
     {% endfor %}
   </div>
+
+<div class="mt-4 d-flex justify-content-center">
+  <nav>
+    <ul class="pagination">
+
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}">&laquo; First</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}">Previous</a>
+        </li>
+      {% endif %}
+
+      <li class="page-item active"><a class="page-link" href="#">{{ page_obj.number }}</a></li>
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}">Next</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}">Last &raquo;</a>
+        </li>
+      {% endif %}
+
+    </ul>
+  </nav>
+</div>
+    
 </div>
 {% endblock content %}

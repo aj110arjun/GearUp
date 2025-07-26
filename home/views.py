@@ -10,7 +10,7 @@ def home(request):
     if request.user.is_staff:
         logout(request)  
         return redirect('login') 
-    products = Product.objects.filter(is_active=True)[:6]
+    products = Product.objects.filter(is_active=True)[:8]
     context = {
     'products': products
     }

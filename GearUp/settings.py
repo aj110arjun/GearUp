@@ -25,9 +25,9 @@ SECRET_KEY = 'django-insecure-9o855=3iz$u#qamn1gwh(iu1sp6@h_@m+yr4=epxdk6h0r6&4x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['dry-pumas-camp.loca.lt', '127.0.0.1']
+ALLOWED_HOSTS = ['cyan-falcons-nail.loca.lt', '127.0.0.1']
 CSRF_TRUSTED_ORIGINS = [
-    'https://dry-pumas-camp.loca.lt',
+    'https://cyan-falcons-nail.loca.lt',
 ]
 
 
