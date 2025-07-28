@@ -22,8 +22,13 @@ def product_list(request):
     price_max = request.GET.get('max_price', '')
     category_id = request.GET.get('category', '')
 
+    # ✅ Updated search filter using Q object
     if search_query:
-        products = products.filter(name__icontains=search_query)
+        products = products.filter(
+            Q(name__icontains=search_query) |
+            Q(category__name__icontains=search_query)
+        )
+
     if price_min:
         products = products.filter(price__gte=price_min)
     if price_max:
@@ -40,10 +45,11 @@ def product_list(request):
     elif sort_by == 'name_desc':
         products = products.order_by('-name')
 
-    # ✅ Add pagination
-    paginator = Paginator(products, 8)  # 8 products per page
+    paginator = Paginator(products, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    categories = Category.objects.all()
 
     context = {
         'page_obj': page_obj,
@@ -53,6 +59,7 @@ def product_list(request):
         'min_price': price_min,
         'max_price': price_max,
         'category_id': category_id,
+        'categories': categories,
     }
     return render(request, 'registration/products.html', context)
 

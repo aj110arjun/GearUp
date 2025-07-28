@@ -1,0 +1,52 @@
+{% extends 'registration/account.html' %}
+{% load static %}
+
+{% block title %}My Addresses - GearUp{% endblock %}
+
+{% block csslink %}
+  <style>
+    .address-scroll-container {
+      max-height: 500px; /* Adjust height as needed */
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+    .address-scroll-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .address-scroll-container::-webkit-scrollbar-thumb {
+      background-color: #ccc;
+      border-radius: 4px;
+    }
+  </style>
+{% endblock %}
+
+{% block account_content %}
+<div class="container mt-5">
+  <h2 class="mb-4">My Addresses</h2>
+
+  <a href="{% url 'add_address' %}" class="btn btn-outline-secondary mb-3">Add New Address</a>
+
+  <div class="address-scroll-container">
+    {% if addresses %}
+      {% for address in addresses %}
+        <div class="card mb-3 {% if address.is_default %}border-success{% endif %}">
+          <div class="card-body">
+            <p><strong>{{ address.full_name }}</strong></p>
+            <p>{{ address.street }}, {{ address.city }}, {{ address.landmark }}, {{ address.pincode }}</p>
+            {% if address.is_default %}
+              <span class="badge bg-success">Default</span>
+            {% else %}
+              <a href="" class="btn btn-sm btn-outline-success">Set as Default</a>
+            {% endif %}
+            <a href="" class="btn btn-sm btn-secondary">Edit</a>
+            <a href="" class="btn btn-sm btn-danger">Delete</a>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="alert alert-info">No addresses saved yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock account_content %}

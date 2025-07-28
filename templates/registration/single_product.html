@@ -31,8 +31,10 @@
       <div class="product-title">{{ product.name|title }}</div>
        {% if product.stock == 0 %}
           <span class="badge bg-danger">Out of Stock</span>
+        {% elif product.stock < 100 %}
+          <span class="text-danger">Limited Stocks</span>
         {% else %}
-          <span class="badge bg-success">In Stock</span>
+          <span class="badge bg-success">In Stocks</span>
         {% endif %}
       <div class="product-category mb-2">{{ product.category.name }}</div>
       <div class="product-description mb-3">{{ product.description }}</div>

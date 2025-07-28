@@ -1,60 +1,43 @@
-{% extends "registration/base.html" %}
+{% extends 'registration/base.html' %}
 {% load static %}
-{% block title %}GearUp - Account{% endblock title %}
-{% block csslink %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/account.css' %}">
-{% endblock csslink %}
+
+{% block title %}User Profile - GearUp{% endblock %}
 
 {% block content %}
-  <div class="container account-container">
-    <div class="go-back mb-3"><a href="{% url 'home' %}" class="text-decoration-none text-dark">&larr; Go Back</a></div>
-    <div class="row">
-      <!-- Sidebar -->
-      <div class="col-md-4 side-menu text-center">
-        <div class="profile-icon mb-2">👤</div>
-        <h4>{{user.first_name}}</h4>
-        <p class="text-muted small">{{user.email}}</p>
-        <ul>
-          <li class="active">Personal Information</li>
-          <li>Order History</li>
-          <li>Gift Cards</li>
-        </ul>
-        <div class="mt-4">
-          <a href="{% url 'edit_info' %}" class="btn btn-dark edit-btn mb-2">Edit Info</a>
-          <a href="{% url 'logout' %}" class="btn logout-btn">Logout</a>
-        </div>
-      </div>
+<div class="container mt-5">
+  <h2 class="mb-4">My Profile</h2>
 
-      <!-- Main content -->
-      <div class="col-md-8">
-        <h3 class="fw-bold mb-4 text-center">Account Information</h3>
-        <div class="border p-4" style="border-color: #007bff;">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <div class="info-label">Address</div>
-              <div class="info-value">{{account.address}}</div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <div class="info-label">City</div>
-              <div class="info-value">{{account.city}}</div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <div class="info-label">Landmark</div>
-              <div class="info-value">{{account.landmark}}</div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <div class="info-label">Street</div>
-              <div class="info-value">{{account.street}}</div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <div class="info-label">Pincode</div>
-              <div class="info-value">{{account.pincode}}</div>
-            </div>
-          </div>
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3">
+      <ul class="list-group">
+        <li class="list-group-item">Basic Info</li>
+        <li class="list-group-item"><a href="{% url 'view_address' %}" class="btn btn-dark">Addresses</a></li>
+        <li class="list-group-item"><a href="{% url 'view_orders' %}" class="btn btn-dark">Order History</a></li>
+        <li class="list-group-item"><a href="{% url 'track_orders' %}" class="btn btn-dark">Track Orders</a></li>
+        <li class="list-group-item"><a href="{% url 'view_wishlist' %}" class="btn btn-dark">Wishlist</a></li>
+        <li class="list-group-item"><a href="{% url 'view_cart' %}" class="btn btn-dark">Cart</a></li>
+      </ul>
+    </div>
+
+    <!-- Content -->
+    <div class="col-md-9">
+      <!-- Basic Info -->
+      <section id="basic-info" class="mb-5">
+        <h4>Basic Info</h4>
+        <div class="card p-3">
+          <p><strong>Name:</strong> {{ user.first_name }} </p>
+          <p><strong>Email:</strong> {{ user.email }}</p>
+          <img src="{{ user.profile.image.url }}" class="rounded" height="80" alt="Profile Image">
+          <a href="" class="btn btn-secondary btn-sm mt-2">Edit Info</a>
         </div>
-      </div>
+      </section>
+
+      {% block account_content %}
+          
+      {% endblock account_content %}
+
     </div>
   </div>
-{% endblock content %}
-
-
+</div>
+{% endblock %}

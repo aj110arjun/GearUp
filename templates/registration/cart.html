@@ -1,0 +1,58 @@
+{% extends 'registration/account.html' %}
+{% load static %}
+
+{% block title %}My Cart - GearUp{% endblock %}
+
+{% block account_content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Shopping Cart</h2>
+
+  {% if cart_items %}
+    <div class="row">
+      <div class="col-md-8">
+        {% for item in cart_items %}
+          <div class="card mb-3">
+            <div class="row g-0 align-items-center">
+              <div class="col-md-3">
+                <img src="{{ item.product.image.url }}" class="img-fluid rounded-start" alt="{{ item.product.name }}">
+              </div>
+              <div class="col-md-6">
+                <div class="card-body">
+                  <h5 class="card-title">{{ item.product.name }}</h5>
+                  <p class="card-text">Price: ₹{{ item.product.price }}</p>
+                  <form method="post" action="{% url 'update_cart' item.id %}" class="d-flex">
+                    {% csrf_token %}
+                    <label for="qty-{{ item.id }}" class="me-2">Qty:</label>
+                    <input type="number" name="quantity" id="qty-{{ item.id }}" value="{{ item.quantity }}" min="1" max="10" class="form-control form-control-sm w-25 me-2">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">Update</button>
+                  </form>
+                </div>
+              </div>
+              <div class="col-md-3 text-end pe-3">
+                <p class="fw-bold mb-1">Total: ₹{{ item.total_price }}</p>
+                <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-sm btn-outline-danger">Remove</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Cart Summary -->
+      <div class="col-md-4">
+        <div class="card p-3 shadow-sm">
+          <h5 class="mb-3">Cart Summary</h5>
+          <p>Subtotal: ₹{{ cart_total }}</p>
+          <p>Tax (5%): ₹{{ cart_tax }}</p>
+          <hr>
+          <h5>Total: ₹{{ cart_grand_total }}</h5>
+          <a href="{% url 'checkout' %}" class="btn btn-success w-100 mt-3">Proceed to Checkout</a>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      Your cart is empty. <a href="{% url 'product_list' %}">Continue Shopping</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock account_content %}

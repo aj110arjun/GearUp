@@ -25,9 +25,9 @@ SECRET_KEY = 'django-insecure-9o855=3iz$u#qamn1gwh(iu1sp6@h_@m+yr4=epxdk6h0r6&4x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cyan-falcons-nail.loca.lt', '127.0.0.1']
+ALLOWED_HOSTS = ['new-trees-brake.loca.lt', '127.0.0.1']
 CSRF_TRUSTED_ORIGINS = [
-    'https://cyan-falcons-nail.loca.lt',
+    'https://new-trees-brake.loca.lt/',
 ]
 
 
@@ -46,8 +46,12 @@ INSTALLED_APPS = [
     'account',
     'users',
     'social_django',
-    
+    'wishlist',    
+    'orders',   
+    'address',
+    'cart',
 ]
+
 
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',
@@ -57,7 +61,7 @@ CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 
 SOCIAL_AUTH_GITHUB_KEY = 'Ov23liyxwy0e40FEzYBP'
-SOCIAL_AUTH_GITHUB_SECRET = '991c3b16f0d4fec8201bab3f840dd702d1ceafaf'
+SOCIAL_AUTH_GITHUB_SECRET = 'e6cd6ed7ab62dec8df8f10cf5170de94a7710133'
 LOGIN_REDIRECT_URL = 'home'
 
 MIDDLEWARE = [

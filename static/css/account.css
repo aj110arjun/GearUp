@@ -12,6 +12,12 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
+    .dynamic{
+      background-color: #BAA991;
+      
+
+    }
+
     .side-menu {
       border-right: 2px solid #ccc;
     }

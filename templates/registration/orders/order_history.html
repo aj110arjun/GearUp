@@ -1,0 +1,42 @@
+{% extends "registration/account.html" %}
+{% load static %}
+
+{% block title %}My Orders - GearUp{% endblock %}
+
+{% block account_content %}
+<div class="container mt-5">
+  <h2 class="mb-4">My Order History</h2>
+
+  {% if orders %}
+    {% for order in orders %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h5>Order #{{ order.id }}</h5>
+              <p class="mb-1"><strong>Date:</strong> {{ order.created_at|date:"d M Y, H:i" }}</p>
+              <p class="mb-1"><strong>Total:</strong> ₹{{ order.total_price }}</p>
+              <p class="mb-1"><strong>Status:</strong> 
+                <span class="badge 
+                  {% if order.status == 'Delivered' %}bg-success
+                  {% elif order.status == 'Shipped' %}bg-primary
+                  {% elif order.status == 'Cancelled' %}bg-danger
+                  {% else %}bg-warning{% endif %}">
+                  {{ order.status }}
+                </span>
+              </p>
+            </div>
+            <div class="align-self-center">
+              <a href="" class="btn btn-outline-primary btn-sm">View Details</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info">
+      You haven't placed any orders yet.
+    </div>
+  {% endif %}
+</div>
+{% endblock account_content %}

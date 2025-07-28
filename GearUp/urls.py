@@ -4,13 +4,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
-    # path('accounts/', include('django.contrib.auth.urls')),includes login, logout, password change etc.
+    path('admin/', admin.site.urls),
     path('', include('home.urls')),
     path('products/', include('products.urls')),
     path('register/', include('register.urls')),
     path('account/', include('account.urls')),
-    path('admin/users/', include('users.urls')),
+    path('gearup/admin/users/', include('users.urls')),
+    path('wishlist/', include('wishlist.urls')),
+    path('orders/', include('orders.urls')),
+    path('address/', include('address.urls')),
+    path('cart/', include('cart.urls')),
     path('auth/', include('social_django.urls', namespace='social')),
 
     
