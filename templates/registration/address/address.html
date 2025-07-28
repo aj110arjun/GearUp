@@ -6,7 +6,7 @@
 {% block csslink %}
   <style>
     .address-scroll-container {
-      max-height: 500px; /* Adjust height as needed */
+      max-height: 550px; /* Adjust height as needed */
       overflow-y: auto;
       padding-right: 10px;
     }
@@ -26,6 +26,12 @@
   <h2 class="mb-4">My Addresses</h2>
 
   <a href="{% url 'add_address' %}" class="btn btn-outline-secondary mb-3">Add New Address</a>
+  {% if messages %}
+      {% for message in messages %}
+        <div class="text-danger">{{message}}</div>
+      {% endfor %}
+  
+  {% endif %}
 
   <div class="address-scroll-container">
     {% if addresses %}
@@ -33,14 +39,17 @@
         <div class="card mb-3 {% if address.is_default %}border-success{% endif %}">
           <div class="card-body">
             <p><strong>{{ address.full_name }}</strong></p>
-            <p>{{ address.street }}, {{ address.city }}, {{ address.landmark }}, {{ address.pincode }}</p>
+            <p>{{address.full_address}}</p>
+            <p> {{ address.street }}, {{ address.city }}, {{ address.landmark }}, {{ address.pincode }}</p>
             {% if address.is_default %}
               <span class="badge bg-success">Default</span>
             {% else %}
-              <a href="" class="btn btn-sm btn-outline-success">Set as Default</a>
+              <a href="{% url 'toggle_default_address' address.id %}" class="btn btn-sm btn-outline-success">Set as Default</a>
             {% endif %}
-            <a href="" class="btn btn-sm btn-secondary">Edit</a>
-            <a href="" class="btn btn-sm btn-danger">Delete</a>
+            <a href="{% url 'edit_address' address.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+            <a href="{% url 'delete_address' address.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this address?');">
+              Delete
+            </a>
           </div>
         </div>
       {% endfor %}
