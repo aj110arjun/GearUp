@@ -1,0 +1,74 @@
+{% extends 'registration/base.html' %}
+{% load static %}
+
+{% block title %}{{ form_title }} - GearUp{% endblock %}
+
+{% block csslink %}
+  <style>
+    .form-card {
+      max-width: 600px;
+      margin: auto;
+      padding: 2rem;
+      background-color: #ffffff;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-title {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .form-label {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .btn-primary {
+      background-color: #00695c;
+      border-color: #00695c;
+    }
+
+    .btn-primary:hover {
+      background-color: #004d40;
+      border-color: #004d40;
+    }
+
+    .btn-secondary {
+      margin-left: 0.5rem;
+    }
+
+    .text-danger {
+      font-size: 0.9rem;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="form-card">
+    <h2 class="form-title">{{ form_title }}</h2>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <div class="text-danger">{{ field.errors }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <div class="d-flex justify-content-between">
+        <button type="submit" class="btn btn-primary">Save Address</button>
+        <a href="{% url 'view_address' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

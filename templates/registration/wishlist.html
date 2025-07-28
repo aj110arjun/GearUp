@@ -1,0 +1,32 @@
+{% extends "registration/account.html" %}
+{% load static %}
+
+{% block title %}My Wishlist - GearUp{% endblock %}
+
+{% block account_content %}
+<div class="container mt-5">
+  <h2 class="mb-4">My Wishlist</h2>
+
+  {% if wishlist %}
+    <div class="row">
+      {% for item in wishlist %}
+        <div class="col-md-4 col-sm-6 mb-4">
+          <div class="card h-100 shadow-sm">
+            <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}" style="height: 200px; object-fit: cover;">
+            <div class="card-body">
+              <h5 class="card-title">{{ item.product.name }}</h5>
+              <p class="card-text">₹{{ item.product.price }}</p>
+              <a href="{% url 'product_detail' item.product.slug %}" class="btn btn-outline-info btn-sm">View</a>
+              <a href="{% url 'remove_from_wishlist' item.product.id %}" class="btn btn-outline-danger btn-sm">Remove</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      You haven't added any items to your wishlist yet.
+    </div>
+  {% endif %}
+</div>
+{% endblock account_content %}

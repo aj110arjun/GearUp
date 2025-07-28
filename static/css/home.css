@@ -1,45 +1,98 @@
 body {
       background-color: #BAA991;
       font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
     }
+
+    .navbar {
+      background-color: #f4f1e9;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .navbar-brand {
+      font-weight: bold;
+      color: #6a994e !important;
+      font-size: 1.5rem;
+    }
+
+    .nav-link {
+      color: #333 !important;
+      font-weight: 500;
+      margin: 0 10px;
+    }
+
+    .nav-link:hover {
+      color: #6a994e !important;
+    }
+
     .hero {
       padding: 60px 0;
+      background-color: #e4e1d5;
+      text-align: center;
     }
+
     .hero-img {
       border-radius: 20px;
       background-color: #97af78;
       padding: 20px;
     }
+
     .section-header {
       background-color: #b8b3b5;
       padding: 20px;
       text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #333;
     }
+
     .card {
       border-radius: 20px;
       background-color: #a9b584;
       padding: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease-in-out;
     }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
     .card img {
       border-radius: 15px;
     }
+
     .explore-section {
       padding: 60px 0;
     }
+
     .explore-card {
       background-color: #a9b584;
       border-radius: 20px;
       padding: 20px;
       margin-bottom: 20px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
     }
+
     footer {
       background-color: #5b5b5b;
       color: white;
       padding: 30px 0;
+      text-align: center;
     }
-    .navbar {
-      background-color: #f4f1e9;
+
+    .dynamic.container {
+      padding: 40px 15px;
     }
-    .navbar-brand {
-      font-weight: bold;
+
+    @media (max-width: 768px) {
+      .navbar-nav {
+        text-align: center;
+      }
+
+      .nav-link {
+        margin: 10px 0;
+      }
     }
+

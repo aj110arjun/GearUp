@@ -36,17 +36,6 @@
           <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
         </select>
       </div>
-      <div class="col-md-2">
-        <label class="form-label text-dark">Category</label>
-        <select name="category" class="form-select">
-          <option value="">-- All --</option>
-          {% for category in categories %}
-            <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
-              {{ category.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
       <div class="col-md-2 d-flex gap-2">
         <button type="submit" class="btn btn-dark w-100">Apply</button>
         <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">Reset</a>

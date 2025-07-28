@@ -34,7 +34,6 @@ def login_view(request):
 
     return render(request, 'registration/login.html', {'form': form})
 
-
 def signup_view(request):
     if request.method == 'POST':
         form = EmailUserCreationForm(request.POST)

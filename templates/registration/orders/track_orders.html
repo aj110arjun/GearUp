@@ -1,0 +1,49 @@
+{% extends "registration/account.html" %}
+{% load static %}
+
+{% block title %}Track Orders - GearUp{% endblock %}
+
+{% block account_content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Track My Orders</h2>
+
+  {% if tracking_orders %}
+    {% for order in tracking_orders %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h5>Order #{{ order.id }}</h5>
+              <p class="mb-1"><strong>Status:</strong> 
+                <span class="badge 
+                  {% if order.status == 'Delivered' %}bg-success
+                  {% elif order.status == 'Shipped' %}bg-primary
+                  {% elif order.status == 'Cancelled' %}bg-danger
+                  {% else %}bg-warning{% endif %}">
+                  {{ order.status }}
+                </span>
+              </p>
+              {% if order.tracking_id %}
+                <p class="mb-1"><strong>Tracking ID:</strong> {{ order.tracking_id }}</p>
+              {% endif %}
+              {% if order.courier_name %}
+                <p class="mb-1"><strong>Courier:</strong> {{ order.courier_name }}</p>
+              {% endif %}
+              {% if order.estimated_delivery %}
+                <p class="mb-1"><strong>Estimated Delivery:</strong> {{ order.estimated_delivery|date:"d M Y" }}</p>
+              {% endif %}
+            </div>
+            <div class="align-self-center">
+              <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-primary btn-sm">View</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info">
+      You have no active orders to track.
+    </div>
+  {% endif %}
+</div>
+{% endblock account_content %}
