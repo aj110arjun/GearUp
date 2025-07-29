@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.conf import settings
 from django.core.paginator import Paginator
+from cart.views import get_cart
 
 
 
@@ -66,8 +67,15 @@ def product_list(request):
 
 
 def product_detail(request, slug):
-	product = get_object_or_404(Product, slug=slug)
-	return render(request, 'registration/single_product.html', {'product': product})
+    product = get_object_or_404(Product, slug=slug)
+    cart = get_cart(request)
+    in_cart = cart.items.filter(product=product).exists()
+    context={
+    'cart': cart,
+    'product': product,
+    'in_cart': in_cart
+    }
+    return render(request, 'registration/single_product.html', context)
 
 
 def staff_required(user):

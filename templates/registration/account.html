@@ -15,8 +15,6 @@
         <li class="list-group-item"><a href="{% url 'view_address' %}" class="btn btn-dark">Addresses</a></li>
         <li class="list-group-item"><a href="{% url 'view_orders' %}" class="btn btn-dark">Order History</a></li>
         <li class="list-group-item"><a href="{% url 'track_orders' %}" class="btn btn-dark">Track Orders</a></li>
-        <li class="list-group-item"><a href="{% url 'view_wishlist' %}" class="btn btn-dark">Wishlist</a></li>
-        <li class="list-group-item"><a href="{% url 'view_cart' %}" class="btn btn-dark">Cart</a></li>
       </ul>
     </div>
 
@@ -24,11 +22,10 @@
     <div class="col-md-9">
       <!-- Basic Info -->
       <section id="basic-info" class="mb-5">
-        <h4>Basic Info</h4>
         <div class="card p-3">
+          <img src="{{ user.profile.image.url }}" class="rounded" height="80" alt="Profile Image">
           <p><strong>Name:</strong> {{ user.first_name }} </p>
           <p><strong>Email:</strong> {{ user.email }}</p>
-          <img src="{{ user.profile.image.url }}" class="rounded" height="80" alt="Profile Image">
           <a href="" class="btn btn-secondary btn-sm mt-2">Edit Info</a>
         </div>
       </section>
