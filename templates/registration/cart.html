@@ -26,7 +26,28 @@
               <img src="{{item.product.image.url}}" alt="Image" class="cart-product-img">
               <h5 class="card-title">{{ item.product.name }}</h5>
               <p class="card-text">Price: ₹{{ item.product.price }}</p>
-              <p class="card-text">Quantity: {{ item.quantity }}</p>
+              <div class="d-flex">
+                <form method="post" action="{% url 'decrement_quantity' item.id %}" class="me-2">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-secondary btn-sm">-</button>
+                </form>
+
+                <p class="pe-2"> {{ item.quantity }}</p>
+
+                <form method="post" action="{% url 'increment_quantity' item.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-success">+</button>
+                </form>
+              </div>
+
+              {% for item in cart.items.all %}
+                <div>
+
+                  {% if item.quantity >= item.product.stock %}
+                    <p class="text-danger">Max stock reached</p>
+                  {% endif %}
+                </div>
+              {% endfor %}
               <p class="card-text text-success">Total: ₹{{ item.total_price }}</p>
               <form method="post" action="{% url 'remove_from_cart' item.id %}">
                 {% csrf_token %} 
