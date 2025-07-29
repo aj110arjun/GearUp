@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+
 from .models import Cart, CartItem
 from products.models import Product
-from django.contrib import messages
+from wishlist.models import Wishlist, WishlistItem
 
 
 
@@ -29,8 +31,12 @@ def add_to_cart(request, product_id):
 
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
 
-    # Optional: get desired quantity from form
     desired_quantity = int(request.POST.get('quantity', 1))
+    try:
+        wishlist = Wishlist.objects.get(user=request.user)
+        WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
+    except Wishlist.DoesNotExist:
+        pass
 
     if product.stock == 0:
         messages.error(request, "This product is out of stock.")

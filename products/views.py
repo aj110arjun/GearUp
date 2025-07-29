@@ -1,6 +1,7 @@
 import os
 
 from .models import Product, Category, ProductImage, ProductImage
+from wishlist.models import WishlistItem, Wishlist
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import ProductForm, AdditionalImageForm
@@ -70,10 +71,19 @@ def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
     cart = get_cart(request)
     in_cart = cart.items.filter(product=product).exists()
+    in_wishlist = False
+
+    if request.user.is_authenticated:
+        try:
+            wishlist = Wishlist.objects.get(user=request.user)
+            in_wishlist = WishlistItem.objects.filter(wishlist=wishlist, product=product).exists()
+        except Wishlist.DoesNotExist:
+            pass
     context={
-    'cart': cart,
     'product': product,
-    'in_cart': in_cart
+    'cart': cart,
+    'in_cart': in_cart,
+    'in_wishlist': in_wishlist,
     }
     return render(request, 'registration/single_product.html', context)
 
