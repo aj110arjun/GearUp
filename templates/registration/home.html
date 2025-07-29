@@ -38,7 +38,7 @@
     {% for product in products %}
       <div class="col-6 col-md-4 col-lg-3">
         <div class="card h-100 shadow-sm border-0 text-center">
-          <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+          <img src="{{ product.image.url }}" class="card-img-top cart-product-img" alt="{{ product.name }}">
           <div class="card-body">
             <h6 class="card-title text-truncate">{{ product.name | title }}</h6>
             <span class="badge bg-danger mb-2">20% OFF</span>
