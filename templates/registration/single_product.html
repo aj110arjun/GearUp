@@ -46,7 +46,11 @@
         {% else %}
           <a href="{% url 'add_to_cart' product.product_id %}" class="btn btn-dark">Add to Cart</a>
         {% endif %}
-        <button class="btn-fav">♡</button>
+        {% if in_wishlist %}
+          <a href="{% url 'view_wishlist' %}" class="btn btn-outline-success">💚 Go to Wishlist</a>
+        {% else %}
+          <a href="{% url 'add_to_wishlist' product.product_id %}" class="btn btn-outline-primary">❤️ Add to Wishlist</a>
+        {% endif %}
        
 
       </div>
