@@ -4,7 +4,7 @@ from .models import Product, Category, ProductImage, ProductImage
 from wishlist.models import WishlistItem, Wishlist
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import ProductForm, AdditionalImageForm
+from .forms import ProductForm, AdditionalImageForm, VariantForm
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -173,11 +173,13 @@ def edit_product(request, slug):
             return redirect('admin_product_view', slug=product.slug)
     else:
         form = ProductForm(instance=product)
-    
+    variant_form = VariantForm()
     context = {
-        'form': form,
-        'product': product,
-        'additional_images': product.additional_images.all(),
+    'form': form,
+    'product': product,
+    'additional_images': product.additional_images.all(),
+    'variants': product.variants.all(),
+    'variant_form': variant_form,   
     }
     return render(request, 'custom_admin/product_edit.html', context)
 
@@ -256,3 +258,36 @@ def delete_additional_image(request, image_id):
     image.delete()
     return redirect('edit_product', slug=product_slug)
 
+def add_variant(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.method == 'POST':
+        form = VariantForm(request.POST)
+        if form.is_valid():
+            variant = form.save(commit=False)
+            variant.product = product
+            variant.save()
+            return redirect('admin:edit_product', product.id)
+    else:
+        form = VariantForm()
+
+    return render(request, 'admin/products/variant_form.html', {'form': form, 'product': product})
+
+def edit_variant(request, variant_id):
+    variant = get_object_or_404(Variant, id=variant_id)
+
+    if request.method == 'POST':
+        form = VariantForm(request.POST, instance=variant)
+        if form.is_valid():
+            form.save()
+            return redirect('admin:edit_product', variant.product.id)
+    else:
+        form = VariantForm(instance=variant)
+
+    return render(request, 'admin/products/variant_form.html', {'form': form, 'product': variant.product})
+
+def delete_variant(request, variant_id):
+    variant = get_object_or_404(Variant, id=variant_id)
+    product_id = variant.product.id
+    variant.delete()
+    return redirect('admin:edit_product', product_id)
