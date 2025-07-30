@@ -37,6 +37,41 @@
             <label class="form-label">Description</label>
             {{ form.description|add_class:"form-control" }}
           </div>
+          <h4>Variants</h4>
+
+          {% if product %}
+            <form method="post" action="{% url 'add_variant' product.product_id %}">
+              {% csrf_token %}
+              {{ variant_form.as_p }}
+              <button type="submit" class="btn btn-success">Add Variant</button>
+            </form>
+
+            <table class="table mt-3">
+              <thead>
+                <tr>
+                  <th>Size</th>
+                  <th>Color</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for variant in product.variants.all %}
+                <tr>
+                  <td>{{ variant.size }}</td>
+                  <td>{{ variant.color }}</td>
+                  <td>₹{{ variant.price }}</td>
+                  <td>{{ variant.stock }}</td>
+                  <td>
+                    <a href="{% url 'edit_variant' variant.id %}" class="btn btn-sm btn-primary">Edit</a>
+                    <a href="{% url 'delete_variant' variant.id %}" class="btn btn-sm btn-danger">Delete</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Main Image</label>

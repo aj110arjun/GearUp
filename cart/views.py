@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
 from .models import Cart, CartItem
-from products.models import Product
+from products.models import Product, Variant
 from wishlist.models import Wishlist, WishlistItem
 
 
@@ -27,7 +27,9 @@ def view_cart(request):
 
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, product_id=product_id)
-    cart = get_cart(request)  # however you get the cart
+    cart = get_cart(request)
+    variant_id = request.POST.get('variant_id')
+    variant = get_object_or_404(Variant, id=variant_id)
 
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
 

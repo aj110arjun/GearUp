@@ -41,16 +41,29 @@
       <div class="price mb-4">₹ {{ product.price }}/-</div>
 
       <div class="d-flex align-items-center gap-3">
-        {% if in_cart %}
-          <a href="{% url 'view_cart' %}" class="btn btn-success">Go to Cart</a>
-        {% else %}
-          <a href="{% url 'add_to_cart' product.product_id %}" class="btn btn-dark">Add to Cart</a>
-        {% endif %}
+       
+        <form method="post" action="{% url 'add_to_cart' product.product_id %}">
+          {% csrf_token %}
+          <label for="variant">Choose Variant:</label>
+          <select name="variant_id" id="variant">
+            {% for variant in product.variants.all %}
+              <option value="{{ variant.id }}">
+                {{ variant.size }} - {{ variant.color }} - ₹{{ variant.price }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if in_cart %}
+            <a href="{% url 'view_cart' %}" class="btn btn-success">Go to Cart</a>
+          {% else %}
+            <button class="btn btn-dark" type="submit">Add to Cart</button>
+          {% endif %}
+        </form>
         {% if in_wishlist %}
           <a href="{% url 'view_wishlist' %}" class="btn btn-outline-success">💚 Go to Wishlist</a>
         {% else %}
           <a href="{% url 'add_to_wishlist' product.product_id %}" class="btn btn-outline-primary">❤️ Add to Wishlist</a>
         {% endif %}
+
        
 
       </div>
