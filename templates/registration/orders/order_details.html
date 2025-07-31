@@ -1,0 +1,57 @@
+{% extends 'registration/base.html' %}
+{% load static %}
+{% load cart_extras %}
+
+
+{% block title %}Order #{{ order.id }} - GearUp{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">📦 Order Details - #{{ order.id }}</h2>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5>Order Summary</h5>
+      <p><strong>Status:</strong> {{ order.status }}</p>
+      <p><strong>Placed on:</strong> {{ order.created_at|date:"F j, Y, g:i A" }}</p>
+      <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
+      <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5>Shipping Information</h5>
+      <p><strong>Name:</strong> {{ order.address.full_name }}</p>
+      <p>{{ order.address.street }}, {{ order.address.city }}, {{ order.address.landmark }}</p>
+      <p>{{ order.address.pincode }}, {{ order.address.state }}</p>
+      <p><strong>Phone:</strong> {{ order.address.phone }}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h5>Items in this Order</h5>
+      <ul class="list-group">
+        {% for item in order.items.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex">
+              <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" style="width: 60px; height: 60px; object-fit: cover; margin-right: 15px;">
+              <div>
+                <strong>{{ item.product.name }}</strong><br>
+                Variant: {{ item.variant.size }} / {{ item.variant.color }}<br>
+                Quantity: {{ item.quantity }} × ₹{{ item.price }}
+              </div>
+            </div>
+            <span>₹{{ item.quantity|multiply:item.price }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <a href="{% url 'view_orders' %}" class="btn btn-secondary">← Back to Orders</a>
+  </div>
+</div>
+{% endblock %}
