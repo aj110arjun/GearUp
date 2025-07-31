@@ -1,0 +1,43 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block content %}
+<h2>Order Detail - #{{ order.order_id }}</h2>
+
+<p><strong>User:</strong> {{ order.user.username }}</p>
+<p><strong>Status:</strong> {{ order.status }}</p>
+<p><strong>Total:</strong> ₹{{ order.total_price }}</p>
+<p><strong>Created:</strong> {{ order.created_at }}</p>
+
+<h4>Shipping Address</h4>
+{% if order.address %}
+<p>{{ order.address.full_name }}, {{ order.address.street }}, {{ order.address.city }}</p>
+<p>{{ order.address.landmark }}, {{ order.address.pincode }}, {{ order.address.state }}</p>
+<p>📞 {{ order.address.phone }}</p>
+{% else %}
+<p><em>No address provided</em></p>
+{% endif %}
+
+<h4>Items</h4>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Variant</th>
+      <th>Quantity</th>
+      <th>Price</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in order.items.all %}
+    <tr>
+      <td>{{ item.product.name }}</td>
+      <td>{% if item.variant %}{{ item.variant.size }} / {{ item.variant.color }}{% else %}-{% endif %}</td>
+      <td>{{ item.quantity }}</td>
+      <td>₹{{ item.price }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a href="{% url 'admin_order_list' %}" class="btn btn-secondary mt-3">← Back to Orders</a>
+{% endblock %}
