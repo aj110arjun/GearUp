@@ -34,6 +34,7 @@ def add_to_cart(request, product_id):
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
 
     desired_quantity = int(request.POST.get('quantity', 1))
+
     try:
         wishlist = Wishlist.objects.get(user=request.user)
         WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
@@ -43,8 +44,16 @@ def add_to_cart(request, product_id):
     if product.stock == 0:
         messages.error(request, "This product is out of stock.")
         return redirect('product_detail', slug=product.slug)
+
+    # Enforce maximum allowed quantity
+    if desired_quantity > 6:
+        messages.warning(request, "You can only add up to 6 units of this product.")
+        desired_quantity = 6
+
+    # Don't allow more than available stock
     if desired_quantity > product.stock:
         desired_quantity = product.stock
+        messages.warning(request, "Only limited stock available.")
 
     cart_item.quantity = desired_quantity
     cart_item.save()

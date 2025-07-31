@@ -1,0 +1,50 @@
+{% extends 'registration/base.html' %}
+{% load cart_extras %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Checkout</h2>
+
+  <!-- Address Selection -->
+  <form method="post">
+    {% csrf_token %}
+    <h4>Select Delivery Address</h4>
+    <div class="row">
+      {% for address in addresses %}
+        <div class="col-md-4">
+          <div class="card mb-3 {% if address.is_default %}border-success{% endif %}">
+            <div class="card-body">
+              <input type="radio" name="address_id" value="{{ address.id }}" required>
+              <p><strong>{{ address.full_name }}</strong></p>
+              <p>{{ address.street }}, {{ address.city }}, {{ address.pincode }}</p>
+              {% if address.landmark %}<p>Landmark: {{ address.landmark }}</p>{% endif %}
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p>No saved addresses. <a href="{% url 'add_address' %}">Add one</a></p>
+      {% endfor %}
+    </div>
+
+    <!-- Order Summary -->
+    <h4 class="mt-4">Order Summary</h4>
+    <ul class="list-group mb-3">
+      {% for item in cart.items.all %}
+        <li class="list-group-item d-flex justify-content-between">
+          <div>
+            {{ item.product.name }}
+            {% if item.variant %}({{ item.variant.size }}, {{ item.variant.color }}){% endif %}
+            × {{ item.quantity }}
+          </div>
+          <span>₹{{ item.quantity|multiply:item.product.price }}</span>
+        </li>
+      {% endfor %}
+      <li class="list-group-item d-flex justify-content-between">
+        <strong>Total</strong>
+        <strong>₹{{ cart.total_price }}</strong>
+      </li>
+    </ul>
+
+    <button type="submit" class="btn btn-success">Place Order</button>
+  </form>
+</div>
+{% endblock %}

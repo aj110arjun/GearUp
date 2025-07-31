@@ -259,7 +259,7 @@ def delete_additional_image(request, image_id):
     return redirect('edit_product', slug=product_slug)
 
 def add_variant(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(Product, product_id=product_id)
 
     if request.method == 'POST':
         form = VariantForm(request.POST)
@@ -267,11 +267,11 @@ def add_variant(request, product_id):
             variant = form.save(commit=False)
             variant.product = product
             variant.save()
-            return redirect('admin:edit_product', product.id)
+            return redirect('edit_product', slug=product.slug)
     else:
         form = VariantForm()
 
-    return render(request, 'admin/products/variant_form.html', {'form': form, 'product': product})
+    return render(request, 'custom_admin/variant_form.html', {'form': form, 'product': product})
 
 def edit_variant(request, variant_id):
     variant = get_object_or_404(Variant, id=variant_id)

@@ -2,6 +2,7 @@
 {% block content %}
 <div class="container mt-5">
   <h2>My Wishlist</h2>
+
   {% if wishlist.items.all %}
     <div class="row">
       {% for item in wishlist.items.all %}
@@ -11,7 +12,26 @@
             <div class="card-body">
               <h5 class="card-title">{{ item.product.name }}</h5>
               <p class="card-text">₹{{ item.product.price }}</p>
-              <a href="{% url 'remove_from_wishlist' item.product.product_id %}" class="btn btn-danger">Remove</a>
+
+              <!-- Remove from Wishlist -->
+              <a href="{% url 'remove_from_wishlist' item.product.product_id %}" class="btn btn-danger mb-2">Remove</a>
+
+              <!-- Add to Cart -->
+              <form method="post" action="{% url 'add_to_cart' item.product.product_id %}">
+                {% csrf_token %}
+                <div class="mb-2">
+                  <label for="variant-{{ item.product.id }}">Choose Variant:</label>
+                  <select name="variant_id" id="variant-{{ item.product.id }}" class="form-select">
+                    {% for variant in item.product.variants.all %}
+                      <option value="{{ variant.id }}">
+                        {{ variant.size }} - {{ variant.color }} - ₹{{ variant.price }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <input type="hidden" name="quantity" value="1">
+                <button class="btn btn-dark" type="submit">Add to Cart</button>
+              </form>
             </div>
           </div>
         </div>
