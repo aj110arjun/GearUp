@@ -5,33 +5,52 @@
 
 {% block content %}
 <div class="container mt-5">
-  <h2 class="mb-4">My Profile</h2>
-
   <div class="row">
+    
     <!-- Sidebar -->
-    <div class="col-md-3">
-      <ul class="list-group">
-        <li class="list-group-item">Basic Info</li>
-        <li class="list-group-item"><a href="{% url 'view_address' %}" class="btn btn-dark">Addresses</a></li>
-        <li class="list-group-item"><a href="{% url 'view_orders' %}" class="btn btn-dark">Order History</a></li>
-        <li class="list-group-item"><a href="{% url 'track_orders' %}" class="btn btn-dark">Track Orders</a></li>
-      </ul>
+    <div class="col-md-3 mb-4">
+      <div class="list-group shadow-sm">
+        <a href="#" class="list-group-item list-group-item-action active">
+          <i class="bi bi-person-circle me-2"></i> My Profile
+        </a>
+        <a href="{% url 'view_address' %}" class="list-group-item list-group-item-action">
+          <i class="bi bi-geo-alt me-2"></i> Addresses
+        </a>
+        <a href="{% url 'view_orders' %}" class="list-group-item list-group-item-action">
+          <i class="bi bi-bag-check me-2"></i> Order History
+        </a>
+        <a href="{% url 'track_orders' %}" class="list-group-item list-group-item-action">
+          <i class="bi bi-truck me-2"></i> Track Orders
+        </a>
+      </div>
     </div>
 
-    <!-- Content -->
+    <!-- Profile Content -->
     <div class="col-md-9">
-      <!-- Basic Info -->
-      <section id="basic-info" class="mb-5">
-        <div class="card p-3">
-          <img src="{{ user.profile.image.url }}" class="rounded" height="80" alt="Profile Image">
-          <p><strong>Name:</strong> {{ user.first_name }} </p>
-          <p><strong>Email:</strong> {{ user.email }}</p>
-          <a href="" class="btn btn-secondary btn-sm mt-2">Edit Info</a>
-        </div>
-      </section>
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body d-flex align-items-center">
+          <!-- Profile Image -->
+          <img src="{{ user.accountinfo.profile.url }}" 
+               class="rounded-circle img-thumbnail me-4" 
+               style="width: 100px; height: 100px; object-fit: cover;" 
+               alt="Profile Image">
 
+          <!-- User Info -->
+          <div>
+            <h4 class="mb-1">{{ user.first_name }} {{ user.last_name }}</h4>
+            <p class="text-muted mb-1"><i class="bi bi-envelope me-1"></i> {{ user.email }}</p>
+            <a href="{% url 'edit_account' %}" class="btn btn-outline-dark btn-sm mt-2">
+              <i class="bi bi-pencil me-1"></i> Edit Profile
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placeholder for extra content like addresses, orders, etc. -->
       {% block account_content %}
-          
+      <div class="card border-0 shadow-sm p-3">
+        <p class="text-muted mb-0">Select an option from the sidebar to view details.</p>
+      </div>
       {% endblock account_content %}
 
     </div>

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'cart',
     'easy_thumbnails',
     'image_cropping',
+    'widget_tweaks',
 ]
 
 THUMBNAIL_PROCESSORS = (
