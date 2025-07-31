@@ -1,5 +1,5 @@
-{% extends 'registration/base.html' %}
-{% block content %}
+{% extends 'registration/account.html' %}
+{% block account_content %}
 <div class="container mt-5">
   <h2>My Orders</h2>
   {% if orders %}
@@ -8,7 +8,7 @@
         <li class="list-group-item">
           <strong>Order ID:</strong> {{ order.order_id }}<br>
           <strong>Status:</strong> {{ order.get_status_display }}<br>
-          <strong>Date:</strong> {{ order.created_at|date:"F d, Y H:i" }}<br>
+          <strong>Date:</strong> {{ order.created_at|date:"d F Y " }}<br>
           <strong>Total:</strong> ₹{{ order.total_price }}<br>
           <a href="{% url 'order_detail' order.order_id %}" class="btn btn-primary btn-sm mt-2">View Details</a>
         </li>

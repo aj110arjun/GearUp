@@ -1,0 +1,31 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block content %}
+<h2>📦 All Orders</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Order ID</th>
+      <th>User</th>
+      <th>Status</th>
+      <th>Total</th>
+      <th>Placed On</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td>{{ order.order_id }}</td>
+      <td>{{ order.user.username }}</td>
+      <td>{{ order.status }}</td>
+      <td>₹{{ order.total_price }}</td>
+      <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+      <td>
+        <a href="{% url 'admin_order_detail' order.order_id %}" class="btn btn-sm btn-primary">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

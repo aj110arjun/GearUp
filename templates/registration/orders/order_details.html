@@ -3,17 +3,17 @@
 {% load cart_extras %}
 
 
-{% block title %}Order #{{ order.id }} - GearUp{% endblock %}
+{% block title %}Order {{ order.order_id }} - GearUp{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-  <h2 class="mb-4">📦 Order Details - #{{ order.id }}</h2>
+  <h2 class="mb-4">📦 Order Details - {{ order.order_id }}</h2>
 
   <div class="card mb-4">
     <div class="card-body">
       <h5>Order Summary</h5>
       <p><strong>Status:</strong> {{ order.status }}</p>
-      <p><strong>Placed on:</strong> {{ order.created_at|date:"F j, Y, g:i A" }}</p>
+      <p><strong>Placed on:</strong> {{ order.created_at|date:"F j, Y" }}</p>
       <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
       <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
     </div>

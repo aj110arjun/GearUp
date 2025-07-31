@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.admin.views.decorators import staff_member_required
 
 from cart.models import Cart
 from address.models import Address
@@ -85,5 +86,15 @@ def checkout(request):
         'cart': cart,
         'addresses': addresses
     })
+
+@staff_member_required
+def admin_order_list(request):
+    orders = Order.objects.all().order_by('-created_at')
+    return render(request, 'custom_admin/order_list.html', {'orders': orders})
+
+@staff_member_required
+def admin_order_detail(request, order_id):
+    order = get_object_or_404(Order, order_id=order_id)
+    return render(request, 'custom_admin/order_detail.html', {'order': order})
 
 
