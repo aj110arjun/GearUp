@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
 
 from .models import Cart, CartItem
 from products.models import Product, Variant
@@ -83,5 +85,19 @@ def decrement_quantity(request, item_id):
             item.save()
         else:
             item.delete()
+    return redirect('view_cart')
+
+@login_required
+def update_cart_variant(request, item_id):
+    if request.method == "POST":
+        variant_id = request.POST.get("variant_id")
+        item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+
+        if variant_id:
+            item.variant = get_object_or_404(Variant, id=variant_id)
+        else:
+            item.variant = None
+        item.save()
+
     return redirect('view_cart')
 
