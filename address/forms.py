@@ -4,7 +4,7 @@ from .models import Address
 class AddressForm(forms.ModelForm):
     class Meta:
         model = Address
-        fields = ['full_name', 'street', 'city', 'landmark', 'pincode', 'full_address']
+        fields = ['full_name', 'street', 'city', 'landmark', 'pincode', 'full_address', 'phone', 'state']
 
     def __init__(self, *args, **kwargs):
         super(AddressForm, self).__init__(*args, **kwargs)

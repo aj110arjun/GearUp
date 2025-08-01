@@ -18,9 +18,21 @@
     <tr>
       <td>{{ order.order_id }}</td>
       <td>{{ order.user.username }}</td>
-      <td>{{ order.status }}</td>
+      <td>
+        {% if order.status == 'PENDING' %}
+          <span class="badge bg-secondary">Pending</span>
+        {% elif order.status == 'PLACED' %}
+          <span class="badge bg-info ">Placed</span>
+        {% elif order.status == 'SHIPPED' %}
+          <span class="badge bg-warning ">Shipped</span>
+        {% elif order.status == 'DELIVERED' %}
+          <span class="badge bg-success">Delivered</span>
+        {% elif order.status == 'CANCELLED' %}
+          <span class="badge bg-danger">Cancelled</span>
+        {% endif %}
+      </td>
       <td>₹{{ order.total_price }}</td>
-      <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+      <td>{{ order.created_at|date:"d F Y" }}</td>
       <td>
         <a href="{% url 'admin_order_detail' order.order_id %}" class="btn btn-sm btn-primary">View</a>
       </td>

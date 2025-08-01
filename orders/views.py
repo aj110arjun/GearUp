@@ -1,5 +1,6 @@
 import uuid
 
+from .forms import OrderStatusForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
@@ -92,9 +93,24 @@ def admin_order_list(request):
     orders = Order.objects.all().order_by('-created_at')
     return render(request, 'custom_admin/order_list.html', {'orders': orders})
 
+
 @staff_member_required
 def admin_order_detail(request, order_id):
     order = get_object_or_404(Order, order_id=order_id)
-    return render(request, 'custom_admin/order_detail.html', {'order': order})
+
+    if request.method == 'POST':
+        form = OrderStatusForm(request.POST, instance=order)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Order #{order.order_id} status updated to {order.status}.")
+            return redirect('admin_order_detail', order_id=order_id)
+    else:
+        form = OrderStatusForm(instance=order)
+
+    return render(request, 'custom_admin/order_detail.html', {
+        'order': order,
+        'form': form,
+    })
+
 
 

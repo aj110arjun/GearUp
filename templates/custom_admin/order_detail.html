@@ -4,9 +4,19 @@
 <h2>Order Detail - #{{ order.order_id }}</h2>
 
 <p><strong>User:</strong> {{ order.user.username }}</p>
-<p><strong>Status:</strong> {{ order.status }}</p>
+{% if order.status == 'PENDING' %}
+  <span class="badge bg-secondary">Pending</span>
+{% elif order.status == 'PLACED' %}
+  <span class="badge bg-info ">Placed</span>
+{% elif order.status == 'SHIPPED' %}
+  <span class="badge bg-warning ">Shipped</span>
+{% elif order.status == 'DELIVERED' %}
+  <span class="badge bg-success">Delivered</span>
+{% elif order.status == 'CANCELLED' %}
+  <span class="badge bg-danger">Cancelled</span>
+{% endif %}
 <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
-<p><strong>Created:</strong> {{ order.created_at }}</p>
+<p><strong>Created:</strong> {{ order.created_at | date:"d F Y" }}</p>
 
 <h4>Shipping Address</h4>
 {% if order.address %}
@@ -16,6 +26,13 @@
 {% else %}
 <p><em>No address provided</em></p>
 {% endif %}
+
+<h4>Change Order Status</h4>
+<form method="POST" class="mb-3">
+  {% csrf_token %}
+  {{ form.status }}
+  <button type="submit" class="btn btn-primary btn-sm">Update Status</button>
+</form>
 
 <h4>Items</h4>
 <table class="table">
