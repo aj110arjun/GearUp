@@ -16,8 +16,19 @@
   {% if order %}
     <h4>Order Found</h4>
     <p><strong>ID:</strong> {{ order.order_id }}</p>
-    <p><strong>Status:</strong> {{ order.get_status_display }}</p>
-    <p><strong>Placed on:</strong> {{ order.created_at }}</p>
+    <strong>Status:</strong>
+    {% if order.status == 'PENDING' %}
+      <span class="badge bg-secondary">Pending</span>
+    {% elif order.status == 'PLACED' %}
+      <span class="badge bg-info ">Placed</span>
+    {% elif order.status == 'SHIPPED' %}
+      <span class="badge bg-warning ">Shipped</span>
+    {% elif order.status == 'DELIVERED' %}
+      <span class="badge bg-success">Delivered</span>
+    {% elif order.status == 'CANCELLED' %}
+      <span class="badge bg-danger">Cancelled</span>
+    {% endif %}
+    <p><strong>Placed on:</strong> {{ order.created_at | date:"d F Y" }}</p>
     <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
     <a href="{% url 'order_detail' order.order_id %}" class="btn btn-info">View Full Order</a>
   {% endif %}
