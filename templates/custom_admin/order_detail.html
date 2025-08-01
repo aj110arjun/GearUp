@@ -16,15 +16,15 @@
   <span class="badge bg-danger">Cancelled</span>
 {% endif %}
 <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
-<p><strong>Created:</strong> {{ order.created_at | date:"d F Y" }}</p>
+<p><strong>Created:</strong> {{ order.created_at|date:"d F Y" }}</p>
 
 <h4>Shipping Address</h4>
 {% if order.address %}
-<p>{{ order.address.full_name }}, {{ order.address.street }}, {{ order.address.city }}</p>
-<p>{{ order.address.landmark }}, {{ order.address.pincode }}, {{ order.address.state }}</p>
-<p>📞 {{ order.address.phone }}</p>
+  <p>{{ order.address.full_name }}, {{ order.address.street }}, {{ order.address.city }}</p>
+  <p>{{ order.address.landmark }}, {{ order.address.pincode }}, {{ order.address.state }}</p>
+  <p>📞 {{ order.address.phone }}</p>
 {% else %}
-<p><em>No address provided</em></p>
+  <p><em>No address provided</em></p>
 {% endif %}
 
 <h4>Change Order Status</h4>
@@ -42,19 +42,47 @@
       <th>Variant</th>
       <th>Quantity</th>
       <th>Price</th>
+      {% if order.status != 'DELIVERED' and order.status != 'CANCELLED' %}
+        <th>Change Variant</th>
+      {% endif %}
     </tr>
   </thead>
   <tbody>
     {% for item in order.items.all %}
     <tr>
       <td>{{ item.product.name }}</td>
-      <td>{% if item.variant %}{{ item.variant.size }} / {{ item.variant.color }}{% else %}-{% endif %}</td>
+      <td>
+        {% if item.variant %}
+          {{ item.variant.size }} / {{ item.variant.color }}
+        {% else %}
+          -
+        {% endif %}
+      </td>
       <td>{{ item.quantity }}</td>
       <td>₹{{ item.price }}</td>
+
+      {% if order.status != 'DELIVERED' and order.status != 'CANCELLED' %}
+      <td>
+        <form method="POST" class="d-flex">
+          {% csrf_token %}
+          <input type="hidden" name="item_id" value="{{ item.id }}">
+          <select name="variant_id" class="form-select form-select-sm me-2">
+            <option value="">No Variant</option>
+            {% for var in item.product.variants.all %}
+              <option value="{{ var.id }}" {% if item.variant and var.id == item.variant.id %}selected{% endif %}>
+                {{ var.size }} / {{ var.color }}
+              </option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-sm btn-primary">Save</button>
+        </form>
+      </td>
+      {% endif %}
     </tr>
     {% endfor %}
   </tbody>
 </table>
+
 
 <a href="{% url 'admin_order_list' %}" class="btn btn-secondary mt-3">← Back to Orders</a>
 {% endblock %}

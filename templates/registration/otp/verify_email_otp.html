@@ -1,0 +1,19 @@
+{% extends "registration/base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h4>Email Verification</h4>
+  <p>We have sent an OTP to your new email. Please enter it below to verify.</p>
+
+  {% if message %}
+    <div class="alert alert-danger">{{ message }}</div>
+  {% endif %}
+
+  <form method="POST">
+    {% csrf_token %}
+    <input type="text" name="otp" class="form-control mb-2" placeholder="Enter OTP" required>
+    <button type="submit" class="btn btn-primary">Verify Email</button>
+  </form>
+</div>
+{% endblock %}
+
+

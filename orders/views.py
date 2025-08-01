@@ -1,15 +1,16 @@
 import uuid
 
-from .forms import OrderStatusForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import ValidationError
 
+from .forms import OrderStatusForm
 from cart.models import Cart
 from address.models import Address
 from .models import Order, OrderItem
-from django.core.exceptions import ValidationError
+from products.models import Variant
 
 
 @login_required
@@ -68,14 +69,21 @@ def checkout(request):
 
         # Add items
         for item in cart.items.all():
+            price = item.variant.price if item.variant else item.product.price
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
+                variant=item.variant,  # store selected variant
                 quantity=item.quantity,
-                price=item.product.price,
+                price=price,
             )
-            item.product.stock -= item.quantity
-            item.product.save()
+            # Reduce stock from variant if selected, else from product
+            if item.variant:
+                item.variant.stock -= item.quantity
+                item.variant.save()
+            else:
+                item.product.stock -= item.quantity
+                item.product.save()
 
         # Clear cart
         cart.items.all().delete()
@@ -98,14 +106,39 @@ def admin_order_list(request):
 def admin_order_detail(request, order_id):
     order = get_object_or_404(Order, order_id=order_id)
 
-    if request.method == 'POST':
-        form = OrderStatusForm(request.POST, instance=order)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f"Order #{order.order_id} status updated to {order.status}.")
+    if request.method == "POST":
+        # Update status
+        if 'status' in request.POST:
+            form = OrderStatusForm(request.POST, instance=order)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f"Order #{order.order_id} status updated!")
+                return redirect('admin_order_detail', order_id=order_id)
+
+        # Update variant
+        if 'item_id' in request.POST and 'variant_id' in request.POST:
+            item_id = request.POST['item_id']
+            variant_id = request.POST['variant_id']
+            item = get_object_or_404(OrderItem, id=item_id, order=order)
+
+            if variant_id:
+                variant = get_object_or_404(Variant, id=variant_id)
+                item.variant = variant
+                item.price = variant.price  # update price
+            else:
+                item.variant = None
+                item.price = item.product.price
+
+            item.save()
+
+            # Update order total
+            order.total_price = sum(i.subtotal() for i in order.items.all())
+            order.save()
+
+            messages.success(request, f"Variant updated for {item.product.name}!")
             return redirect('admin_order_detail', order_id=order_id)
-    else:
-        form = OrderStatusForm(instance=order)
+
+    form = OrderStatusForm(instance=order)
 
     return render(request, 'custom_admin/order_detail.html', {
         'order': order,
