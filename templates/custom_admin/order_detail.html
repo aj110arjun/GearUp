@@ -1,7 +1,7 @@
 {% extends 'custom_admin/base.html' %}
 
 {% block content %}
-<h2>Order Detail - #{{ order.order_id }}</h2>
+<h2>Order Detail - #{{ order.order_number }}</h2>
 
 <p><strong>User:</strong> {{ order.user.username }}</p>
 {% if order.status == 'PENDING' %}
@@ -14,6 +14,8 @@
   <span class="badge bg-success">Delivered</span>
 {% elif order.status == 'CANCELLED' %}
   <span class="badge bg-danger">Cancelled</span>
+{% elif order.status == 'RETURNED' %}
+  <span class="badge bg-warning">Returned</span>
 {% endif %}
 <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
 <p><strong>Created:</strong> {{ order.created_at|date:"d F Y" }}</p>

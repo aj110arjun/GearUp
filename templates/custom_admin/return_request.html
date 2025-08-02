@@ -1,0 +1,36 @@
+{% extends "custom_admin/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Return Requests</h2>
+    
+    {% if orders %}
+        <table class="table table-bordered mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>Order ID</th>
+                    <th>User</th>
+                    <th>email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>#{{ order.order_number }}</td>
+                    <td>{{ order.user.first_name }}</td>
+                    <td>{{ order.user.email }}</td>
+                    <td>
+                        <a href="{% url 'admin_return_detail' order.order_id %}" 
+                           class="btn btn-primary btn-sm">
+                           View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No return requests at the moment.</p>
+    {% endif %}
+</div>
+{% endblock %}
