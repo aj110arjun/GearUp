@@ -3,11 +3,11 @@
 {% load cart_extras %}
 
 
-{% block title %}Order {{ order.order_id }} - GearUp{% endblock %}
+{% block title %}Order #{{ order.order_number }} - GearUp{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-  <h2 class="mb-4">📦 Order Details - {{ order.order_id }}</h2>
+  <h2 class="mb-4">📦 Order Details - #{{ order.order_number }}</h2>
 
   <div class="card mb-4">
     <div class="card-body">
@@ -23,7 +23,9 @@
         {% elif order.status == 'DELIVERED' %}
           <span class="badge bg-success">Delivered</span>
         {% elif order.status == 'CANCELLED' %}
-          <span class="badge bg-danger">Cancelled</span>
+          <span class="badge bg-danger">Cancelled</span> 
+        {% elif order.status == 'RETURNED' %}
+          <span class="badge bg-warning">Returned</span>
         {% endif %}
       </p>
       <p><strong>Placed on:</strong> {{ order.created_at|date:"d F Y" }}</p>
@@ -63,8 +65,47 @@
     </div>
   </div>
 
-  <div class="mt-4">
+  <div class="mt-4 d-flex justify-content-between">
     <a href="{% url 'view_orders' %}" class="btn btn-secondary">← Back to Orders</a>
+    {% if order.status == 'PLACED' or order.status == 'PENDING' %}
+      <form method="POST" action="{% url 'cancel_order' order.order_id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger"
+              onclick="return confirm('Are you sure you want to cancel this order?');">
+              Cancel Order
+          </button>
+      </form>
+    {% endif %}
+   {% if order.status == 'DELIVERED' %}
+    {% if order.return_status == 'NONE' %}
+        <a href="{% url 'return_order' order.order_id %}" class="btn btn-warning">
+            Request Return
+        </a>
+
+    {% elif order.return_status == 'REQUESTED' %}
+        <p class="text-warning mt-2 fw-bold">
+            Return Requested – Pending Approval<br>
+            <small>Reason: {{ order.return_reason }}</small>
+        </p>
+
+    {% elif order.return_status == 'APPROVED' %}
+        <p class="text-success mt-2 fw-bold">
+            ✅ Return Approved – Your return is being processed.
+        </p>
+
+    {% elif order.return_status == 'REJECTED' %}
+        <p class="text-danger mt-2 fw-bold">
+            ❌ Return Request Rejected
+            {% if order.admin_reject_reason %}
+                <br><small>Reason: {{ order.admin_reject_reason }}</small>
+            {% endif %}
+        </p>
+    {% endif %}
+{% endif %}
+
   </div>
+
+
+
 </div>
 {% endblock %}

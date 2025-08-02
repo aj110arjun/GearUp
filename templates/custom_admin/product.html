@@ -95,7 +95,7 @@
           <td>₹{{ product.price }}</td>
           <td>{{ product.stock }}</td>
           <td class="text-center">
-            <a href="{% url 'admin_product_view' slug=product.slug %}" class="btn btn-sm btn-info me-1">View</a>
+            <a href="{% url 'admin_product_view' product.pk %}" class="btn btn-sm btn-info me-1">View</a>
           </td>
         </tr>
         {% empty %}

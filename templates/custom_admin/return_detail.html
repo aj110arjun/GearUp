@@ -1,0 +1,25 @@
+{% extends "custom_admin/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Return Request for Order #{{ order.order_number }}</h2>
+
+    <div class="card p-3 mb-3">
+        <p><strong>User:</strong> {{ order.user.first_name }} ({{ order.user.email }})</p>
+        <p><strong>Reason:</strong> {{ order.return_reason }}</p>
+        <p><strong>Status:</strong> {{ order.return_status }}</p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" name="action" value="approve" class="btn btn-success"
+                onclick="return confirm('Approve return and restore stock?');">
+            Approve Return
+        </button>
+        <button type="submit" name="action" value="reject" class="btn btn-danger"
+                onclick="return confirm('Reject this return request?');">
+            Reject Return
+        </button>
+        <a href="{% url 'admin_return_requests' %}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+{% endblock %}

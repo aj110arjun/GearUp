@@ -12,17 +12,28 @@
       {% for address in addresses %}
         <div class="col-md-4">
           <div class="card mb-3 {% if address.is_default %}border-success{% endif %}">
-            <div class="card-body">
-              <input type="radio" name="address_id" value="{{ address.id }}" required>
+            <div class="card-body position-relative">
+
+              <!-- Radio button -->
+              <input type="radio" name="address_id" value="{{ address.id }}" required {% if address.is_default %}checked{% endif %}>
+
+              <!-- Tick mark and Default tag -->
+              {% if address.is_default %}
+                <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                  <i class="bi bi-check-circle"></i> Default
+                </span>
+              {% endif %}
+
               <p><strong>{{ address.full_name }}</strong></p>
               <p>{{ address.street }}, {{ address.city }}, {{ address.pincode }}</p>
               {% if address.landmark %}<p>Landmark: {{ address.landmark }}</p>{% endif %}
+              
             </div>
           </div>
         </div>
-      {% empty %}
+        {% empty %}
         <p>No saved addresses. <a href="{% url 'add_address' %}">Add one</a></p>
-      {% endfor %}
+        {% endfor %}
     </div>
 
     <!-- Order Summary -->

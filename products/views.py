@@ -1,6 +1,6 @@
 import os
 
-from .models import Product, Category, ProductImage, ProductImage
+from .models import Product, Category, ProductImage, ProductImage, Variant
 from wishlist.models import WishlistItem, Wishlist
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -158,31 +158,35 @@ def admin_product_list(request):
     return render(request, 'custom_admin/product.html', context)
 
 
-@login_required
-def edit_product(request, slug):
-    product = get_object_or_404(Product, slug=slug)
-    
+def edit_product(request, pk):  # UUID
+    product = get_object_or_404(Product, pk=pk)
+
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES, instance=product)
-
         files = request.FILES.getlist('additional_images')
+
         if form.is_valid():
             form.save()
+
+            # Save additional images
             for file in files:
                 ProductImage.objects.create(product=product, image=file)
-            return redirect('admin_product_view', slug=product.slug)
+
+            messages.success(request, "Product updated successfully.")
+            return redirect('edit_product', pk=product.pk)
+
     else:
         form = ProductForm(instance=product)
-    variant_form = VariantForm()
-    context = {
-    'form': form,
-    'product': product,
-    'additional_images': product.additional_images.all(),
-    'variants': product.variants.all(),
-    'variant_form': variant_form,   
-    }
-    return render(request, 'custom_admin/product_edit.html', context)
 
+    variant_form = VariantForm()
+
+    return render(request, 'custom_admin/product_edit.html', {
+        'form': form,
+        'product': product,
+        'additional_images': product.additional_images.all(),
+        'variants': product.variants.all(),
+        'variant_form': variant_form,   
+    })
 
 def delete_product(request, slug):
     product = get_object_or_404(Product, slug=slug)
@@ -258,8 +262,9 @@ def delete_additional_image(request, image_id):
     image.delete()
     return redirect('edit_product', slug=product_slug)
 
-def add_variant(request, product_id):
-    product = get_object_or_404(Product, product_id=product_id)
+@login_required
+def add_variant(request, pk):
+    product = get_object_or_404(Product, pk=pk)
 
     if request.method == 'POST':
         form = VariantForm(request.POST)
@@ -267,27 +272,33 @@ def add_variant(request, product_id):
             variant = form.save(commit=False)
             variant.product = product
             variant.save()
-            return redirect('edit_product', slug=product.slug)
+            messages.success(request, "Variant added successfully.")
+            return redirect('edit_product', pk=product.pk)
+
     else:
         form = VariantForm()
 
     return render(request, 'custom_admin/variant_form.html', {'form': form, 'product': product})
 
-def edit_variant(request, variant_id):
-    variant = get_object_or_404(Variant, id=variant_id)
+@login_required
+def edit_variant(request, pk):
+    variant = get_object_or_404(Variant, pk=pk)
 
     if request.method == 'POST':
         form = VariantForm(request.POST, instance=variant)
         if form.is_valid():
             form.save()
-            return redirect('admin:edit_product', variant.product.id)
+            messages.success(request, "Variant updated successfully.")
+            return redirect('edit_product', pk=variant.product.pk)
     else:
         form = VariantForm(instance=variant)
 
-    return render(request, 'admin/products/variant_form.html', {'form': form, 'product': variant.product})
+    return render(request, 'custom_admin/variant_form.html', {'form': form, 'product': variant.product})
 
-def delete_variant(request, variant_id):
-    variant = get_object_or_404(Variant, id=variant_id)
-    product_id = variant.product.id
+@login_required
+def delete_variant(request, pk):
+    variant = get_object_or_404(Variant, pk=pk)
+    product_pk = variant.product.pk
     variant.delete()
-    return redirect('admin:edit_product', product_id)
+    messages.success(request, "Variant deleted successfully.")
+    return redirect('edit_product', pk=product_pk)
