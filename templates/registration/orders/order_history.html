@@ -19,6 +19,8 @@
               <span class="badge bg-success">Delivered</span>
             {% elif order.status == 'CANCELLED' %}
               <span class="badge bg-danger">Cancelled</span>
+            {% elif order.status == 'RETURNED' %}
+              <span class="badge bg-warning">Returned</span>
             {% endif %}<br>
             <strong>Date:</strong> {{ order.created_at|date:"d F Y" }}<br>
             <strong>Total:</strong> ₹{{ order.total_price }}<br>

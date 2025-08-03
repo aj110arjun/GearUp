@@ -29,7 +29,7 @@
         {% endif %}
       </p>
       <p><strong>Placed on:</strong> {{ order.created_at|date:"d F Y" }}</p>
-      <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
+      <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
       <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
     </div>
   </div>
@@ -83,22 +83,18 @@
         </a>
 
     {% elif order.return_status == 'REQUESTED' %}
-        <p class="text-warning mt-2 fw-bold">
+        <p class="text-warning mt-2 mb-0 fw-bold">
             Return Requested – Pending Approval<br>
-            <small>Reason: {{ order.return_reason }}</small>
         </p>
 
     {% elif order.return_status == 'APPROVED' %}
-        <p class="text-success mt-2 fw-bold">
-            ✅ Return Approved – Your return is being processed.
+        <p class="text-success mt-2 mb-0 fw-bold">
+             Return Approved – Your return is being processed.
         </p>
 
     {% elif order.return_status == 'REJECTED' %}
-        <p class="text-danger mt-2 fw-bold">
-            ❌ Return Request Rejected
-            {% if order.admin_reject_reason %}
-                <br><small>Reason: {{ order.admin_reject_reason }}</small>
-            {% endif %}
+        <p class="text-danger mt-2 mb-0 fw-bold">
+              Return Request Rejected by Admin
         </p>
     {% endif %}
 {% endif %}

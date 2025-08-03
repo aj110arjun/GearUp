@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-
+from django.contrib import messages
 
 from .models import Cart, CartItem
 from products.models import Product, Variant
@@ -30,21 +30,23 @@ def view_cart(request):
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, product_id=product_id)
     cart = get_cart(request)
+
     variant_id = request.POST.get('variant_id')
     variant = get_object_or_404(Variant, id=variant_id)
 
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-
     desired_quantity = int(request.POST.get('quantity', 1))
 
+    # Remove from wishlist if present
     try:
         wishlist = Wishlist.objects.get(user=request.user)
         WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
     except Wishlist.DoesNotExist:
         pass
 
-    if product.stock == 0:
-        messages.error(request, "This product is out of stock.")
+    # Check stock from variant instead of product
+    stock = variant.stock
+    if stock == 0:
+        messages.error(request, "This variant is out of stock.")
         return redirect('product_detail', slug=product.slug)
 
     # Enforce maximum allowed quantity
@@ -53,9 +55,17 @@ def add_to_cart(request, product_id):
         desired_quantity = 6
 
     # Don't allow more than available stock
-    if desired_quantity > product.stock:
-        desired_quantity = product.stock
-        messages.warning(request, "Only limited stock available.")
+    if desired_quantity > stock:
+        desired_quantity = stock
+        messages.warning(request, "Only limited stock available for this variant.")
+
+    # ✅ Include variant in get_or_create
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        variant=variant,  # ✅ Important
+        defaults={'quantity': 0}  # start from 0, we'll add quantity below
+    )
 
     cart_item.quantity = desired_quantity
     cart_item.save()

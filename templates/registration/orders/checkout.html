@@ -35,6 +35,19 @@
         <p>No saved addresses. <a href="{% url 'add_address' %}">Add one</a></p>
         {% endfor %}
     </div>
+    <div class="mb-3">
+        <h5>Payment Method</h5>
+        <select name="payment_method" class="form-select" required>
+            <option value="COD" selected>Cash on Delivery (COD)</option>
+            <!-- Future methods (can be uncommented later)
+            <option value="UPI">UPI</option>
+            <option value="NET_BANKING">Net Banking</option>
+            <option value="DEBIT_CARD">Debit Card</option>
+            <option value="CREDIT_CARD">Credit Card</option>
+            -->
+        </select>
+    </div>  
+
 
     <!-- Order Summary -->
     <h4 class="mt-4">Order Summary</h4>

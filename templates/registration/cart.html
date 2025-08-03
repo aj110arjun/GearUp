@@ -34,14 +34,14 @@
               <!-- Variant Selector -->
               <form method="post" action="{% url 'update_cart_variant' item.id %}" class="mb-2">
                 {% csrf_token %}
-                <select name="variant_id" class="form-select form-select-sm w-75 d-inline">
-                  <option value="">Select Variant</option>
-                  {% for var in item.product.variants.all %}
-                    <option value="{{ var.id }}" {% if item.variant and item.variant.id == var.id %}selected{% endif %}>
-                      {{ var.size }} / {{ var.color }}
-                    </option>
+                <select name="variant" class="form-select">
+                  {% for v in item.product.variants.all %}
+                      <option value="{{ v.id }}" {% if item.variant and item.variant.id == v.id %}selected{% endif %}>
+                          {{ v.size }} / {{ v.color }}
+                      </option>
                   {% endfor %}
-                </select>
+              </select>
+
                 <button type="submit" class="btn btn-sm btn-primary">Update</button>
               </form>
 

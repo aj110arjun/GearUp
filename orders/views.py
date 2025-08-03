@@ -171,7 +171,8 @@ def checkout(request):
         return redirect('view_cart')
 
     if request.method == "POST":
-        # Get selected address
+        payment_method = request.POST.get('payment_method', 'COD')
+
         address_id = request.POST.get('address_id')
         if not address_id:
             messages.error(request, "Please select an address.")
@@ -195,6 +196,7 @@ def checkout(request):
             total_price=total,
             status='PLACED',
             address=address,
+            payment_method=payment_method,
         )
 
         # Create Order Items and update stock

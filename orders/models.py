@@ -15,6 +15,7 @@ class Order(models.Model):
         ('CANCELLED', 'Cancelled'),
         ('RETURNED', 'Returned'),
     ]
+
     RETURN_STATUS_CHOICES = [
         ('NONE', 'No Return'),
         ('REQUESTED', 'Return Requested'),
@@ -22,6 +23,15 @@ class Order(models.Model):
         ('REJECTED', 'Return Rejected'),
     ]
 
+    PAYMENT_METHOD_CHOICES = [
+        ('COD', 'Cash on Delivery'),
+        ('UPI', 'UPI'),                # For future
+        ('NET_BANKING', 'Net Banking'),# For future
+        ('DEBIT_CARD', 'Debit Card'),  # For future
+        ('CREDIT_CARD', 'Credit Card'),# For future
+    ]
+
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='COD')
     order_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     sequential_number = models.PositiveIntegerField(unique=True, editable=False, null=True, blank=True)

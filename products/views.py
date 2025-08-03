@@ -94,14 +94,15 @@ def staff_required(user):
 
 @login_required(login_url='admin_login')
 @user_passes_test(staff_required, login_url='admin_login')
-def admin_product_view(request, slug):
-    product = get_object_or_404(Product, slug=slug)
+def admin_product_view(request, product_id):
+    product = get_object_or_404(Product, product_id=product_id)
     additional_images = product.additional_images.all()
     context = {
-    'product': product,
-    'additional_images': additional_images,
+        'product': product,
+        'additional_images': additional_images,
     }
     return render(request, 'custom_admin/single_product.html', context)
+
 
 
 @login_required(login_url='admin_login')
@@ -198,8 +199,8 @@ def delete_product(request, slug):
     return render(request, 'custom_admin/confirm_delete.html', {'product': product})
 
 
-def toggle_product_status(request, slug):
-    product = get_object_or_404(Product, slug=slug)
+def toggle_product_status(request, product_id):
+    product = get_object_or_404(Product, product_id=product_id)
     product.is_active = not product.is_active
     product.save()
 
@@ -208,7 +209,7 @@ def toggle_product_status(request, slug):
     else:
         messages.warning(request, f"Product '{product.name}' is now blocked.")
 
-    return redirect('admin_product_view', slug=slug)
+    return redirect('admin_product_view', product_id=product_id)
 
 def add_product_view(request):
     if request.method == 'POST':
