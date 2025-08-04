@@ -50,9 +50,9 @@ class Order(models.Model):
         if self.return_status == 'REQUESTED':
         # Restore stock
             for item in self.items.all():
-                if item.variant:
-                    item.variant.stock += item.quantity
-                    item.variant.save()
+                if item:
+                    item.product.stock += item.quantity
+                    item.product.save()
                 else:
                     item.product.stock += item.quantity
                     item.product.save()

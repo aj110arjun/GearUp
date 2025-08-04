@@ -37,4 +37,4 @@ class AdditionalImageForm(forms.ModelForm):
 class VariantForm(forms.ModelForm):
     class Meta:
         model = Variant
-        fields = ['size', 'color', 'price', 'stock']
+        fields = ['size', 'color', 'price']

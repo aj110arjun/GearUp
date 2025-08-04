@@ -79,14 +79,20 @@ def product_detail(request, slug):
             in_wishlist = WishlistItem.objects.filter(wishlist=wishlist, product=product).exists()
         except Wishlist.DoesNotExist:
             pass
-    context={
-    'product': product,
-    'cart': cart,
-    'in_cart': in_cart,
-    'in_wishlist': in_wishlist,
+
+    # ✅ Prepare distinct sizes and colors
+    sizes = product.variants.values_list('size', flat=True).distinct()
+    colors = product.variants.values_list('color', flat=True).distinct()
+
+    context = {
+        'product': product,
+        'cart': cart,
+        'in_cart': in_cart,
+        'in_wishlist': in_wishlist,
+        'sizes': sizes,
+        'colors': colors,
     }
     return render(request, 'registration/single_product.html', context)
-
 
 def staff_required(user):
     return user.is_authenticated and user.is_staff
@@ -124,9 +130,9 @@ def admin_product_list(request):
     if max_price:
         products = products.filter(price__lte=max_price)
     if in_stock == 'true':
-        products = products.filter(stock__gt=0)
+        products = products.filter(total_stock__gt=0)
     elif in_stock == 'false':
-        products = products.filter(stock__lte=0)
+        products = products.filter(total_stock__lte=0)
     if search:
         products = products.filter(name__icontains=search)
 
@@ -259,9 +265,9 @@ def delete_main_image(request, slug):
 
 def delete_additional_image(request, image_id):
     image = get_object_or_404(ProductImage, id=image_id)
-    product_slug = image.product.slug
+    product = image.product
     image.delete()
-    return redirect('edit_product', slug=product_slug)
+    return redirect('edit_product', pk=product.product_id)
 
 @login_required
 def add_variant(request, pk):

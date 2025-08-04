@@ -73,6 +73,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'aj110arjun@gmail.com'
 EMAIL_HOST_PASSWORD = 'oyat mnjb nuul jjwl'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_USE_TLS = True
 
 ROOT_URLCONF = 'GearUp.urls'
 

@@ -24,7 +24,7 @@
                   <select name="variant_id" id="variant-{{ item.product.id }}" class="form-select">
                     {% for variant in item.product.variants.all %}
                       <option value="{{ variant.id }}">
-                        {{ variant.size }} - {{ variant.color }} - ₹{{ variant.price }}
+                        {{ variant.size }} / {{ variant.color }}
                       </option>
                     {% endfor %}
                   </select>

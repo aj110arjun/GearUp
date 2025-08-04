@@ -5,7 +5,7 @@
 
     <div class="card p-3 mb-3">
         <p><strong>User:</strong> {{ order.user.first_name }} ({{ order.user.email }})</p>
-        <p><strong>Reason:</strong> {{ order.return_reason }}</p>
+        <p><strong>Reason:</strong> {{ order.return_reason | title }}</p>
         <p><strong>Status:</strong> {{ order.return_status }}</p>
     </div>
 
