@@ -41,7 +41,7 @@
         </div>
 
         <div class="mt-4 d-flex gap-2">
-          <a href="{% url 'edit_product' product.slug %}" class="btn btn-warning">Edit</a>
+          <a href="{% url 'edit_product' product.product_id %}" class="btn btn-warning">Edit</a>
 
           <form action="{% url 'delete_product' product.slug %}" method="post" onsubmit="return confirm('Are you sure you want to delete this product?');">
             {% csrf_token %}
@@ -49,9 +49,9 @@
           </form>
 
           {% if product.is_active %}
-            <a href="{% url 'toggle_product_status' product.slug %}" class="btn btn-danger">Block</a>
+            <a href="{% url 'toggle_product_status' product.product_id %}" class="btn btn-danger">Block</a>
           {% else %}
-            <a href="{% url 'toggle_product_status' product.slug %}" class="btn btn-success">Unblock</a>
+            <a href="{% url 'toggle_product_status' product.product_id %}" class="btn btn-success">Unblock</a>
           {% endif %}
         </div>
       </div>

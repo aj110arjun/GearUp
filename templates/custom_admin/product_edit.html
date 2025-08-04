@@ -16,7 +16,6 @@
                   <th>Size</th>
                   <th>Color</th>
                   <th>Price</th>
-                  <th>Stock</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -26,7 +25,6 @@
                   <td>{{ variant.size }}</td>
                   <td>{{ variant.color }}</td>
                   <td>₹{{ variant.price }}</td>
-                  <td>{{ variant.stock }}</td>
                   <td>
                     <a href="{% url 'edit_variant' variant.pk %}" class="btn btn-sm btn-primary">Edit</a>
                     <a href="{% url 'delete_variant' variant.pk %}" class="btn btn-sm btn-danger">Delete</a>
@@ -101,7 +99,7 @@
 
         <div class="d-flex gap-2">
           <button type="submit" class="btn btn-success">Save Changes</button>
-          <a href="{% url 'admin_product_view' product.slug %}" class="btn btn-secondary">Cancel</a>
+          <a href="{% url 'admin_product_view' product.product_id %}" class="btn btn-secondary">Cancel</a>
         </div>
 
       </form>

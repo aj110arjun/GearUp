@@ -6,12 +6,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST
+from django.db import transaction
 
 from .forms import OrderStatusForm, ReturnOrderForm
 from cart.models import Cart
 from address.models import Address
 from .models import Order, OrderItem
 from products.models import Variant
+from cart.views import get_cart
 
 
 @login_required
@@ -160,73 +162,66 @@ def order_success(request):
 
 @login_required
 def checkout(request):
-    """
-    Handles checkout page display (GET) and order placement (POST).
-    """
-    cart = Cart.objects.filter(user=request.user).first()
-    addresses = request.user.addresses.all()
+    cart = get_cart(request)
+    cart_items = cart.items.all()
 
-    if not cart or not cart.items.exists():
+    if not cart_items.exists():
         messages.warning(request, "Your cart is empty.")
-        return redirect('view_cart')
+        return redirect("view_cart")
+
+    total_price = sum(
+        (item.variant.price if item.variant else item.product.price) * item.quantity
+        for item in cart_items
+    )
 
     if request.method == "POST":
-        # Get selected address
-        address_id = request.POST.get('address_id')
+        address_id = request.POST.get("address_id")
+        payment_method = request.POST.get("payment_method", "COD")
+
         if not address_id:
             messages.error(request, "Please select an address.")
-            return redirect('checkout')
+            return redirect("checkout")
 
-        try:
-            address = Address.objects.get(id=address_id, user=request.user)
-        except Address.DoesNotExist:
-            messages.error(request, "Selected address not found.")
-            return redirect('checkout')
+        # ✅ Check stock before placing order
+        for item in cart_items:
+            if item.product.stock < item.quantity:
+                messages.error(request, f"Not enough stock for {item.product.name}.")
+                return redirect("view_cart")
 
-        # Calculate total price
-        total = 0
-        for item in cart.items.all():
-            price = item.variant.price if item.variant else item.product.price
-            total += price * item.quantity
-
-        # Create Order
+        # Create order
         order = Order.objects.create(
             user=request.user,
-            total_price=total,
-            status='PLACED',
-            address=address,
+            address_id=address_id,
+            total_price=total_price,
+            status="PLACED",
+            payment_method=payment_method,
         )
 
-        # Create Order Items and update stock
-        for item in cart.items.all():
-            price = item.variant.price if item.variant else item.product.price
-
+        for item in cart_items:
+            # Create order items
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
                 variant=item.variant,
                 quantity=item.quantity,
-                price=price,
+                price=item.variant.price if item.variant else item.product.price
             )
 
-            # Update stock
-            if item.variant:
-                item.variant.stock -= item.quantity
-                item.variant.save()
-            else:
-                item.product.stock -= item.quantity
-                item.product.save()
+            # ✅ Deduct stock
+            item.product.stock -= item.quantity
+            item.product.save()
 
-        # Clear cart
-        cart.items.all().delete()
+        # Clear the cart
+        cart_items.delete()
 
         messages.success(request, "Your order has been placed successfully!")
-        return redirect('order_success')  # redirect to success page
+        return redirect("order_success")
 
-    # Handle GET: Show checkout page
-    return render(request, 'registration/orders/checkout.html', {
-        'cart': cart,
-        'addresses': addresses
+    addresses = Address.objects.filter(user=request.user)
+    return render(request, "registration/orders/checkout.html", {
+        "cart": cart,
+        "addresses": addresses,
+        "total_price": total_price
     })
 
 @login_required
