@@ -97,32 +97,107 @@
                     </div>
                     <h2 class="text-3xl font-bold text-gray-900 mb-2 text-center">Welcome Back</h2>
                     <p class="text-gray-600 mb-8 text-center">Sign in to your GearUp account</p>
-                    
-                    <form class="space-y-6">
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                            <div class="mt-1">
-                                <input id="email" name="email" type="email" autocomplete="email" required 
-                                    class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+
+                    <!-- Display messages -->
+                    {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                        <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                            <div class="flex items-center">
+                                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                                {{ message }}
                             </div>
                         </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Display non-field errors -->
+                    {% if form.non_field_errors %}
+                    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">
+                                    Authentication Error
+                                </h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <ul class="list-disc list-inside space-y-1">
+                                        {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="space-y-6" novalidate>
+                        {% csrf_token %}
                         
+                        <!-- Email Field with Error -->
                         <div>
-                            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                            <label for="id_email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <div class="mt-1">
+                                <input id="id_email" 
+                                       name="email" 
+                                       type="email" 
+                                       autocomplete="email" 
+                                       value="{{ form.email.value|default:'' }}" 
+                                       required 
+                                       class="appearance-none block w-full px-3 py-2 border {% if form.email.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                                       placeholder="Enter your email address">
+                            </div>
+                            {% if form.email.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.email.errors %}
+                                <p class="flex items-center">
+                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
+                                    {{ error }}
+                                </p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Password Field with Error -->
+                        <div>
+                            <label for="id_password" class="block text-sm font-medium text-gray-700">Password</label>
                             <div class="mt-1 relative">
-                                <input id="password" name="password" type="password" autocomplete="current-password" required 
-                                    class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                <input id="id_password" 
+                                       name="password" 
+                                       type="password" 
+                                       autocomplete="current-password" 
+                                       required 
+                                       class="appearance-none block w-full px-3 py-2 border {% if form.password.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                                       placeholder="Enter your password">
                                 <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <i class="far fa-eye text-gray-400"></i>
                                 </button>
                             </div>
+                            {% if form.password.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.password.errors %}
+                                <p class="flex items-center">
+                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
+                                    {{ error }}
+                                </p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         
+                        <!-- Remember Me & Forgot Password -->
                         <div class="flex items-center justify-between">
                             <div class="flex items-center">
-                                <input id="remember-me" name="remember-me" type="checkbox" 
-                                    class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="remember-me" class="ml-2 block text-sm text-gray-700">
+                                <input id="id_remember_me" 
+                                       name="remember_me" 
+                                       type="checkbox" 
+                                       class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
+                                <label for="id_remember_me" class="ml-2 block text-sm text-gray-700">
                                     Remember me
                                 </label>
                             </div>
@@ -136,7 +211,7 @@
                         
                         <div>
                             <button type="submit" 
-                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
                                 Sign In
                             </button>
                         </div>
@@ -180,7 +255,7 @@
                 </div>
                 
                 <div class="mt-8 text-center text-sm text-gray-500">
-                    <p>&copy; 2023 GearUp Survival Toolkit. All rights reserved.</p>
+                    <p>&copy; 2025 GearUp Survival Toolkit. All rights reserved.</p>
                 </div>
             </div>
         </div>
@@ -203,6 +278,20 @@
                     icon.classList.add('fa-eye');
                 }
             });
+        });
+
+        // Auto-remove success messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const successMessages = document.querySelector('.bg-green-50');
+            if (successMessages) {
+                setTimeout(function() {
+                    successMessages.style.transition = 'opacity 0.5s ease';
+                    successMessages.style.opacity = '0';
+                    setTimeout(function() {
+                        successMessages.remove();
+                    }, 500);
+                }, 5000);
+            }
         });
     </script>
 </body>
