@@ -1,0 +1,305 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}
+      GearUp
+      {% endblock title %}
+    </title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://unpkg.com/tailwindcss@3.4.10/dist/tailwind.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="icon" type="image/x-icon"
+      href="https://res.cloudinary.com/dhpo5iq3m/image/upload/guide_mar3hq.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      }
+      
+      .nav-link {
+        position: relative;
+        transition: all 0.3s ease;
+      }
+      
+      .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #10b981, #059669);
+        transition: width 0.3s ease;
+        border-radius: 2px;
+      }
+      
+      .nav-link:hover::after,
+      .nav-link.active::after {
+        width: 100%;
+      }
+      
+      .mobile-menu-slide {
+        animation: slideDown 0.3s ease-out;
+      }
+      
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      .top-banner {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      }
+      
+      .dropdown-menu {
+        display: none;
+      }
+      
+      .dropdown:hover .dropdown-menu {
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-50 text-gray-800">
+    <!-- Top Announcement Banner -->
+    <div class="top-banner text-white text-center py-2 text-sm">
+      <div class="container mx-auto px-4">
+        <i class="fas fa-shipping-fast mr-2"></i>
+         <strong>30-Day Returns</strong> | <strong>24/7 Support</strong>
+      </div>
+    </div>
+
+    <!-- Main Navbar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+      <div class="container mx-auto px-4 lg:px-6">
+        <div class="flex items-center justify-between py-4">
+          <!-- Logo -->
+          <a href="{% url 'home' %}" class="flex items-center gap-2 group">
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-500 w-10 h-10 rounded-lg flex items-center justify-center">
+              <i class="fas fa-mountain text-white text-xl"></i>
+            </div>
+            <span class="text-2xl font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">
+              GearUp
+            </span>
+          </a>
+
+          <!-- Desktop Navigation -->
+          <ul class="hidden md:flex items-center space-x-6 font-medium text-gray-700">
+            <li>
+              <a href="{% url 'home' %}"
+                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/' %}text-emerald-600 active{% endif %}">
+                Home
+              </a>
+            </li>
+            <li>
+              <a href=""
+                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/products/list/' %}text-emerald-600 active{% endif %}">
+                Shop
+              </a>
+            </li>
+            <li>
+              <a href=""
+                class="nav-link hover:text-emerald-600 transition-colors flex items-center gap-1 {% if request.path == '/cart/list/' %}text-emerald-600 active{% endif %}">
+                <i class="fas fa-shopping-cart"></i>
+              </a>
+            </li>
+            <li>
+              <a href=""
+                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/wishlist/list/' %}text-emerald-600 active{% endif %}">
+                <i class="fas fa-heart"></i>
+              </a>
+            </li>
+            <li>
+              <a href=""
+                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/wallet/view/' %}text-emerald-600 active{% endif %}">
+                Wallet
+              </a>
+            </li>
+            <li>
+              <a href=""
+                class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold">
+                <i class="fas fa-user"></i>
+                Account
+              </a>
+            </li>
+          </ul>
+
+          <!-- Mobile Menu Button -->
+          <button
+            id="menu-btn"
+            class="md:hidden text-gray-700 text-2xl focus:outline-none hover:text-emerald-600 transition-colors"
+          >
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200">
+        <ul class="flex flex-col text-gray-700 mobile-menu-slide">
+          <li>
+            <a href="{% url 'home' %}" 
+               class="flex items-center gap-3 px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if request.path == '/' %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
+              <i class="fas fa-home w-5"></i>
+              <span>Home</span>
+            </a>
+          </li>
+          <li>
+            <a href="" 
+               class="flex items-center gap-3 px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if request.path == '/products/list/' %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
+              <i class="fas fa-store w-5"></i>
+              <span>Shop</span>
+            </a>
+          </li>
+          <li>
+            <a href="" 
+               class="flex items-center justify-between px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if request.path == '/cart/list/' %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
+              <div class="flex items-center gap-3">
+                <i class="fas fa-shopping-cart w-5"></i>
+                <span>Cart</span>
+              </div>
+            </a>
+          </li>
+          <li>
+            <a href="" 
+               class="flex items-center gap-3 px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if request.path == '/wishlist/list/' %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
+              <i class="fas fa-heart w-5"></i>
+              <span>Wishlist</span>
+            </a>
+          </li>
+          <li>
+            <a href="" 
+               class="flex items-center gap-3 px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if request.path == '/wallet/view/' %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
+              <i class="fas fa-wallet w-5"></i>
+              <span>Wallet</span>
+            </a>
+          </li>
+          <li>
+            <a href="" 
+               class="flex items-center gap-3 px-6 py-4 bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors">
+              <i class="fas fa-user w-5"></i>
+              <span>My Account</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="min-h-screen">
+      {% block content %}
+      {% endblock content %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 mt-16">
+      <div class="container mx-auto px-4 lg:px-6 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <!-- About -->
+          <div>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="bg-gradient-to-r from-emerald-600 to-teal-500 w-10 h-10 rounded-lg flex items-center justify-center">
+                <i class="fas fa-mountain text-white text-xl"></i>
+              </div>
+              <span class="text-xl font-bold text-white">GearUp</span>
+            </div>
+            <p class="text-sm leading-relaxed">
+              Your trusted partner for premium outdoor gear and survival equipment. Adventure awaits!
+            </p>
+            <div class="flex gap-3 mt-4">
+              <a href="https://x.com/aj110arjun_web?t=chauiSk5OrQoVxDhzFfGAA&s=08" target="_blank" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors">
+                <i class="fab fa-twitter"></i>
+              </a>
+              <a href="https://www.linkedin.com/in/arjun-aj-069162362?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors">
+                <i class="fab fa-linkedin"></i>
+              </a>
+              <a href="https://www.instagram.com/epic_living.110?igsh=enQ4NzU3dzJtYXU0" target="_blank" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors">
+                <i class="fab fa-instagram"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Quick Links -->
+          <div>
+            <h3 class="text-white font-bold mb-4">Quick Links</h3>
+            <ul class="space-y-2 text-sm">
+              <li><a href="{% url 'home' %}" class="hover:text-emerald-400 transition-colors">Home</a></li>
+              <li><a href="" class="hover:text-emerald-400 transition-colors">Shop</a></li>
+              <li><a href="#" class="hover:text-emerald-400 transition-colors">About Us</a></li>
+              <li><a href="#" class="hover:text-emerald-400 transition-colors">Contact</a></li>
+            </ul>
+          </div>
+
+          <!-- Customer Service -->
+          <div>
+            <h3 class="text-white font-bold mb-4">Customer Service</h3>
+            <ul class="space-y-2 text-sm">
+              <li><a href="#" class="hover:text-emerald-400 transition-colors">Shipping Info</a></li>
+              <li><a href="#" class="hover:text-emerald-400 transition-colors">Returns & Exchanges</a></li>
+              <li><a href="#" class="hover:text-emerald-400 transition-colors">FAQs</a></li>
+              <li><a href="#" class="hover:text-emerald-400 transition-colors">Track Order</a></li>
+            </ul>
+          </div>
+
+          <!-- Contact -->
+          <div>
+            <h3 class="text-white font-bold mb-4">Contact Us</h3>
+            <ul class="space-y-3 text-sm">
+              <li class="flex items-start gap-2">
+                <i class="fas fa-map-marker-alt text-emerald-400 mt-1"></i>
+                <span>Trivandrum, Kerala, India</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <i class="fas fa-phone text-emerald-400"></i>
+                <span><a href="tel:+91 8714454862">+91 87144 54862</a></span>
+              </li>
+              <li class="flex items-center gap-2">
+                <i class="fas fa-envelope text-emerald-400"></i>
+                <span><a href="mailto:aj110arjun@gmail.com">aj110arjun@gmail.com</a></span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+          <p>&copy; 2025 GearUp. All rights reserved. | <a href="#" class="hover:text-emerald-400">Privacy Policy</a> | <a href="#" class="hover:text-emerald-400">Terms of Service</a></p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const menuBtn = document.getElementById("menu-btn");
+      const mobileMenu = document.getElementById("mobile-menu");
+      
+      menuBtn.addEventListener("click", () => {
+        mobileMenu.classList.toggle("hidden");
+      });
+    </script>
+  </body>
+</html>
