@@ -80,143 +80,218 @@
         </div>
 
         <!-- Right side - Signup Form -->
-        <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
-            <div class="mx-auto w-full max-w-md">
-                <div class="lg:hidden mb-8">
-                    <a href="#" class="text-2xl font-bold text-emerald-700 flex items-center">
-                        <i class="fas fa-campground mr-2"></i>
-                        GearUp
-                    </a>
-                </div>
-                
-                <div class="bg-white py-8 px-6 shadow-lg rounded-lg sm:px-10 border border-emerald-100">
-                    <div class="flex items-center justify-center mb-6">
-                        <div class="bg-emerald-100 p-3 rounded-full">
-                            <i class="fas fa-user-plus text-emerald-700 text-xl"></i>
-                        </div>
-                    </div>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-2 text-center">Join GearUp</h2>
-                    <p class="text-gray-600 mb-8 text-center">Create your account and get prepared</p>
-                    
-                    <form class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
-                                <div class="mt-1">
-                                    <input id="firstName" name="firstName" type="text" value="{{form.first_name.value}}" required 
-                                        class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label for="lastName" class="block text-sm font-medium text-gray-700" value="{{form.last_name.value}}">Last Name</label>
-                                <div class="mt-1">
-                                    <input id="lastName" name="lastName" type="text" required 
-                                        class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                            <div class="mt-1">
-                                <input id="email" name="email" type="email" autocomplete="email" value="{{form.email.value}}" required 
-                                    class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                            <div class="mt-1 relative">
-                                <input id="password" name="password" type="password" autocomplete="new-password" value="{{form.password.value}}" required 
-                                    class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
-                                <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
-                                    <i class="far fa-eye text-gray-400"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                            <div class="mt-1 relative">
-                                <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required 
-                                    class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
-                                <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
-                                    <i class="far fa-eye text-gray-400"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <button type="submit" 
-                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
-                                Create Account
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <div class="mt-6">
-                        <div class="relative">
-                            <div class="absolute inset-0 flex items-center">
-                                <div class="w-full border-t border-gray-300"></div>
-                            </div>
-                            <div class="relative flex justify-center text-sm">
-                                <span class="px-2 bg-white text-gray-500">Or continue with</span>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-6 grid grid-cols-3 gap-3">
-                            <div>
-                                <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <i class="fab fa-google text-red-500"></i>
-                                </a>
-                            </div>
-                            <div>
-                                <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <i class="fab fa-facebook-f text-blue-600"></i>
-                                </a>
-                            </div>
-                            <div>
-                                <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <i class="fab fa-apple"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 text-center">
-                        <p class="text-sm text-gray-600">
-                            Already have an account? 
-                            <a href="{% url 'signin' %}" class="font-medium text-emerald-600 hover:text-emerald-500">Sign in</a>
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="mt-8 text-center text-sm text-gray-500">
-                    <p>&copy; 2025 GearUp Survival Toolkit. All rights reserved.</p>
+        <!-- Right side - Signup Form -->
+<div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
+    <div class="mx-auto w-full max-w-md">
+        <div class="lg:hidden mb-8">
+            <a href="#" class="text-2xl font-bold text-emerald-700 flex items-center">
+                <i class="fas fa-campground mr-2"></i>
+                GearUp
+            </a>
+        </div>
+        
+        <div class="bg-white py-8 px-6 shadow-lg rounded-lg sm:px-10 border border-emerald-100">
+            <div class="flex items-center justify-center mb-6">
+                <div class="bg-emerald-100 p-3 rounded-full">
+                    <i class="fas fa-user-plus text-emerald-700 text-xl"></i>
                 </div>
             </div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-2 text-center">Join GearUp</h2>
+            <p class="text-gray-600 mb-8 text-center">Create your account and get prepared</p>
+            
+            <!-- Display non-field errors -->
+            {% if form.non_field_errors %}
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">
+                            Please correct the errors below
+                        </h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- First Name Field with Error -->
+                    <div>
+                        <label for="id_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                        <div class="mt-1">
+                            <input id="id_first_name" 
+                                   name="first_name" 
+                                   type="text" 
+                                   value="{{ form.first_name.value|default:'' }}" 
+                                   required 
+                                   class="appearance-none block w-full px-3 py-2 border {% if form.first_name.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        {% if form.first_name.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {% for error in form.first_name.errors %}
+                            <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Last Name Field with Error -->
+                    <div>
+                        <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <div class="mt-1">
+                            <input id="id_last_name" 
+                                   name="last_name" 
+                                   type="text" 
+                                   value="{{ form.last_name.value|default:'' }}" 
+                                   required 
+                                   class="appearance-none block w-full px-3 py-2 border {% if form.last_name.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        {% if form.last_name.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {% for error in form.last_name.errors %}
+                            <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Email Field with Error -->
+                <div>
+                    <label for="id_email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                    <div class="mt-1">
+                        <input id="id_email" 
+                               name="email" 
+                               type="email" 
+                               autocomplete="email" 
+                               value="{{ form.email.value|default:'' }}" 
+                               required 
+                               class="appearance-none block w-full px-3 py-2 border {% if form.email.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+                    {% if form.email.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.email.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Password Field with Error -->
+                <div>
+                    <label for="id_password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <div class="mt-1 relative">
+                        <input id="id_password" 
+                            name="password" 
+                            type="password" 
+                            autocomplete="new-password" 
+                            required 
+                            class="appearance-none block w-full px-3 py-2 border {% if form.password.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                        <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <i class="far fa-eye text-gray-400"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.password.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if form.password.help_text %}
+                    <div class="mt-1 text-sm text-gray-500">
+                        {{ form.password.help_text }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password Field with Error -->
+                <div>
+                    <label for="id_confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <div class="mt-1 relative">
+                        <input id="id_confirm_password" 
+                            name="confirm_password" 
+                            type="password" 
+                            autocomplete="new-password" 
+                            required 
+                            class="appearance-none block w-full px-3 py-2 border {% if form.confirm_password.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                        <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <i class="far fa-eye text-gray-400"></i>
+                        </button>
+                    </div>
+                    {% if form.confirm_password.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                        {% for error in form.confirm_password.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <button type="submit" 
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Rest of your social login and signin link sections -->
+            <div class="mt-6">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 grid grid-cols-3 gap-3">
+                    <div>
+                        <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fab fa-google text-red-500"></i>
+                        </a>
+                    </div>
+                    <div>
+                        <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fab fa-facebook-f text-blue-600"></i>
+                        </a>
+                    </div>
+                    <div>
+                        <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fab fa-apple"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Already have an account? 
+                    <a href="{% url 'signin' %}" class="font-medium text-emerald-600 hover:text-emerald-500">Sign in</a>
+                </p>
+            </div>
         </div>
+        
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>&copy; 2025 GearUp Survival Toolkit. All rights reserved.</p>
+        </div>
+    </div>
+</div>
     </div>
 
     <script>
-        // Password visibility toggle
-        document.querySelectorAll('.password-toggle').forEach(button => {
-            button.addEventListener('click', function() {
-                const input = this.parentElement.querySelector('input');
-                const icon = this.querySelector('i');
-                
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            });
-        });
     </script>
 </body>
 </html>

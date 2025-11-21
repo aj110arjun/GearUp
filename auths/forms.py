@@ -1,9 +1,13 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import authenticate
+
 from .models import UserModel
 
-class UserCreationForm(forms.ModelForm):
+
+class UserCreationForm(BaseUserCreationForm):
     email = forms.EmailField(
         required=True,
         label="Email Address"
@@ -20,8 +24,8 @@ class UserCreationForm(forms.ModelForm):
     
     class Meta:
         model = UserModel
-        fields = ['email', 'first_name', 'last_name', 'password']
-        # Remove username from fields since we're using email
+        fields = ['email', 'first_name', 'last_name']
+        # Note: 'password' is not in fields because it's an extra field
     
     def clean_email(self):
         email = self.cleaned_data['email']
@@ -59,3 +63,42 @@ class UserCreationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class SigninForm(forms.Form):
+    email = forms.EmailField(
+        required=True,
+        label="Email Address",
+        widget=forms.EmailInput(attrs={
+            'autocomplete': 'email',
+            'placeholder': 'Enter your email address'
+        })
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'autocomplete': 'current-password',
+            'placeholder': 'Enter your password'
+        }),
+        label="Password"
+    )
+    remember_me = forms.BooleanField(
+        required=False,
+        label="Remember me"
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        password = cleaned_data.get('password')
+
+        if email and password:
+            # Authenticate using email as username
+            user = authenticate(username=email, password=password)
+            if user is None:
+                raise forms.ValidationError("Invalid email or password. Please try again.")
+            elif not user.is_active:
+                raise forms.ValidationError("This account is inactive.")
+            
+            cleaned_data['user'] = user
+        
+        return cleaned_data
