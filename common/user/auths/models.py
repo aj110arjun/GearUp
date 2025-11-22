@@ -19,6 +19,12 @@ class UserModel(AbstractUser):
             {'width': 200, 'height': 200, 'crop': 'fill'},
         ]
     )
+    email = models.EmailField(unique=True)
+
+    def save(self, *args, **kwargs):
+        if not self.username:
+            self.username = self.email
+        super().save(*args, **kwargs)
 
 
 class OTP(models.Model):
