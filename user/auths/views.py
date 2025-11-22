@@ -162,7 +162,7 @@ def resend_otp(request):
     email = signup_data['email']
 
     # Generate new OTP
-    otp = OTP.generate_otp(email)
+    otp = OTP.create_otp(email)
     send_otp_email(otp.email, otp.otp_code)
 
     # Update session
@@ -171,3 +171,5 @@ def resend_otp(request):
 
     messages.success(request, "New verification code sent!")
     return redirect('verify_otp')
+
+
