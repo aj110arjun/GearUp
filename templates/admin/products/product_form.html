@@ -1,0 +1,802 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+{% block title %}{% if is_edit %}Edit {{ product.name }} | {% else %}Add New Product | {% endif %}Admin Panel - GearUp{% endblock title %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <nav class="flex mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+              <li>
+                <a href="{% url 'products:product_list' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Products</a>
+              </li>
+              <li>
+                <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              </li>
+              <li>
+                <span class="text-gray-700 text-sm font-medium">
+                  {% if is_edit %}Edit Product{% else %}Add New Product{% endif %}
+                </span>
+              </li>
+            </ol>
+          </nav>
+          <h1 class="text-3xl font-bold text-gray-900">
+            {% if is_edit %}Edit {{ product.name }}{% else %}Add New Product{% endif %}
+          </h1>
+          <p class="mt-2 text-gray-600">
+            {% if is_edit %}
+            Update product information and inventory
+            {% else %}
+            Create a new product listing for your store
+            {% endif %}
+          </p>
+        </div>
+        
+        <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+          <a href="{% if is_edit %}{% url 'products:product_detail' product_slug=product.slug %}{% else %}{% url 'products:product_list' %}{% endif %}"
+             class="inline-flex items-center px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-all duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            {% if is_edit %}Back to Product{% else %}Back to Products{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form -->
+    <form method="post" enctype="multipart/form-data" id="product-form" novalidate>
+      {% csrf_token %}
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column - Product Details -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Basic Information Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Basic Information</h2>
+              <p class="text-sm text-gray-600 mt-1">Essential product details and description</p>
+            </div>
+            <div class="p-6 space-y-6">
+              
+              <!-- Product Name -->
+              <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.name.label }} <span class="text-red-500">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.name.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+
+              <!-- Brand -->
+              <div>
+                <label for="{{ form.brand.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.brand.label }} <span class="text-red-500">*</span>
+                </label>
+                {{ form.brand }}
+                {% if form.brand.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.brand.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+
+              <!-- SKU -->
+              <div>
+                <label for="{{ form.sku.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.sku.label }}
+                </label>
+                {{ form.sku }}
+                {% if form.sku.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.sku.errors.0 }}
+                  </p>
+                {% endif %}
+                {% if form.sku.help_text %}
+                  <p class="text-gray-500 text-sm mt-1">{{ form.sku.help_text }}</p>
+                {% endif %}
+              </div>
+
+              <!-- Category -->
+              <div>
+                <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.category.label }} <span class="text-red-500">*</span>
+                </label>
+                {{ form.category }}
+                {% if form.category.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.category.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+
+              <!-- Description -->
+              <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.description.label }} <span class="text-red-500">*</span>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.description.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Primary Product Image Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Primary Product Image</h2>
+              <p class="text-sm text-gray-600 mt-1">Main product display image</p>
+            </div>
+            <div class="p-6">
+              <div>
+                <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.image.label }}
+                </label>
+                {{ form.image }}
+                {% if form.image.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.image.errors.0 }}
+                  </p>
+                {% endif %}
+                {% if form.image.help_text %}
+                  <p class="text-gray-500 text-sm mt-1">{{ form.image.help_text }}</p>
+                {% endif %}
+                {% if is_edit and product.image %}
+                  <div class="mt-3">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="h-32 w-32 object-cover rounded-lg border border-gray-200">
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Product Images Section -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Additional Product Images</h2>
+              <p class="text-sm text-gray-600 mt-1">Upload multiple product images (up to 10)</p>
+            </div>
+            <div class="p-6">
+              {{ image_formset.management_form }}
+              <div id="image-forms" class="space-y-4">
+                {% for form in image_formset %}
+                <div class="image-form p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                  {% endfor %}
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                    <!-- Image Upload -->
+                    <div class="md:col-span-10">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Image {{ forloop.counter }}</label>
+                      {{ form.image }}
+                      {% if form.image.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
+                      {% endif %}
+                      {% if form.instance.image %}
+                        <div class="mt-2">
+                          <img src="{{ form.instance.image.url }}" alt="Additional image" class="h-20 w-20 object-cover rounded border border-gray-200">
+                        </div>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Delete -->
+                    {% if image_formset.can_delete %}
+                    <div class="md:col-span-2">
+                      <div class="flex items-center h-full pt-6">
+                        <div class="flex items-center">
+                          {{ form.DELETE }}
+                          <label for="{{ form.DELETE.id_for_label }}" class="ml-2 text-sm text-red-600">Delete</label>
+                        </div>
+                      </div>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              
+              <!-- Add More Images Button -->
+              <button type="button" id="add-image-form" class="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Another Image
+              </button>
+            </div>
+          </div>
+
+          <!-- Product Variants Section -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Product Variants</h2>
+              <p class="text-sm text-gray-600 mt-1">Add different variants (colors, sizes, prices - up to 20)</p>
+            </div>
+            <div class="p-6">
+              {{ variant_formset.management_form }}
+              <div id="variant-forms" class="space-y-6">
+                {% for form in variant_formset %}
+                <div class="variant-form p-5 border-2 border-gray-200 rounded-lg bg-gray-50">
+                  {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                  {% endfor %}
+                  
+                  <div class="mb-4 pb-2 border-b border-gray-300">
+                    <h3 class="text-sm font-semibold text-gray-700">Variant {{ forloop.counter }}</h3>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Color -->
+                    <div>
+                      <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.color.label }} <span class="text-red-500">*</span>
+                      </label>
+                      {{ form.color }}
+                      {% if form.color.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.color.errors.0 }}</p>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Size -->
+                    <div>
+                      <label for="{{ form.size.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.size.label }} <span class="text-red-500">*</span>
+                      </label>
+                      {{ form.size }}
+                      {% if form.size.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.size.errors.0 }}</p>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Variant SKU -->
+                    <div>
+                      <label for="{{ form.sku.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.sku.label }}
+                      </label>
+                      {{ form.sku }}
+                      {% if form.sku.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.sku.errors.0 }}</p>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Price -->
+                    <div>
+                      <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.price.label }} <span class="text-red-500">*</span>
+                      </label>
+                      <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                        {{ form.price }}
+                      </div>
+                      {% if form.price.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.price.errors.0 }}</p>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Compare Price -->
+                    <div>
+                      <label for="{{ form.compare_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.compare_price.label }}
+                      </label>
+                      <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                        {{ form.compare_price }}
+                      </div>
+                      {% if form.compare_price.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.compare_price.errors.0 }}</p>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Stock Quantity -->
+                    <div>
+                      <label for="{{ form.stock_quantity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.stock_quantity.label }} <span class="text-red-500">*</span>
+                      </label>
+                      {{ form.stock_quantity }}
+                      {% if form.stock_quantity.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.stock_quantity.errors.0 }}</p>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Weight -->
+                    <div>
+                      <label for="{{ form.weight.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.weight.label }}
+                      </label>
+                      <div class="relative">
+                        {{ form.weight }}
+                        <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 text-sm">grams</span>
+                      </div>
+                      {% if form.weight.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.weight.errors.0 }}</p>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Active Status -->
+                    <div class="flex items-center space-x-6">
+                      <div class="flex items-center">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                          {{ form.is_active.label }}
+                        </label>
+                      </div>
+                      
+                      <!-- Delete -->
+                      {% if variant_formset.can_delete %}
+                      <div class="flex items-center">
+                        {{ form.DELETE }}
+                        <label for="{{ form.DELETE.id_for_label }}" class="ml-2 text-sm text-red-600 font-medium">
+                          Delete Variant
+                        </label>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              
+              <!-- Add More Variants Button -->
+              <button type="button" id="add-variant-form" class="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Another Variant
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Settings & Actions -->
+        <div class="space-y-6">
+          
+          <!-- Product Settings Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Product Settings</h2>
+              <p class="text-sm text-gray-600 mt-1">Control product behavior</p>
+            </div>
+            <div class="p-6 space-y-4">
+              <!-- Active Status -->
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">{{ form.is_active.label }}</p>
+                  <p class="text-xs text-gray-600">Make product visible in store</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.is_active }}
+                  <div class="toggle-switch"></div>
+                </label>
+              </div>
+
+              <!-- Track Inventory -->
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">{{ form.track_inventory.label }}</p>
+                  <p class="text-xs text-gray-600">Track stock levels for variants</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.track_inventory }}
+                  <div class="toggle-switch"></div>
+                </label>
+              </div>
+
+              <!-- Featured Product -->
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">{{ form.is_featured.label }}</p>
+                  <p class="text-xs text-gray-600">Display on homepage</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.is_featured }}
+                  <div class="toggle-switch"></div>
+                </label>
+              </div>
+
+              <!-- Bestseller -->
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">{{ form.is_bestseller.label }}</p>
+                  <p class="text-xs text-gray-600">Mark as bestseller product</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.is_bestseller }}
+                  <div class="toggle-switch"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEO Settings Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">SEO Settings</h2>
+              <p class="text-sm text-gray-600 mt-1">Optimize for search engines</p>
+            </div>
+            <div class="p-6 space-y-4">
+              <!-- Meta Title -->
+              <div>
+                <label for="{{ form.meta_title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.meta_title.label }}
+                </label>
+                {{ form.meta_title }}
+                {% if form.meta_title.errors %}
+                  <p class="text-red-500 text-sm mt-1">{{ form.meta_title.errors.0 }}</p>
+                {% endif %}
+                <p class="text-gray-500 text-xs mt-1">Recommended: 50-60 characters</p>
+              </div>
+
+              <!-- Meta Description -->
+              <div>
+                <label for="{{ form.meta_description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.meta_description.label }}
+                </label>
+                {{ form.meta_description }}
+                {% if form.meta_description.errors %}
+                  <p class="text-red-500 text-sm mt-1">{{ form.meta_description.errors.0 }}</p>
+                {% endif %}
+                <p class="text-gray-500 text-xs mt-1">Recommended: 150-160 characters</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Actions</h2>
+            </div>
+            <div class="p-6 space-y-4">
+              <button type="submit"
+                      class="w-full inline-flex items-center justify-center px-4 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {% if is_edit %}Update Product{% else %}Create Product{% endif %}
+              </button>
+              
+              <a href="{% if is_edit %}{% url 'products:product_detail' product_slug=product.slug %}{% else %}{% url 'products:product_list' %}{% endif %}"
+                 class="w-full inline-flex items-center justify-center px-4 py-3 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancel
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JavaScript for Dynamic Forms -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Add image form dynamically
+  const addImageBtn = document.getElementById('add-image-form');
+  if (addImageBtn) {
+    addImageBtn.addEventListener('click', function() {
+      const totalForms = document.getElementById('id_additional_images-TOTAL_FORMS');
+      const imageForms = document.getElementById('image-forms');
+      const formNum = parseInt(totalForms.value);
+      
+      // Check if we've reached the max number of forms
+      if (formNum >= 10) {
+        alert('Maximum of 10 additional images allowed');
+        return;
+      }
+      
+      const newForm = imageForms.children[0].cloneNode(true);
+      newForm.innerHTML = newForm.innerHTML.replace(/additional_images-\d+-/g, `additional_images-${formNum}-`);
+      newForm.innerHTML = newForm.innerHTML.replace(/additional_images\['\d+'\]/g, `additional_images['${formNum}']`);
+      
+      // Clear input values
+      newForm.querySelectorAll('input[type="file"]').forEach(input => {
+        input.value = '';
+      });
+      newForm.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        if (input.name.includes('DELETE')) {
+          input.checked = false;
+        }
+      });
+      
+      // Remove existing image preview if any
+      const imgPreview = newForm.querySelector('img');
+      if (imgPreview) {
+        imgPreview.remove();
+      }
+      
+      imageForms.appendChild(newForm);
+      totalForms.value = formNum + 1;
+    });
+  }
+
+  // Add variant form dynamically
+  const addVariantBtn = document.getElementById('add-variant-form');
+  if (addVariantBtn) {
+    addVariantBtn.addEventListener('click', function() {
+      const totalForms = document.getElementById('id_variants-TOTAL_FORMS');
+      const variantForms = document.getElementById('variant-forms');
+      const formNum = parseInt(totalForms.value);
+      
+      // Check if we've reached the max number of forms
+      if (formNum >= 20) {
+        alert('Maximum of 20 variants allowed');
+        return;
+      }
+      
+      const newForm = variantForms.children[0].cloneNode(true);
+      newForm.innerHTML = newForm.innerHTML.replace(/variants-\d+-/g, `variants-${formNum}-`);
+      newForm.innerHTML = newForm.innerHTML.replace(/variants\['\d+'\]/g, `variants['${formNum}']`);
+      
+      // Update variant counter in heading
+      newForm.querySelector('h3').textContent = `Variant ${formNum + 1}`;
+      
+      // Clear input values
+      newForm.querySelectorAll('input, textarea, select').forEach(input => {
+        if (input.type !== 'hidden' && input.name !== 'csrfmiddlewaretoken') {
+          if (input.type === 'checkbox') {
+            if (input.name.includes('is_active')) {
+              input.checked = true; // Default active to checked
+            } else {
+              input.checked = false;
+            }
+          } else {
+            input.value = '';
+          }
+        }
+      });
+      
+      variantForms.appendChild(newForm);
+      totalForms.value = formNum + 1;
+    });
+  }
+
+  // Form validation
+  const form = document.getElementById('product-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      let isValid = true;
+      let errorMessages = [];
+      
+      // Clear previous error styles
+      document.querySelectorAll('.border-red-500').forEach(el => {
+        el.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+      });
+      
+      // Validate required fields
+      const requiredFields = form.querySelectorAll('[required]');
+      requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+          isValid = false;
+          field.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+        }
+      });
+      
+      // Validate at least one variant
+      const variantFormsCount = document.querySelectorAll('.variant-form').length;
+      const deletedVariants = document.querySelectorAll('input[name*="DELETE"]:checked').length;
+      
+      if (variantFormsCount - deletedVariants === 0) {
+        isValid = false;
+        errorMessages.push('At least one product variant is required');
+      }
+      
+      if (!isValid) {
+        e.preventDefault();
+        
+        // Show error messages
+        if (errorMessages.length > 0) {
+          alert(errorMessages.join('\n'));
+        }
+        
+        // Scroll to first error
+        const firstError = document.querySelector('.border-red-500');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstError.focus();
+        }
+      }
+    });
+  }
+
+  // Toggle switch functionality for checkboxes
+  document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    if (checkbox.classList.contains('form-check-input')) {
+      checkbox.style.display = 'none';
+      
+      const toggleSwitch = checkbox.nextElementSibling;
+      if (toggleSwitch && toggleSwitch.classList.contains('toggle-switch')) {
+        // Set initial state
+        if (checkbox.checked) {
+          toggleSwitch.classList.add('active');
+        }
+        
+        // Toggle on click
+        toggleSwitch.addEventListener('click', function() {
+          checkbox.checked = !checkbox.checked;
+          toggleSwitch.classList.toggle('active');
+        });
+      }
+    }
+  });
+});
+</script>
+
+<style>
+/* Custom styles for form elements */
+.form-control, .form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.form-control:focus, .form-select:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-control.error, .form-select.error {
+  border-color: #ef4444;
+}
+
+/* Price input with dollar sign */
+input[name*="price"] {
+  padding-left: 2rem;
+}
+
+/* Weight input */
+input[name*="weight"] {
+  padding-right: 4rem;
+}
+
+/* Checkbox styles */
+input[type="checkbox"]:not(.form-check-input) {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+}
+
+input[type="checkbox"]:not(.form-check-input):checked {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+/* Toggle switch styles */
+.toggle-switch {
+  width: 2.75rem;
+  height: 1.5rem;
+  background-color: #d1d5db;
+  border-radius: 9999px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: white;
+  border-radius: 9999px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-switch.active {
+  background-color: #4f46e5;
+}
+
+.toggle-switch.active::after {
+  transform: translateX(1.25rem);
+}
+
+/* File input styles */
+input[type="file"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
+  margin-right: 0.75rem;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+  background-color: #e5e7eb;
+}
+
+/* Textarea styles */
+textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Error state */
+.border-red-500 {
+  border-color: #ef4444 !important;
+}
+
+.ring-red-500 {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Button hover effects */
+button:hover, a.inline-flex:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+button:active, a.inline-flex:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .variant-form .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .variant-form .md\:col-span-3,
+  .variant-form .md\:col-span-2 {
+    grid-column: span 1;
+  }
+}
+</style>
+{% endblock content %}
