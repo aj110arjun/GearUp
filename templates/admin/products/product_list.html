@@ -1,0 +1,306 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Admin - Product Management{% endblock title %}
+
+{% block content %}
+<div class="px-6 py-8 bg-gray-50 min-h-screen">
+
+  <!-- Header with Stats -->
+  <div class="mb-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900">Product Management</h2>
+        <p class="text-gray-600 mt-1">Manage your product catalog and inventory</p>
+      </div>
+      <div class="flex space-x-3 mt-4 md:mt-0">
+        <a href="{% url 'products:product_create' %}"
+           class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-md transition flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add Product
+        </a>
+      </div>
+    </div>
+
+  <!-- Filters and Search -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2 md:mb-0">Filter Products</h3>
+      <div class="flex items-center space-x-2">
+        <button id="bulk-actions-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+          Bulk Actions
+        </button>
+        <button id="filter-toggle" class="md:hidden bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
+          </svg>
+          Filters
+        </button>
+      </div>
+    </div>
+
+    <form method="get" id="filter-form" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+        <select name="category"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if filters.category == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Stock Status</label>
+        <select name="in_stock"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="">All Stock Status</option>
+          <option value="true" {% if filters.in_stock == 'true' %}selected{% endif %}>In Stock</option>
+          <option value="false" {% if filters.in_stock == 'false' %}selected{% endif %}>Out of Stock</option>
+          <option value="low" {% if filters.in_stock == 'low' %}selected{% endif %}>Low Stock</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <select name="is_active"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="">All Status</option>
+          <option value="true" {% if filters.is_active == 'true' %}selected{% endif %}>Active</option>
+          <option value="false" {% if filters.is_active == 'false' %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+        <select name="sort"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="">Default</option>
+          <option value="name" {% if filters.sort == 'name' %}selected{% endif %}>Name (A–Z)</option>
+          <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>Price Low → High</option>
+          <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Price High → Low</option>
+          <option value="stock_asc" {% if filters.sort == 'stock_asc' %}selected{% endif %}>Stock Low → High</option>
+          <option value="stock_desc" {% if filters.sort == 'stock_desc' %}selected{% endif %}>Stock High → Low</option>
+          <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest First</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+        <div class="relative flex items-center">
+          <input type="text" name="q" id="search-input"
+                 value="{{ filters.search }}"
+                 placeholder="Search products..."
+                 class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-20">
+          <button type="button" id="clear-btn"
+                  class="absolute right-12 text-gray-400 hover:text-gray-600 text-xl transition"
+                  aria-label="Clear search">&times;</button>
+          <button type="submit"
+                  class="absolute right-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition">
+            Search
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Applied Filters -->
+    {% if applied_filters %}
+    <div class="mt-4 flex flex-wrap gap-2">
+      <span class="text-sm text-gray-600">Applied filters:</span>
+      {% for filter in applied_filters %}
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+        {{ filter }}
+        <button type="button" class="ml-1.5 text-indigo-600 hover:text-indigo-900">
+          &times;
+        </button>
+      </span>
+      {% endfor %}
+      <a href="?" class="text-sm text-indigo-600 hover:text-indigo-800 ml-2">Clear all</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Products Table -->
+  <div class="bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for product in products %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-12 w-12 mr-4">
+                  <img class="h-12 w-12 rounded-lg object-cover border border-gray-200" 
+                       src="{{ product.image.url|default:'/static/images/no-image.jpg' }}" 
+                       alt="{{ product.name }}">
+                </div>
+                <div class="ml-0">
+                  <div class="text-sm font-medium text-gray-900">{{ product.name|title }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ product.category.name }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if product.is_active %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Active
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  Inactive
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {% if product.variants.first %}
+                ₹{{ product.variants.first.price }}
+              {% else %}
+                <span class="text-gray-400">No Variant</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                {% if product.total_stock > 10 %}
+                  <span class="text-sm text-gray-900">{{ product.total_stock }}</span>
+                {% elif product.total_stock > 0 %}
+                  <span class="text-sm text-yellow-600 font-medium">{{ product.total_stock }}</span>
+                  <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Low
+                  </span>
+                {% else %}
+                  <span class="text-sm text-red-600 font-medium">0</span>
+                  <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    Out
+                  </span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <a href="{% url 'admin_product_detail' product.product_id %}" 
+                   class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md text-sm transition">
+                  View
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="px-6 py-12 text-center">
+              <div class="flex flex-col items-center justify-center">
+                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">No products found</h3>
+                <p class="text-gray-500 mb-4">Try adjusting your search or filter to find what you're looking for.</p>
+                <a href="{% url 'products:product_create' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                  Add Your First Product
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if products.paginator.count > 0 %}
+  <div class="flex flex-col md:flex-row justify-between items-center mt-6 px-2">
+    <p class="text-sm text-gray-700 mb-4 md:mb-0">
+      Showing <span class="font-medium">{{ products.start_index }}</span> to <span class="font-medium">{{ products.end_index }}</span> of 
+      <span class="font-medium">{{ products.paginator.count }}</span> results
+    </p>
+
+    <div class="flex items-center space-x-1">
+      {% if products.has_previous %}
+        <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+           class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+          Previous
+        </a>
+      {% endif %}
+
+      {% for num in products.paginator.page_range %}
+        {% if products.number == num %}
+          <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+            {{ num }}
+          </a>
+        {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+          <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+            {{ num }}
+          </a>
+        {% endif %}
+      {% endfor %}
+
+      {% if products.has_next %}
+        <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+           class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+          Next
+        </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- JavaScript -->
+<script>
+  // Clear search functionality
+  const input = document.getElementById('search-input');
+  const clearBtn = document.getElementById('clear-btn');
+
+  function toggleClearBtn() {
+    clearBtn.style.display = input.value ? 'block' : 'none';
+  }
+
+  input.addEventListener('input', toggleClearBtn);
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    toggleClearBtn();
+    input.focus();
+  });
+
+  toggleClearBtn();
+
+  // Mobile filter toggle
+  const filterToggle = document.getElementById('filter-toggle');
+  const filterForm = document.getElementById('filter-form');
+  
+  if (filterToggle && filterForm) {
+    filterToggle.addEventListener('click', () => {
+      filterForm.classList.toggle('hidden');
+      filterForm.classList.toggle('grid');
+    });
+  }
+
+  // Auto-submit filters on change (except search)
+  const filterSelects = document.querySelectorAll('select[name="category"], select[name="in_stock"], select[name="is_active"], select[name="sort"]');
+  filterSelects.forEach(select => {
+    select.addEventListener('change', function() {
+      this.form.submit();
+    });
+  });
+</script>
+{% endblock content %}

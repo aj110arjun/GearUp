@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - GearUp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Hide number input spinners */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <div class="text-center mb-6">
+            <div class="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-shield-alt text-emerald-600 text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Verify Your Email</h2>
+            <p class="text-gray-600 mt-2">We sent a 4-digit verification code to</p>
+            <p class="text-emerald-600 font-medium mt-1">{{ email }}</p>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3 text-center">
+                    Enter 4-digit code
+                </label>
+                <input type="text" 
+                       name="otp_code" 
+                       maxlength="4" 
+                       class="w-full text-center text-2xl tracking-widest font-mono border border-gray-300 rounded-lg py-4 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                       placeholder="0000"
+                       inputmode="numeric"
+                       pattern="[0-9]*"
+                       required
+                       autocomplete="one-time-code"
+                       autofocus>
+                {% if form.otp_code.errors %}
+                <div class="mt-2 text-sm text-red-600 text-center">
+                    {% for error in form.otp_code.errors %}
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
+                        {{ error }}
+                    </p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="text-center">
+                <div id="timer" class="text-sm {% if is_expired %}text-red-600{% else %}text-gray-600{% endif %} mb-4">
+                    {% if is_expired %}
+                    <i class="fas fa-clock mr-1"></i>Code expired
+                    {% else %}
+                    <i class="fas fa-clock mr-1"></i>Code expires in: <span id="time" class="font-mono">{{ timer_display }}</span>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-emerald-600 text-white py-3 rounded-lg font-medium hover:bg-emerald-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        {% if is_expired %}disabled{% endif %}>
+                    Verify & Create Account
+                </button>
+                
+                <div class="mt-4 text-sm">
+                    <p class="text-gray-600">
+                        Didn't receive the code? 
+                        <a href="{% url 'resend_otp' %}" 
+                           class="text-emerald-600 hover:text-emerald-500 font-medium {% if not is_expired %}opacity-50 cursor-not-allowed{% endif %}"
+                           {% if not is_expired %}onclick="return false;"{% endif %}>
+                            Resend OTP
+                        </a>
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Resend available when timer expires
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let timeLeft = {{ remaining_time }};
+        const timerElement = document.getElementById('timer');
+        const timeElement = document.getElementById('time');
+        const submitButton = document.querySelector('button[type="submit"]');
+        const resendLink = document.querySelector('a[href*="resend-otp"]');
+        
+        function updateTimer() {
+            if (timeLeft <= 0) {
+                timeElement.textContent = '00:00';
+                timerElement.innerHTML = '<i class="fas fa-clock mr-1"></i>Code expired';
+                timerElement.className = 'text-sm text-red-600 mb-4';
+                submitButton.disabled = true;
+                submitButton.textContent = 'Code Expired';
+                resendLink.classList.remove('opacity-50', 'cursor-not-allowed');
+                resendLink.removeAttribute('onclick');
+                return;
+            }
+            
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timeElement.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            timeLeft--;
+            setTimeout(updateTimer, 1000);
+        }
+        
+        // Auto-focus and auto-tab for better UX
+        document.addEventListener('DOMContentLoaded', function() {
+            const otpInput = document.querySelector('input[name="otp_code"]');
+            if (otpInput) {
+                otpInput.focus();
+                
+                // Auto-format on input
+                otpInput.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 4);
+                });
+            }
+            
+            updateTimer();
+        });
+    </script>
+</body>
+</html>

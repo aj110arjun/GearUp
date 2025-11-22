@@ -1,0 +1,386 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Admin Dashboard - E-commerce Analytics{% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<main class="p-6 bg-gray-50 min-h-screen space-y-8">
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+      <p class="text-gray-600 mt-2">Welcome back, {{ user.username|title }}! Here's your business overview.</p>
+    </div>
+    <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+      <a href=""
+         class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-md hover:from-blue-700 hover:to-blue-800 transition-all">
+        <i class="fas fa-file-pdf mr-2"></i>
+        Download Report (PDF)
+      </a>
+      <button class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition">
+        <i class="fas fa-sync-alt mr-2"></i>
+        Refresh Data
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Total Orders Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transition-transform hover:scale-[1.02]">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Orders</p>
+          <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_orders }}</p>
+          <p class="text-xs text-gray-500 mt-1">All time orders</p>
+        </div>
+        <div class="p-3 bg-blue-50 rounded-xl">
+          <i class="fas fa-shopping-bag text-blue-500 text-xl"></i>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center">
+        <span class="text-green-500 text-sm font-medium flex items-center">
+          <i class="fas fa-arrow-up mr-1"></i> 12.5%
+        </span>
+        <span class="text-gray-500 text-xs ml-2">vs last month</span>
+      </div>
+    </div>
+
+    <!-- Total Sales Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transition-transform hover:scale-[1.02]">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Sales</p>
+          <p class="text-3xl font-bold text-gray-900 mt-2">₹{{ total_sales }}</p>
+          <p class="text-xs text-gray-500 mt-1">Revenue generated</p>
+        </div>
+        <div class="p-3 bg-green-50 rounded-xl">
+          <i class="fas fa-rupee-sign text-green-500 text-xl"></i>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center">
+        <span class="text-green-500 text-sm font-medium flex items-center">
+          <i class="fas fa-arrow-up mr-1"></i> 18.3%
+        </span>
+        <span class="text-gray-500 text-xs ml-2">vs last month</span>
+      </div>
+    </div>
+
+    <!-- Completed Orders Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transition-transform hover:scale-[1.02]">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Completed Orders</p>
+          <p class="text-3xl font-bold text-gray-900 mt-2">{{ completed_orders }}</p>
+          <p class="text-xs text-gray-500 mt-1">Successfully delivered</p>
+        </div>
+        <div class="p-3 bg-purple-50 rounded-xl">
+          <i class="fas fa-check-circle text-purple-500 text-xl"></i>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center">
+        <span class="text-green-500 text-sm font-medium flex items-center">
+          <i class="fas fa-arrow-up mr-1"></i> 8.2%
+        </span>
+        <span class="text-gray-500 text-xs ml-2">vs last month</span>
+      </div>
+    </div>
+
+    <!-- Pending Orders Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transition-transform hover:scale-[1.02]">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Pending Orders</p>
+          <p class="text-3xl font-bold text-gray-900 mt-2">{{ pending_orders }}</p>
+          <p class="text-xs text-gray-500 mt-1">Awaiting fulfillment</p>
+        </div>
+        <div class="p-3 bg-orange-50 rounded-xl">
+          <i class="fas fa-clock text-orange-500 text-xl"></i>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center">
+        <span class="text-red-500 text-sm font-medium flex items-center">
+          <i class="fas fa-arrow-down mr-1"></i> 5.7%
+        </span>
+        <span class="text-gray-500 text-xs ml-2">vs last month</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts and Analytics Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Sales Chart -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:col-span-2">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">Sales Analytics</h3>
+          <p class="text-gray-500 text-sm">Revenue performance over time</p>
+        </div>
+        <form method="get" action="" class="flex items-center gap-3 mt-3 md:mt-0" id="chart-filter-form">
+          <select name="filter"
+                  class="border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
+            <option value="daily" {% if selected_filter == "daily" %}selected{% endif %}>Daily</option>
+            <option value="monthly" {% if selected_filter == "monthly" %}selected{% endif %}>Monthly</option>
+            <option value="yearly" {% if selected_filter == "yearly" %}selected{% endif %}>Yearly</option>
+          </select>
+        </form>
+      </div>
+
+      <!-- Chart Container -->
+      <div id="sales-chart" class="ct-chart h-80 relative">
+        {% if not daily_sales %}
+        <div class="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg">
+          <div class="text-center text-gray-500">
+            <i class="fas fa-chart-line text-4xl mb-3 opacity-50"></i>
+            <p class="text-lg font-medium">No sales data available</p>
+            <p class="text-sm">Sales chart will appear here when data is available</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <h3 class="text-lg font-bold text-gray-900 mb-6">Performance Metrics</h3>
+      
+      <div class="space-y-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="p-2 bg-blue-50 rounded-lg mr-3">
+              <i class="fas fa-shopping-cart text-blue-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Conversion Rate</p>
+              <p class="text-xs text-gray-500">Last 30 days</p>
+            </div>
+          </div>
+          <span class="text-lg font-bold text-gray-900">3.2%</span>
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="p-2 bg-green-50 rounded-lg mr-3">
+              <i class="fas fa-user text-green-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Customer Growth</p>
+              <p class="text-xs text-gray-500">New customers</p>
+            </div>
+          </div>
+          <span class="text-lg font-bold text-gray-900">+124</span>
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="p-2 bg-purple-50 rounded-lg mr-3">
+              <i class="fas fa-box text-purple-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Avg. Order Value</p>
+              <p class="text-xs text-gray-500">Last 30 days</p>
+            </div>
+          </div>
+          <span class="text-lg font-bold text-gray-900">₹2,450</span>
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="p-2 bg-yellow-50 rounded-lg mr-3">
+              <i class="fas fa-undo text-yellow-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Return Rate</p>
+              <p class="text-xs text-gray-500">Product returns</p>
+            </div>
+          </div>
+          <span class="text-lg font-bold text-gray-900">2.1%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Performers Section -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Top Products -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+        <h3 class="font-bold text-gray-900">Top Products</h3>
+        <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Last 30 days</span>
+      </div>
+      <div class="p-4 max-h-96 overflow-y-auto">
+        {% if top_products %}
+        <ul class="divide-y divide-gray-100">
+          {% for prod in top_products %}
+            <li class="py-3 flex items-center">
+              <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-cube text-gray-500"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ prod.variant__product__name|truncatewords:4 }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ prod.quantity_sold }} units sold</p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                ₹{{ prod.total_revenue|default:0 }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+          <i class="fas fa-cube text-3xl mb-3 opacity-50"></i>
+          <p>No product data available</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Top Categories -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+        <h3 class="font-bold text-gray-900">Top Categories</h3>
+        <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">By revenue</span>
+      </div>
+      <div class="p-4 max-h-96 overflow-y-auto">
+        {% if top_categories %}
+        <ul class="divide-y divide-gray-100">
+          {% for cat in top_categories %}
+            <li class="py-3 flex items-center">
+              <div class="flex-shrink-0 h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-tags text-green-600"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-gray-900">{{ cat.variant__product__category__name }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ cat.quantity_sold }} items sold</p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                {{ cat.quantity_sold }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+          <i class="fas fa-tags text-3xl mb-3 opacity-50"></i>
+          <p>No category data available</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Top Brands -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+        <h3 class="font-bold text-gray-900">Top Brands</h3>
+        <span class="text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">By units sold</span>
+      </div>
+      <div class="p-4 max-h-96 overflow-y-auto">
+        {% if top_brands %}
+        <ul class="divide-y divide-gray-100">
+          {% for brand in top_brands %}
+            <li class="py-3 flex items-center">
+              <div class="flex-shrink-0 h-10 w-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-star text-yellow-600"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-gray-900">{{ brand.variant__product__brand|default:"Unknown" }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ brand.quantity_sold }} products sold</p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                {{ brand.quantity_sold }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+          <i class="fas fa-star text-3xl mb-3 opacity-50"></i>
+          <p>No brand data available</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Check if we have sales data
+    const hasSalesData = {{ daily_sales|length }} > 0;
+    
+    if (hasSalesData) {
+      // Format data for Chartist
+      const labels = [{% for day in daily_sales %}'{{ day.date }}',{% endfor %}];
+      const series = [{% for day in daily_sales %}{{ day.sales }},{% endfor %}];
+      
+      console.log('Chart Data:', { labels, series }); // Debug log
+      
+      // Create chart
+      new Chartist.Line('#sales-chart', {
+        labels: labels,
+        series: [series]
+      }, {
+        showArea: true,
+        lineSmooth: true,
+        fullWidth: true,
+        chartPadding: {
+          right: 20,
+          left: 20,
+          top: 20,
+          bottom: 20
+        },
+        axisX: {
+          showGrid: true,
+          showLabel: true
+        },
+        axisY: {
+          onlyInteger: false,
+          low: 0
+        }
+      });
+    } else {
+      console.log('No sales data available'); // Debug log
+    }
+
+    // Auto-submit when filter changes
+    const filterSelect = document.querySelector('select[name="filter"]');
+    if (filterSelect) {
+      filterSelect.addEventListener('change', function() {
+        document.getElementById('chart-filter-form').submit();
+      });
+    }
+  });
+</script>
+
+<style>
+  /* Custom Chartist styles */
+  .ct-series-a .ct-line {
+    stroke: #3b82f6;
+    stroke-width: 3px;
+  }
+  
+  .ct-series-a .ct-point {
+    stroke: #3b82f6;
+    stroke-width: 8px;
+  }
+  
+  .ct-series-a .ct-area {
+    fill: #3b82f6;
+    fill-opacity: 0.1;
+  }
+  
+  .ct-grid {
+    stroke: #e5e7eb;
+    stroke-dasharray: 0;
+    stroke-width: 1px;
+  }
+  
+  .ct-label {
+    color: #6b7280;
+    font-size: 0.75rem;
+  }
+</style>
+{% endblock content %}

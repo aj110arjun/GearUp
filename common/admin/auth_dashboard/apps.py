@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class HomeDashboardConfig(AppConfig):
+class AuthsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'home_dashboard'
+    name = 'common.admin.auth_dashboard'

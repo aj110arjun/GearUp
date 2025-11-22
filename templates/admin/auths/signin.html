@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Sign In - GearUp</title>
+    <script src="https://unpkg.com/tailwindcss@3.4.10/dist/tailwind.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        },
+                        blue: {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .admin-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div class="min-h-screen flex">
+        <!-- Left side - Admin Theme -->
+        <div class="hidden lg:flex lg:flex-1 admin-bg text-white p-12 flex-col justify-between">
+            <div>
+                <a href="#" class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    GearUp Admin
+                </a>
+                <h1 class="text-4xl font-bold mt-16 mb-6">Administrative Portal</h1>
+                <p class="text-lg opacity-90">Secure access to your ecommerce management dashboard.</p>
+            </div>
+            <div class="flex space-x-4">
+                <div class="glass-effect p-4 rounded-lg">
+                    <i class="fas fa-database text-2xl mb-2"></i>
+                    <h3 class="font-semibold">Database</h3>
+                    <p class="text-sm opacity-80">Full control</p>
+                </div>
+                <div class="glass-effect p-4 rounded-lg">
+                    <i class="fas fa-cog text-2xl mb-2"></i>
+                    <h3 class="font-semibold">Settings</h3>
+                    <p class="text-sm opacity-80">System configuration</p>
+                </div>
+                <div class="glass-effect p-4 rounded-lg">
+                    <i class="fas fa-user-shield text-2xl mb-2"></i>
+                    <h3 class="font-semibold">Security</h3>
+                    <p class="text-sm opacity-80">Protected access</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right side - Admin Signin Form -->
+        <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
+            <div class="mx-auto w-full max-w-md">
+                <div class="lg:hidden mb-8">
+                    <a href="#" class="text-2xl font-bold text-slate-800 flex items-center">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        GearUp Admin
+                    </a>
+                </div>
+                
+                <div class="bg-white py-8 px-6 shadow-xl rounded-lg sm:px-10 border border-slate-200">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="bg-slate-100 p-3 rounded-full">
+                            <i class="fas fa-lock text-slate-700 text-xl"></i>
+                        </div>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2 text-center">Admin Access</h2>
+                    <p class="text-slate-600 mb-8 text-center">Sign in with your admin credentials</p>
+
+                    <!-- Display messages -->
+                    {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                        <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                            <div class="flex items-center">
+                                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                                {{ message }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Display non-field errors -->
+                    {% if form.non_field_errors %}
+                    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">
+                                    Authentication Error
+                                </h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <ul class="list-disc list-inside space-y-1">
+                                        {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="space-y-6" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Username Field with Error -->
+                        <div>
+                            <label for="id_username" class="block text-sm font-medium text-slate-700">Username</label>
+                            <div class="mt-1">
+                                <input id="id_username" 
+                                       name="username" 
+                                       type="text" 
+                                       autocomplete="username" 
+                                       value="{{ form.username.value|default:'' }}" 
+                                       required 
+                                       class="appearance-none block w-full px-3 py-2 border {% if form.username.errors %}border-red-300{% else %}border-slate-300{% endif %} rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Enter your username">
+                            </div>
+                            {% if form.username.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.username.errors %}
+                                <p class="flex items-center">
+                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
+                                    {{ error }}
+                                </p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Password Field with Error -->
+                        <div>
+                            <label for="id_password" class="block text-sm font-medium text-slate-700">Password</label>
+                            <div class="mt-1 relative">
+                                <input id="id_password" 
+                                       name="password" 
+                                       type="password" 
+                                       autocomplete="current-password" 
+                                       required 
+                                       class="appearance-none block w-full px-3 py-2 border {% if form.password.errors %}border-red-300{% else %}border-slate-300{% endif %} rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Enter your password">
+                                <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <i class="far fa-eye text-slate-400"></i>
+                                </button>
+                            </div>
+                            {% if form.password.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.password.errors %}
+                                <p class="flex items-center">
+                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
+                                    {{ error }}
+                                </p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Remember Me -->
+                        <div class="flex items-center">
+                            <input id="id_remember_me" 
+                                   name="remember_me" 
+                                   type="checkbox" 
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded">
+                            <label for="id_remember_me" class="ml-2 block text-sm text-slate-700">
+                                Remember this device
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <button type="submit" 
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition duration-150">
+                                Sign In to Admin
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-6 pt-6 border-t border-slate-200">
+                        <div class="text-center">
+                            <p class="text-sm text-slate-600">
+                                User account? 
+                                <a href="{% url 'user_auth:signin' %}" class="font-medium text-blue-600 hover:text-blue-500">Go to user signin</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center text-sm text-slate-500">
+                    <p>&copy; 2025 GearUp Survival Toolkit. Administrative Access Only.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Password visibility toggle
+        document.querySelectorAll('.password-toggle').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('input');
+                const icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // Auto-remove success messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const successMessages = document.querySelector('.bg-green-50');
+            if (successMessages) {
+                setTimeout(function() {
+                    successMessages.style.transition = 'opacity 0.5s ease';
+                    successMessages.style.opacity = '0';
+                    setTimeout(function() {
+                        successMessages.remove();
+                    }, 500);
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

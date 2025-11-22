@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.core.exceptions import ValidationError
@@ -8,24 +10,45 @@ from .models import UserModel
 
 
 class UserCreationForm(BaseUserCreationForm):
-    email = forms.EmailField(
-        required=True,
-        label="Email Address"
-    )
-    password = forms.CharField(
-        widget=forms.PasswordInput,
-        validators=[validate_password],
-        help_text="Your password must contain at least 8 characters."
-    )
-    confirm_password = forms.CharField(
-        widget=forms.PasswordInput,
-        label="Confirm Password"
-    )
+    email = forms.EmailField(required=True, label="Email Address")
+    first_name = forms.CharField(required=True, max_length=30)
+    last_name = forms.CharField(required=True, max_length=30)
     
     class Meta:
         model = UserModel
         fields = ['email', 'first_name', 'last_name']
-        # Note: 'password' is not in fields because it's an extra field
+    
+    def clean_password1(self):
+        password1 = self.cleaned_data.get('password1')
+        
+        if password1:
+            # Minimum length check
+            if len(password1) < 8:
+                raise ValidationError("Password must contain at least 8 characters.")
+            
+            # Numeric check
+            if password1.isdigit():
+                raise ValidationError("Your password can't be entirely numeric.")
+            
+            # Common passwords check
+            common_passwords = [
+                'password', '12345678', 'qwerty', 'admin', 'welcome',
+                'password1', '123456789', 'abc123', 'letmein', 'monkey'
+            ]
+            if password1.lower() in common_passwords:
+                raise ValidationError("Your password can't be a commonly used password.")
+            
+            # Similarity check (simplified)
+            email = self.cleaned_data.get('email', '')
+            first_name = self.cleaned_data.get('first_name', '')
+            last_name = self.cleaned_data.get('last_name', '')
+            
+            user_info = [email.split('@')[0], first_name, last_name]
+            for info in user_info:
+                if info and info.lower() in password1.lower():
+                    raise ValidationError("Your password can't be too similar to your other personal information.")
+        
+        return password1
     
     def clean_email(self):
         email = self.cleaned_data['email']
@@ -45,21 +68,9 @@ class UserCreationForm(BaseUserCreationForm):
             raise ValidationError("Last name should contain only letters.")
         return last_name.strip()
     
-    def clean(self):
-        cleaned_data = super().clean()
-        password = cleaned_data.get('password')
-        confirm_password = cleaned_data.get('confirm_password')
-        
-        if password and confirm_password and password != confirm_password:
-            self.add_error('confirm_password', "Passwords do not match.")
-        
-        return cleaned_data
-    
     def save(self, commit=True):
         user = super().save(commit=False)
-        # Set username as email automatically
         user.username = self.cleaned_data['email']
-        user.set_password(self.cleaned_data['password'])
         if commit:
             user.save()
         return user
@@ -98,7 +109,25 @@ class SigninForm(forms.Form):
                 raise forms.ValidationError("Invalid email or password. Please try again.")
             elif not user.is_active:
                 raise forms.ValidationError("This account is inactive.")
-            
+
             cleaned_data['user'] = user
-        
+
         return cleaned_data
+
+
+class OTPVerificationForm(forms.Form):
+    otp_code = forms.CharField(
+        max_length=4,
+        min_length=4,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter 4-digit OTP',
+            'class': 'text-center text-xl tracking-widest'
+        }),
+        label="Verification Code"
+    )
+
+    def clean_otp_code(self):
+        otp_code = self.cleaned_data['otp_code']
+        if not re.match(r'^\d{4}$', otp_code):
+            raise ValidationError("OTP must be exactly 4 digits.")
+        return otp_code
