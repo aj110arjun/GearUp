@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class HomeDashboardConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'user.home'
+    name = 'common.user.home'
