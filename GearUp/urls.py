@@ -24,4 +24,5 @@ urlpatterns = [
     path('admin/', include('common.admin.auth_dashboard.urls', namespace='auth_dashboard')),
     path('accounts/', include('allauth.urls')),
     path('products/', include('common.products.urls', namespace='products')),
+    path('shop/', include('common.user.cart_wishlist.urls', namespace='shop')),
 ]
