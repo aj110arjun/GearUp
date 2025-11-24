@@ -1,0 +1,333 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+{% block title %}{% if is_edit %}Edit {{ category.name }} | {% else %}Add New Category | {% endif %}Admin Panel - GearUp{% endblock title %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <nav class="flex mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+              <li>
+                <a href="{% url 'products:category_list' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Categories</a>
+              </li>
+              <li>
+                <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              </li>
+              <li>
+                <span class="text-gray-700 text-sm font-medium">
+                  {% if is_edit %}Edit Category{% else %}Add New Category{% endif %}
+                </span>
+              </li>
+            </ol>
+          </nav>
+          <h1 class="text-3xl font-bold text-gray-900">
+            {% if is_edit %}Edit {{ category.name }}{% else %}Add New Category{% endif %}
+          </h1>
+          <p class="mt-2 text-gray-600">
+            {% if is_edit %}
+            Update category information
+            {% else %}
+            Create a new product category for your store
+            {% endif %}
+          </p>
+        </div>
+        
+        <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+          <a href="{% url 'products:category_list' %}"
+             class="inline-flex items-center px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-all duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Categories
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form -->
+    <form method="post" id="category-form" novalidate>
+      {% csrf_token %}
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column - Category Details -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Basic Information Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Basic Information</h2>
+              <p class="text-sm text-gray-600 mt-1">Essential category details</p>
+            </div>
+            <div class="p-6 space-y-6">
+              
+              <!-- Category Name -->
+              <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.name.label }} <span class="text-red-500">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.name.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+
+              <!-- Slug -->
+              <div>
+                <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.slug.label }}
+                </label>
+                {{ form.slug }}
+                {% if form.slug.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.slug.errors.0 }}
+                  </p>
+                {% endif %}
+                {% if form.slug.help_text %}
+                  <p class="text-gray-500 text-sm mt-1">{{ form.slug.help_text }}</p>
+                {% endif %}
+              </div>
+
+              <!-- Description -->
+              <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.description.label }}
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <p class="text-red-500 text-sm mt-2 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    {{ form.description.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Settings & Actions -->
+        <div class="space-y-6">
+          
+          <!-- Category Status Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Category Status</h2>
+              <p class="text-sm text-gray-600 mt-1">Control category visibility</p>
+            </div>
+            <div class="p-6">
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">{{ form.is_active.label }}</p>
+                  <p class="text-xs text-gray-600">Make category visible in store</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.is_active }}
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statistics Card (for edit mode) -->
+          {% if is_edit %}
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Category Statistics</h2>
+              <p class="text-sm text-gray-600 mt-1">Overview of category usage</p>
+            </div>
+            <div class="p-6 space-y-4">
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Total Products</span>
+                <span class="text-sm font-semibold text-gray-900">{{ total_products }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Active Products</span>
+                <span class="text-sm font-semibold text-green-600">{{ active_products }}</span>
+              </div>
+              <div class="flex justify-between items-center py-2">
+                <span class="text-sm text-gray-600">Created</span>
+                <span class="text-sm text-gray-500">{{ category.created_at|date:"M d, Y" }}</span>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Form Actions Card -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Actions</h2>
+            </div>
+            <div class="p-6 space-y-4">
+              <button type="submit"
+                      class="w-full inline-flex items-center justify-center px-4 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {% if is_edit %}Update Category{% else %}Create Category{% endif %}
+              </button>
+              
+              <a href="{% url 'products:category_list' %}"
+                 class="w-full inline-flex items-center justify-center px-4 py-3 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancel
+              </a>
+
+              {% if is_edit %}
+              <div class="pt-4 border-t border-gray-200">
+                <button type="button"
+                        onclick="confirmDelete()"
+                        class="w-full inline-flex items-center justify-center px-4 py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg border border-red-200 hover:bg-red-100 transition-all duration-200">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Category
+                </button>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-generate slug from category name
+  const nameField = document.getElementById('{{ form.name.id_for_label }}');
+  const slugField = document.getElementById('{{ form.slug.id_for_label }}');
+  
+  if (nameField && slugField) {
+    nameField.addEventListener('blur', function() {
+      const name = this.value;
+      if (name && (!slugField.value || slugField.value === '')) {
+        const slug = name.toLowerCase()
+          .replace(/[^\w ]+/g, '')
+          .replace(/ +/g, '-');
+        slugField.value = slug;
+      }
+    });
+  }
+
+  // Form validation
+  const form = document.getElementById('category-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      let isValid = true;
+      
+      // Clear previous error styles
+      document.querySelectorAll('.border-red-500').forEach(el => {
+        el.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+      });
+      
+      // Validate required fields
+      const nameField = document.getElementById('{{ form.name.id_for_label }}');
+      if (!nameField.value.trim()) {
+        isValid = false;
+        nameField.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+        
+        // Add error message if not exists
+        if (!nameField.parentElement.querySelector('.text-red-500')) {
+          const errorElement = document.createElement('p');
+          errorElement.className = 'text-red-500 text-sm mt-2 flex items-center';
+          errorElement.innerHTML = `<svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>Category name is required.`;
+          nameField.parentElement.appendChild(errorElement);
+        }
+      }
+      
+      if (!isValid) {
+        e.preventDefault();
+        // Scroll to first error
+        nameField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        nameField.focus();
+      }
+    });
+  }
+});
+
+// Delete confirmation
+function confirmDelete() {
+  if (confirm('Are you sure you want to delete this category? This action cannot be undone and will remove all products associated with this category.')) {
+    // Redirect to delete view (you'll need to create this)
+    window.location.href = "";
+  }
+}
+</script>
+
+<style>
+/* Custom styles for form elements */
+.form-control, .form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.form-control:focus, .form-select:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #4f46e5;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-control.error, .form-select.error {
+  border-color: #ef4444;
+  ring-color: #ef4444;
+}
+
+/* Textarea specific styles */
+textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Checkbox styles */
+input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
+  background-color: white;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+/* Toggle switch styles */
+.peer:checked ~ .peer-checked\:bg-indigo-600 {
+  background-color: #4f46e5;
+}
+
+.peer:checked ~ .peer-checked\:after\:translate-x-full:after {
+  transform: translateX(100%);
+}
+</style>
+{% endblock content %}
