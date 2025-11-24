@@ -1,0 +1,350 @@
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block title %}Products - GearUp{% endblock title %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <!-- Header Section -->
+  <div class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="py-6">
+        <h1 class="text-3xl font-bold text-gray-900">Shop All Products</h1>
+        <p class="text-gray-600 mt-2">Discover our amazing collection of products</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+      
+      <!-- Sidebar Filters -->
+      <div class="lg:w-64 flex-shrink-0">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-4">
+          
+          <!-- Categories Filter -->
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
+            <div class="space-y-2">
+              <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}{% if request.GET.min_price %}min_price={{ request.GET.min_price }}&{% endif %}{% if request.GET.max_price %}max_price={{ request.GET.max_price }}&{% endif %}{% if request.GET.in_stock %}in_stock={{ request.GET.in_stock }}{% endif %}"
+                 class="block text-sm {% if not category_slug %}text-indigo-600 font-medium{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                All Categories
+              </a>
+              {% for category in categories %}
+              <a href="?category={{ category.slug }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}{% if request.GET.in_stock %}&in_stock={{ request.GET.in_stock }}{% endif %}"
+                 class="block text-sm {% if category_slug == category.slug %}text-indigo-600 font-medium{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                {{ category.name }}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Price Filter -->
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Price Range</h3>
+            <form method="get" class="space-y-4">
+              <input type="hidden" name="category" value="{{ category_slug }}">
+              <input type="hidden" name="q" value="{{ search_query }}">
+              <input type="hidden" name="sort" value="{{ sort_by }}">
+              <input type="hidden" name="in_stock" value="{{ in_stock }}">
+              
+              <div class="flex items-center space-x-2">
+                <input type="number" 
+                       name="min_price" 
+                       value="{{ min_price|default:'' }}"
+                       placeholder="Min" 
+                       class="w-20 px-2 py-1 border border-gray-300 rounded text-sm">
+                <span class="text-gray-500">-</span>
+                <input type="number" 
+                       name="max_price" 
+                       value="{{ max_price|default:'' }}"
+                       placeholder="Max" 
+                       class="w-20 px-2 py-1 border border-gray-300 rounded text-sm">
+              </div>
+              <button type="submit" 
+                      class="w-full bg-indigo-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition-colors">
+                Apply Price
+              </button>
+            </form>
+          </div>
+
+          <!-- Stock Filter -->
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Availability</h3>
+            <div class="space-y-2">
+              <label class="flex items-center">
+                <input type="checkbox" 
+                       name="in_stock" 
+                       value="true"
+                       {% if in_stock %}checked{% endif %}
+                       onchange="this.form.submit()"
+                       class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-600">In Stock Only</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Clear Filters -->
+          {% if category_slug or search_query or min_price or max_price or in_stock %}
+          <div>
+            <a href="?" class="w-full bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm font-medium hover:bg-gray-200 transition-colors text-center block">
+              Clear All Filters
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="flex-1">
+        
+        <!-- Search and Sort Bar -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+            
+            <!-- Search -->
+            <form method="get" class="flex-1 sm:mr-4">
+              <div class="relative">
+                <input type="text" 
+                       name="q" 
+                       value="{{ search_query|default:'' }}"
+                       placeholder="Search products..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                </div>
+              </div>
+              <input type="hidden" name="category" value="{{ category_slug }}">
+              <input type="hidden" name="sort" value="{{ sort_by }}">
+              <input type="hidden" name="min_price" value="{{ min_price }}">
+              <input type="hidden" name="max_price" value="{{ max_price }}">
+              <input type="hidden" name="in_stock" value="{{ in_stock }}">
+            </form>
+
+            <!-- Sort -->
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-gray-600">Sort by:</span>
+              <select onchange="window.location.href = updateURLParam('sort', this.value)" 
+                      class="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name A-Z</option>
+                <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                <option value="bestseller" {% if sort_by == 'bestseller' %}selected{% endif %}>Bestseller</option>
+                <option value="featured" {% if sort_by == 'featured' %}selected{% endif %}>Featured</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Products Grid -->
+        {% if products %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {% for product in products %}
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
+            <a href="{% url 'products:product_detail_user' product_slug=product.slug %}" class="block">
+              
+              <!-- Product Image -->
+              <div class="aspect-w-1 aspect-h-1 bg-gray-200">
+                {% if product.images.all %}
+                <img src="{{ product.images.first.image.url }}" 
+                     alt="{{ product.name }}"
+                     class="w-full h-48 object-cover">
+                {% else %}
+                <img src="{{ product.image.url }}" 
+                     alt="{{ product.name }}"
+                     class="w-full h-48 object-cover">
+                {% endif %}
+              </div>
+
+              <!-- Product Info -->
+              <div class="p-4">
+                <!-- Category -->
+                <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ product.category.name }}</p>
+                
+                <!-- Product Name -->
+                <h3 class="text-sm font-semibold text-gray-900 mb-2 line-clamp-2">{{ product.name }}</h3>
+                
+                <!-- Brand -->
+                <p class="text-xs text-gray-600 mb-2">by {{ product.brand }}</p>
+                
+                <!-- Price -->
+                <div class="flex items-center justify-between mb-2">
+                  <div>
+                    <span class="text-lg font-bold text-gray-900">₹{{ product.min_price }}</span>
+                    {% if product.max_price > product.min_price %}
+                    <span class="text-sm text-gray-500 ml-1">- ₹{{ product.max_price }}</span>
+                    {% endif %}
+                  </div>
+                  
+                  <!-- Badges -->
+                  <div class="flex space-x-1">
+                    {% if product.is_featured %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Featured
+                    </span>
+                    {% endif %}
+                    {% if product.is_bestseller %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Bestseller
+                    </span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Stock Status -->
+                <div class="flex items-center justify-between">
+                  {% if product.in_stock %}
+                  <span class="inline-flex items-center text-sm text-green-600">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    In Stock
+                  </span>
+                  {% else %}
+                  <span class="inline-flex items-center text-sm text-red-600">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Out of Stock
+                  </span>
+                  {% endif %}
+                  
+                  <a href="{% url 'products:product_detail_user' product.slug %}" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                    View Details
+                  </a>
+                </div>
+              </div>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+          <nav class="flex items-center space-x-2">
+            {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+               class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 hover:bg-gray-50">
+              Previous
+            </a>
+            {% endif %}
+
+            {% for num in products.paginator.page_range %}
+              {% if products.number == num %}
+              <span class="px-3 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600 rounded-md">
+                {{ num }}
+              </span>
+              {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+              <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                 class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 hover:bg-gray-50">
+                {{ num }}
+              </a>
+              {% endif %}
+            {% endfor %}
+
+            {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+               class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 hover:bg-gray-50">
+              Next
+            </a>
+            {% endif %}
+          </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-12">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No products found</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            {% if search_query or category_slug or min_price or max_price %}
+            Try adjusting your search or filter to find what you're looking for.
+            {% else %}
+            No products are available at the moment.
+            {% endif %}
+          </p>
+          <div class="mt-6">
+            <a href="?" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              Clear Filters
+            </a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateURLParam(key, value) {
+  const url = new URL(window.location.href);
+  url.searchParams.set(key, value);
+  return url.toString();
+}
+
+// Auto-submit search form on input
+document.querySelector('input[name="q"]').addEventListener('input', function(e) {
+  if (this.value.length === 0 || this.value.length >= 2) {
+    this.form.submit();
+  }
+});
+
+// Auto-submit stock filter
+document.querySelector('input[name="in_stock"]').addEventListener('change', function(e) {
+  const form = document.createElement('form');
+  form.method = 'GET';
+  form.action = window.location.pathname;
+  
+  const params = new URLSearchParams(window.location.search);
+  if (this.checked) {
+    params.set('in_stock', 'true');
+  } else {
+    params.delete('in_stock');
+  }
+  
+  form.innerHTML = params.toString().split('&').map(param => {
+    const [key, value] = param.split('=');
+    return `<input type="hidden" name="${key}" value="${value}">`;
+  }).join('');
+  
+  document.body.appendChild(form);
+  form.submit();
+});
+</script>
+
+<style>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.aspect-w-1 {
+  position: relative;
+}
+
+.aspect-w-1::before {
+  content: '';
+  display: block;
+  padding-bottom: 100%;
+}
+
+.aspect-w-1 > * {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+</style>
+{% endblock content %}

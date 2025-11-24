@@ -1,0 +1,512 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Edit Product | Admin Panel - GearUp{% endblock title %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <nav class="flex mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+              <li>
+                <a href="{% url 'products:product_list' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Products</a>
+              </li>
+              <li>
+                <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              </li>
+              <li>
+                <a href="{% url 'products:product_detail' product_slug=product.slug %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">{{ product.name }}</a>
+              </li>
+              <li>
+                <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              </li>
+              <li>
+                <span class="text-gray-700 text-sm font-medium">Edit</span>
+              </li>
+            </ol>
+          </nav>
+          <h1 class="text-3xl font-bold text-gray-900">Edit Product</h1>
+          <p class="mt-2 text-gray-600">Update product information, manage variants and images</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+          <a href="{% url 'products:product_detail' product_slug=product.slug %}"
+             class="inline-flex items-center px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-all duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Product
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-6 space-y-3">
+      {% for message in messages %}
+      <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% elif message.tags == 'info' %}bg-blue-50 border-blue-200 text-blue-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-700{% else %}bg-green-50 border-green-200 text-green-700{% endif %} border rounded-lg p-4">
+        <div class="flex items-start">
+          {% if message.tags == 'error' %}
+          <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+          {% else %}
+          <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+          {% endif %}
+          <span>{{ message }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Form -->
+    <form method="post" enctype="multipart/form-data" id="product-form" novalidate>
+      {% csrf_token %}
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Main Content - Left Column (2/3) -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Basic Information -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Basic Information</h2>
+            </div>
+            <div class="p-6 space-y-6">
+              
+              <!-- Product Name -->
+              <div>
+                <label for="id_name" class="block text-sm font-medium text-gray-700 mb-2">
+                  Product Name <span class="text-red-500">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                  <p class="text-red-500 text-sm mt-2">{{ form.name.errors.0 }}</p>
+                {% endif %}
+              </div>
+
+              <!-- Brand -->
+              <div>
+                <label for="id_brand" class="block text-sm font-medium text-gray-700 mb-2">
+                  Brand <span class="text-red-500">*</span>
+                </label>
+                {{ form.brand }}
+                {% if form.brand.errors %}
+                  <p class="text-red-500 text-sm mt-2">{{ form.brand.errors.0 }}</p>
+                {% endif %}
+              </div>
+
+              <!-- Category -->
+              <div>
+                <label for="id_category" class="block text-sm font-medium text-gray-700 mb-2">
+                  Category <span class="text-red-500">*</span>
+                </label>
+                {{ form.category }}
+                {% if form.category.errors %}
+                  <p class="text-red-500 text-sm mt-2">{{ form.category.errors.0 }}</p>
+                {% endif %}
+              </div>
+
+              <!-- Description -->
+              <div>
+                <label for="id_description" class="block text-sm font-medium text-gray-700 mb-2">
+                  Description <span class="text-red-500">*</span>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <p class="text-red-500 text-sm mt-2">{{ form.description.errors.0 }}</p>
+                {% endif %}
+              </div>
+
+              <!-- SKU & Slug (Read-only) -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label for="id_sku" class="block text-sm font-medium text-gray-700 mb-2">
+                    SKU
+                  </label>
+                  {{ form.sku }}
+                  <p class="text-xs text-gray-500 mt-1">Auto-generated, cannot be edited</p>
+                </div>
+                <div>
+                  <label for="id_slug" class="block text-sm font-medium text-gray-700 mb-2">
+                    URL Slug
+                  </label>
+                  {{ form.slug }}
+                  <p class="text-xs text-gray-500 mt-1">Auto-generated, cannot be edited</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Product Variants -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Product Variants</h2>
+              <p class="text-sm text-gray-600 mt-1">Manage sizes, colors, and pricing</p>
+            </div>
+            <div class="p-6">
+              {{ variant_formset.management_form }}
+              
+              <div id="variant-forms" class="space-y-4">
+                {% for variant_form in variant_formset %}
+                <div class="variant-form border border-gray-200 rounded-lg p-4 relative">
+                  {{ variant_form.id }}
+                  
+                  {% if variant_form.instance.pk %}
+                  <div class="absolute top-2 right-2">
+                    <label class="flex items-center text-sm text-red-600 cursor-pointer hover:text-red-700">
+                      {{ variant_form.DELETE }}
+                      <span class="ml-2">Delete</span>
+                    </label>
+                  </div>
+                  {% endif %}
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Size</label>
+                      {{ variant_form.size }}
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Color</label>
+                      {{ variant_form.color }}
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Price (₹) *</label>
+                      {{ variant_form.price }}
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Compare Price (₹)</label>
+                      {{ variant_form.compare_price }}
+                    </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Stock Quantity</label>
+                      {{ variant_form.stock_quantity }}
+                    </div>
+                    <div class="flex items-center">
+                      <label class="flex items-center cursor-pointer">
+                        {{ variant_form.is_active }}
+                        <span class="ml-2 text-sm text-gray-700">Active</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {% if variant_form.errors %}
+                  <div class="mt-2 text-red-500 text-xs">
+                    {{ variant_form.errors }}
+                  </div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+              
+              <button type="button" id="add-variant" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Variant
+              </button>
+            </div>
+          </div>
+
+          <!-- Product Images -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Product Images</h2>
+              <p class="text-sm text-gray-600 mt-1">Upload and manage product images</p>
+            </div>
+            <div class="p-6">
+              {{ image_formset.management_form }}
+              
+              <div id="image-forms" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for image_form in image_formset %}
+                <div class="image-form border border-gray-200 rounded-lg p-4 relative">
+                  {{ image_form.id }}
+                  
+                  {% if image_form.instance.pk and image_form.instance.image %}
+                  <div class="mb-4">
+                    <img src="{{ image_form.instance.image.url }}" alt="{{ image_form.instance.alt_text }}" class="w-full h-48 object-cover rounded-lg">
+                  </div>
+                  {% endif %}
+                  
+                  {% if image_form.instance.pk %}
+                  <div class="absolute top-2 right-2 bg-white rounded px-2 py-1">
+                    <label class="flex items-center text-xs text-red-600 cursor-pointer hover:text-red-700">
+                      {{ image_form.DELETE }}
+                      <span class="ml-1">Delete</span>
+                    </label>
+                  </div>
+                  {% endif %}
+                  
+                  <div class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Image</label>
+                      {{ image_form.image }}
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Alt Text</label>
+                      {{ image_form.alt_text }}
+                    </div>
+                    <div>
+                      <label class="flex items-center cursor-pointer">
+                        {{ image_form.is_primary }}
+                        <span class="ml-2 text-sm text-gray-700">Primary Image</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {% if image_form.errors %}
+                  <div class="mt-2 text-red-500 text-xs">
+                    {{ image_form.errors }}
+                  </div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+              
+              <button type="button" id="add-image" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Image
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Sidebar - Right Column (1/3) -->
+        <div class="lg:col-span-1 space-y-6">
+          
+          <!-- Status & Settings -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">Status & Settings</h2>
+            </div>
+            <div class="p-6 space-y-4">
+              
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm font-medium text-gray-700">Active</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.is_active }}
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm font-medium text-gray-700">Featured</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.is_featured }}
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm font-medium text-gray-700">Bestseller</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.is_bestseller }}
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm font-medium text-gray-700">Track Inventory</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  {{ form.track_inventory }}
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- SEO -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4">
+              <h2 class="text-lg font-semibold text-gray-900">SEO</h2>
+            </div>
+            <div class="p-6 space-y-4">
+              
+              <div>
+                <label for="id_meta_title" class="block text-sm font-medium text-gray-700 mb-2">
+                  Meta Title
+                </label>
+                {{ form.meta_title }}
+              </div>
+
+              <div>
+                <label for="id_meta_description" class="block text-sm font-medium text-gray-700 mb-2">
+                  Meta Description
+                </label>
+                {{ form.meta_description }}
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 space-y-3">
+              <button type="submit" id="submit-btn"
+                      class="w-full inline-flex items-center justify-center px-6 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span id="submit-text">Update Product</span>
+              </button>
+              
+              <a href="{% url 'products:product_detail' product_slug=product.slug %}"
+                 class="w-full inline-flex items-center justify-center px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-200">
+                Cancel
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('product-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const submitText = document.getElementById('submit-text');
+  
+  // Handle form submission
+  if (form) {
+    form.addEventListener('submit', function() {
+      submitBtn.disabled = true;
+      submitText.textContent = 'Updating...';
+    });
+  }
+  
+  // Dynamic formset handling for variants
+  const addVariantBtn = document.getElementById('add-variant');
+  const variantForms = document.getElementById('variant-forms');
+  const totalForms = document.querySelector('#id_variants-TOTAL_FORMS');
+  
+  if (addVariantBtn && variantForms && totalForms) {
+    addVariantBtn.addEventListener('click', function() {
+      const formCount = parseInt(totalForms.value);
+      const newForm = document.querySelector('.variant-form').cloneNode(true);
+      
+      // Update form index
+      newForm.innerHTML = newForm.innerHTML.replace(/variants-\d+-/g, `variants-${formCount}-`);
+      newForm.innerHTML = newForm.innerHTML.replace(/variants-\d+/g, `variants-${formCount}`);
+      
+      // Clear values
+      newForm.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type !== 'checkbox') {
+          input.value = '';
+        } else {
+          input.checked = false;
+        }
+      });
+      
+      variantForms.appendChild(newForm);
+      totalForms.value = formCount + 1;
+    });
+  }
+  
+  // Dynamic formset handling for images
+  const addImageBtn = document.getElementById('add-image');
+  const imageForms = document.getElementById('image-forms');
+  const totalImageForms = document.querySelector('#id_images-TOTAL_FORMS');
+  
+  if (addImageBtn && imageForms && totalImageForms) {
+    addImageBtn.addEventListener('click', function() {
+      const formCount = parseInt(totalImageForms.value);
+      const newForm = document.querySelector('.image-form').cloneNode(true);
+      
+      // Update form index
+      newForm.innerHTML = newForm.innerHTML.replace(/images-\d+-/g, `images-${formCount}-`);
+      newForm.innerHTML = newForm.innerHTML.replace(/images-\d+/g, `images-${formCount}`);
+      
+      // Clear values and remove existing image preview
+      newForm.querySelectorAll('img').forEach(img => img.remove());
+      newForm.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type !== 'checkbox') {
+          input.value = '';
+        } else {
+          input.checked = false;
+        }
+      });
+      
+      imageForms.appendChild(newForm);
+      totalImageForms.value = formCount + 1;
+    });
+  }
+});
+</script>
+
+<style>
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-control:disabled,
+.form-control:read-only {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.form-control-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.form-check-input {
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.form-check-input:checked {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.peer:checked ~ div {
+  background-color: #4f46e5;
+}
+
+.peer:checked ~ div:after {
+  transform: translateX(100%);
+}
+</style>
+{% endblock content %}

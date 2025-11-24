@@ -35,13 +35,22 @@ class Product(models.Model):
     # Basic Information
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(max_length=250, unique=True)
     description = models.TextField()
-    brand = models.CharField(max_length=100) 
-
-    image = CloudinaryField('products/', default="https://res.cloudinary.com/dhpo5iq3m/image/upload/jic4cjtfmvgh0zubu8gt.png")
+    brand = models.CharField(max_length=100)
+    
+    # Image
+    image = CloudinaryField(
+        'products/', 
+        default="https://res.cloudinary.com/dhpo5iq3m/image/upload/jic4cjtfmvgh0zubu8gt.png"
+    )
+    
     # Categorization
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    category = models.ForeignKey(
+        Category, 
+        on_delete=models.CASCADE, 
+        related_name='products'
+    )
     
     # Inventory & Identification
     sku = models.CharField(max_length=100, unique=True, blank=True)
@@ -62,19 +71,37 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = 'Product'
+        verbose_name_plural = 'Products'
 
     def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs):
-        if not self.slug:
+        # Auto-generate slug if not provided
+        if not self.slug and self.name:
             self.slug = slugify(self.name)
-        if not self.sku:
-            self.sku = f"GRP{self.id:06d}" if self.id else "GRPTEMP"
+            # Ensure slug is unique
+            base_slug = self.slug
+            counter = 1
+            while Product.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        
+        # Save first to get ID
+        is_new = self._state.adding
         super().save(*args, **kwargs)
+        
+        # Auto-generate SKU after saving if new and no SKU provided
+        if is_new and not self.sku:
+            # Convert UUID to string, remove hyphens, and take first 8 chars
+            uuid_str = str(self.id).replace('-', '')[:8].upper()
+            self.sku = f"GRP-{uuid_str}"
+            super().save(update_fields=['sku'])
 
     def get_absolute_url(self):
-        return reverse('products:product_detail', kwargs={'slug': self.slug})
+        from django.urls import reverse
+        return reverse('products:product_detail', kwargs={'product_slug': self.slug})
 
     @property
     def in_stock(self):
@@ -99,30 +126,22 @@ class Product(models.Model):
     
 
 class ProductVariant(models.Model):
-    # Required Fields (as per your request)
+    """Product variants (size, color, etc.)"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
-    color = models.CharField(max_length=100)
-    size = models.CharField(max_length=100)
+    
+    # Variant attributes
+    size = models.CharField(max_length=50, blank=True)
+    color = models.CharField(max_length=50, blank=True)
+    
+    # Pricing
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    compare_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    # Inventory
     stock_quantity = models.IntegerField(default=0)
     
-    # Additional Useful Fields
-    sku = models.CharField(max_length=100, unique=True, blank=True)
-    compare_price = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        null=True, 
-        blank=True,
-        help_text="Original price for showing discounts"
-    )
-    weight = models.DecimalField(
-        max_digits=8, 
-        decimal_places=2, 
-        null=True, 
-        blank=True, 
-        help_text="Weight in grams"
-    )
+    # Status
     is_active = models.BooleanField(default=True)
     
     # Timestamps
@@ -130,70 +149,50 @@ class ProductVariant(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ['product', 'color', 'size']
-        ordering = ['product', 'color', 'size']
+        ordering = ['size', 'color']
+        unique_together = [['product', 'size', 'color']]
 
     def __str__(self):
-        variant_name = f"{self.product.name}"
-        if self.color:
-            variant_name += f" - {self.color.name}"
+        parts = [self.product.name]
         if self.size:
-            variant_name += f" - {self.size.name}"
-        return variant_name
-
-    def save(self, *args, **kwargs):
-        if not self.sku:
-            base_sku = self.product.sku
-            color_code = self.color.name[:3].upper() if self.color else "DEF"
-            size_code = self.size.code if self.size else "ONE"
-            self.sku = f"{base_sku}-{color_code}-{size_code}"
-        super().save(*args, **kwargs)
-
-    @property
-    def display_name(self):
-        """Generate display name from color and size"""
-        parts = []
+            parts.append(self.size)
         if self.color:
-            parts.append(self.color.name)
-        if self.size:
-            parts.append(self.size.name)
-        return " / ".join(parts) if parts else "Standard"
-
-    @property
-    def in_stock(self):
-        """Check if variant is in stock"""
-        return self.stock_quantity > 0
-
-    @property
-    def is_low_stock(self):
-        """Check if variant is low in stock"""
-        return 0 < self.stock_quantity <= 10
+            parts.append(self.color)
+        return ' - '.join(parts)
 
     @property
     def discount_percentage(self):
-        """Calculate discount percentage if compare price exists"""
+        """Calculate discount percentage"""
         if self.compare_price and self.compare_price > self.price:
-            discount = ((self.compare_price - self.price) / self.compare_price) * 100
-            return round(discount)
+            return int(((self.compare_price - self.price) / self.compare_price) * 100)
         return 0
 
-    @property
-    def is_on_sale(self):
-        """Check if variant is on sale"""
-        return self.compare_price and self.compare_price > self.price
-    
 
-class AdditionalImage(models.Model):
-    # Primary Key as UUID
+class ProductImage(models.Model):
+    """Product images"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='additional_images')
-    image = CloudinaryField('product_additional_images', default="https://res.cloudinary.com/dhpo5iq3m/image/upload/jic4cjtfmvgh0zubu8gt.png")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = CloudinaryField('product_images/')
+    alt_text = models.CharField(max_length=200, blank=True)
+    is_primary = models.BooleanField(default=False)
+    display_order = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Additional Product Image"
-        verbose_name_plural = "Additional Product Images"
+        ordering = ['display_order', 'created_at']
 
     def __str__(self):
-        return f"Additional image for {self.product.name}"
+        return f"{self.product.name} - Image {self.display_order}"
+
+    def save(self, *args, **kwargs):
+        # If this is set as primary, unmark others
+        if self.is_primary:
+            ProductImage.objects.filter(
+                product=self.product, 
+                is_primary=True
+            ).exclude(pk=self.pk).update(is_primary=False)
+        super().save(*args, **kwargs)
 
     
