@@ -27,34 +27,6 @@
     transition: transform 0.3s ease;
   }
   
-  .star-rating {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-  
-  .star-rating input[type="radio"] {
-    display: none;
-  }
-  
-  .star-rating label {
-    font-size: 3rem;
-    color: #d1d5db;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .star-rating label:hover,
-  .star-rating label:hover ~ label {
-    color: #fbbf24;
-    transform: scale(1.1);
-  }
-  
-  .star-rating input[type="radio"]:checked ~ label {
-    color: #fbbf24;
-  }
-  
   .badge-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
@@ -92,6 +64,30 @@
   #image-container {
     position: relative;
   }
+
+  /* Notification styles */
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+  }
+  
+  .notification.show {
+    transform: translateX(0);
+  }
+  
+  .notification.success { background: #10b981; }
+  .notification.error { background: #ef4444; }
+  .notification.warning { background: #f59e0b; }
+  .notification.info { background: #3b82f6; }
 
   @media (max-width: 1023px) {
     #zoom-result {
@@ -290,7 +286,7 @@
             
             <div class="space-y-3">
               {% for variant in variants %}
-              <div class="group relative bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border-2 border-gray-200 hover:border-blue-500 transition-all shadow-sm hover:shadow-lg">
+              <div class="group relative bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border-2 border-gray-200 hover:border-blue-500 transition-all shadow-sm hover:shadow-lg variant-item" data-variant-id="{{ variant.id }}">
                 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                   
                   <!-- Variant Info -->
@@ -346,29 +342,46 @@
                   <!-- Action Buttons -->
                   <div class="flex items-center gap-3 min-w-[200px]">
                     {% if variant.stock_quantity > 0 %}
-                      <!-- Quantity Selector -->
-                      <div class="flex items-center border-2 border-gray-300 rounded-lg">
-                        <button type="button" onclick="decrementQty(this)" class="px-3 py-2 hover:bg-gray-100 transition">
-                          <i class="fas fa-minus text-gray-600"></i>
+                      <!-- Quantity Selector (Hidden when item is in cart) -->
+                      <div class="flex items-center border-2 border-gray-300 rounded-lg variant-quantity-container" data-variant-id="{{ variant.id }}">
+                        <button type="button" 
+                                onclick="decrementVariantQty('{{ variant.id }}')" 
+                                class="px-3 py-2 hover:bg-gray-100 transition text-gray-600">
+                          <i class="fas fa-minus"></i>
                         </button>
-                        <input type="number" value="1" min="1" max="{{ variant.stock_quantity }}" 
-                               class="w-16 text-center border-x-2 border-gray-300 py-2 focus:outline-none font-semibold">
-                        <button type="button" onclick="incrementQty(this)" class="px-3 py-2 hover:bg-gray-100 transition">
-                          <i class="fas fa-plus text-gray-600"></i>
+                        <input type="number" 
+                               value="1" 
+                               min="1" 
+                               max="{{ variant.stock_quantity }}" 
+                               class="w-16 text-center border-x-2 border-gray-300 py-2 focus:outline-none font-semibold variant-quantity"
+                               data-variant-id="{{ variant.id }}"
+                               onchange="updateVariantQty('{{ variant.id }}', this.value)">
+                        <button type="button" 
+                                onclick="incrementVariantQty('{{ variant.id }}')" 
+                                class="px-3 py-2 hover:bg-gray-100 transition text-gray-600">
+                          <i class="fas fa-plus"></i>
                         </button>
                       </div>
                       
-                      <!-- Add to Cart Button -->
-                      <form method="post" action="" class="flex-1">
-                        {% csrf_token %}
-                        <input type="hidden" name="variant_id" value="{{ variant.id }}">
-                        <input type="hidden" name="quantity" value="1" class="qty-input">
-                        <button type="submit" 
-                                class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg">
+                      <!-- Add to Cart / Go to Cart Button -->
+                      <div class="flex-1">
+                        <button type="button" 
+                                onclick="addToCart('{{ variant.id }}')"
+                                class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg add-to-cart-btn"
+                                data-variant-id="{{ variant.id }}"
+                                id="cart-btn-{{ variant.id }}">
                           <i class="fas fa-cart-plus"></i>
                           <span>Add to Cart</span>
                         </button>
-                      </form>
+                        
+                        <a href="{% url 'shop:cart' %}"
+                           class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition shadow-lg go-to-cart-btn hidden"
+                           data-variant-id="{{ variant.id }}"
+                           id="go-to-cart-btn-{{ variant.id }}">
+                          <i class="fas fa-shopping-cart"></i>
+                          <span>Go to Cart</span>
+                        </a>
+                      </div>
                     {% else %}
                       <button disabled 
                               class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed">
@@ -376,6 +389,15 @@
                         <span>Out of Stock</span>
                       </button>
                     {% endif %}
+                    
+                    <!-- Wishlist Button -->
+                    <button type="button"
+                            onclick="toggleWishlist('{{ product.id }}')"
+                            class="flex items-center justify-center w-12 h-12 border-2 border-gray-300 rounded-xl hover:border-red-300 hover:bg-red-50 transition-colors wishlist-btn"
+                            data-product-id="{{ product.id }}"
+                            title="Add to Wishlist">
+                      <i class="far fa-heart text-gray-600 hover:text-red-500"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -420,6 +442,246 @@
 </div>
 
 <script>
+// Utility Functions
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function showNotification(message, type = 'info') {
+  // Remove existing notifications
+  document.querySelectorAll('.notification').forEach(notif => notif.remove());
+  
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerHTML = `
+    <div class="flex items-center gap-3">
+      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+      <span>${message}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Animate in
+  setTimeout(() => notification.classList.add('show'), 100);
+  
+  // Remove after 4 seconds
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => notification.remove(), 300);
+  }, 4000);
+}
+
+function updateCartCount(count) {
+  const cartCount = document.getElementById('cart-count');
+  if (cartCount) {
+    cartCount.textContent = count;
+    // Add animation
+    cartCount.classList.add('scale-125');
+    setTimeout(() => cartCount.classList.remove('scale-125'), 300);
+  }
+}
+
+function updateWishlistCount(count) {
+  const wishlistCount = document.getElementById('wishlist-count');
+  if (wishlistCount) {
+    wishlistCount.textContent = count;
+    // Add animation
+    wishlistCount.classList.add('scale-125');
+    setTimeout(() => wishlistCount.classList.remove('scale-125'), 300);
+  }
+}
+
+// Cart State Management
+let cartItems = new Set();
+
+// Check cart status on page load
+function checkCartStatus() {
+  fetch('/shop/ajax/cart-count/', {
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    updateCartCount(data.count);
+    // You would need to implement an endpoint to get cart items
+    // For now, we'll rely on the addToCart function to update the UI
+  })
+  .catch(error => {
+    console.error('Error checking cart status:', error);
+  });
+}
+
+function updateCartButton(variantId, isInCart = true) {
+  const addToCartBtn = document.getElementById(`cart-btn-${variantId}`);
+  const goToCartBtn = document.getElementById(`go-to-cart-btn-${variantId}`);
+  const quantityContainer = document.querySelector(`.variant-quantity-container[data-variant-id="${variantId}"]`);
+  
+  if (isInCart) {
+    // Item is in cart - show "Go to Cart" button
+    addToCartBtn.classList.add('hidden');
+    goToCartBtn.classList.remove('hidden');
+    if (quantityContainer) {
+      quantityContainer.classList.add('hidden');
+    }
+    cartItems.add(variantId);
+  } else {
+    // Item is not in cart - show "Add to Cart" button
+    addToCartBtn.classList.remove('hidden');
+    goToCartBtn.classList.add('hidden');
+    if (quantityContainer) {
+      quantityContainer.classList.remove('hidden');
+    }
+    cartItems.delete(variantId);
+  }
+}
+
+// Cart Functions
+function getVariantQuantity(variantId) {
+  const input = document.querySelector(`.variant-quantity[data-variant-id="${variantId}"]`);
+  return input ? parseInt(input.value) : 1;
+}
+
+function addToCart(variantId) {
+  const quantity = getVariantQuantity(variantId);
+  const button = document.querySelector(`.add-to-cart-btn[data-variant-id="${variantId}"]`);
+  
+  // Show loading state
+  const originalHTML = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Adding...</span>';
+  button.disabled = true;
+  
+  fetch('/shop/cart/add/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      variant_id: variantId,
+      quantity: quantity
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      updateCartCount(data.cart_count);
+      showNotification(data.message, 'success');
+      
+      // Update button to show "Go to Cart"
+      updateCartButton(variantId, true);
+      
+    } else {
+      showNotification(data.message, 'error');
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showNotification('Error adding to cart', 'error');
+    button.innerHTML = originalHTML;
+    button.disabled = false;
+  });
+}
+
+function incrementVariantQty(variantId) {
+  const input = document.querySelector(`.variant-quantity[data-variant-id="${variantId}"]`);
+  const max = parseInt(input.getAttribute('max'));
+  const current = parseInt(input.value);
+  if (current < max) {
+    input.value = current + 1;
+  }
+}
+
+function decrementVariantQty(variantId) {
+  const input = document.querySelector(`.variant-quantity[data-variant-id="${variantId}"]`);
+  const min = parseInt(input.getAttribute('min'));
+  const current = parseInt(input.value);
+  if (current > min) {
+    input.value = current - 1;
+  }
+}
+
+function updateVariantQty(variantId, quantity) {
+  if (quantity < 1) quantity = 1;
+  const input = document.querySelector(`.variant-quantity[data-variant-id="${variantId}"]`);
+  const max = parseInt(input.getAttribute('max'));
+  if (quantity > max) quantity = max;
+  input.value = quantity;
+}
+
+// Wishlist Functions
+function toggleWishlist(productId) {
+  const button = document.querySelector(`.wishlist-btn[data-product-id="${productId}"]`);
+  const icon = button.querySelector('i');
+  
+  // Toggle visual state immediately for better UX
+  if (icon.classList.contains('far')) {
+    icon.classList.replace('far', 'fas');
+    icon.classList.add('text-red-500');
+    button.classList.add('border-red-300', 'bg-red-50');
+  } else {
+    icon.classList.replace('fas', 'far');
+    icon.classList.remove('text-red-500');
+    button.classList.remove('border-red-300', 'bg-red-50');
+  }
+  
+  fetch(`/shop/wishlist/add/${productId}/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      updateWishlistCount(data.wishlist_count);
+      showNotification(data.message, 'success');
+    } else {
+      // Revert visual state on error
+      if (icon.classList.contains('fas')) {
+        icon.classList.replace('fas', 'far');
+        icon.classList.remove('text-red-500');
+        button.classList.remove('border-red-300', 'bg-red-50');
+      } else {
+        icon.classList.replace('far', 'fas');
+        icon.classList.add('text-red-500');
+        button.classList.add('border-red-300', 'bg-red-50');
+      }
+      showNotification(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showNotification('Error updating wishlist', 'error');
+    // Revert visual state on error
+    if (icon.classList.contains('fas')) {
+      icon.classList.replace('fas', 'far');
+      icon.classList.remove('text-red-500');
+      button.classList.remove('border-red-300', 'bg-red-50');
+    } else {
+      icon.classList.replace('far', 'fas');
+      icon.classList.add('text-red-500');
+      button.classList.add('border-red-300', 'bg-red-50');
+    }
+  });
+}
+
+// Image Gallery and Zoom Setup
 document.addEventListener("DOMContentLoaded", function() {
   // Show real content after loading
   setTimeout(() => {
@@ -427,7 +689,9 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('real-content').classList.remove('hidden');
   }, 800);
 
-  // Image Gallery and Zoom Setup
+  // Check cart status on page load
+  checkCartStatus();
+
   const mainImg = document.getElementById("main-product-image");
   const thumbs = document.querySelectorAll(".thumb-img");
   const imageContainer = document.getElementById('image-container');
@@ -508,50 +772,6 @@ document.addEventListener("DOMContentLoaded", function() {
       zoomResult.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
     });
   }
-
-  // Quantity controls
-  window.incrementQty = function(btn) {
-    const container = btn.closest('.flex');
-    const input = container.querySelector('input[type="number"]');
-    const max = parseInt(input.getAttribute('max'));
-    const current = parseInt(input.value);
-    if (current < max) {
-      input.value = current + 1;
-      // Update hidden input in form if exists
-      const form = btn.closest('.lg\\:flex-row').querySelector('form');
-      if (form) {
-        const hiddenQty = form.querySelector('.qty-input');
-        if (hiddenQty) hiddenQty.value = input.value;
-      }
-    }
-  };
-
-  window.decrementQty = function(btn) {
-    const container = btn.closest('.flex');
-    const input = container.querySelector('input[type="number"]');
-    const min = parseInt(input.getAttribute('min'));
-    const current = parseInt(input.value);
-    if (current > min) {
-      input.value = current - 1;
-      // Update hidden input in form if exists
-      const form = btn.closest('.lg\\:flex-row').querySelector('form');
-      if (form) {
-        const hiddenQty = form.querySelector('.qty-input');
-        if (hiddenQty) hiddenQty.value = input.value;
-      }
-    }
-  };
-
-  // Sync quantity with form submission
-  document.querySelectorAll('input[type="number"]').forEach(input => {
-    input.addEventListener('change', function() {
-      const form = this.closest('.lg\\:flex-row')?.querySelector('form');
-      if (form) {
-        const hiddenQty = form.querySelector('.qty-input');
-        if (hiddenQty) hiddenQty.value = this.value;
-      }
-    });
-  });
 });
 </script>
 {% endblock %}
