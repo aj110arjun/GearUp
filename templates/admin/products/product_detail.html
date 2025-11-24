@@ -1,0 +1,455 @@
+{% extends "admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Product Details - {{ product.name }} | Admin Panel{% endblock title %}
+
+{% block content %}
+<div class="px-6 py-8 bg-gray-50 min-h-screen">
+  
+  <!-- Header Section -->
+  <div class="mb-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+      <div>
+        <nav class="flex mb-4" aria-label="Breadcrumb">
+          <ol class="flex items-center space-x-2">
+            <li>
+              <a href="{% url 'products:product_list' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Products</a>
+            </li>
+            <li>
+              <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </li>
+            <li>
+              <span class="text-gray-700 text-sm font-medium">{{ product.name|truncatewords:3 }}</span>
+            </li>
+          </ol>
+        </nav>
+        <h1 class="text-3xl font-bold text-gray-900">{{ product.name }}</h1>
+        <p class="text-gray-600 mt-1">Product details and inventory management</p>
+      </div>
+      
+      <div class="flex space-x-3 mt-4 md:mt-0">
+        <a href="{% url 'products:product_edit' product_slug=product.slug %}" 
+           class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-md transition flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          Edit Product
+        </a>
+        <a href="{% url 'products:product_list' %}" 
+           class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-md transition flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to Products
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Stock</p>
+            <p class="text-2xl font-bold text-gray-900">{{ total_stock }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Active Variants</p>
+            <p class="text-2xl font-bold text-gray-900">{{ active_variants }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Out of Stock</p>
+            <p class="text-2xl font-bold text-gray-900">{{ out_of_stock_variants }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Low Stock</p>
+            <p class="text-2xl font-bold text-gray-900">{{ low_stock_variants }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Left Column - Product Info & Images -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <!-- Product Information Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="text-lg font-semibold text-gray-900">Product Information</h2>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 class="text-sm font-medium text-gray-500 mb-2">Basic Details</h3>
+              <dl class="space-y-3">
+                <div>
+                  <dt class="text-sm font-medium text-gray-600">Product Name</dt>
+                  <dd class="text-sm text-gray-900 mt-1">{{ product.name }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-600">SKU</dt>
+                  <dd class="text-sm text-gray-900 mt-1">
+                    <code class="bg-gray-100 px-2 py-1 rounded text-sm">{{ product.sku|default:"Not set" }}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-600">Category</dt>
+                  <dd class="text-sm text-gray-900 mt-1">
+                    {% if product.category %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {{ product.category.name }}
+                    </span>
+                    {% else %}
+                    <span class="text-gray-400">Uncategorized</span>
+                    {% endif %}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-600">Slug</dt>
+                  <dd class="text-sm text-gray-900 mt-1">
+                    <code class="bg-gray-100 px-2 py-1 rounded text-sm">{{ product.slug }}</code>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            
+            <div>
+              <h3 class="text-sm font-medium text-gray-500 mb-2">Pricing & Status</h3>
+              <dl class="space-y-3">
+                <div>
+                  <dt class="text-sm font-medium text-gray-600">Price</dt>
+                  <dd class="text-sm text-gray-900 mt-1">
+                    <span class="text-lg font-semibold">₹{{ product.price }}</span>
+                    {% if product.compare_price %}
+                    <span class="ml-2 text-sm text-gray-500 line-through">₹{{ product.compare_price }}</span>
+                    {% endif %}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-600">Status</dt>
+                  <dd class="text-sm text-gray-900 mt-1">
+                    {% if product.is_active %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                      Active
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                      Inactive
+                    </span>
+                    {% endif %}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-600">Created</dt>
+                  <dd class="text-sm text-gray-900 mt-1">{{ product.created_at|date:"M d, Y H:i" }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-600">Last Updated</dt>
+                  <dd class="text-sm text-gray-900 mt-1">{{ product.updated_at|date:"M d, Y H:i" }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+          
+          <!-- Description -->
+          <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-medium text-gray-500 mb-3">Description</h3>
+            <div class="prose prose-sm max-w-none text-gray-900">
+              {% if product.description %}
+                {{ product.description|linebreaks }}
+              {% else %}
+                <p class="text-gray-400 italic">No description provided</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Variants Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-gray-900">Product Variants</h2>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            {{ variants.count }} variants
+          </span>
+        </div>
+        <div class="p-6">
+          {% if variants %}
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variant Name</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                {% for variant in variants %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ variant.name }}
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    <code class="bg-gray-100 px-2 py-1 rounded text-xs">{{ variant.sku|default:"N/A" }}</code>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    ₹{{ variant.price }}
+                    {% if variant.compare_price %}
+                    <br><span class="text-xs text-gray-500 line-through">₹{{ variant.compare_price }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    {% if variant.stock_quantity == 0 %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Out of Stock
+                    </span>
+                    {% elif variant.stock_quantity <= 10 %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      {{ variant.stock_quantity }} left
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      {{ variant.stock_quantity }} in stock
+                    </span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    {% if variant.is_active %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Active
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Inactive
+                    </span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-8">
+            <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m-4 4l2-2m-2 2l-2-2m4 4l2 2m4-4a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-1">No Variants</h3>
+            <p class="text-gray-500 mb-4">This product doesn't have any variants yet.</p>
+            <a href="{% url 'products:product_edit' product_slug=product.slug %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+              Add Variants
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Images & Actions -->
+    <div class="space-y-6">
+      
+      <!-- Product Images Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="text-lg font-semibold text-gray-900">Product Images</h2>
+        </div>
+        <div class="p-6">
+          {% if images %}
+          <div class="grid grid-cols-2 gap-4">
+            {% for image in images %}
+            <div class="relative group">
+              <img src="{{ image.image.url }}" 
+                   alt="{{ image.alt_text|default:product.name }}" 
+                   class="w-full h-32 object-cover rounded-lg border border-gray-200">
+              {% if image.is_primary %}
+              <span class="absolute top-2 left-2 inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                Primary
+              </span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% elif product.image %}
+          <!-- Single image field -->
+          <div class="text-center">
+            <img src="{{ product.image.url }}" 
+                 alt="{{ product.name }}" 
+                 class="w-full h-64 object-cover rounded-lg border border-gray-200">
+          </div>
+          {% else %}
+          <div class="text-center py-8">
+            <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-1">No Images</h3>
+            <p class="text-gray-500">No product images available</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Quick Actions Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <a href="{% url 'products:product_edit' product_slug=product.slug %}" 
+             class="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Edit Product
+          </a>
+          
+          <button type="button" 
+                  onclick="toggleProductStatus()"
+                  class="w-full flex items-center justify-center px-4 py-3 {% if product.is_active %}bg-yellow-600 hover:bg-yellow-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white text-sm font-medium rounded-lg transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {% if product.is_active %}Deactivate Product{% else %}Activate Product{% endif %}
+          </button>
+          
+          <a href="{% url 'products:product_list' %}" 
+             class="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Products
+          </a>
+        </div>
+      </div>
+
+      <!-- Product Settings Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="text-lg font-semibold text-gray-900">Product Settings</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700">Track Inventory</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if product.track_inventory %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+              {% if product.track_inventory %}Yes{% else %}No{% endif %}
+            </span>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700">Allow Backorders</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if product.allow_backorders %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+              {% if product.allow_backorders %}Yes{% else %}No{% endif %}
+            </span>
+          </div>
+          
+          {% if product.meta_title or product.meta_description %}
+          <div class="pt-4 border-t border-gray-200">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">SEO Settings</h3>
+            <dl class="space-y-2 text-xs">
+              {% if product.meta_title %}
+              <div>
+                <dt class="font-medium text-gray-600">Meta Title</dt>
+                <dd class="text-gray-500 truncate">{{ product.meta_title }}</dd>
+              </div>
+              {% endif %}
+              {% if product.meta_description %}
+              <div>
+                <dt class="font-medium text-gray-600">Meta Description</dt>
+                <dd class="text-gray-500 line-clamp-2">{{ product.meta_description }}</dd>
+              </div>
+              {% endif %}
+            </dl>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+function toggleProductStatus() {
+  const isActive = {{ product.is_active|lower }};
+  const action = isActive ? 'deactivate' : 'activate';
+  const productName = "{{ product.name }}";
+  
+  if (confirm(`Are you sure you want to ${action} "${productName}"?`)) {
+    // Here you would typically make an AJAX call to update the product status
+    // For now, we'll redirect to the edit page
+    window.location.href = "{% url 'products:product_edit' product_slug=product.slug %}";
+  }
+}
+
+// Add any additional interactive functionality here
+document.addEventListener('DOMContentLoaded', function() {
+  // You can add more interactive features as needed
+});
+</script>
+
+<style>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>
+{% endblock content %}

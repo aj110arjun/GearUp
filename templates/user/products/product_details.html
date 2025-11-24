@@ -1,0 +1,557 @@
+{% extends "user/base.html" %}
+{% load static %}
+
+{% block title %}{{ product.name }} - GearUp{% endblock %}
+
+{% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.6s ease-out forwards; }
+  
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+  .shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  .image-zoom {
+    transition: transform 0.3s ease;
+  }
+  
+  .star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .star-rating input[type="radio"] {
+    display: none;
+  }
+  
+  .star-rating label {
+    font-size: 3rem;
+    color: #d1d5db;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .star-rating label:hover,
+  .star-rating label:hover ~ label {
+    color: #fbbf24;
+    transform: scale(1.1);
+  }
+  
+  .star-rating input[type="radio"]:checked ~ label {
+    color: #fbbf24;
+  }
+  
+  .badge-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .7; }
+  }
+
+  /* Zoom lens and result */
+  #zoom-lens {
+    position: absolute;
+    border: 2px solid #3b82f6;
+    background: rgba(59, 130, 246, 0.2);
+    cursor: crosshair;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  #zoom-result {
+    position: fixed;
+    border: 2px solid #d1d5db;
+    background: white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    z-index: 1000;
+    width: 500px;
+    height: 500px;
+    left: 60%;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+  }
+
+  /* Ensure image container has proper positioning */
+  #image-container {
+    position: relative;
+  }
+
+  @media (max-width: 1023px) {
+    #zoom-result {
+      display: none !important;
+    }
+  }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Breadcrumb -->
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+          <a href="/" class="text-gray-500 hover:text-gray-900 inline-flex items-center text-sm font-medium">
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+            Home
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+            <a href="#" class="text-gray-500 hover:text-gray-900 ml-1 text-sm font-medium">{{ product.category.name }}</a>
+          </div>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+            <span class="text-gray-700 ml-1 text-sm font-medium">{{ product.name }}</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Skeleton Loader -->
+    <div id="skeleton-content">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Image Skeleton -->
+        <div>
+          <div class="shimmer rounded-2xl h-96 lg:h-[500px] mb-4"></div>
+          <div class="flex gap-3">
+            {% for i in "12345" %}
+              <div class="shimmer h-20 w-20 rounded-lg"></div>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <!-- Info Skeleton -->
+        <div class="space-y-4">
+          <div class="shimmer h-10 w-4/5 rounded-lg"></div>
+          <div class="shimmer h-6 w-2/5 rounded-lg"></div>
+          <div class="shimmer h-32 w-full rounded-lg"></div>
+          <div class="shimmer h-16 w-full rounded-lg"></div>
+          <div class="space-y-3">
+            {% for i in "123" %}
+              <div class="shimmer h-24 w-full rounded-lg"></div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real Content -->
+    <div id="real-content" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        
+        <!-- Product Images Section -->
+        <div class="fade-in">
+          <div class="sticky top-4">
+            <!-- Main Image with Zoom -->
+            <div class="relative bg-white rounded-2xl overflow-hidden shadow-2xl mb-4 group" id="image-container">
+              <div class="aspect-square flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-white">
+                <img id="main-product-image" 
+                     src="{% if images %}{{ images.0.image.url }}{% else %}{{ product.image.url }}{% endif %}" 
+                     alt="{{ product.name }}"
+                     class="max-w-full max-h-full object-contain image-zoom cursor-zoom-in">
+              </div>
+
+              <!-- Zoom Lens -->
+              <div id="zoom-lens" class="hidden"></div>
+              
+              <!-- Zoom Hint -->
+              <div class="absolute bottom-4 right-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-xs opacity-0 group-hover:opacity-100 transition">
+                <i class="fas fa-search-plus mr-1"></i> Hover to zoom
+              </div>
+            </div>
+
+            <!-- Thumbnail Images -->
+            <div class="flex gap-3 overflow-x-auto pb-2">
+              {% if images %}
+                {% for img in images %}
+                <img src="{{ img.image.url }}" 
+                     alt="{{ product.name }}"
+                     data-full="{{ img.image.url }}"
+                     class="thumb-img {% if forloop.first %}border-blue-600{% else %}border-gray-200{% endif %} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0">
+                {% endfor %}
+              {% else %}
+                <img src="{{ product.image.url }}" 
+                     alt="{{ product.name }}"
+                     data-full="{{ product.image.url }}"
+                     class="thumb-img border-blue-600 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg flex-shrink-0">
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Details Section -->
+        <div class="fade-in space-y-6">
+          
+          <!-- Header -->
+          <div>
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                <i class="fas fa-tag mr-1"></i>{{ product.brand }}
+              </span>
+              <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">
+                <i class="fas fa-layer-group mr-1"></i>{{ product.category.name }}
+              </span>
+            </div>
+            
+            <h1 class="text-4xl font-bold text-gray-900 mb-3">{{ product.name }}</h1>
+            
+            <!-- Stock Status -->
+            <div class="flex items-center space-x-2 mb-4">
+              {% if product.in_stock %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  In Stock
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                  <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  </svg>
+                  Out of Stock
+                </span>
+              {% endif %}
+            </div>
+
+            <!-- Price Range -->
+            {% if variants %}
+            <div class="flex items-center space-x-2">
+              <span class="text-3xl font-bold text-gray-900">
+                ${{ product.min_price }}
+                {% if product.min_price != product.max_price %}
+                  - ${{ product.max_price }}
+                {% endif %}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Description -->
+          <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+              <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+              Product Description
+            </h3>
+            <p class="text-gray-700 leading-relaxed">{{ product.description }}</p>
+          </div>
+
+          <!-- Features/Highlights -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-500">
+              <i class="fas fa-truck text-green-600 text-2xl mb-2"></i>
+              <p class="font-semibold text-gray-800">Free Delivery</p>
+              <p class="text-sm text-gray-500">On orders over $50</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500">
+              <i class="fas fa-shield-alt text-blue-600 text-2xl mb-2"></i>
+              <p class="font-semibold text-gray-800">Secure Payment</p>
+              <p class="text-sm text-gray-500">100% Protected</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-purple-500">
+              <i class="fas fa-undo text-purple-600 text-2xl mb-2"></i>
+              <p class="font-semibold text-gray-800">Easy Returns</p>
+              <p class="text-sm text-gray-500">30-day return policy</p>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500">
+              <i class="fas fa-headset text-orange-600 text-2xl mb-2"></i>
+              <p class="font-semibold text-gray-800">24/7 Support</p>
+              <p class="text-sm text-gray-500">Always here to help</p>
+            </div>
+          </div>
+
+          <!-- Variants Section -->
+          {% if variants %}
+          <div class="bg-white rounded-2xl p-6 shadow-xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+              <i class="fas fa-boxes text-purple-600 mr-3"></i>
+              Available Options
+            </h2>
+            
+            <div class="space-y-3">
+              {% for variant in variants %}
+              <div class="group relative bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border-2 border-gray-200 hover:border-blue-500 transition-all shadow-sm hover:shadow-lg">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                  
+                  <!-- Variant Info -->
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-3 mb-2">
+                      {% if variant.color %}
+                      <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                        <i class="fas fa-palette mr-1"></i>{{ variant.color }}
+                      </span>
+                      {% endif %}
+                      {% if variant.size %}
+                      <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold">
+                        <i class="fas fa-ruler mr-1"></i>{{ variant.size }}
+                      </span>
+                      {% endif %}
+                      {% if variant.sku %}
+                      <span class="text-xs text-gray-500">SKU: {{ variant.sku }}</span>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Pricing -->
+                    <div class="flex items-center space-x-3">
+                      <span class="text-2xl font-bold text-gray-800">${{ variant.price }}</span>
+                      {% if variant.compare_price and variant.compare_price > variant.price %}
+                        <span class="text-lg text-gray-400 line-through">${{ variant.compare_price }}</span>
+                        <span class="px-2 py-1 bg-red-500 text-white rounded-md text-xs font-bold">
+                          {{ variant.discount_percentage }}% OFF
+                        </span>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Stock Indicator -->
+                    {% if variant.stock_quantity > 0 %}
+                      {% if variant.is_low_stock %}
+                        <div class="mt-2 flex items-center text-red-600 text-sm font-medium">
+                          <i class="fas fa-exclamation-triangle mr-2"></i>
+                          Only {{ variant.stock_quantity }} left in stock!
+                        </div>
+                      {% else %}
+                        <div class="mt-2 flex items-center text-green-600 text-sm font-medium">
+                          <i class="fas fa-check-circle mr-2"></i>
+                          In Stock ({{ variant.stock_quantity }} available)
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      <div class="mt-2 flex items-center text-red-600 text-sm font-medium">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        Out of Stock
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex items-center gap-3 min-w-[200px]">
+                    {% if variant.stock_quantity > 0 %}
+                      <!-- Quantity Selector -->
+                      <div class="flex items-center border-2 border-gray-300 rounded-lg">
+                        <button type="button" onclick="decrementQty(this)" class="px-3 py-2 hover:bg-gray-100 transition">
+                          <i class="fas fa-minus text-gray-600"></i>
+                        </button>
+                        <input type="number" value="1" min="1" max="{{ variant.stock_quantity }}" 
+                               class="w-16 text-center border-x-2 border-gray-300 py-2 focus:outline-none font-semibold">
+                        <button type="button" onclick="incrementQty(this)" class="px-3 py-2 hover:bg-gray-100 transition">
+                          <i class="fas fa-plus text-gray-600"></i>
+                        </button>
+                      </div>
+                      
+                      <!-- Add to Cart Button -->
+                      <form method="post" action="" class="flex-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="variant_id" value="{{ variant.id }}">
+                        <input type="hidden" name="quantity" value="1" class="qty-input">
+                        <button type="submit" 
+                                class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg">
+                          <i class="fas fa-cart-plus"></i>
+                          <span>Add to Cart</span>
+                        </button>
+                      </form>
+                    {% else %}
+                      <button disabled 
+                              class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed">
+                        <i class="fas fa-times-circle"></i>
+                        <span>Out of Stock</span>
+                      </button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+
+      <!-- Product Specifications -->
+      <div class="mt-16 bg-white rounded-3xl shadow-2xl p-8 fade-in">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+          <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>
+          Product Specifications
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="border-b border-gray-200 pb-3">
+            <span class="font-semibold text-gray-700">Brand:</span>
+            <span class="text-gray-600 ml-2">{{ product.brand }}</span>
+          </div>
+          <div class="border-b border-gray-200 pb-3">
+            <span class="font-semibold text-gray-700">Category:</span>
+            <span class="text-gray-600 ml-2">{{ product.category.name }}</span>
+          </div>
+          <div class="border-b border-gray-200 pb-3">
+            <span class="font-semibold text-gray-700">SKU:</span>
+            <span class="text-gray-600 ml-2">{{ product.sku }}</span>
+          </div>
+          <div class="border-b border-gray-200 pb-3">
+            <span class="font-semibold text-gray-700">Status:</span>
+            <span class="text-gray-600 ml-2">{% if product.is_active %}Active{% else %}Inactive{% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zoom Result - Fixed positioning outside the grid -->
+  <div id="zoom-result"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Show real content after loading
+  setTimeout(() => {
+    document.getElementById('skeleton-content').classList.add('hidden');
+    document.getElementById('real-content').classList.remove('hidden');
+  }, 800);
+
+  // Image Gallery and Zoom Setup
+  const mainImg = document.getElementById("main-product-image");
+  const thumbs = document.querySelectorAll(".thumb-img");
+  const imageContainer = document.getElementById('image-container');
+  const zoomLens = document.getElementById('zoom-lens');
+  const zoomResult = document.getElementById('zoom-result');
+
+  const ZOOM_LEVEL = 2.5;
+  const LENS_SIZE = 150;
+
+  // Set lens size
+  if (zoomLens) {
+    zoomLens.style.width = LENS_SIZE + 'px';
+    zoomLens.style.height = LENS_SIZE + 'px';
+  }
+
+  // Thumbnail click handler
+  thumbs.forEach(thumb => {
+    thumb.addEventListener("click", function() {
+      const fullUrl = this.getAttribute('data-full');
+      mainImg.src = fullUrl;
+      
+      thumbs.forEach(t => {
+        t.classList.remove("border-blue-600");
+        t.classList.add("border-gray-200");
+      });
+      this.classList.remove("border-gray-200");
+      this.classList.add("border-blue-600");
+    });
+  });
+
+  // Zoom functionality
+  if (imageContainer && mainImg && zoomLens && zoomResult) {
+    imageContainer.addEventListener('mouseenter', function() {
+      if (window.innerWidth < 1024) return;
+      
+      zoomLens.classList.remove('hidden');
+      zoomResult.style.display = 'block';
+      
+      // Position zoom result fixed on the page
+      zoomResult.style.position = 'fixed';
+      zoomResult.style.left = '60%';
+      zoomResult.style.top = '50%';
+      zoomResult.style.transform = 'translateY(-50%)';
+      zoomResult.style.zIndex = '1000';
+      
+      zoomResult.style.backgroundImage = `url('${mainImg.src}')`;
+      
+      setTimeout(() => {
+        const imgWidth = mainImg.offsetWidth;
+        const imgHeight = mainImg.offsetHeight;
+        zoomResult.style.backgroundSize = `${imgWidth * ZOOM_LEVEL}px ${imgHeight * ZOOM_LEVEL}px`;
+      }, 10);
+      
+      zoomResult.style.backgroundRepeat = 'no-repeat';
+    });
+
+    imageContainer.addEventListener('mouseleave', function() {
+      zoomLens.classList.add('hidden');
+      zoomResult.style.display = 'none';
+    });
+
+    imageContainer.addEventListener('mousemove', function(e) {
+      if (window.innerWidth < 1024) return;
+      
+      const rect = imageContainer.getBoundingClientRect();
+      let x = e.clientX - rect.left;
+      let y = e.clientY - rect.top;
+      
+      x = Math.max(LENS_SIZE / 2, Math.min(x, rect.width - LENS_SIZE / 2));
+      y = Math.max(LENS_SIZE / 2, Math.min(y, rect.height - LENS_SIZE / 2));
+      
+      zoomLens.style.left = (x - LENS_SIZE / 2) + 'px';
+      zoomLens.style.top = (y - LENS_SIZE / 2) + 'px';
+      
+      const bgPosX = -(x * ZOOM_LEVEL - zoomResult.offsetWidth / 2);
+      const bgPosY = -(y * ZOOM_LEVEL - zoomResult.offsetHeight / 2);
+      
+      zoomResult.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
+    });
+  }
+
+  // Quantity controls
+  window.incrementQty = function(btn) {
+    const container = btn.closest('.flex');
+    const input = container.querySelector('input[type="number"]');
+    const max = parseInt(input.getAttribute('max'));
+    const current = parseInt(input.value);
+    if (current < max) {
+      input.value = current + 1;
+      // Update hidden input in form if exists
+      const form = btn.closest('.lg\\:flex-row').querySelector('form');
+      if (form) {
+        const hiddenQty = form.querySelector('.qty-input');
+        if (hiddenQty) hiddenQty.value = input.value;
+      }
+    }
+  };
+
+  window.decrementQty = function(btn) {
+    const container = btn.closest('.flex');
+    const input = container.querySelector('input[type="number"]');
+    const min = parseInt(input.getAttribute('min'));
+    const current = parseInt(input.value);
+    if (current > min) {
+      input.value = current - 1;
+      // Update hidden input in form if exists
+      const form = btn.closest('.lg\\:flex-row').querySelector('form');
+      if (form) {
+        const hiddenQty = form.querySelector('.qty-input');
+        if (hiddenQty) hiddenQty.value = input.value;
+      }
+    }
+  };
+
+  // Sync quantity with form submission
+  document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('change', function() {
+      const form = this.closest('.lg\\:flex-row')?.querySelector('form');
+      if (form) {
+        const hiddenQty = form.querySelector('.qty-input');
+        if (hiddenQty) hiddenQty.value = this.value;
+      }
+    });
+  });
+});
+</script>
+{% endblock %}
