@@ -105,6 +105,7 @@ INSTALLED_APPS = [
     'common.user.home',
     'common.products',
     'common.admin.auth_dashboard',
+    'common.user.cart_wishlist',
 ]
 
 MIDDLEWARE = [
