@@ -117,19 +117,19 @@
             </li>
             <li>
               <a href="{% url 'products:product_list_user' %}"
-                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/products/list/' %}text-emerald-600 active{% endif %}">
+                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/products/' %}text-emerald-600 active{% endif %}">
                 Shop
               </a>
             </li>
             <li>
               <a href="{% url 'shop:cart' %}"
-                class="nav-link hover:text-emerald-600 transition-colors flex items-center gap-1 {% if request.path == '/cart/list/' %}text-emerald-600 active{% endif %}">
+                class="nav-link hover:text-emerald-600 transition-colors flex items-center gap-1 {% if request.path == '/shop/cart/' %}text-emerald-600 active{% endif %}">
                 <i class="fas fa-shopping-cart"></i>
               </a>
             </li>
             <li>
               <a href="{% url 'shop:wishlist' %}"
-                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/wishlist/list/' %}text-emerald-600 active{% endif %}">
+                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/shop/wishlist/' %}text-emerald-600 active{% endif %}">
                 <i class="fas fa-heart"></i>
               </a>
             </li>
@@ -140,7 +140,7 @@
               </a>
             </li>
             <li>
-              <a href=""
+              <a href="{% url 'profile:profile' %}"
                 class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold">
                 <i class="fas fa-user"></i>
                 Account

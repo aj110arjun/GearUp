@@ -20,11 +20,18 @@ class UserModel(AbstractUser):
         ]
     )
     email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.username:
             self.username = self.email
         super().save(*args, **kwargs)
+
+    def get_initials(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name[0]}{self.last_name[0]}".upper()
+        return self.username[0].upper()
 
 
 class OTP(models.Model):
