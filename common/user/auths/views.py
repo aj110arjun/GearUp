@@ -3,8 +3,10 @@ from django.contrib.auth import login
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
 
-from .forms import UserCreationForm, SigninForm, OTPVerificationForm
+from .forms import UserCreationForm, SigninForm, OTPVerificationForm, CustomPasswordChangeForm
 from .models import UserModel, OTP
 from core.services import send_otp_email
 
@@ -171,5 +173,34 @@ def resend_otp(request):
 
     messages.success(request, "New verification code sent!")
     return redirect('verify_otp')
+
+@never_cache
+@login_required(login_url='auth_user:signin')
+def change_password(request):
+    if not request.user.has_usable_password():
+        messages.error(request, "Password change is not available for social accounts.")
+        return redirect('profile:profile')
+    
+    if request.method == 'POST':
+        form = CustomPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your password has been changed successfully!')
+            return redirect('profile:profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CustomPasswordChangeForm(request.user)
+    
+    context = {
+        'form': form
+    }
+    return render(request, 'user/auth/change_password.html', context)
+
+
+@login_required
+def custom_logout(request):
+    logout(request)
+    return redirect('/')
 
 
