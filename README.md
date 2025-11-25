@@ -56,7 +56,7 @@ Create a Virtual Enviornment
 
 
 
- ## 🔐 Eniviornment Variables
+ ## 🔐 Enviornment Variables
 
  `SECRET_KEY`
 
