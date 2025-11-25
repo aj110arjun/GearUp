@@ -131,3 +131,64 @@ class OTPVerificationForm(forms.Form):
         if not re.match(r'^\d{4}$', otp_code):
             raise ValidationError("OTP must be exactly 4 digits.")
         return otp_code
+
+
+
+class CustomPasswordChangeForm(forms.Form):
+    current_password = forms.CharField(
+        label="Current Password",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Enter your current password'
+        }),
+        required=True
+    )
+    
+    new_password1 = forms.CharField(
+        label="New Password",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Enter new password'
+        }),
+        required=True
+    )
+    
+    new_password2 = forms.CharField(
+        label="Confirm New Password",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Confirm new password'
+        }),
+        required=True
+    )
+    
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+    
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get('current_password')
+        if not self.user.check_password(current_password):
+            raise ValidationError("Your current password was entered incorrectly. Please enter it again.")
+        return current_password
+    
+    def clean_new_password2(self):
+        new_password1 = self.cleaned_data.get('new_password1')
+        new_password2 = self.cleaned_data.get('new_password2')
+        
+        if new_password1 and new_password2 and new_password1 != new_password2:
+            raise ValidationError("The two password fields didn't match.")
+        
+        # Validate password strength
+        try:
+            validate_password(new_password2, self.user)
+        except ValidationError as e:
+            raise ValidationError(e.messages)
+        
+        return new_password2
+    
+    def save(self):
+        password = self.cleaned_data["new_password1"]
+        self.user.set_password(password)
+        self.user.save()
+        return self.user
