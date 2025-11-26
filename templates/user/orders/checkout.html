@@ -1,0 +1,489 @@
+<!-- templates/orders/checkout.html -->
+{% extends "user/base.html" %}
+{% load static %}
+{% block title %} Checkout - GearUp {% endblock %}
+
+{% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<div class="bg-gray-50 min-h-screen py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+          <a href="{% url 'home' %}" class="text-gray-500 hover:text-gray-900 inline-flex items-center text-sm font-medium">
+            <i class="fas fa-home mr-2"></i>
+            Home
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+            <a href="{% url 'shop:cart' %}" class="text-gray-500 hover:text-gray-900 text-sm font-medium">Cart</a>
+          </div>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+            <span class="text-gray-800 font-medium text-sm">Checkout</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Checkout</h1>
+      <p class="mt-2 text-sm text-gray-600">Complete your purchase</p>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for message in messages %}
+      <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="lg:grid lg:grid-cols-12 lg:gap-8">
+      
+      <!-- Checkout Form -->
+      <div class="lg:col-span-8">
+        <form id="checkout-form" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="payment_method" id="selected-payment-method" value="cash_on_delivery">
+          
+          <!-- Shipping Address -->
+          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <i class="fas fa-truck text-blue-500 mr-3"></i>
+              Shipping Address
+            </h2>
+            
+            {% if addresses %}
+            <div class="space-y-4">
+              {% for address in addresses %}
+              <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors address-option">
+                <input type="radio" name="shipping_address" value="{{ address.id }}" 
+                       class="mt-1 text-blue-600 shipping-address-radio" 
+                       {% if address.is_default %}checked{% endif %}>
+                <div class="ml-3">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <span class="font-medium text-gray-900">{{ address.full_name }}</span>
+                    {% if address.is_default %}
+                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Default</span>
+                    {% endif %}
+                  </div>
+                  <p class="text-gray-600 text-sm">{{ address.address_line1 }}</p>
+                  {% if address.address_line2 %}
+                  <p class="text-gray-600 text-sm">{{ address.address_line2 }}</p>
+                  {% endif %}
+                  <p class="text-gray-600 text-sm">{{ address.city }}, {{ address.state }} {{ address.zip_code }}</p>
+                  <p class="text-gray-600 text-sm">{{ address.country }}</p>
+                  {% if address.phone_number %}
+                  <p class="text-gray-600 text-sm mt-1">
+                    <i class="fas fa-phone mr-1"></i>{{ address.phone_number }}
+                  </p>
+                  {% endif %}
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+              <i class="fas fa-map-marker-alt text-gray-400 text-4xl mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">No addresses found</h3>
+              <p class="text-gray-600 mb-4">Please add a shipping address to continue</p>
+              <a href="{% url 'address:address_create' %}?next={% url 'orders:checkout' %}" 
+                 class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center">
+                <i class="fas fa-plus mr-2"></i>
+                Add Address
+              </a>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Payment Method -->
+          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <i class="fas fa-credit-card text-green-500 mr-3"></i>
+              Payment Method
+            </h2>
+            
+            <div class="space-y-3">
+              <!-- Cash on Delivery -->
+              <label class="flex items-start p-4 border-2 border-blue-500 rounded-lg cursor-pointer bg-blue-50 payment-option" data-method="cash_on_delivery">
+                <input type="radio" name="payment_method_ui" value="cash_on_delivery" class="mt-1 text-blue-600 payment-radio" checked>
+                <div class="ml-3 flex items-center space-x-3">
+                  <i class="fas fa-money-bill-wave text-green-500 text-xl"></i>
+                  <div>
+                    <span class="text-gray-700 font-medium">Cash on Delivery</span>
+                    <p class="text-sm text-gray-500 mt-1">Pay when you receive your order</p>
+                  </div>
+                </div>
+              </label>
+              
+              <!-- Razorpay -->
+              <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors payment-option" data-method="razorpay">
+                <input type="radio" name="payment_method_ui" value="razorpay" class="mt-1 text-blue-600 payment-radio">
+                <div class="ml-3 flex items-center space-x-3">
+                  <i class="fas fa-credit-card text-purple-500 text-xl"></i>
+                  <div>
+                    <span class="text-gray-700 font-medium">Razorpay</span>
+                    <p class="text-sm text-gray-500 mt-1">Pay securely with cards, UPI, netbanking</p>
+                  </div>
+                </div>
+              </label>
+              
+              <!-- Wallet -->
+              <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors payment-option" data-method="wallet">
+                <input type="radio" name="payment_method_ui" value="wallet" class="mt-1 text-blue-600 payment-radio">
+                <div class="ml-3 flex items-center space-x-3">
+                  <i class="fas fa-wallet text-orange-500 text-xl"></i>
+                  <div>
+                    <span class="text-gray-700 font-medium">Wallet</span>
+                    <p class="text-sm text-gray-500 mt-1">Use your GearUp wallet balance</p>
+                    {% if user.wallet_balance %}
+                    <p class="text-sm text-green-600 font-medium mt-1">
+                      Available balance: ₹{{ user.wallet_balance }}
+                    </p>
+                    {% else %}
+                    <p class="text-sm text-gray-500 mt-1">No wallet balance available</p>
+                    {% endif %}
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Payment Method Details -->
+            <div id="payment-details" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+              <!-- Razorpay Details -->
+              <div id="razorpay-details" class="hidden">
+                <h4 class="font-medium text-gray-900 mb-2">Secure Payment with Razorpay</h4>
+                <p class="text-sm text-gray-600">You will be redirected to Razorpay's secure payment gateway to complete your transaction.</p>
+                <div class="mt-3 flex items-center space-x-4 text-sm text-gray-500">
+                  <span><i class="fas fa-shield-alt text-green-500 mr-1"></i> SSL Secure</span>
+                  <span><i class="fas fa-lock text-green-500 mr-1"></i> Encrypted</span>
+                </div>
+              </div>
+
+              <!-- Wallet Details -->
+              <div id="wallet-details" class="hidden">
+                <h4 class="font-medium text-gray-900 mb-2">Pay with Wallet</h4>
+                {% if user.wallet_balance >= final_total %}
+                <p class="text-sm text-green-600">Your wallet balance (₹{{ user.wallet_balance }}) is sufficient for this order.</p>
+                {% else %}
+                <p class="text-sm text-red-600">
+                  Insufficient wallet balance. You need ₹{{ final_total }} but have only ₹{{ user.wallet_balance }}.
+                </p>
+                {% endif %}
+              </div>
+
+              <!-- Cash on Delivery Details -->
+              <div id="cod-details">
+                <h4 class="font-medium text-gray-900 mb-2">Cash on Delivery</h4>
+                <p class="text-sm text-gray-600">Pay with cash when your order is delivered.</p>
+                <div class="mt-2 text-sm text-gray-500">
+                  <p><i class="fas fa-info-circle text-blue-500 mr-1"></i> Please keep exact change ready</p>
+                  <p><i class="fas fa-clock text-blue-500 mr-1"></i> Delivery executive will collect payment</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="lg:col-span-4 mt-8 lg:mt-0">
+        <div class="bg-white rounded-lg shadow-sm sticky top-8">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Order Summary</h2>
+          </div>
+          
+          <!-- Cart Items -->
+          <div class="px-6 py-4 max-h-96 overflow-y-auto">
+            {% for item in cart_items %}
+            <div class="flex items-center space-x-3 mb-4 pb-4 border-b border-gray-200 last:border-b-0">
+              <img src="{{ item.variant.product.image.url }}" 
+                   alt="{{ item.variant.product.name }}" 
+                   class="w-16 h-16 object-cover rounded-lg border border-gray-200">
+
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-medium text-gray-900 truncate">{{ item.variant.product.name }}</h3>
+                <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
+                <p class="text-sm font-semibold text-gray-900">₹{{ item.total_price }}</p>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          
+          <!-- Order Totals -->
+          <div class="px-6 py-4 space-y-3 border-t border-gray-200">
+            <div class="flex justify-between text-gray-600">
+              <span>Subtotal ({{ cart_item_count }} items)</span>
+              <span>₹{{ cart_total }}</span>
+            </div>
+            
+            {% if cart.total_discount > 0 %}
+            <div class="flex justify-between text-green-600">
+              <span>Discount</span>
+              <span>-₹{{ cart.total_discount }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="flex justify-between text-gray-600">
+              <span>Shipping</span>
+              <span class="text-green-600">FREE</span>
+            </div>
+            
+            <div class="flex justify-between text-gray-600">
+              <span>Tax</span>
+              <span>₹{{ tax_amount }}</span>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-3">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-semibold text-gray-900">Total</span>
+                <span class="text-2xl font-bold text-emerald-600">₹{{ final_total }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Place Order Button -->
+          <div class="px-6 py-4 border-t border-gray-200">
+            <button type="button" id="place-order-btn"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+              <i class="fas fa-lock"></i>
+              <span id="place-order-text">Place Order (Cash on Delivery)</span>
+            </button>
+            
+            <a href="{% url 'shop:cart' %}" 
+               class="block w-full mt-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-center font-medium py-3 px-4 rounded-lg transition">
+              Back to Cart
+            </a>
+          </div>
+          
+          <!-- Security Badges -->
+          <div class="px-6 py-4 bg-gray-50 rounded-b-lg">
+            <div class="grid grid-cols-2 gap-4 text-xs text-gray-600">
+              <div class="flex items-center">
+                <i class="fas fa-shield-alt text-green-500 mr-1.5"></i>
+                Secure Checkout
+              </div>
+              <div class="flex items-center">
+                <i class="fas fa-truck text-blue-500 mr-1.5"></i>
+                Free Shipping
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl p-8 text-center max-w-sm">
+    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i>
+    </div>
+    <h3 class="text-xl font-semibold text-gray-800 mb-2">Processing Order</h3>
+    <p class="text-gray-600">Please wait while we process your order...</p>
+  </div>
+</div>
+
+<!-- Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const checkoutForm = document.getElementById('checkout-form');
+  const loadingOverlay = document.getElementById('loading-overlay');
+  const placeOrderBtn = document.getElementById('place-order-btn');
+  const selectedPaymentMethod = document.getElementById('selected-payment-method');
+  const paymentDetails = document.getElementById('payment-details');
+  
+  // Payment method selection
+  const paymentOptions = document.querySelectorAll('.payment-radio');
+  paymentOptions.forEach(radio => {
+    radio.addEventListener('change', function() {
+      const method = this.value;
+      selectedPaymentMethod.value = method;
+      
+      // Update visual selection
+      document.querySelectorAll('.payment-option').forEach(option => {
+        option.style.borderColor = '#e5e7eb';
+        option.style.backgroundColor = 'transparent';
+      });
+      
+      const selectedOption = this.closest('.payment-option');
+      selectedOption.style.borderColor = '#3b82f6';
+      selectedOption.style.backgroundColor = '#dbeafe';
+      
+      // Update payment details
+      updatePaymentDetails(method);
+      
+      // Update place order button text
+      updatePlaceOrderButton(method);
+    });
+  });
+  
+  // Address selection
+  const addressOptions = document.querySelectorAll('.shipping-address-radio');
+  addressOptions.forEach(radio => {
+    radio.addEventListener('change', function() {
+      // Update visual selection
+      document.querySelectorAll('.address-option').forEach(option => {
+        option.style.borderColor = '#e5e7eb';
+      });
+      
+      const selectedOption = this.closest('.address-option');
+      selectedOption.style.borderColor = '#3b82f6';
+    });
+  });
+  
+  // Initialize first payment method as selected
+  const firstPayment = document.querySelector('.payment-radio:checked');
+  if (firstPayment) {
+    const selectedOption = firstPayment.closest('.payment-option');
+    selectedOption.style.borderColor = '#3b82f6';
+    selectedOption.style.backgroundColor = '#dbeafe';
+    updatePaymentDetails(firstPayment.value);
+  }
+  
+  // Place order button click
+  placeOrderBtn.addEventListener('click', function() {
+    const shippingAddress = document.querySelector('.shipping-address-radio:checked');
+    const agreeTerms = document.getElementById('agree_terms').checked;
+    const paymentMethod = selectedPaymentMethod.value;
+    
+    if (!shippingAddress) {
+      alert('Please select a shipping address.');
+      return;
+    }
+    
+    if (!agreeTerms) {
+      alert('Please agree to the terms and conditions.');
+      return;
+    }
+    
+    // Wallet balance check
+    if (paymentMethod === 'wallet') {
+      const walletBalance = parseFloat('{{ user.wallet_balance|default:0 }}');
+      const orderTotal = parseFloat('{{ final_total }}');
+      
+      if (walletBalance < orderTotal) {
+        alert('Insufficient wallet balance. Please choose another payment method.');
+        return;
+      }
+    }
+    
+    // Handle different payment methods
+    if (paymentMethod === 'razorpay') {
+      initiateRazorpayPayment();
+    } else {
+      // For COD and Wallet, submit form directly
+      submitOrder();
+    }
+  });
+  
+  function updatePaymentDetails(method) {
+    // Hide all details first
+    document.querySelectorAll('#payment-details > div').forEach(detail => {
+      detail.classList.add('hidden');
+    });
+    
+    // Show selected method details
+    paymentDetails.classList.remove('hidden');
+    
+    switch(method) {
+      case 'razorpay':
+        document.getElementById('razorpay-details').classList.remove('hidden');
+        break;
+      case 'wallet':
+        document.getElementById('wallet-details').classList.remove('hidden');
+        break;
+      case 'cash_on_delivery':
+        document.getElementById('cod-details').classList.remove('hidden');
+        break;
+    }
+  }
+  
+  function updatePlaceOrderButton(method) {
+    const buttonText = document.getElementById('place-order-text');
+    switch(method) {
+      case 'razorpay':
+        buttonText.textContent = 'Pay with Razorpay';
+        break;
+      case 'wallet':
+        buttonText.textContent = 'Pay with Wallet';
+        break;
+      case 'cash_on_delivery':
+        buttonText.textContent = 'Place Order (Cash on Delivery)';
+        break;
+    }
+  }
+  
+  function initiateRazorpayPayment() {
+    const orderTotal = parseFloat('{{ final_total }}') * 100; // Convert to paise
+    const options = {
+      key: '{{ RAZORPAY_KEY_ID }}', // Your Razorpay Key ID from settings
+      amount: orderTotal,
+      currency: 'INR',
+      name: 'GearUp',
+      description: 'Order Payment',
+      image: '{% static "images/logo.png" %}',
+      handler: function(response) {
+        // Payment successful
+        document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+        document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+        document.getElementById('razorpay_signature').value = response.razorpay_signature;
+        submitOrder();
+      },
+      prefill: {
+        name: '{{ user.get_full_name }}',
+        email: '{{ user.email }}',
+        contact: '{{ user.phone_number|default:"" }}'
+      },
+      theme: {
+        color: '#10b981'
+      }
+    };
+    
+    const rzp = new Razorpay(options);
+    rzp.open();
+  }
+  
+  function submitOrder() {
+    // Show loading overlay
+    loadingOverlay.classList.remove('hidden');
+    
+    // Submit form
+    checkoutForm.submit();
+  }
+});
+</script>
+
+<style>
+.payment-option {
+  transition: all 0.3s ease;
+}
+
+.address-option {
+  transition: all 0.3s ease;
+}
+
+#loading-overlay {
+  backdrop-filter: blur(4px);
+}
+
+/* Ensure proper spacing for payment details */
+#payment-details {
+  transition: all 0.3s ease;
+}
+</style>
+{% endblock %}
