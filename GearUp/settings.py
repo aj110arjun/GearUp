@@ -95,17 +95,22 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google', 
     'cloudinary',
     'cloudinary_storage',
+    
     'common.user.auths',
     'common.user.home',
     'common.products',
     'common.admin.auth_dashboard',
     'common.user.cart_wishlist',
+    'common.orders',
+    'common.user.user_profile',
+    'common.user.address',
 ]
 
 MIDDLEWARE = [
