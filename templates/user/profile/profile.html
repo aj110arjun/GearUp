@@ -1,0 +1,591 @@
+<!-- templates/user/profile/profile.html -->
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block title %}My Profile - GearUp{% endblock %}
+
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+  .form-input {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200;
+  }
+  .readonly-input {
+    @apply w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 cursor-not-allowed;
+  }
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.1), 0 5px 10px -5px rgba(16, 185, 129, 0.04);
+  }
+  
+  /* Skeleton Loading Animation */
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 py-8 px-4">
+  <div class="max-w-6xl mx-auto">
+    
+    <!-- Breadcrumbs -->
+    <nav class="mb-6" aria-label="Breadcrumb">
+      <ol class="flex items-center space-x-2 text-sm text-gray-600">
+        <li>
+          <a href="{% url 'home' %}" class="hover:text-emerald-600 transition-colors flex items-center">
+            <i class="fas fa-home mr-2"></i>
+            Home
+          </a>
+        </li>
+        <li class="flex items-center">
+          <i class="fas fa-chevron-right text-gray-400 text-xs mx-2"></i>
+          <span class="text-gray-800 font-medium">My Profile</span>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="text-center mb-12 fade-in">
+      <h1 class="text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
+        My Profile
+      </h1>
+      <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+        Manage your personal information and account settings
+      </p>
+    </div>
+
+    <!-- Skeleton Loading -->
+    <div id="skeletonLoading" class="hidden">
+      <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        <!-- Sidebar Skeleton -->
+        <div class="xl:col-span-1">
+          <div class="bg-white rounded-3xl shadow-lg border border-gray-200 p-6 sticky top-8 animate-pulse">
+            <div class="text-center mb-8">
+              <div class="relative inline-block mb-4">
+                <div class="w-28 h-28 rounded-2xl bg-gray-200 border-4 border-gray-100"></div>
+              </div>
+              <div class="h-6 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+              <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+            </div>
+            <nav class="space-y-3">
+              {% for i in "12345" %}
+              <div class="flex items-center space-x-4 p-4 bg-gray-100 rounded-2xl">
+                <div class="w-10 h-10 bg-gray-200 rounded-xl"></div>
+                <div class="h-4 bg-gray-200 rounded w-24"></div>
+              </div>
+              {% endfor %}
+            </nav>
+          </div>
+        </div>
+
+        <!-- Main Content Skeleton -->
+        <div class="xl:col-span-3">
+          <div class="bg-white rounded-3xl shadow-lg border border-gray-200 p-8 animate-pulse">
+            <!-- Header Skeleton -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+              <div class="space-y-2">
+                <div class="h-8 bg-gray-200 rounded w-64"></div>
+                <div class="h-4 bg-gray-200 rounded w-48"></div>
+              </div>
+              <div class="h-12 bg-gray-200 rounded-xl w-48 mt-4 lg:mt-0"></div>
+            </div>
+
+            <!-- Form Sections Skeleton -->
+            <div class="space-y-8">
+              <!-- Profile Picture Section -->
+              <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                <div class="h-6 bg-gray-200 rounded w-48 mb-4"></div>
+                <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
+                  <div class="w-24 h-24 rounded-2xl bg-gray-200 border-4 border-white"></div>
+                  <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="h-12 bg-gray-200 rounded-xl w-40"></div>
+                    <div class="h-12 bg-gray-200 rounded-xl w-32"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Personal Information Skeleton -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {% for i in "12" %}
+                <div class="space-y-2">
+                  <div class="h-4 bg-gray-200 rounded w-32"></div>
+                  <div class="h-12 bg-gray-200 rounded-xl"></div>
+                </div>
+                {% endfor %}
+              </div>
+
+              <!-- Email Section Skeleton -->
+              <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                <div class="h-4 bg-gray-200 rounded w-32 mb-3"></div>
+                <div class="h-12 bg-gray-200 rounded-xl"></div>
+              </div>
+
+              <!-- Contact Information Skeleton -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {% for i in "12" %}
+                <div class="space-y-2">
+                  <div class="h-4 bg-gray-200 rounded w-32"></div>
+                  <div class="h-12 bg-gray-200 rounded-xl"></div>
+                </div>
+                {% endfor %}
+              </div>
+
+              <!-- Submit Button Skeleton -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-8 border-t border-gray-200">
+                <div class="h-4 bg-gray-200 rounded w-48"></div>
+                <div class="h-12 bg-gray-200 rounded-2xl w-40 mt-4 sm:mt-0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="profileContent" class="fade-in">
+      <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        
+        <!-- Sidebar Navigation -->
+        <div class="xl:col-span-1">
+          <div class="bg-white rounded-3xl shadow-lg border border-emerald-100 p-6 sticky top-8 card-hover">
+            <div class="text-center mb-8">
+              <div class="relative inline-block mb-4">
+                {% if user.profile_image %}
+                    <img src="{{ user.profile_image.url }}" 
+                        alt="Profile Picture"
+                        class="w-28 h-28 rounded-2xl object-cover border-4 border-emerald-100 shadow-2xl">
+                {% else %}
+                    <div class="w-28 h-28 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-emerald-100 shadow-2xl overflow-hidden">
+                        <img src="https://res.cloudinary.com/dhpo5iq3m/image/upload/v1764046142/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752_ilk96c.webp" 
+                            alt="Default Profile"
+                            class="w-full h-full object-cover">
+                    </div>
+                {% endif %}
+                <div class="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 rounded-full border-4 border-white shadow-lg"></div>
+              </div>
+              <h2 class="text-xl font-bold text-gray-800 mb-2">{{ user.get_full_name|default:user.username }}</h2>
+              <p class="text-gray-500 text-sm bg-emerald-50 rounded-lg py-2 px-3 inline-block">
+                <i class="fas fa-envelope text-emerald-500 mr-2"></i>
+                {{ user.email }}
+              </p>
+            </div>
+
+            <nav class="space-y-3">
+              <a href="{% url 'profile:profile' %}" 
+                 class="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 rounded-2xl font-semibold border border-emerald-200 transition-all duration-300 hover:shadow-md">
+                <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-user-circle text-white text-lg"></i>
+                </div>
+                <span>Profile Settings</span>
+              </a>
+              
+              <a href="{% url 'shop:wishlist' %}" 
+                 class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-pink-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-pink-200">
+                <div class="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-heart text-pink-500 text-lg"></i>
+                </div>
+                <span>My Wishlist</span>
+              </a>
+
+              {% if user.has_usable_password %}
+                <a href="{% url 'user_auth:change_password' %}" 
+                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-amber-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-amber-200">
+                  <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-lock text-amber-500 text-lg"></i>
+                  </div>
+                  <span>Change Password</span>
+                </a>
+              {% endif %}
+
+              <a href="{% url 'address:address_list' %}" 
+                class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-blue-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-blue-200">
+                  <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <i class="fas fa-map-marker-alt text-blue-500 text-lg"></i>
+                  </div>
+                  <span>My Addresses</span>
+              </a>
+              
+              <a href="{% url 'shop:cart' %}" 
+                 class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-teal-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-teal-200">
+                <div class="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-shopping-cart text-teal-500 text-lg"></i>
+                </div>
+                <span>Shopping Cart</span>
+              </a>
+              
+              <a href="{% url 'user_auth:logout' %}" 
+                 class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-red-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-red-200 group">
+                <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-500 transition-colors">
+                  <i class="fas fa-sign-out-alt text-red-500 group-hover:text-white text-lg transition-colors"></i>
+                </div>
+                <span class="group-hover:text-red-700">Logout</span>
+              </a>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="xl:col-span-3">
+          <div class="bg-white rounded-3xl shadow-lg border border-emerald-100 p-8 card-hover">
+            <!-- Header with Stats -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+              <div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+                  <i class="fas fa-user-edit text-emerald-500 mr-3"></i>
+                  Personal Information
+                </h2>
+                <p class="text-gray-600">Update your profile details and preferences</p>
+              </div>
+              <div class="mt-4 lg:mt-0">
+                <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-200">
+                  <p class="text-sm text-emerald-700 font-medium">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Last updated: {{ user.updated_at|date:"M j, Y"|default:"Recently" }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {% if messages %}
+            <div class="mb-8 space-y-3">
+              {% for message in messages %}
+              <div class="p-4 rounded-2xl border-l-4 {% if message.tags == 'success' %}bg-emerald-50 border-emerald-400 text-emerald-700{% else %}bg-red-50 border-red-400 text-red-700{% endif %} flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} text-lg"></i>
+                  <span class="font-medium">{{ message }}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" class="space-y-8" id="profileForm">
+              {% csrf_token %}
+              
+              <!-- Profile Picture Section -->
+              <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <i class="fas fa-camera text-emerald-500 mr-3"></i>
+                  Profile Photo
+                </h3>
+                <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
+                  <div class="relative">
+                    {% if user.profile_image %}
+                      <img id="profile-preview" src="{{ user.profile_image.url }}" 
+                           alt="Profile Preview" 
+                           class="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg">
+                      <div id="profile-preview-default" class="hidden"></div>
+                    {% else %}
+                      <div id="profile-preview-default" class="w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg overflow-hidden">
+                        <img src="https://res.cloudinary.com/dhpo5iq3m/image/upload/v1764046142/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752_ilk96c.webp" 
+                            alt="Default Profile"
+                            class="w-full h-full object-cover">
+                      </div>
+                      <img id="profile-preview" src="" alt="Profile Preview" class="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg hidden">
+                    {% endif %}
+                  </div>
+                  
+                  <div class="flex flex-col sm:flex-row gap-3">
+                    <div>
+                      <input type="file" 
+                             name="profile_image" 
+                             id="id_profile_image"
+                             accept="image/*"
+                             class="hidden"
+                             onchange="previewImage(this)">
+                      <label for="id_profile_image" 
+                             class="cursor-pointer bg-white text-emerald-600 px-6 py-3 rounded-xl font-semibold hover:bg-emerald-50 transition-all duration-300 border-2 border-emerald-200 hover:border-emerald-300 shadow-sm flex items-center space-x-2">
+                        <i class="fas fa-camera"></i>
+                        <span>Change Photo</span>
+                      </label>
+                    </div>
+                    
+                    {% if user.profile_image %}
+                    <button type="button" 
+                            onclick="removeProfilePicture()"
+                            class="cursor-pointer bg-white text-red-600 px-6 py-3 rounded-xl font-semibold hover:bg-red-50 transition-all duration-300 border-2 border-red-200 hover:border-red-300 shadow-sm flex items-center space-x-2">
+                      <i class="fas fa-trash"></i>
+                      <span>Remove</span>
+                    </button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Personal Information Section -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <label for="id_first_name" class="block text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-user text-emerald-500 mr-2"></i>
+                    First Name
+                  </label>
+                  <input type="text" 
+                         name="first_name" 
+                         id="id_first_name" 
+                         value="{{ form.first_name.value|default:'' }}"
+                         class="form-input"
+                         placeholder="Enter your first name">
+                  {% if form.first_name.errors %}
+                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                      <i class="fas fa-exclamation-circle"></i>
+                      <span>{{ form.first_name.errors.0 }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+                
+                <div>
+                  <label for="id_last_name" class="block text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-user text-emerald-500 mr-2"></i>
+                    Last Name
+                  </label>
+                  <input type="text" 
+                         name="last_name" 
+                         id="id_last_name" 
+                         value="{{ form.last_name.value|default:'' }}"
+                         class="form-input"
+                         placeholder="Enter your last name">
+                  {% if form.last_name.errors %}
+                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                      <i class="fas fa-exclamation-circle"></i>
+                      <span>{{ form.last_name.errors.0 }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Email Address (Read-only) -->
+              <div class="bg-emerald-50 rounded-2xl p-6 border border-emerald-200">
+                <label for="email-display" class="block text-sm font-semibold text-gray-700 mb-3">
+                  <i class="fas fa-envelope text-emerald-500 mr-2"></i>
+                  Email Address
+                </label>
+                <div class="flex items-center space-x-3">
+                  <input type="email" 
+                         id="email-display" 
+                         value="{{ user.email }}"
+                         class="readonly-input flex-1"
+                         readonly
+                         disabled>
+                  <span class="bg-emerald-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                    Verified
+                  </span>
+                </div>
+                <p class="text-sm text-gray-500 mt-2 flex items-center space-x-1">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Email address cannot be changed for security reasons</span>
+                </p>
+              </div>
+
+              <!-- Contact Information -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <label for="id_phone_number" class="block text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-phone text-emerald-500 mr-2"></i>
+                    Phone Number
+                  </label>
+                  <input type="text" 
+                         name="phone_number" 
+                         id="id_phone_number" 
+                         value="{{ form.phone_number.value|default:'' }}"
+                         class="form-input"
+                         placeholder="+1 (555) 123-4567">
+                  {% if form.phone_number.errors %}
+                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                      <i class="fas fa-exclamation-circle"></i>
+                      <span>{{ form.phone_number.errors.0 }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+                
+                <div>
+                  <label for="id_date_of_birth" class="block text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-birthday-cake text-emerald-500 mr-2"></i>
+                    Date of Birth
+                  </label>
+                  <input type="date" 
+                         name="date_of_birth" 
+                         id="id_date_of_birth" 
+                         value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}"
+                         class="form-input">
+                  {% if form.date_of_birth.errors %}
+                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                      <i class="fas fa-exclamation-circle"></i>
+                      <span>{{ form.date_of_birth.errors.0 }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-8 border-t border-gray-200">
+                <p class="text-gray-500 text-sm mb-4 sm:mb-0">
+                  <i class="fas fa-shield-alt text-emerald-500 mr-2"></i>
+                  Your information is secure and encrypted
+                </p>
+                <button type="submit" 
+                        id="submitButton"
+                        class="bg-blue-500 text-white px-8 py-4 rounded-2xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 group">
+                  <i class="fas fa-save group-hover:scale-110 transition-transform"></i>
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let isLoading = false;
+
+// Show skeleton loading
+function showSkeleton() {
+  document.getElementById('skeletonLoading').classList.remove('hidden');
+  document.getElementById('profileContent').classList.add('hidden');
+  isLoading = true;
+}
+
+// Hide skeleton loading
+function hideSkeleton() {
+  document.getElementById('skeletonLoading').classList.add('hidden');
+  document.getElementById('profileContent').classList.remove('hidden');
+  isLoading = false;
+}
+
+// Simulate loading on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Show skeleton for a brief moment to demonstrate
+  showSkeleton();
+  setTimeout(() => {
+    hideSkeleton();
+  }, 1000);
+});
+
+function previewImage(input) {
+  const preview = document.getElementById('profile-preview');
+  const defaultPreview = document.getElementById('profile-preview-default');
+  
+  if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+          // Hide the default preview if it exists
+          if (defaultPreview) {
+              defaultPreview.classList.add('hidden');
+          }
+          
+          // Show and set the uploaded image preview
+          if (preview) {
+              preview.src = e.target.result;
+              preview.classList.remove('hidden');
+          }
+      }
+      
+      reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function removeProfilePicture() {
+  if (confirm('Are you sure you want to remove your profile picture?')) {
+      // Create a hidden input to indicate removal
+      const removeInput = document.createElement('input');
+      removeInput.type = 'hidden';
+      removeInput.name = 'remove_profile_image';
+      removeInput.value = 'true';
+      
+      // Add it to the form
+      const form = document.querySelector('form');
+      form.appendChild(removeInput);
+      
+      // Show loading and submit
+      showSkeleton();
+      form.submit();
+  }
+}
+
+// Enhanced form submission with loading
+document.getElementById('profileForm')?.addEventListener('submit', function(e) {
+  const submitButton = document.getElementById('submitButton');
+  const originalHTML = submitButton.innerHTML;
+  
+  // Show loading state on button
+  submitButton.disabled = true;
+  submitButton.innerHTML = `
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Saving Changes...</span>
+  `;
+  submitButton.classList.remove('hover:from-emerald-600', 'hover:to-teal-700', 'hover:shadow-xl');
+  
+  // Show skeleton loading
+  showSkeleton();
+});
+
+// Enhanced image preview with error handling
+document.addEventListener('DOMContentLoaded', function() {
+  const profileImageInput = document.getElementById('id_profile_image');
+  
+  if (profileImageInput) {
+      profileImageInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+              // Check file size (max 5MB)
+              if (file.size > 5 * 1024 * 1024) {
+                  alert('File size must be less than 5MB');
+                  this.value = '';
+                  return;
+              }
+              
+              // Check file type
+              const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+              if (!validTypes.includes(file.type)) {
+                  alert('Please select a valid image file (JPEG, PNG, or WebP)');
+                  this.value = '';
+                  return;
+              }
+              
+              previewImage(this);
+          }
+      });
+  }
+  
+  // Auto-close messages after 5 seconds
+  setTimeout(function() {
+      const messages = document.querySelectorAll('[class*="rounded-2xl border-l-4"]');
+      messages.forEach(function(message) {
+          message.style.transition = 'all 0.5s ease-out';
+          message.style.opacity = '0';
+          message.style.transform = 'translateX(100%)';
+          setTimeout(() => {
+              if (message.parentNode) {
+                  message.remove();
+              }
+          }, 500);
+      });
+  }, 5000);
+});
+</script>
+{% endblock %}

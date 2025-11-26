@@ -1,0 +1,148 @@
+{% extends 'user/base.html' %}
+
+{% block title %}{{ title }} - GearUp{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-2xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">{{ title }}</h1>
+            <p class="text-gray-600 mt-2">Fill in your address details</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                
+                <div class="space-y-6">
+                    <!-- Address Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Address Type</label>
+                        {{ form.address_type }}
+                        {% if form.address_type.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.address_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        {{ form.full_name }}
+                        {% if form.full_name.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.full_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number (Optional)</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.phone_number.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Address Line 1 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 1</label>
+                        {{ form.address_line1 }}
+                        {% if form.address_line1.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.address_line1.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Address Line 2 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 2 (Optional)</label>
+                        {{ form.address_line2 }}
+                    </div>
+
+                    <!-- City, State, ZIP -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                            {{ form.city }}
+                            {% if form.city.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.city.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+                            {{ form.state }}
+                            {% if form.state.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.state.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+                            {{ form.zip_code }}
+                            {% if form.zip_code.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.zip_code.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Country -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                        {{ form.country }}
+                        {% if form.country.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.country.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Delivery Instructions -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Instructions (Optional)</label>
+                        {{ form.instructions }}
+                    </div>
+
+                    <!-- Default Address -->
+                    <div class="flex items-center">
+                        {{ form.is_default }}
+                        <label class="ml-2 text-sm text-gray-700">Set as default address</label>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
+                    <a href="{% url 'address:address_list' %}" 
+                       class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                        Save Address
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-select, .form-input, .form-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.form-select:focus, .form-input:focus, .form-textarea:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.form-checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid #d1d5db;
+}
+</style>
+{% endblock %}
