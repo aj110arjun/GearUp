@@ -51,7 +51,7 @@
     <nav class="mb-6" aria-label="Breadcrumb">
       <ol class="flex items-center space-x-2 text-sm text-gray-600">
         <li>
-          <a href="{% url 'home' %}" class="hover:text-emerald-600 transition-colors flex items-center">
+          <a href="{% url 'user_home:home' %}" class="hover:text-emerald-600 transition-colors flex items-center">
             <i class="fas fa-home mr-2"></i>
             Home
           </a>
@@ -182,7 +182,7 @@
                 {% endif %}
                 <div class="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 rounded-full border-4 border-white shadow-lg"></div>
               </div>
-              <h2 class="text-xl font-bold text-gray-800 mb-2">{{ user.get_full_name|default:user.username }}</h2>
+              <h2 class="text-xl font-bold text-gray-800 mb-2">{{ user.get_display_name }}</h2>
               <p class="text-gray-500 text-sm bg-emerald-50 rounded-lg py-2 px-3 inline-block">
                 <i class="fas fa-envelope text-emerald-500 mr-2"></i>
                 {{ user.email }}
@@ -190,7 +190,7 @@
             </div>
 
             <nav class="space-y-3">
-              <a href="{% url 'profile:profile' %}" 
+              <a href="{% url 'user_auth:profile' %}" 
                  class="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 rounded-2xl font-semibold border border-emerald-200 transition-all duration-300 hover:shadow-md">
                 <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
                   <i class="fas fa-user-circle text-white text-lg"></i>
@@ -207,7 +207,7 @@
               </a>
 
               {% if user.has_usable_password %}
-                <a href="{% url 'user_auth:change_password' %}" 
+                <a href="" 
                   class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-amber-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-amber-200">
                   <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
                     <i class="fas fa-lock text-amber-500 text-lg"></i>
@@ -232,7 +232,7 @@
                 <span>Shopping Cart</span>
               </a>
               
-              <a href="{% url 'user_auth:logout' %}" 
+              <a href="" 
                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-red-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-red-200 group">
                 <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-500 transition-colors">
                   <i class="fas fa-sign-out-alt text-red-500 group-hover:text-white text-lg transition-colors"></i>
@@ -259,7 +259,7 @@
                 <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-200">
                   <p class="text-sm text-emerald-700 font-medium">
                     <i class="fas fa-info-circle mr-2"></i>
-                    Last updated: {{ user.updated_at|date:"M j, Y"|default:"Recently" }}
+                    Profile Completion: {{ user.profile_completion_percentage }}%
                   </p>
                 </div>
               </div>
@@ -344,7 +344,7 @@
                   <input type="text" 
                          name="first_name" 
                          id="id_first_name" 
-                         value="{{ form.first_name.value|default:'' }}"
+                         value="{{ form.first_name.value|default:user.first_name|default:'' }}"
                          class="form-input"
                          placeholder="Enter your first name">
                   {% if form.first_name.errors %}
@@ -363,7 +363,7 @@
                   <input type="text" 
                          name="last_name" 
                          id="id_last_name" 
-                         value="{{ form.last_name.value|default:'' }}"
+                         value="{{ form.last_name.value|default:user.last_name|default:'' }}"
                          class="form-input"
                          placeholder="Enter your last name">
                   {% if form.last_name.errors %}
@@ -388,14 +388,34 @@
                          class="readonly-input flex-1"
                          readonly
                          disabled>
-                  <span class="bg-emerald-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
-                    Verified
+                  <span class="{% if user.email_verified %}bg-emerald-500 text-white{% else %}bg-yellow-500 text-white{% endif %} px-3 py-1 rounded-lg text-sm font-medium">
+                    {% if user.email_verified %}Verified{% else %}Not Verified{% endif %}
                   </span>
                 </div>
                 <p class="text-sm text-gray-500 mt-2 flex items-center space-x-1">
                   <i class="fas fa-info-circle"></i>
                   <span>Email address cannot be changed for security reasons</span>
                 </p>
+              </div>
+
+              <!-- Bio Section -->
+              <div>
+                <label for="id_bio" class="block text-sm font-semibold text-gray-700 mb-3">
+                  <i class="fas fa-edit text-emerald-500 mr-2"></i>
+                  Bio
+                </label>
+                <textarea 
+                  name="bio" 
+                  id="id_bio" 
+                  rows="4"
+                  class="form-input"
+                  placeholder="Tell us a little about yourself...">{{ form.bio.value|default:user.bio|default:'' }}</textarea>
+                {% if form.bio.errors %}
+                  <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>{{ form.bio.errors.0 }}</span>
+                  </div>
+                {% endif %}
               </div>
 
               <!-- Contact Information -->
@@ -408,13 +428,54 @@
                   <input type="text" 
                          name="phone_number" 
                          id="id_phone_number" 
-                         value="{{ form.phone_number.value|default:'' }}"
+                         value="{{ form.phone_number.value|default:user.phone_number|default:'' }}"
                          class="form-input"
                          placeholder="+1 (555) 123-4567">
                   {% if form.phone_number.errors %}
                     <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.phone_number.errors.0 }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+                
+                <div>
+                  <label for="id_location" class="block text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-map-marker-alt text-emerald-500 mr-2"></i>
+                    Location
+                  </label>
+                  <input type="text" 
+                         name="location" 
+                         id="id_location" 
+                         value="{{ form.location.value|default:user.location|default:'' }}"
+                         class="form-input"
+                         placeholder="Your city or country">
+                  {% if form.location.errors %}
+                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                      <i class="fas fa-exclamation-circle"></i>
+                      <span>{{ form.location.errors.0 }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Website and Date of Birth -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <label for="id_website" class="block text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-globe text-emerald-500 mr-2"></i>
+                    Website
+                  </label>
+                  <input type="url" 
+                         name="website" 
+                         id="id_website" 
+                         value="{{ form.website.value|default:user.website|default:'' }}"
+                         class="form-input"
+                         placeholder="https://example.com">
+                  {% if form.website.errors %}
+                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                      <i class="fas fa-exclamation-circle"></i>
+                      <span>{{ form.website.errors.0 }}</span>
                     </div>
                   {% endif %}
                 </div>
@@ -427,7 +488,7 @@
                   <input type="date" 
                          name="date_of_birth" 
                          id="id_date_of_birth" 
-                         value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}"
+                         value="{% if form.date_of_birth.value %}{{ form.date_of_birth.value|date:'Y-m-d' }}{% elif user.date_of_birth %}{{ user.date_of_birth|date:'Y-m-d' }}{% endif %}"
                          class="form-input">
                   {% if form.date_of_birth.errors %}
                     <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
@@ -435,6 +496,67 @@
                       <span>{{ form.date_of_birth.errors.0 }}</span>
                     </div>
                   {% endif %}
+                </div>
+              </div>
+
+              <!-- Social Media Section -->
+              <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <i class="fas fa-share-alt text-emerald-500 mr-3"></i>
+                  Social Media Links
+                </h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <label for="id_twitter" class="block text-sm font-semibold text-gray-700 mb-3">
+                      <i class="fab fa-twitter text-blue-400 mr-2"></i>
+                      Twitter
+                    </label>
+                    <input type="text" 
+                           name="twitter" 
+                           id="id_twitter" 
+                           value="{{ form.twitter.value|default:user.twitter|default:'' }}"
+                           class="form-input"
+                           placeholder="@username">
+                  </div>
+                  
+                  <div>
+                    <label for="id_instagram" class="block text-sm font-semibold text-gray-700 mb-3">
+                      <i class="fab fa-instagram text-pink-500 mr-2"></i>
+                      Instagram
+                    </label>
+                    <input type="text" 
+                           name="instagram" 
+                           id="id_instagram" 
+                           value="{{ form.instagram.value|default:user.instagram|default:'' }}"
+                           class="form-input"
+                           placeholder="@username">
+                  </div>
+                  
+                  <div>
+                    <label for="id_facebook" class="block text-sm font-semibold text-gray-700 mb-3">
+                      <i class="fab fa-facebook text-blue-600 mr-2"></i>
+                      Facebook
+                    </label>
+                    <input type="text" 
+                           name="facebook" 
+                           id="id_facebook" 
+                           value="{{ form.facebook.value|default:user.facebook|default:'' }}"
+                           class="form-input"
+                           placeholder="username">
+                  </div>
+                  
+                  <div>
+                    <label for="id_linkedin" class="block text-sm font-semibold text-gray-700 mb-3">
+                      <i class="fab fa-linkedin text-blue-700 mr-2"></i>
+                      LinkedIn
+                    </label>
+                    <input type="text" 
+                           name="linkedin" 
+                           id="id_linkedin" 
+                           value="{{ form.linkedin.value|default:user.linkedin|default:'' }}"
+                           class="form-input"
+                           placeholder="linkedin.com/in/username">
+                  </div>
                 </div>
               </div>
 
@@ -446,7 +568,7 @@
                 </p>
                 <button type="submit" 
                         id="submitButton"
-                        class="bg-blue-500 text-white px-8 py-4 rounded-2xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 group">
+                        class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-2xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 group">
                   <i class="fas fa-save group-hover:scale-110 transition-transform"></i>
                   <span>Save Changes</span>
                 </button>

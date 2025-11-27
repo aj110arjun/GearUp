@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
-from .forms import UserCreationForm, SigninForm, OTPVerificationForm
+from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm
 from .models import UserModel, OTP
 from core.services import send_otp_email
 
@@ -12,11 +13,11 @@ from core.services import send_otp_email
 @never_cache
 def signup(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('user_home:home')
 
     # Check if user is already in OTP verification stage
     if 'signup_data' in request.session and 'otp_sent' in request.session:
-        return redirect('verify_otp')
+        return redirect('user_auth:verify_otp')
 
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -39,7 +40,7 @@ def signup(request):
             request.session['otp_created'] = otp.created_at.isoformat()
 
             messages.success(request, f"Verification code sent to {form.cleaned_data['email']}")  # Fixed
-            return redirect('verify_otp')
+            return redirect('user_auth:verify_otp')
     else:
         form = UserCreationForm()
 
@@ -52,7 +53,7 @@ def signup(request):
 @never_cache
 def signin(request):
     if request.user.is_authenticated:
-        return redirect('home')  # or 'dashboard'
+        return redirect('user_home:home')  # or 'dashboard'
 
     if request.method == 'POST':
         form = SigninForm(request.POST)
@@ -83,7 +84,7 @@ def signin(request):
 @never_cache
 def verify_otp(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('user_home:home')
     
     if 'signup_data' not in request.session or 'otp_sent' not in request.session:
         return redirect('signup')
@@ -96,7 +97,7 @@ def verify_otp(request):
         otp = OTP.objects.filter(email=otp_email, is_verified=False).latest('created_at')
     except OTP.DoesNotExist:
         messages.error(request, "OTP expired or invalid. Please sign up again.")
-        return redirect('signup')
+        return redirect('user_auth:signup')
     
     if request.method == 'POST':
         form = OTPVerificationForm(request.POST)
@@ -127,7 +128,7 @@ def verify_otp(request):
                 del request.session['otp_created']
                 
                 messages.success(request, "Account created successfully! You can now sign in.")
-                return redirect('signin')
+                return redirect('user_auth:signin')
             
             else:
                 if otp.is_expired():
@@ -156,7 +157,7 @@ def verify_otp(request):
 @never_cache
 def resend_otp(request):
     if 'signup_data' not in request.session:
-        return redirect('signup')
+        return redirect('user_auth:signup')
 
     signup_data = request.session['signup_data']
     email = signup_data['email']
@@ -170,6 +171,45 @@ def resend_otp(request):
     request.session['otp_created'] = otp.created_at.isoformat()
 
     messages.success(request, "New verification code sent!")
-    return redirect('verify_otp')
+    return redirect('user_auth:verify_otp')
+
+# views.py
+
+
+@login_required
+def profile_view(request):
+    """Display user profile"""
+    return render(request, 'user/profile/profile.html', {
+        'user_profile': request.user
+    })
+
+@login_required
+def profile_edit(request):
+    """Edit user profile"""
+    if request.method == 'POST':
+        form = ProfileUpdateForm(
+            request.POST, 
+            request.FILES, 
+            instance=request.user
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('profile')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+    
+    return render(request, 'profiles/profile_edit.html', {'form': form})
+
+@login_required
+def profile_image_upload(request):
+    """Handle profile image upload separately"""
+    if request.method == 'POST' and request.FILES.get('profile_image'):
+        user = request.user
+        user.profile_image = request.FILES['profile_image']
+        user.save()
+        messages.success(request, 'Profile image updated successfully!')
+    
+    return redirect('profile_edit')
 
 

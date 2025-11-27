@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
+from django.contrib.auth.forms import UserChangeForm
 
 from .models import UserModel
 
@@ -131,3 +132,24 @@ class OTPVerificationForm(forms.Form):
         if not re.match(r'^\d{4}$', otp_code):
             raise ValidationError("OTP must be exactly 4 digits.")
         return otp_code
+
+
+class ProfileUpdateForm(UserChangeForm):
+    password = None  # Remove password field from the form
+    
+    class Meta:
+        model = UserModel
+        fields = [
+            'first_name', 'last_name', 'email', 'profile_image',
+            'bio', 'phone_number', 'location', 'website', 
+            'date_of_birth', 'twitter', 'facebook', 'instagram', 'linkedin'
+        ]
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+            'bio': forms.Textarea(attrs={'rows': 4}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make email read-only or handle carefully
+        self.fields['email'].widget.attrs['readonly'] = True

@@ -20,11 +20,43 @@ class UserModel(AbstractUser):
         ]
     )
     email = models.EmailField(unique=True)
+    bio = models.TextField(max_length=500, blank=True)
+    phone_number = models.CharField(max_length=15, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+    website = models.URLField(blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    email_verified = models.BooleanField(default=False)
+    
+    # Social links
+    twitter = models.CharField(max_length=100, blank=True)
+    facebook = models.CharField(max_length=100, blank=True)
+    instagram = models.CharField(max_length=100, blank=True)
+    linkedin = models.CharField(max_length=100, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.username:
             self.username = self.email
         super().save(*args, **kwargs)
+    
+    def get_display_name(self):
+        """Return display name (first name + last name or username)"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
+    
+    @property
+    def profile_completion_percentage(self):
+        """Calculate profile completion percentage"""
+        fields = [
+            self.first_name, self.last_name, self.email,
+            self.profile_image, self.bio, self.phone_number,
+            self.location, self.date_of_birth
+        ]
+        completed = sum(1 for field in fields if field)
+        return int((completed / len(fields)) * 100)
 
 
 class OTP(models.Model):

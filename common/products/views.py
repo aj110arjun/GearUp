@@ -1,15 +1,20 @@
+import json
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum,  Min, Max
 from django.db import transaction
 from django.utils.text import slugify
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.urls import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q, Min, Max
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
+from common.user.cart_wishlist.models import Cart, CartItem, Wishlist
 from .models import Product, ProductVariant, Category
 from .forms import (
     ProductCreateForm,
@@ -403,17 +408,22 @@ def product_list_user(request):
     # Get all active products with variants
     products = Product.objects.filter(is_active=True).prefetch_related('variants', 'category')
     
-    # Get filter parameters
-    category_slug = request.GET.get('category')
+    # Get filter parameters (match template parameter names)
+    category_id = request.GET.get('category')
     search_query = request.GET.get('q')
-    min_price = request.GET.get('min_price')
-    max_price = request.GET.get('max_price')
-    sort_by = request.GET.get('sort', 'name')
-    in_stock = request.GET.get('in_stock')
+    sort_by = request.GET.get('sort', '')
+    
+    # Debug prints
+    print(f"Category ID: {category_id}")
+    print(f"Search Query: {search_query}")
+    print(f"Sort By: {sort_by}")
     
     # Apply filters
-    if category_slug and category_slug != 'all':
-        products = products.filter(category__slug=category_slug)
+    if category_id and category_id != '':
+        try:
+            products = products.filter(category__id=category_id)
+        except ValueError:
+            pass  # Invalid category ID
     
     if search_query:
         products = products.filter(
@@ -423,33 +433,25 @@ def product_list_user(request):
             Q(category__name__icontains=search_query)
         )
     
-    if min_price:
-        products = products.filter(variants__price__gte=min_price)
-    
-    if max_price:
-        products = products.filter(variants__price__lte=max_price)
-    
-    if in_stock:
-        products = products.filter(variants__stock_quantity__gt=0)
-    
     # Remove duplicates
     products = products.distinct()
     
-    # Apply sorting
-    if sort_by == 'price_low':
-        products = products.annotate(min_price=Min('variants__price')).order_by('min_price')
-    elif sort_by == 'price_high':
-        products = products.annotate(min_price=Min('variants__price')).order_by('-min_price')
+    # Apply sorting (use different annotation names to avoid property conflict)
+    if sort_by == 'price_asc':
+        products = products.annotate(
+            product_min_price=Min('variants__price')
+        ).order_by('product_min_price')
+    elif sort_by == 'price_desc':
+        products = products.annotate(
+            product_min_price=Min('variants__price')
+        ).order_by('-product_min_price')
     elif sort_by == 'name':
         products = products.order_by('name')
-    elif sort_by == 'newest':
-        products = products.order_by('-created_at')
-    elif sort_by == 'bestseller':
-        products = products.filter(is_bestseller=True).order_by('-created_at')
-    elif sort_by == 'featured':
-        products = products.filter(is_featured=True).order_by('-created_at')
+    elif sort_by == 'name2':  # Z-A
+        products = products.order_by('-name')
     else:
-        products = products.order_by('name')
+        # Default ordering
+        products = products.order_by('-created_at')
     
     # Pagination
     page = request.GET.get('page', 1)
@@ -465,26 +467,42 @@ def product_list_user(request):
     # Get categories for filter
     categories = Category.objects.filter(is_active=True)
     
-    # Get price range for filter
-    price_range = products.aggregate(
-        min_price=Min('variants__price'),
-        max_price=Max('variants__price')
-    )
+    # Get cart items
+    cart_items = []
+    wishlist_product_ids = []
+    if request.user.is_authenticated:
+        try:
+            cart = Cart.objects.get(user=request.user)
+            cart_items = cart.items.all()
+        except Cart.DoesNotExist:
+            pass
+        
+        # Get wishlist product IDs
+        try:
+            from wishlist.models import Wishlist  # Adjust import based on your app structure
+            wishlist_product_ids = Wishlist.objects.filter(
+                user=request.user
+            ).values_list('product_id', flat=True)
+        except:
+            pass
+    
+    # Prepare filters for template display
+    filters = {
+        'search': search_query or '',
+        'category': category_id or '',
+        'sort': sort_by or '',
+    }
     
     context = {
         'products': products_page,
         'categories': categories,
-        'search_query': search_query,
-        'category_slug': category_slug,
-        'min_price': min_price,
-        'max_price': max_price,
-        'sort_by': sort_by,
-        'in_stock': in_stock,
-        'price_range': price_range,
+        'filters': filters,
+        'cart_items': cart_items,
+        'cart_variant_ids': [item.variant.id for item in cart_items],
+        'wishlist_product_ids': list(wishlist_product_ids),
     }
     
     return render(request, 'user/products/product_list.html', context)
-
 @login_required(login_url='user_auth:signin')
 @never_cache
 def product_detail_user(request, product_slug):
@@ -508,11 +526,130 @@ def product_detail_user(request, product_slug):
         is_active=True
     ).exclude(id=product.id).prefetch_related('variants', 'images')[:4]
 
+    if request.user.is_authenticated:
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        if wishlist:
+            wishlist_product_ids = list(wishlist.items.values_list('product_id', flat=True))
+        else:
+            wishlist_product_ids = []
+    else:
+        wishlist_product_ids = []
+
     context = {
         'product': product,
         'images': images_qs,
         'variants': variants,
         'related_products': related_products,
+        'wishlist_product_ids': wishlist_product_ids,
     }
 
     return render(request, 'user/products/product_details.html', context)
+
+
+@require_POST
+@login_required
+def toggle_wishlist(request):
+    try:
+        data = json.loads(request.body)
+        product_id = data.get('product_id')
+        
+        if not product_id:
+            return JsonResponse({'error': 'Product ID is required'}, status=400)
+        
+        product = Product.objects.get(id=product_id)
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        
+        if wishlist.has_product(product):
+            wishlist.remove_product(product)
+            return JsonResponse({'status': 'removed'})
+        else:
+            wishlist.add_product(product)
+            return JsonResponse({'status': 'added'})
+            
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_POST
+@login_required
+def add_to_cart(request):
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        variant_id = data.get('variant_id')
+        quantity = int(data.get('quantity', 1))
+        
+        if not variant_id:
+            return JsonResponse({'success': False, 'error': 'Variant ID is required'}, status=400)
+        
+        variant = ProductVariant.objects.get(id=variant_id)
+        
+        # Check stock availability
+        if variant.stock_quantity < quantity:
+            return JsonResponse({
+                'success': False, 
+                'error': f'Only {variant.stock_quantity} items available in stock'
+            })
+        
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        
+        # Check if item already in cart
+        cart_item_exists = CartItem.objects.filter(cart=cart, variant=variant).exists()
+        
+        if cart_item_exists:
+            # Remove from cart
+            CartItem.objects.filter(cart=cart, variant=variant).delete()
+            return JsonResponse({
+                'success': True, 
+                'added': False, 
+                'removed': True,
+                'message': 'Item removed from cart'
+            })
+        else:
+            # Add to cart
+            CartItem.objects.create(cart=cart, variant=variant, quantity=quantity)
+            return JsonResponse({
+                'success': True, 
+                'added': True, 
+                'removed': False,
+                'message': 'Item added to cart'
+            })
+            
+    except ProductVariant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Product variant not found'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+def product_list(request):
+    products = Product.objects.all().prefetch_related('variants')
+    
+    # Get wishlist product IDs for current user
+    wishlist_product_ids = []
+    if request.user.is_authenticated:
+        try:
+            wishlist = Wishlist.objects.get(user=request.user)
+            wishlist_product_ids = list(wishlist.items.values_list('product_id', flat=True))
+        except Wishlist.DoesNotExist:
+            pass
+    
+    # Get cart variant IDs for current user
+    cart_variant_ids = []
+    if request.user.is_authenticated:
+        try:
+            cart = Cart.objects.get(user=request.user)
+            cart_variant_ids = list(cart.items.values_list('variant_id', flat=True))
+        except Cart.DoesNotExist:
+            pass
+    
+    context = {
+        'products': products,
+        'wishlist_product_ids': wishlist_product_ids,
+        'cart_variant_ids': cart_variant_ids,
+        # ... other context
+    }
+    return render(request, 'products/product_list.html', context)

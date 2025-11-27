@@ -97,6 +97,22 @@ class Wishlist(models.Model):
     @property
     def total_items(self):
         return self.items.count()
+    
+    def add_product(self, product):
+        """Add product to wishlist"""
+        WishlistItem.objects.get_or_create(wishlist=self, product=product)
+    
+    def remove_product(self, product):
+        """Remove product from wishlist"""
+        WishlistItem.objects.filter(wishlist=self, product=product).delete()
+    
+    def has_product(self, product):
+        """Check if product is in wishlist"""
+        return WishlistItem.objects.filter(wishlist=self, product=product).exists()
+    
+    def get_product_ids(self):
+        """Get list of product IDs in wishlist"""
+        return list(self.items.values_list('product_id', flat=True))
 
 class WishlistItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
