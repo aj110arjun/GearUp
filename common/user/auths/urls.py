@@ -19,6 +19,9 @@ urlpatterns = [
     # Custom Google OAuth URL
     path('google/', google_views.oauth2_login, name='google_login'),
     path('google/callback/', google_views.oauth2_callback, name='google_callback'),
+
+    # auths/urls.py
+    path('logout/', views.user_logout, name='logout'),
     
     # Or use allauth's built-in URLs
     # path('social/', include('allauth.socialaccount.urls')),

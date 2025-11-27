@@ -9,6 +9,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
+  /* Your existing CSS styles */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -30,17 +31,17 @@
     box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.1), 0 5px 10px -5px rgba(16, 185, 129, 0.04);
   }
   
-  /* Skeleton Loading Animation */
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
+  /* Social media link styles */
+  .social-link {
+    transition: all 0.3s ease;
+    cursor: pointer;
   }
-  .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  .social-link:hover {
+    transform: translateY(-2px);
+  }
+  .social-link.active {
+    border-color: currentColor;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2);
   }
 </style>
 
@@ -73,95 +74,8 @@
       </p>
     </div>
 
-    <!-- Skeleton Loading -->
-    <div id="skeletonLoading" class="hidden">
-      <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        <!-- Sidebar Skeleton -->
-        <div class="xl:col-span-1">
-          <div class="bg-white rounded-3xl shadow-lg border border-gray-200 p-6 sticky top-8 animate-pulse">
-            <div class="text-center mb-8">
-              <div class="relative inline-block mb-4">
-                <div class="w-28 h-28 rounded-2xl bg-gray-200 border-4 border-gray-100"></div>
-              </div>
-              <div class="h-6 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
-              <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
-            </div>
-            <nav class="space-y-3">
-              {% for i in "12345" %}
-              <div class="flex items-center space-x-4 p-4 bg-gray-100 rounded-2xl">
-                <div class="w-10 h-10 bg-gray-200 rounded-xl"></div>
-                <div class="h-4 bg-gray-200 rounded w-24"></div>
-              </div>
-              {% endfor %}
-            </nav>
-          </div>
-        </div>
-
-        <!-- Main Content Skeleton -->
-        <div class="xl:col-span-3">
-          <div class="bg-white rounded-3xl shadow-lg border border-gray-200 p-8 animate-pulse">
-            <!-- Header Skeleton -->
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-              <div class="space-y-2">
-                <div class="h-8 bg-gray-200 rounded w-64"></div>
-                <div class="h-4 bg-gray-200 rounded w-48"></div>
-              </div>
-              <div class="h-12 bg-gray-200 rounded-xl w-48 mt-4 lg:mt-0"></div>
-            </div>
-
-            <!-- Form Sections Skeleton -->
-            <div class="space-y-8">
-              <!-- Profile Picture Section -->
-              <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-                <div class="h-6 bg-gray-200 rounded w-48 mb-4"></div>
-                <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
-                  <div class="w-24 h-24 rounded-2xl bg-gray-200 border-4 border-white"></div>
-                  <div class="flex flex-col sm:flex-row gap-3">
-                    <div class="h-12 bg-gray-200 rounded-xl w-40"></div>
-                    <div class="h-12 bg-gray-200 rounded-xl w-32"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Personal Information Skeleton -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {% for i in "12" %}
-                <div class="space-y-2">
-                  <div class="h-4 bg-gray-200 rounded w-32"></div>
-                  <div class="h-12 bg-gray-200 rounded-xl"></div>
-                </div>
-                {% endfor %}
-              </div>
-
-              <!-- Email Section Skeleton -->
-              <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-                <div class="h-4 bg-gray-200 rounded w-32 mb-3"></div>
-                <div class="h-12 bg-gray-200 rounded-xl"></div>
-              </div>
-
-              <!-- Contact Information Skeleton -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {% for i in "12" %}
-                <div class="space-y-2">
-                  <div class="h-4 bg-gray-200 rounded w-32"></div>
-                  <div class="h-12 bg-gray-200 rounded-xl"></div>
-                </div>
-                {% endfor %}
-              </div>
-
-              <!-- Submit Button Skeleton -->
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-8 border-t border-gray-200">
-                <div class="h-4 bg-gray-200 rounded w-48"></div>
-                <div class="h-12 bg-gray-200 rounded-2xl w-40 mt-4 sm:mt-0"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Main Content -->
-    <div id="profileContent" class="fade-in">
+    <div class="fade-in">
       <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
         
         <!-- Sidebar Navigation -->
@@ -198,7 +112,8 @@
                 <span>Profile Settings</span>
               </a>
               
-              <a href="{% url 'shop:wishlist' %}" 
+              <!-- Fix other URLs or remove if not implemented -->
+              <a href="#" 
                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-pink-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-pink-200">
                 <div class="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center">
                   <i class="fas fa-heart text-pink-500 text-lg"></i>
@@ -207,7 +122,7 @@
               </a>
 
               {% if user.has_usable_password %}
-                <a href="" 
+                <a href="#" 
                   class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-amber-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-amber-200">
                   <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
                     <i class="fas fa-lock text-amber-500 text-lg"></i>
@@ -216,7 +131,7 @@
                 </a>
               {% endif %}
 
-              <a href="{% url 'address:address_list' %}" 
+              <a href="{% url 'adderss:address_list' %}" 
                 class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-blue-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-blue-200">
                   <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                       <i class="fas fa-map-marker-alt text-blue-500 text-lg"></i>
@@ -224,7 +139,7 @@
                   <span>My Addresses</span>
               </a>
               
-              <a href="{% url 'shop:cart' %}" 
+              <a href="#" 
                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-teal-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-teal-200">
                 <div class="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
                   <i class="fas fa-shopping-cart text-teal-500 text-lg"></i>
@@ -232,7 +147,7 @@
                 <span>Shopping Cart</span>
               </a>
               
-              <a href="" 
+              <a href="{% url 'user_auth:logout' %}" 
                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-red-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-red-200 group">
                 <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-500 transition-colors">
                   <i class="fas fa-sign-out-alt text-red-500 group-hover:text-white text-lg transition-colors"></i>
@@ -281,7 +196,8 @@
             </div>
             {% endif %}
 
-            <form method="POST" enctype="multipart/form-data" class="space-y-8" id="profileForm">
+            <!-- Fix: Form should point to profile_edit URL -->
+            <form method="POST" action="{% url 'user_auth:profile_edit' %}" enctype="multipart/form-data" class="space-y-8" id="profileForm">
               {% csrf_token %}
               
               <!-- Profile Picture Section -->
@@ -296,7 +212,6 @@
                       <img id="profile-preview" src="{{ user.profile_image.url }}" 
                            alt="Profile Preview" 
                            class="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg">
-                      <div id="profile-preview-default" class="hidden"></div>
                     {% else %}
                       <div id="profile-preview-default" class="w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg overflow-hidden">
                         <img src="https://res.cloudinary.com/dhpo5iq3m/image/upload/v1764046142/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752_ilk96c.webp" 
@@ -375,7 +290,6 @@
                 </div>
               </div>
 
-              <!-- Email Address (Read-only) -->
               <div class="bg-emerald-50 rounded-2xl p-6 border border-emerald-200">
                 <label for="email-display" class="block text-sm font-semibold text-gray-700 mb-3">
                   <i class="fas fa-envelope text-emerald-500 mr-2"></i>
@@ -488,7 +402,7 @@
                   <input type="date" 
                          name="date_of_birth" 
                          id="id_date_of_birth" 
-                         value="{% if form.date_of_birth.value %}{{ form.date_of_birth.value|date:'Y-m-d' }}{% elif user.date_of_birth %}{{ user.date_of_birth|date:'Y-m-d' }}{% endif %}"
+                         value="{% if form.date_of_birth.value %}{{ form.date_of_birth.value|date:'Y-m-d' }}{% endif %}"
                          class="form-input">
                   {% if form.date_of_birth.errors %}
                     <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
@@ -506,56 +420,108 @@
                   Social Media Links
                 </h3>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <!-- Twitter -->
                   <div>
                     <label for="id_twitter" class="block text-sm font-semibold text-gray-700 mb-3">
                       <i class="fab fa-twitter text-blue-400 mr-2"></i>
                       Twitter
                     </label>
-                    <input type="text" 
-                           name="twitter" 
-                           id="id_twitter" 
-                           value="{{ form.twitter.value|default:user.twitter|default:'' }}"
-                           class="form-input"
-                           placeholder="@username">
+                    <div class="relative">
+                      <input type="text" 
+                             name="twitter" 
+                             id="id_twitter" 
+                             value="{{ form.twitter.value|default:user.twitter|default:'' }}"
+                             class="form-input pr-10"
+                             placeholder="@username"
+                             oninput="updateSocialLink('twitter', this.value)">
+                      {% if user.twitter %}
+                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-600 transition-colors"
+                           onclick="openSocialLink('twitter', '{{ user.twitter }}')"
+                           title="Visit Twitter profile">
+                        <i class="fab fa-twitter text-lg"></i>
+                      </div>
+                      {% endif %}
+                    </div>
                   </div>
                   
+                  <!-- Instagram -->
                   <div>
                     <label for="id_instagram" class="block text-sm font-semibold text-gray-700 mb-3">
                       <i class="fab fa-instagram text-pink-500 mr-2"></i>
                       Instagram
                     </label>
-                    <input type="text" 
-                           name="instagram" 
-                           id="id_instagram" 
-                           value="{{ form.instagram.value|default:user.instagram|default:'' }}"
-                           class="form-input"
-                           placeholder="@username">
+                    <div class="relative">
+                      <input type="text" 
+                             name="instagram" 
+                             id="id_instagram" 
+                             value="{{ form.instagram.value|default:user.instagram|default:'' }}"
+                             class="form-input pr-10"
+                             placeholder="@username"
+                             oninput="updateSocialLink('instagram', this.value)">
+                      {% if user.instagram %}
+                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-pink-500 hover:text-pink-600 transition-colors"
+                           onclick="openSocialLink('instagram', '{{ user.instagram }}')"
+                           title="Visit Instagram profile">
+                        <i class="fab fa-instagram text-lg"></i>
+                      </div>
+                      {% endif %}
+                    </div>
                   </div>
                   
+                  <!-- Facebook -->
                   <div>
                     <label for="id_facebook" class="block text-sm font-semibold text-gray-700 mb-3">
                       <i class="fab fa-facebook text-blue-600 mr-2"></i>
                       Facebook
                     </label>
-                    <input type="text" 
-                           name="facebook" 
-                           id="id_facebook" 
-                           value="{{ form.facebook.value|default:user.facebook|default:'' }}"
-                           class="form-input"
-                           placeholder="username">
+                    <div class="relative">
+                      <input type="text" 
+                             name="facebook" 
+                             id="id_facebook" 
+                             value="{{ form.facebook.value|default:user.facebook|default:'' }}"
+                             class="form-input pr-10"
+                             placeholder="username"
+                             oninput="updateSocialLink('facebook', this.value)">
+                      {% if user.facebook %}
+                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-800 transition-colors"
+                           onclick="openSocialLink('facebook', '{{ user.facebook }}')"
+                           title="Visit Facebook profile">
+                        <i class="fab fa-facebook text-lg"></i>
+                      </div>
+                      {% endif %}
+                    </div>
                   </div>
                   
+                  <!-- LinkedIn -->
                   <div>
                     <label for="id_linkedin" class="block text-sm font-semibold text-gray-700 mb-3">
                       <i class="fab fa-linkedin text-blue-700 mr-2"></i>
                       LinkedIn
                     </label>
-                    <input type="text" 
-                           name="linkedin" 
-                           id="id_linkedin" 
-                           value="{{ form.linkedin.value|default:user.linkedin|default:'' }}"
-                           class="form-input"
-                           placeholder="linkedin.com/in/username">
+                    <div class="relative">
+                      <input type="text" 
+                             name="linkedin" 
+                             id="id_linkedin" 
+                             value="{{ form.linkedin.value|default:user.linkedin|default:'' }}"
+                             class="form-input pr-10"
+                             placeholder="linkedin.com/in/username"
+                             oninput="updateSocialLink('linkedin', this.value)">
+                      {% if user.linkedin %}
+                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900 transition-colors"
+                           onclick="openSocialLink('linkedin', '{{ user.linkedin }}')"
+                           title="Visit LinkedIn profile">
+                        <i class="fab fa-linkedin text-lg"></i>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Social Media Preview -->
+                <div id="socialPreview" class="mt-6 p-4 bg-white rounded-lg border border-gray-200 hidden">
+                  <h4 class="text-sm font-semibold text-gray-700 mb-3">Social Media Preview</h4>
+                  <div class="flex flex-wrap gap-3" id="socialLinksContainer">
+                    <!-- Social links will be dynamically added here -->
                   </div>
                 </div>
               </div>
@@ -568,7 +534,7 @@
                 </p>
                 <button type="submit" 
                         id="submitButton"
-                        class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-2xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 group">
+                        class="bg-blue-500 text-white px-8 py-4 rounded-2xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 group">
                   <i class="fas fa-save group-hover:scale-110 transition-transform"></i>
                   <span>Save Changes</span>
                 </button>
@@ -582,31 +548,7 @@
 </div>
 
 <script>
-let isLoading = false;
-
-// Show skeleton loading
-function showSkeleton() {
-  document.getElementById('skeletonLoading').classList.remove('hidden');
-  document.getElementById('profileContent').classList.add('hidden');
-  isLoading = true;
-}
-
-// Hide skeleton loading
-function hideSkeleton() {
-  document.getElementById('skeletonLoading').classList.add('hidden');
-  document.getElementById('profileContent').classList.remove('hidden');
-  isLoading = false;
-}
-
-// Simulate loading on page load
-document.addEventListener('DOMContentLoaded', function() {
-  // Show skeleton for a brief moment to demonstrate
-  showSkeleton();
-  setTimeout(() => {
-    hideSkeleton();
-  }, 1000);
-});
-
+// Your existing JavaScript code
 function previewImage(input) {
   const preview = document.getElementById('profile-preview');
   const defaultPreview = document.getElementById('profile-preview-default');
@@ -615,12 +557,10 @@ function previewImage(input) {
       const reader = new FileReader();
       
       reader.onload = function(e) {
-          // Hide the default preview if it exists
           if (defaultPreview) {
               defaultPreview.classList.add('hidden');
           }
           
-          // Show and set the uploaded image preview
           if (preview) {
               preview.src = e.target.result;
               preview.classList.remove('hidden');
@@ -633,81 +573,137 @@ function previewImage(input) {
 
 function removeProfilePicture() {
   if (confirm('Are you sure you want to remove your profile picture?')) {
-      // Create a hidden input to indicate removal
       const removeInput = document.createElement('input');
       removeInput.type = 'hidden';
       removeInput.name = 'remove_profile_image';
       removeInput.value = 'true';
       
-      // Add it to the form
-      const form = document.querySelector('form');
+      const form = document.getElementById('profileForm');
       form.appendChild(removeInput);
-      
-      // Show loading and submit
-      showSkeleton();
       form.submit();
   }
 }
 
-// Enhanced form submission with loading
+// Social Media Link Functions
+function updateSocialLink(platform, username) {
+  const socialPreview = document.getElementById('socialPreview');
+  const socialLinksContainer = document.getElementById('socialLinksContainer');
+  
+  // Clear previous content
+  socialLinksContainer.innerHTML = '';
+  
+  // Check if any social media has content
+  const socialInputs = ['twitter', 'instagram', 'facebook', 'linkedin'];
+  let hasContent = false;
+  
+  socialInputs.forEach(platform => {
+    const input = document.getElementById(`id_${platform}`);
+    const username = input.value.trim();
+    
+    if (username) {
+      hasContent = true;
+      const linkElement = createSocialLinkElement(platform, username);
+      socialLinksContainer.appendChild(linkElement);
+    }
+  });
+  
+  // Show/hide preview based on content
+  if (hasContent) {
+    socialPreview.classList.remove('hidden');
+  } else {
+    socialPreview.classList.add('hidden');
+  }
+  
+  // Update the clickable icon for the current platform
+  updateSocialIcon(platform, username);
+}
+
+function updateSocialIcon(platform, username) {
+  const iconContainer = document.querySelector(`#id_${platform} ~ .social-link`);
+  
+  if (iconContainer) {
+    if (username.trim()) {
+      iconContainer.style.display = 'block';
+    } else {
+      iconContainer.style.display = 'none';
+    }
+  }
+}
+
+function openSocialLink(platform, username) {
+  if (!username.trim()) return;
+  
+  let url = '';
+  const cleanUsername = username.trim().replace('@', '').replace('https://', '').replace('http://', '');
+  
+  switch(platform) {
+    case 'twitter':
+      url = `https://twitter.com/${cleanUsername}`;
+      break;
+    case 'instagram':
+      url = `https://instagram.com/${cleanUsername}`;
+      break;
+    case 'facebook':
+      url = `https://facebook.com/${cleanUsername}`;
+      break;
+    case 'linkedin':
+      if (cleanUsername.includes('linkedin.com')) {
+        url = `https://${cleanUsername}`;
+      } else {
+        url = `https://linkedin.com/in/${cleanUsername}`;
+      }
+      break;
+  }
+  
+  if (url) {
+    window.open(url, '_blank');
+  }
+}
+
+function createSocialLinkElement(platform, username) {
+  const linkDiv = document.createElement('div');
+  linkDiv.className = 'flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg social-link';
+  linkDiv.onclick = () => openSocialLink(platform, username);
+  
+  const icons = {
+    'twitter': 'fab fa-twitter text-blue-400',
+    'instagram': 'fab fa-instagram text-pink-500',
+    'facebook': 'fab fa-facebook text-blue-600',
+    'linkedin': 'fab fa-linkedin text-blue-700'
+  };
+  
+  const platformNames = {
+    'twitter': 'Twitter',
+    'instagram': 'Instagram',
+    'facebook': 'Facebook',
+    'linkedin': 'LinkedIn'
+  };
+  
+  linkDiv.innerHTML = `
+    <i class="${icons[platform]}"></i>
+    <span class="text-sm font-medium text-gray-700">${platformNames[platform]}</span>
+    <span class="text-xs text-gray-500">${username}</span>
+  `;
+  
+  return linkDiv;
+}
+
+// Initialize social media links on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Update all social media links
+  updateSocialLink('twitter', document.getElementById('id_twitter')?.value || '');
+  updateSocialLink('instagram', document.getElementById('id_instagram')?.value || '');
+  updateSocialLink('facebook', document.getElementById('id_facebook')?.value || '');
+  updateSocialLink('linkedin', document.getElementById('id_linkedin')?.value || '');
+});
+
 document.getElementById('profileForm')?.addEventListener('submit', function(e) {
   const submitButton = document.getElementById('submitButton');
-  const originalHTML = submitButton.innerHTML;
-  
-  // Show loading state on button
   submitButton.disabled = true;
   submitButton.innerHTML = `
     <i class="fas fa-spinner fa-spin"></i>
     <span>Saving Changes...</span>
   `;
-  submitButton.classList.remove('hover:from-emerald-600', 'hover:to-teal-700', 'hover:shadow-xl');
-  
-  // Show skeleton loading
-  showSkeleton();
-});
-
-// Enhanced image preview with error handling
-document.addEventListener('DOMContentLoaded', function() {
-  const profileImageInput = document.getElementById('id_profile_image');
-  
-  if (profileImageInput) {
-      profileImageInput.addEventListener('change', function(e) {
-          const file = e.target.files[0];
-          if (file) {
-              // Check file size (max 5MB)
-              if (file.size > 5 * 1024 * 1024) {
-                  alert('File size must be less than 5MB');
-                  this.value = '';
-                  return;
-              }
-              
-              // Check file type
-              const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-              if (!validTypes.includes(file.type)) {
-                  alert('Please select a valid image file (JPEG, PNG, or WebP)');
-                  this.value = '';
-                  return;
-              }
-              
-              previewImage(this);
-          }
-      });
-  }
-  
-  // Auto-close messages after 5 seconds
-  setTimeout(function() {
-      const messages = document.querySelectorAll('[class*="rounded-2xl border-l-4"]');
-      messages.forEach(function(message) {
-          message.style.transition = 'all 0.5s ease-out';
-          message.style.opacity = '0';
-          message.style.transform = 'translateX(100%)';
-          setTimeout(() => {
-              if (message.parentNode) {
-                  message.remove();
-              }
-          }, 500);
-      });
-  }, 5000);
 });
 </script>
 {% endblock %}
