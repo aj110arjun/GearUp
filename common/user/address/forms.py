@@ -1,26 +1,33 @@
-from django import forms
-from .models import Address
+# common/user/address/forms.py
 import re
+from django import forms
+from django.core.exceptions import ValidationError
+from .models import Address
 
 class AddressForm(forms.ModelForm):
     class Meta:
         model = Address
         fields = [
-            'address_type', 'full_name', 'phone_number', 
-            'address_line1', 'address_line2', 'city', 
-            'state', 'zip_code', 'country', 'instructions', 'is_default'
+            'full_name',
+            'phone_number', 
+            'address_line1',
+            'address_line2',
+            'city',
+            'state',
+            'zip_code',
+            'country',
+            'address_type',
+            'instructions',
+            'is_default'
         ]
         widgets = {
-            'address_type': forms.Select(attrs={
-                'class': 'form-select',
-            }),
             'full_name': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Full Name'
             }),
             'phone_number': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Phone Number (Optional)'
+                'placeholder': 'Phone Number'
             }),
             'address_line1': forms.TextInput(attrs={
                 'class': 'form-input',
@@ -46,215 +53,164 @@ class AddressForm(forms.ModelForm):
                 'class': 'form-input',
                 'placeholder': 'Country'
             }),
-            'instructions': forms.Textarea(attrs={
-                'class': 'form-textarea',
-                'placeholder': 'Delivery instructions (Optional)',
-                'rows': 3
+            'address_type': forms.Select(attrs={
+                'class': 'form-input'
             }),
-            'is_default': forms.CheckboxInput(attrs={
-                'class': 'form-checkbox'
+            'instructions': forms.Textarea(attrs={
+                'class': 'form-input',
+                'placeholder': 'Delivery instructions (optional) - Minimum 5 words required',
+                'rows': 3
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make instructions field required for validation
+        self.fields['instructions'].required = False
+
     def clean_full_name(self):
         full_name = self.cleaned_data.get('full_name', '').strip()
-        
         if not full_name:
-            raise forms.ValidationError("Full name is required.")
+            raise ValidationError("Full name is required.")
         
-        if len(full_name) < 2:
-            raise forms.ValidationError("Full name must be at least 2 characters long.")
+        # Check for special characters (only allow letters, spaces, hyphens, and apostrophes)
+        if re.search(r'[!@#$%^&*()_+=<>?/\\|\[\]{}~`]', full_name):
+            raise ValidationError("Full name should not contain special characters. Only letters, spaces, hyphens (-), and apostrophes (') are allowed.")
         
-        if len(full_name) > 100:
-            raise forms.ValidationError("Full name cannot exceed 100 characters.")
+        # Check for numbers
+        if re.search(r'\d', full_name):
+            raise ValidationError("Full name should not contain numbers.")
         
-        # Check for valid name format (letters, spaces, hyphens, apostrophes)
-        if not re.match(r'^[A-Za-z\s\-\'\.]+$', full_name):
-            raise forms.ValidationError("Full name can only contain letters, spaces, hyphens, and apostrophes.")
-        
-        # Check if name has at least two parts (first and last name)
-        name_parts = full_name.split()
-        if len(name_parts) < 2:
-            raise forms.ValidationError("Please enter both first and last name.")
+        # Minimum 2 words check
+        if len(full_name.split()) < 2:
+            raise ValidationError("Please enter your full name (first and last name).")
         
         return full_name
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number', '').strip()
+        if phone_number:
+            # Remove spaces, hyphens, and parentheses for validation
+            clean_phone = re.sub(r'[\s\-\(\)]', '', phone_number)
+            
+            # Check if it contains only numbers and optional + at start
+            if not re.match(r'^\+?\d+$', clean_phone):
+                raise ValidationError("Phone number should contain only numbers and optional country code with +.")
+            
+            # Check length (minimum 10 digits excluding +)
+            digits_only = clean_phone.lstrip('+')
+            if len(digits_only) < 10:
+                raise ValidationError("Phone number should be at least 10 digits long.")
+            
+            if len(digits_only) > 15:
+                raise ValidationError("Phone number is too long.")
         
-        if not phone_number:  # Optional field
-            return phone_number
-        
-        # Remove all non-digit characters except +
-        cleaned_phone = re.sub(r'[^\d+]', '', phone_number)
-        
-        # Check if it's a valid phone number format
-        # Supports: +1234567890, 1234567890, (123) 456-7890, etc.
-        if not re.match(r'^(\+\d{1,3})?\d{7,15}$', cleaned_phone):
-            raise forms.ValidationError("Please enter a valid phone number.")
-        
-        # Check length
-        if len(cleaned_phone) < 10 or len(cleaned_phone) > 15:
-            raise forms.ValidationError("Phone number must be between 10 and 15 digits.")
-        
-        return phone_number  # Return original formatted number
+        return phone_number
 
     def clean_address_line1(self):
         address_line1 = self.cleaned_data.get('address_line1', '').strip()
-        
         if not address_line1:
-            raise forms.ValidationError("Address line 1 is required.")
+            raise ValidationError("Address line 1 is required.")
         
-        if len(address_line1) < 5:
-            raise forms.ValidationError("Address line 1 must be at least 5 characters long.")
-        
-        if len(address_line1) > 255:
-            raise forms.ValidationError("Address line 1 cannot exceed 255 characters.")
-        
-        # Basic address validation - should contain at least a number and street name
-        if not re.match(r'^[0-9].*[A-Za-z]|[A-Za-z].*[0-9]', address_line1):
-            raise forms.ValidationError("Please enter a valid street address with building number and street name.")
+        # Check for problematic special characters but allow common address characters
+        if re.search(r'[!$%^*()_+=<>?/\\|\[\]{}~`]', address_line1):
+            raise ValidationError("Address line 1 contains invalid characters. Only letters, numbers, spaces, hyphens, commas, periods, #, and apostrophes are allowed.")
         
         return address_line1
 
     def clean_address_line2(self):
         address_line2 = self.cleaned_data.get('address_line2', '').strip()
-        
-        if address_line2 and len(address_line2) > 255:
-            raise forms.ValidationError("Address line 2 cannot exceed 255 characters.")
+        if address_line2:
+            # Check for problematic special characters but allow common address characters
+            if re.search(r'[!$%^*()_+=<>?/\\|\[\]{}~`]', address_line2):
+                raise ValidationError("Address line 2 contains invalid characters. Only letters, numbers, spaces, hyphens, commas, periods, #, and apostrophes are allowed.")
         
         return address_line2
 
     def clean_city(self):
         city = self.cleaned_data.get('city', '').strip()
-        
         if not city:
-            raise forms.ValidationError("City is required.")
+            raise ValidationError("City is required.")
         
-        if len(city) < 2:
-            raise forms.ValidationError("City name must be at least 2 characters long.")
-        
-        if len(city) > 100:
-            raise forms.ValidationError("City name cannot exceed 100 characters.")
-        
-        # City should only contain letters, spaces, hyphens
-        if not re.match(r'^[A-Za-z\s\-\.]+$', city):
-            raise forms.ValidationError("City name can only contain letters, spaces, hyphens, and periods.")
+        # Check for special characters and numbers
+        if re.search(r'[!@#$%^&*()_+=<>?/\\|\[\]{}~`\d]', city):
+            raise ValidationError("City should contain only letters, spaces, and hyphens.")
         
         return city
 
     def clean_state(self):
         state = self.cleaned_data.get('state', '').strip()
-        
         if not state:
-            raise forms.ValidationError("State is required.")
+            raise ValidationError("State is required.")
         
-        if len(state) < 2:
-            raise forms.ValidationError("State name must be at least 2 characters long.")
-        
-        if len(state) > 100:
-            raise forms.ValidationError("State name cannot exceed 100 characters.")
-        
-        # State should only contain letters and spaces
-        if not re.match(r'^[A-Za-z\s]+$', state):
-            raise forms.ValidationError("State name can only contain letters and spaces.")
+        # Check for special characters and numbers
+        if re.search(r'[!@#$%^&*()_+=<>?/\\|\[\]{}~`\d]', state):
+            raise ValidationError("State should contain only letters, spaces, and hyphens.")
         
         return state
 
     def clean_zip_code(self):
         zip_code = self.cleaned_data.get('zip_code', '').strip()
-        
         if not zip_code:
-            raise forms.ValidationError("ZIP code is required.")
+            raise ValidationError("ZIP code is required.")
         
-        # Remove all non-alphanumeric characters
-        cleaned_zip = re.sub(r'[^A-Za-z0-9]', '', zip_code)
+        # Allow only numbers and hyphens for ZIP codes
+        if not re.match(r'^[\d\-]+$', zip_code):
+            raise ValidationError("ZIP code should contain only numbers and hyphens.")
         
-        # US ZIP code validation (5 digits or 5+4 format)
-        if re.match(r'^\d{5}$', cleaned_zip) or re.match(r'^\d{5}\d{4}$', cleaned_zip):
-            return zip_code
+        # Remove hyphens and check length
+        digits_only = re.sub(r'[^\d]', '', zip_code)
+        if len(digits_only) < 5:
+            raise ValidationError("ZIP code should be at least 5 digits long.")
         
-        # Canadian postal code validation (A1A 1A1 format)
-        if re.match(r'^[A-Za-z]\d[A-Za-z]\d[A-Za-z]\d$', cleaned_zip, re.IGNORECASE):
-            return zip_code
+        if len(digits_only) > 10:
+            raise ValidationError("ZIP code is too long.")
         
-        # UK postcode validation
-        if re.match(r'^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$', zip_code, re.IGNORECASE):
-            return zip_code
-        
-        # Generic validation for other countries (at least 3 characters)
-        if len(cleaned_zip) >= 3 and len(cleaned_zip) <= 10:
-            return zip_code
-        
-        raise forms.ValidationError("Please enter a valid ZIP/postal code.")
+        return zip_code
 
     def clean_country(self):
         country = self.cleaned_data.get('country', '').strip()
-        
         if not country:
-            raise forms.ValidationError("Country is required.")
+            raise ValidationError("Country is required.")
         
-        if len(country) < 2:
-            raise forms.ValidationError("Country name must be at least 2 characters long.")
-        
-        if len(country) > 100:
-            raise forms.ValidationError("Country name cannot exceed 100 characters.")
-        
-        # Country should only contain letters and spaces
-        if not re.match(r'^[A-Za-z\s\-]+$', country):
-            raise forms.ValidationError("Country name can only contain letters, spaces, and hyphens.")
+        # Check for special characters and numbers
+        if re.search(r'[!@#$%^&*()_+=<>?/\\|\[\]{}~`\d]', country):
+            raise ValidationError("Country should contain only letters, spaces, and hyphens.")
         
         return country
 
     def clean_instructions(self):
         instructions = self.cleaned_data.get('instructions', '').strip()
-        
-        if instructions and len(instructions) > 500:
-            raise forms.ValidationError("Delivery instructions cannot exceed 500 characters.")
+        if instructions:
+            # Count words (split by spaces and filter out empty strings)
+            words = [word for word in instructions.split() if word.strip()]
+            
+            if len(words) < 5:
+                raise ValidationError("Delivery instructions must contain at least 5 words.")
+            
+            # Check for excessive special characters
+            if re.search(r'[!$%^&*()_+=<>?/\\|\[\]{}~`]{2,}', instructions):
+                raise ValidationError("Delivery instructions contain too many consecutive special characters.")
         
         return instructions
 
     def clean(self):
         cleaned_data = super().clean()
         
-        # Additional cross-field validation
+        # Additional validation that requires multiple fields
         address_line1 = cleaned_data.get('address_line1')
         city = cleaned_data.get('city')
         state = cleaned_data.get('state')
         zip_code = cleaned_data.get('zip_code')
-        country = cleaned_data.get('country')
         
-        # Check if all required address components are present
-        required_fields = [address_line1, city, state, zip_code, country]
-        if all(required_fields):
-            # Validate that the address doesn't already exist for this user
-            user = self.instance.user if self.instance.pk else None
-            if user:
-                existing_address = Address.objects.filter(
-                    user=user,
-                    address_line1__iexact=address_line1,
-                    city__iexact=city,
-                    state__iexact=state,
-                    zip_code__iexact=zip_code,
-                    country__iexact=country,
-                    is_active=True
-                ).exclude(pk=self.instance.pk if self.instance.pk else None)
-                
-                if existing_address.exists():
-                    raise forms.ValidationError(
-                        "This address already exists in your address book."
-                    )
+        # Ensure all required address components are present
+        if address_line1 and not city:
+            self.add_error('city', 'City is required when address is provided.')
+        
+        if address_line1 and not state:
+            self.add_error('state', 'State is required when address is provided.')
+        
+        if address_line1 and not zip_code:
+            self.add_error('zip_code', 'ZIP code is required when address is provided.')
         
         return cleaned_data
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Add required attribute to required fields
-        required_fields = ['full_name', 'address_line1', 'city', 'state', 'zip_code', 'country']
-        for field_name in required_fields:
-            self.fields[field_name].required = True
-            
-        # Set initial country if not provided
-        if not self.instance.pk and not self.data.get('country'):
-            self.fields['country'].initial = 'India'

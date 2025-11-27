@@ -140,7 +140,7 @@ class ProfileUpdateForm(UserChangeForm):
     class Meta:
         model = UserModel
         fields = [
-            'first_name', 'last_name', 'email', 'profile_image',
+            'first_name', 'last_name', 'profile_image',
             'bio', 'phone_number', 'location', 'website', 
             'date_of_birth', 'twitter', 'facebook', 'instagram', 'linkedin'
         ]
@@ -149,7 +149,7 @@ class ProfileUpdateForm(UserChangeForm):
             'bio': forms.Textarea(attrs={'rows': 4}),
         }
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Make email read-only or handle carefully
-        self.fields['email'].widget.attrs['readonly'] = True
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     # Make email read-only or handle carefully
+    #     self.fields['email'].widget.attrs['readonly'] = True

@@ -1,13 +1,12 @@
 # orders/models.py
 from django.db import models
 from django.conf import settings
-from django.core.validators import MinValueValidator
 from decimal import Decimal
 import random
 import string
+from django.utils import timezone
 
-# Use your custom UserModel
-User = settings.AUTH_USER_MODEL  # This points to 'users.UserModel'
+User = settings.AUTH_USER_MODEL
 
 class Order(models.Model):
     ORDER_STATUS_CHOICES = [
@@ -17,7 +16,7 @@ class Order(models.Model):
         ('shipped', 'Shipped'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
-        ('refunded', 'Refunded'),
+        ('returned', 'Returned'),
     ]
 
     PAYMENT_STATUS_CHOICES = [
@@ -27,7 +26,12 @@ class Order(models.Model):
         ('refunded', 'Refunded'),
     ]
 
-    # Use settings.AUTH_USER_MODEL to reference your custom user
+    PAYMENT_METHOD_CHOICES = [
+        ('cash_on_delivery', 'Cash On Delivery'),
+        ('razorpay', 'RazorPay'),
+        ('wallet', 'Wallet'),
+    ]
+
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
@@ -54,13 +58,9 @@ class Order(models.Model):
     # Status
     order_status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
-    payment_method = models.CharField(max_length=20, choices=[
-        ('cash_on_delivery', 'Cash On Delivery'),
-        ('razorpay', 'RazorPay'),
-        ('wallet', 'Wallet'),
-    ])
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     
-    # Shipping Address - reference your Address model
+    # Shipping Address
     shipping_address = models.ForeignKey(
         'address.Address', 
         on_delete=models.SET_NULL, 
@@ -72,6 +72,7 @@ class Order(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -82,12 +83,18 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if not self.order_number:
             self.order_number = self.generate_order_number()
-        self.subtotal = self.unit_price * self.quantity
-        self.total_amount = self.subtotal + self.tax_amount + self.shipping_cost
+        
+        # Calculate prices if not set
+        if not self.subtotal:
+            self.subtotal = self.unit_price * self.quantity
+        
+        if not self.total_amount:
+            self.total_amount = self.subtotal + self.tax_amount + self.shipping_cost
+            
         super().save(*args, **kwargs)
 
     def generate_order_number(self):
-        timestamp = int(models.DateTimeField.now().timestamp())
+        timestamp = int(timezone.now().timestamp())
         random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         return f"ORD{timestamp}{random_str}"
 
@@ -105,3 +112,12 @@ class Order(models.Model):
             'cancelled': 'bg-red-100 text-red-800',
         }
         return status_classes.get(self.order_status, 'bg-gray-100 text-gray-800')
+
+    def get_payment_status_class(self):
+        status_classes = {
+            'pending': 'bg-yellow-100 text-yellow-800',
+            'paid': 'bg-green-100 text-green-800',
+            'failed': 'bg-red-100 text-red-800',
+            'refunded': 'bg-gray-100 text-gray-800',
+        }
+        return status_classes.get(self.payment_status, 'bg-gray-100 text-gray-800')

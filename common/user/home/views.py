@@ -3,9 +3,12 @@ import random
 from django.shortcuts import redirect, render
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 
 from common.products.views import Product
+
+
 
 @never_cache
 @login_required(login_url='user_auth:signin')
@@ -37,7 +40,17 @@ def home(request):
                 'in_stock': first_variant.stock_quantity > 0
             })
     
+    # Calculate discount percentage for template
+    for product_data in products_data:
+        if product_data['original_price'] and product_data['price']:
+            discount_amount = product_data['original_price'] - product_data['price']
+            product_data['discount_percentage'] = int((discount_amount / product_data['original_price']) * 100)
+        else:
+            product_data['discount_percentage'] = 0
+    
     context = {
-        'products': products_data
+        'products': products_data,
+        'today': timezone.now().date(),  # Add current date for birthday detection
+        'random': random.randint(1, 99),  # Add random number for ratings
     }
     return render(request, 'user/index.html', context)

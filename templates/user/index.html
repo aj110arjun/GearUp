@@ -19,10 +19,6 @@
     animation: fadeInUp 0.6s ease-out;
   }
   
-  .hero-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
-  
   .category-badge {
     transition: all 0.3s ease;
   }
@@ -31,10 +27,48 @@
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
   }
+  
+  /* Simple Birthday Banner */
+  @keyframes gentlePulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.01);
+    }
+  }
+  
+  .birthday-banner {
+    animation: gentlePulse 3s ease-in-out infinite;
+    background: #fef3c7;
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+  }
 </style>
 {% endblock css %}
 
 {% block content %}
+
+<!-- Simple Birthday Banner -->
+{% if user.is_authenticated and user.date_of_birth and user.date_of_birth|date:"md" == today|date:"md" %}
+<div class="birthday-banner mx-4 mt-4 p-4">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="bg-amber-500 w-10 h-10 rounded-full flex items-center justify-center">
+        <i class="fas fa-birthday-cake text-white text-lg"></i>
+      </div>
+      <div>
+        <h3 class="font-bold text-lg text-amber-900">Happy Birthday, {{ user.first_name|default:user.username }}! 🎉</h3>
+        <p class="text-amber-700 text-sm">Wishing you a wonderful day filled with joy and adventure!</p>
+      </div>
+    </div>
+    <button onclick="this.parentElement.parentElement.remove()" class="text-amber-600 hover:text-amber-800">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>
+{% endif %}
+
 <!-- Hero Section -->
 <div class="bg-gradient-to-r from-emerald-600 to-teal-500 text-white">
   <div class="max-w-7xl mx-auto px-4 py-16 md:py-24">
@@ -57,7 +91,7 @@
         </p>
         
         <div class="flex flex-wrap gap-4 pt-4">
-          <a href="" 
+          <a href="{% url 'products:product_list_user' %}" 
              class="bg-white text-emerald-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
             Shop Now
             <i class="fas fa-arrow-right ml-2"></i>
@@ -150,7 +184,7 @@
   </div>
 </div>
 
-<!-- Products Section Header -->
+<!-- Products Section -->
 <div class="max-w-7xl mx-auto px-4 py-16" id="featured">
   <div class="text-center mb-12">
     <p class="text-emerald-600 font-semibold text-sm uppercase tracking-wider mb-2">Featured Products</p>
@@ -303,6 +337,19 @@
       document.getElementById('product-skeletons').classList.add('hidden');
       document.getElementById('product-grid').classList.remove('hidden');
     }, 1000);
+    
+    // Auto-hide birthday banner after 10 seconds
+    {% if user.is_authenticated and user.date_of_birth and user.date_of_birth|date:"md" == today|date:"md" %}
+    setTimeout(function() {
+      const birthdayBanner = document.querySelector('.birthday-banner');
+      if (birthdayBanner) {
+        birthdayBanner.style.transition = 'all 0.5s ease-out';
+        birthdayBanner.style.opacity = '0';
+        birthdayBanner.style.transform = 'translateY(-20px)';
+        setTimeout(() => birthdayBanner.remove(), 500);
+      }
+    }, 10000);
+    {% endif %}
   });
 </script>
 

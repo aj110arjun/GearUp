@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
@@ -176,11 +176,17 @@ def resend_otp(request):
 # views.py
 
 
+# auths/views.py - Update the profile views
+
 @login_required
 def profile_view(request):
     """Display user profile"""
+    # Create form instance with current user data
+    form = ProfileUpdateForm(instance=request.user)
+    
     return render(request, 'user/profile/profile.html', {
-        'user_profile': request.user
+        'user_profile': request.user,
+        'form': form  # Pass the form to template
     })
 
 @login_required
@@ -192,14 +198,25 @@ def profile_edit(request):
             request.FILES, 
             instance=request.user
         )
+        print(f"Form is valid: {form.is_valid()}")  # Debug
+        print(f"Form errors: {form.errors}")  # Debug
+        print(f"Form data: {request.POST}")  # Debug
+        
         if form.is_valid():
-            form.save()
+            user = form.save()
+            print(f"User saved: {user}")  # Debug
             messages.success(request, 'Your profile has been updated successfully!')
-            return redirect('profile')
+            return redirect('user_auth:profile')
+        else:
+            # Show what specific errors are occurring
+            messages.error(request, f'Please correct the errors: {form.errors}')
     else:
         form = ProfileUpdateForm(instance=request.user)
     
-    return render(request, 'profiles/profile_edit.html', {'form': form})
+    return render(request, 'user/profile/profile.html', {
+        'form': form,
+        'user_profile': request.user
+    })
 
 @login_required
 def profile_image_upload(request):
@@ -210,6 +227,12 @@ def profile_image_upload(request):
         user.save()
         messages.success(request, 'Profile image updated successfully!')
     
-    return redirect('profile_edit')
+    return redirect('user_auth:profile_edit')  # Fixed redirect
+
+@login_required
+def user_logout(request):
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('user_home:home')
 
 
