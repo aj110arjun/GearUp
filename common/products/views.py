@@ -503,6 +503,8 @@ def product_list_user(request):
     }
     
     return render(request, 'user/products/product_list.html', context)
+
+
 @login_required(login_url='user_auth:signin')
 @never_cache
 def product_detail_user(request, product_slug):
@@ -519,6 +521,19 @@ def product_detail_user(request, product_slug):
 
     # Get active variants
     variants = product.variants.filter(is_active=True)
+
+    # Get cart variant IDs for current user to check which variants are in cart
+    cart_variant_ids = []
+    if request.user.is_authenticated:
+        try:
+            cart = Cart.objects.get(user=request.user)
+            cart_variant_ids = list(cart.items.values_list('variant_id', flat=True))
+        except Cart.DoesNotExist:
+            pass
+    
+    # Add in_cart status to each variant
+    for variant in variants:
+        variant.in_cart = variant.id in cart_variant_ids
 
     # Get related products
     related_products = Product.objects.filter(
@@ -602,19 +617,23 @@ def add_to_cart(request):
         if cart_item_exists:
             # Remove from cart
             CartItem.objects.filter(cart=cart, variant=variant).delete()
+            cart_count = cart.items.count()
             return JsonResponse({
                 'success': True, 
                 'added': False, 
                 'removed': True,
+                'cart_count': cart_count,
                 'message': 'Item removed from cart'
             })
         else:
             # Add to cart
             CartItem.objects.create(cart=cart, variant=variant, quantity=quantity)
+            cart_count = cart.items.count()
             return JsonResponse({
                 'success': True, 
                 'added': True, 
                 'removed': False,
+                'cart_count': cart_count,
                 'message': 'Item added to cart'
             })
             
@@ -653,3 +672,17 @@ def product_list(request):
         # ... other context
     }
     return render(request, 'products/product_list.html', context)
+
+@login_required
+def ajax_cart_count(request):
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        try:
+            cart = Cart.objects.get(user=request.user)
+            cart_count = cart.items.count()
+        except Cart.DoesNotExist:
+            cart_count = 0
+        
+        return JsonResponse({
+            'count': cart_count
+        })
+    return JsonResponse({'error': 'Invalid request'})
