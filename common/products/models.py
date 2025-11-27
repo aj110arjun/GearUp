@@ -1,5 +1,4 @@
 import uuid
-
 from django.db import models
 from django.utils.text import slugify
 from django.urls import reverse
@@ -100,8 +99,7 @@ class Product(models.Model):
             super().save(update_fields=['sku'])
 
     def get_absolute_url(self):
-        from django.urls import reverse
-        return reverse('products:product_detail', kwargs={'product_slug': self.slug})
+        return reverse('products:product_detail_user', kwargs={'slug': self.slug})
 
     @property
     def in_stock(self):
@@ -124,6 +122,34 @@ class Product(models.Model):
             return max(variant.price for variant in variants)
         return 0
     
+    def get_in_stock_variants(self):
+        """Return all variants that are in stock"""
+        return self.variants.filter(stock_quantity__gt=0)
+    
+    def get_first_in_stock_variant(self):
+        """Return the first variant that is in stock, or None"""
+        in_stock = self.get_in_stock_variants()
+        return in_stock.first() if in_stock.exists() else None
+
+    # ADD THESE PROPERTIES FOR TEMPLATE COMPATIBILITY
+    @property
+    def avg_rating(self):
+        """Calculate average rating for the product"""
+        # If you have a Review model, implement this
+        return 4.5  # Placeholder - implement based on your review system
+
+    @property
+    def rating_count(self):
+        """Get number of ratings"""
+        # If you have a Review model, implement this
+        return 10  # Placeholder
+
+    @property
+    def best_offer(self):
+        """Get the best offer/discount for the product"""
+        # If you have an Offer model, implement this
+        return None  # Placeholder - implement based on your offer system
+
 
 class ProductVariant(models.Model):
     """Product variants (size, color, etc.)"""
@@ -167,6 +193,26 @@ class ProductVariant(models.Model):
             return int(((self.compare_price - self.price) / self.compare_price) * 100)
         return 0
 
+    # ADD THESE METHODS FOR TEMPLATE COMPATIBILITY
+    def get_display_name(self):
+        """Return display name for variant selection"""
+        parts = []
+        if self.color:
+            parts.append(self.color)
+        if self.size:
+            parts.append(self.size)
+        return ' - '.join(parts) if parts else "Standard"
+
+    def get_discounted_price(self):
+        """Get discounted price if available"""
+        if self.compare_price and self.compare_price > self.price:
+            return self.compare_price
+        return self.price
+
+    def get_discount(self):
+        """Get discount percentage for template"""
+        return self.discount_percentage
+
 
 class ProductImage(models.Model):
     """Product images"""
@@ -194,5 +240,3 @@ class ProductImage(models.Model):
                 is_primary=True
             ).exclude(pk=self.pk).update(is_primary=False)
         super().save(*args, **kwargs)
-
-    
