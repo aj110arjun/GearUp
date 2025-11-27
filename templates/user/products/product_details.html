@@ -342,45 +342,23 @@
                   <!-- Action Buttons -->
                   <div class="flex items-center gap-3 min-w-[200px]">
                     {% if variant.stock_quantity > 0 %}
-                      <!-- Quantity Selector (Hidden when item is in cart) -->
-                      <div class="flex items-center border-2 border-gray-300 rounded-lg variant-quantity-container" data-variant-id="{{ variant.id }}">
-                        <button type="button" 
-                                onclick="decrementVariantQty('{{ variant.id }}')" 
-                                class="px-3 py-2 hover:bg-gray-100 transition text-gray-600">
-                          <i class="fas fa-minus"></i>
-                        </button>
-                        <input type="number" 
-                               value="1" 
-                               min="1" 
-                               max="{{ variant.stock_quantity }}" 
-                               class="w-16 text-center border-x-2 border-gray-300 py-2 focus:outline-none font-semibold variant-quantity"
-                               data-variant-id="{{ variant.id }}"
-                               onchange="updateVariantQty('{{ variant.id }}', this.value)">
-                        <button type="button" 
-                                onclick="incrementVariantQty('{{ variant.id }}')" 
-                                class="px-3 py-2 hover:bg-gray-100 transition text-gray-600">
-                          <i class="fas fa-plus"></i>
-                        </button>
-                      </div>
-                      
-                      <!-- Add to Cart / Go to Cart Button -->
                       <div class="flex-1">
-                        <button type="button" 
-                                onclick="addToCart('{{ variant.id }}')"
-                                class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg add-to-cart-btn"
-                                data-variant-id="{{ variant.id }}"
-                                id="cart-btn-{{ variant.id }}">
-                          <i class="fas fa-cart-plus"></i>
-                          <span>Add to Cart</span>
-                        </button>
-                        
-                        <a href="{% url 'shop:cart' %}"
-                           class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition shadow-lg go-to-cart-btn hidden"
-                           data-variant-id="{{ variant.id }}"
-                           id="go-to-cart-btn-{{ variant.id }}">
-                          <i class="fas fa-shopping-cart"></i>
-                          <span>Go to Cart</span>
-                        </a>
+                        {% if variant.in_cart %}
+                          <!-- Show "Go to Cart" if variant is already in cart -->
+                          <a href="{% url 'shop:cart' %}"
+                             class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition shadow-lg">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Go to Cart</span>
+                          </a>
+                        {% else %}
+                          <!-- Show "Add to Cart" if variant is not in cart -->
+                          <button type="button" 
+                                  onclick="addToCart('{{ variant.id }}')"
+                                  class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg">
+                            <i class="fas fa-cart-plus"></i>
+                            <span>Add to Cart</span>
+                          </button>
+                        {% endif %}
                       </div>
                     {% else %}
                       <button disabled 
@@ -493,70 +471,9 @@ function updateCartCount(count) {
   }
 }
 
-function updateWishlistCount(count) {
-  const wishlistCount = document.getElementById('wishlist-count');
-  if (wishlistCount) {
-    wishlistCount.textContent = count;
-    // Add animation
-    wishlistCount.classList.add('scale-125');
-    setTimeout(() => wishlistCount.classList.remove('scale-125'), 300);
-  }
-}
-
-// Cart State Management
-let cartItems = new Set();
-
-// Check cart status on page load
-function checkCartStatus() {
-  fetch('/shop/ajax/cart-count/', {
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest'
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    updateCartCount(data.count);
-    // You would need to implement an endpoint to get cart items
-    // For now, we'll rely on the addToCart function to update the UI
-  })
-  .catch(error => {
-    console.error('Error checking cart status:', error);
-  });
-}
-
-function updateCartButton(variantId, isInCart = true) {
-  const addToCartBtn = document.getElementById(`cart-btn-${variantId}`);
-  const goToCartBtn = document.getElementById(`go-to-cart-btn-${variantId}`);
-  const quantityContainer = document.querySelector(`.variant-quantity-container[data-variant-id="${variantId}"]`);
-  
-  if (isInCart) {
-    // Item is in cart - show "Go to Cart" button
-    addToCartBtn.classList.add('hidden');
-    goToCartBtn.classList.remove('hidden');
-    if (quantityContainer) {
-      quantityContainer.classList.add('hidden');
-    }
-    cartItems.add(variantId);
-  } else {
-    // Item is not in cart - show "Add to Cart" button
-    addToCartBtn.classList.remove('hidden');
-    goToCartBtn.classList.add('hidden');
-    if (quantityContainer) {
-      quantityContainer.classList.remove('hidden');
-    }
-    cartItems.delete(variantId);
-  }
-}
-
 // Cart Functions
-function getVariantQuantity(variantId) {
-  const input = document.querySelector(`.variant-quantity[data-variant-id="${variantId}"]`);
-  return input ? parseInt(input.value) : 1;
-}
-
 function addToCart(variantId) {
-  const quantity = getVariantQuantity(variantId);
-  const button = document.querySelector(`.add-to-cart-btn[data-variant-id="${variantId}"]`);
+  const button = document.querySelector(`button[onclick="addToCart('${variantId}')"]`);
   
   // Show loading state
   const originalHTML = button.innerHTML;
@@ -571,7 +488,7 @@ function addToCart(variantId) {
     },
     body: JSON.stringify({
       variant_id: variantId,
-      quantity: quantity
+      quantity: 1
     })
   })
   .then(response => response.json())
@@ -580,8 +497,10 @@ function addToCart(variantId) {
       updateCartCount(data.cart_count);
       showNotification(data.message, 'success');
       
-      // Update button to show "Go to Cart"
-      updateCartButton(variantId, true);
+      // Reload the page to show updated cart state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
     } else {
       showNotification(data.message, 'error');
@@ -595,32 +514,6 @@ function addToCart(variantId) {
     button.innerHTML = originalHTML;
     button.disabled = false;
   });
-}
-
-function incrementVariantQty(variantId) {
-  const input = document.querySelector(`.variant-quantity[data-variant-id="${variantId}"]`);
-  const max = parseInt(input.getAttribute('max'));
-  const current = parseInt(input.value);
-  if (current < max) {
-    input.value = current + 1;
-  }
-}
-
-function decrementVariantQty(variantId) {
-  const input = document.querySelector(`.variant-quantity[data-variant-id="${variantId}"]`);
-  const min = parseInt(input.getAttribute('min'));
-  const current = parseInt(input.value);
-  if (current > min) {
-    input.value = current - 1;
-  }
-}
-
-function updateVariantQty(variantId, quantity) {
-  if (quantity < 1) quantity = 1;
-  const input = document.querySelector(`.variant-quantity[data-variant-id="${variantId}"]`);
-  const max = parseInt(input.getAttribute('max'));
-  if (quantity > max) quantity = max;
-  input.value = quantity;
 }
 
 // Wishlist Functions
@@ -681,6 +574,16 @@ function toggleWishlist(productId) {
   });
 }
 
+function updateWishlistCount(count) {
+  const wishlistCount = document.getElementById('wishlist-count');
+  if (wishlistCount) {
+    wishlistCount.textContent = count;
+    // Add animation
+    wishlistCount.classList.add('scale-125');
+    setTimeout(() => wishlistCount.classList.remove('scale-125'), 300);
+  }
+}
+
 // Image Gallery and Zoom Setup
 document.addEventListener("DOMContentLoaded", function() {
   // Show real content after loading
@@ -688,9 +591,6 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('skeleton-content').classList.add('hidden');
     document.getElementById('real-content').classList.remove('hidden');
   }, 800);
-
-  // Check cart status on page load
-  checkCartStatus();
 
   const mainImg = document.getElementById("main-product-image");
   const thumbs = document.querySelectorAll(".thumb-img");

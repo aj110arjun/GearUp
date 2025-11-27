@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
-from .forms import UserCreationForm, SigninForm, OTPVerificationForm
+from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm
 from .models import UserModel, OTP
 from core.services import send_otp_email
 
@@ -12,11 +13,11 @@ from core.services import send_otp_email
 @never_cache
 def signup(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('user_home:home')
 
     # Check if user is already in OTP verification stage
     if 'signup_data' in request.session and 'otp_sent' in request.session:
-        return redirect('verify_otp')
+        return redirect('user_auth:verify_otp')
 
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -39,7 +40,7 @@ def signup(request):
             request.session['otp_created'] = otp.created_at.isoformat()
 
             messages.success(request, f"Verification code sent to {form.cleaned_data['email']}")  # Fixed
-            return redirect('verify_otp')
+            return redirect('user_auth:verify_otp')
     else:
         form = UserCreationForm()
 
@@ -52,7 +53,7 @@ def signup(request):
 @never_cache
 def signin(request):
     if request.user.is_authenticated:
-        return redirect('home')  # or 'dashboard'
+        return redirect('user_home:home')  # or 'dashboard'
 
     if request.method == 'POST':
         form = SigninForm(request.POST)
@@ -83,7 +84,7 @@ def signin(request):
 @never_cache
 def verify_otp(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('user_home:home')
     
     if 'signup_data' not in request.session or 'otp_sent' not in request.session:
         return redirect('signup')
@@ -96,7 +97,7 @@ def verify_otp(request):
         otp = OTP.objects.filter(email=otp_email, is_verified=False).latest('created_at')
     except OTP.DoesNotExist:
         messages.error(request, "OTP expired or invalid. Please sign up again.")
-        return redirect('signup')
+        return redirect('user_auth:signup')
     
     if request.method == 'POST':
         form = OTPVerificationForm(request.POST)
@@ -127,7 +128,7 @@ def verify_otp(request):
                 del request.session['otp_created']
                 
                 messages.success(request, "Account created successfully! You can now sign in.")
-                return redirect('signin')
+                return redirect('user_auth:signin')
             
             else:
                 if otp.is_expired():
@@ -156,7 +157,7 @@ def verify_otp(request):
 @never_cache
 def resend_otp(request):
     if 'signup_data' not in request.session:
-        return redirect('signup')
+        return redirect('user_auth:signup')
 
     signup_data = request.session['signup_data']
     email = signup_data['email']
@@ -170,6 +171,68 @@ def resend_otp(request):
     request.session['otp_created'] = otp.created_at.isoformat()
 
     messages.success(request, "New verification code sent!")
-    return redirect('verify_otp')
+    return redirect('user_auth:verify_otp')
+
+# views.py
+
+
+# auths/views.py - Update the profile views
+
+@login_required
+def profile_view(request):
+    """Display user profile"""
+    # Create form instance with current user data
+    form = ProfileUpdateForm(instance=request.user)
+    
+    return render(request, 'user/profile/profile.html', {
+        'user_profile': request.user,
+        'form': form  # Pass the form to template
+    })
+
+@login_required
+def profile_edit(request):
+    """Edit user profile"""
+    if request.method == 'POST':
+        form = ProfileUpdateForm(
+            request.POST, 
+            request.FILES, 
+            instance=request.user
+        )
+        print(f"Form is valid: {form.is_valid()}")  # Debug
+        print(f"Form errors: {form.errors}")  # Debug
+        print(f"Form data: {request.POST}")  # Debug
+        
+        if form.is_valid():
+            user = form.save()
+            print(f"User saved: {user}")  # Debug
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('user_auth:profile')
+        else:
+            # Show what specific errors are occurring
+            messages.error(request, f'Please correct the errors: {form.errors}')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+    
+    return render(request, 'user/profile/profile.html', {
+        'form': form,
+        'user_profile': request.user
+    })
+
+@login_required
+def profile_image_upload(request):
+    """Handle profile image upload separately"""
+    if request.method == 'POST' and request.FILES.get('profile_image'):
+        user = request.user
+        user.profile_image = request.FILES['profile_image']
+        user.save()
+        messages.success(request, 'Profile image updated successfully!')
+    
+    return redirect('user_auth:profile_edit')  # Fixed redirect
+
+@login_required
+def user_logout(request):
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('user_home:home')
 
 

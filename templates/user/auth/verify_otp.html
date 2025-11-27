@@ -76,7 +76,7 @@
                 <div class="mt-4 text-sm">
                     <p class="text-gray-600">
                         Didn't receive the code? 
-                        <a href="{% url 'resend_otp' %}" 
+                        <a href="{% url 'user_auth:resend_otp' %}" 
                            class="text-emerald-600 hover:text-emerald-500 font-medium {% if not is_expired %}opacity-50 cursor-not-allowed{% endif %}"
                            {% if not is_expired %}onclick="return false;"{% endif %}>
                             Resend OTP

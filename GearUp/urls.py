@@ -26,6 +26,6 @@ urlpatterns = [
     path('products/', include('common.products.urls', namespace='products')),
     path('shop/', include('common.user.cart_wishlist.urls', namespace='shop')),
     path('orders/', include('common.orders.urls', namespace='orders')),
-    path('profile/', include('common.user.user_profile.urls', namespace='profile')),
-    path('addresses/', include('common.user.address.urls', namespace='address')),
+    # path('profile/', include('common.user.user_profile.urls', namespace='profile')),
+    path('address/', include('common.user.address.urls', namespace='address')),
 ]

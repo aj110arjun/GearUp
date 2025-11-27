@@ -10,9 +10,28 @@
   }
   
   .shimmer {
-    background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+    background: linear-gradient(90px, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
     background-size: 1000px 100%;
     animation: shimmer 2s infinite;
+  }
+  
+  .out-of-stock {
+    position: relative;
+  }
+  
+  .out-of-stock::after {
+    content: "Out of Stock";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    padding: 8px 16px;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 4px;
+    z-index: 10;
   }
 </style>
 
@@ -30,7 +49,7 @@
         <li>
           <div class="flex items-center">
             <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-            <a href="{% url 'products:product_list' %}" class="text-gray-500 hover:text-gray-900 ml-1 text-sm font-medium">Shop</a>
+            <a href="{% url 'products:product_list_user' %}" class="text-gray-500 hover:text-gray-900 ml-1 text-sm font-medium">Shop</a>
           </div>
         </li>
       </ol>
@@ -43,70 +62,77 @@
   </div>
 
   <!-- Search & Filters Section -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-    <form method="get" class="flex flex-wrap gap-4 items-end">
-      
-      <!-- Search Input -->
-      <div class="relative flex-1 min-w-[220px]">
-        <label for="search-input" class="block text-sm text-gray-700 font-semibold mb-2">
-          <i class="fas fa-search mr-2 text-emerald-600"></i>Search Products
-        </label>
-        <div class="relative">
-          <input type="text" name="q" id="search-input"
-                 class="w-full border-2 border-gray-200 rounded-lg py-3 px-4 pr-10 focus:outline-none focus:border-emerald-500 transition-colors"
-                 placeholder="Search for products..." value="{{ filters.search }}">
-          <button type="button" id="clear-btn"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl h-8 w-8 flex items-center justify-center hidden transition-colors">
-            <i class="fas fa-times-circle"></i>
-          </button>
-        </div>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+  <form method="get" class="flex flex-wrap gap-4 items-end">
+    
+    <!-- Search Input -->
+    <div class="relative flex-1 min-w-[220px]">
+      <label for="search-input" class="block text-sm text-gray-700 font-semibold mb-2">
+        <i class="fas fa-search mr-2 text-emerald-600"></i>Search Products
+      </label>
+      <div class="relative">
+        <input type="text" name="q" id="search-input"
+               class="w-full border-2 border-gray-200 rounded-lg py-3 px-4 pr-10 focus:outline-none focus:border-emerald-500 transition-colors"
+               placeholder="Search for products..." value="{{ filters.search }}">
+        <button type="button" id="clear-btn"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl h-8 w-8 flex items-center justify-center hidden transition-colors">
+          <i class="fas fa-times-circle"></i>
+        </button>
       </div>
+    </div>
 
-      <!-- Category Filter -->
-      <div class="min-w-[180px]">
-        <label for="category-select" class="block text-sm text-gray-700 font-semibold mb-2">
-          <i class="fas fa-layer-group mr-2 text-emerald-600"></i>Category
-        </label>
-        <select name="category" id="category-select"
-          class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 cursor-pointer transition-colors bg-white"
-          onchange="this.form.submit()">
-          <option value="">All Categories</option>
-          {% for cat in categories %}
-            <option value="{{ cat.id }}" {% if filters.category == cat.id|stringformat:"s" %}selected{% endif %}>
-              {{ cat.name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+    <!-- Category Filter -->
+    <div class="min-w-[180px]">
+      <label for="category-select" class="block text-sm text-gray-700 font-semibold mb-2">
+        <i class="fas fa-layer-group mr-2 text-emerald-600"></i>Category
+      </label>
+      <select name="category" id="category-select"
+        class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 cursor-pointer transition-colors bg-white">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if filters.category == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
-      <!-- Sorting Order -->
-      <div class="min-w-[180px]">
-        <label for="sort-select" class="block text-sm text-gray-700 font-semibold mb-2">
-          <i class="fas fa-sort-amount-down mr-2 text-emerald-600"></i>Sort By
-        </label>
-        <select name="sort" id="sort-select"
-          class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 cursor-pointer transition-colors bg-white"
-          onchange="this.form.submit()">
-          <option value="">Default Order</option>
-          <option value="name" {% if filters.sort == "name" %}selected{% endif %}>Name: A-Z</option>
-          <option value="name2" {% if filters.sort == "name2" %}selected{% endif %}>Name: Z-A</option>
-          <option value="price_asc" {% if filters.sort == "price_asc" %}selected{% endif %}>Price: Low to High</option>
-          <option value="price_desc" {% if filters.sort == "price_desc" %}selected{% endif %}>Price: High to Low</option>
-        </select>
-      </div>
+    <!-- Sorting Order -->
+    <div class="min-w-[180px]">
+      <label for="sort-select" class="block text-sm text-gray-700 font-semibold mb-2">
+        <i class="fas fa-sort-amount-down mr-2 text-emerald-600"></i>Sort By
+      </label>
+      <select name="sort" id="sort-select"
+        class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 cursor-pointer transition-colors bg-white">
+        <option value="">Default Order</option>
+        <option value="name" {% if filters.sort == "name" %}selected{% endif %}>Name: A-Z</option>
+        <option value="name2" {% if filters.sort == "name2" %}selected{% endif %}>Name: Z-A</option>
+        <option value="price_asc" {% if filters.sort == "price_asc" %}selected{% endif %}>Price: Low to High</option>
+        <option value="price_desc" {% if filters.sort == "price_desc" %}selected{% endif %}>Price: High to Low</option>
+      </select>
+    </div>
 
-      <!-- Clear Filters Button -->
-      <div class="ml-auto">
-        {% if filters.search or filters.category or filters.sort or filters.price_min or filters.price_max %}
-        <a href="{% url 'product_list' %}"
-          class="inline-flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all">
-          <i class="fas fa-redo"></i>
-          Clear Filters
-        </a>
-        {% endif %}
-      </div>
-    </form>
-  </div>
+    <!-- Submit Button -->
+    <div class="min-w-[120px]">
+      <button type="submit" 
+              class="w-full bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
+        <i class="fas fa-filter"></i>
+        Apply
+      </button>
+    </div>
+
+    <!-- Clear Filters Button -->
+    <div class="ml-auto">
+      {% if filters.search or filters.category or filters.sort %}
+      <a href="{% url 'products:product_list_user' %}"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all">
+        <i class="fas fa-redo"></i>
+        Clear Filters
+      </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
 
   <!-- Results Info -->
   <div class="flex items-center justify-between mb-6">
@@ -145,7 +171,8 @@
   <div id="product-grid" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
     {% if products %}
     {% for product in products %}
-    <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group">
+    {% with first_variant=product.variants.first %}
+    <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group {% if not first_variant or first_variant.stock_quantity <= 0 %}out-of-stock opacity-70{% endif %}">
       <!-- Image Container -->
       <div class="relative overflow-hidden bg-gray-50">
         {% if product.image %}
@@ -166,19 +193,40 @@
           </a>
         </div>
         
-        <!-- Discount Badge -->
-        {% if product.best_offer %}
-        <div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-          {{ product.best_offer.discount_percent }}% OFF
+        <!-- Top Left: Discount Badge -->
+        {% if first_variant and first_variant.discount_percentage > 0 %}
+        <div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
+          {{ first_variant.discount_percentage }}% OFF
         </div>
         {% endif %}
         
-        <!-- Wishlist Icon -->
-        <button class="wishlist-btn absolute top-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-md {% if product.id in wishlist_ids %}text-red-500{% else %}text-gray-600{% endif %}"
+        <!-- Top Right: Wishlist Button -->
+        {% if user.is_authenticated %}
+        <button class="wishlist-btn absolute top-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-md {% if product.id in wishlist_product_ids %}text-red-500{% else %}text-gray-600{% endif %} z-20"
                 data-product-id="{{ product.id }}"
-                title="{% if product.id in wishlist_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
-          <i class="{% if product.id in wishlist_ids %}fas fa-heart{% else %}far fa-heart{% endif %} text-lg"></i>
+                title="{% if product.id in wishlist_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
+          <i class="{% if product.id in wishlist_product_ids %}fas fa-heart{% else %}far fa-heart{% endif %} text-lg"></i>
         </button>
+        {% else %}
+        <a href="{% url 'user_auth:login' %}" 
+           class="absolute top-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-md text-gray-600 z-20"
+           title="Login to add to wishlist">
+          <i class="far fa-heart text-lg"></i>
+        </a>
+        {% endif %}
+        
+        <!-- Bottom Right: Stock Badge -->
+        {% if first_variant %}
+          {% if first_variant.stock_quantity <= 0 %}
+          <div class="absolute bottom-3 right-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
+            Out of Stock
+          </div>
+          {% elif first_variant.stock_quantity <= 10 %}
+          <div class="absolute bottom-3 right-3 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
+            Low Stock
+          </div>
+          {% endif %}
+        {% endif %}
       </div>
 
       <!-- Product Info -->
@@ -187,7 +235,7 @@
           {{ product.name }}
         </h3>
 
-        <!-- Replace the hardcoded rating section with this dynamic version -->
+        <!-- Rating -->
         <div class="flex items-center gap-1 mb-2">
             <div class="flex text-yellow-400 text-sm">
                 {% with rating=product.avg_rating|default:0 %}
@@ -213,42 +261,51 @@
         </div>
 
         <!-- Pricing -->
-        {% with first_variant=product.variants.first %}
-          {% if first_variant %}
-            {% with discount=product.get_best_offer %}
-              {% if discount and discount|floatformat:0 != '0' %}
-                <div class="flex items-center gap-2 mb-4">
-                  <span class="text-2xl font-bold text-emerald-600">₹{{ first_variant.get_discounted_price }}</span>
-                  <span class="text-sm text-gray-400 line-through">₹{{ first_variant.price }}</span>
-                </div>
-              {% else %}
-                <div class="text-2xl font-bold text-emerald-600 mb-4">
-                  ₹{{ first_variant.price }}
-                </div>
-              {% endif %}
-            {% endwith %}
+        {% if first_variant %}
+          {% if first_variant.discount_percentage > 0 %}
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-2xl font-bold text-emerald-600">₹{{ first_variant.get_discounted_price }}</span>
+              <span class="text-sm text-gray-400 line-through">₹{{ first_variant.price }}</span>
+            </div>
           {% else %}
-            <p class="text-gray-500 text-sm mb-4">No variants available</p>
+            <div class="text-2xl font-bold text-emerald-600 mb-4">
+              ₹{{ first_variant.price }}
+            </div>
           {% endif %}
-        {% endwith %}
+        {% else %}
+          <p class="text-gray-500 text-sm mb-4">No variants available</p>
+        {% endif %}
 
         <!-- Action Buttons -->
         <div class="space-y-2">
           <!-- Add to Cart Button -->
-          <form action="" method="POST" class="toggle-cart-form" data-variant-id="{{ product.variants.first.id }}">
-            {% csrf_token %}
-            <button type="button"
-                    class="cart-btn w-full py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 {% if product.variants.first.id in cart_variant_ids %}bg-green-600 text-white hover:bg-green-700{% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}"
-                    data-product-id="{{ product.id }}" 
-                    data-variant-id="{{ product.variants.first.id }}"
-                    title="{% if product.variants.first.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}">
-              <i class="{% if product.variants.first.id in cart_variant_ids %}fas fa-check-circle{% else %}fas fa-shopping-cart{% endif %}"></i>
-              {% if product.variants.first.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}
-            </button>
-          </form>
+          {% if user.is_authenticated %}
+            {% if first_variant and first_variant.stock_quantity > 0 %}
+              <button type="button"
+                      class="cart-btn w-full py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 {% if first_variant.id in cart_variant_ids %}bg-green-600 text-white hover:bg-green-700{% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}"
+                      data-product-id="{{ product.id }}" 
+                      data-variant-id="{{ first_variant.id }}"
+                      title="{% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}">
+                <i class="{% if first_variant.id in cart_variant_ids %}fas fa-check-circle{% else %}fas fa-shopping-cart{% endif %}"></i>
+                {% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}
+              </button>
+            {% else %}
+              <button class="w-full py-2.5 rounded-lg font-semibold bg-gray-400 text-white cursor-not-allowed" disabled>
+                <i class="fas fa-times-circle"></i>
+                Out of Stock
+              </button>
+            {% endif %}
+          {% else %}
+            <a href="{% url 'user_auth:login' %}" 
+               class="w-full py-2.5 rounded-lg font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
+              <i class="fas fa-shopping-cart"></i>
+              Login to Add to Cart
+            </a>
+          {% endif %}
         </div>
       </div>
     </div>
+    {% endwith %}
     {% endfor %}
     {% else %}
     <div class="col-span-full text-center py-16">
@@ -308,97 +365,207 @@
   {% endif %}
 </div>
 
-<!-- Scripts -->
+<!-- Messages Toast -->
+<div id="message-toast" class="fixed top-4 right-4 z-50 hidden">
+  <div class="bg-white rounded-lg shadow-lg border-l-4 p-4 min-w-80">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <i id="toast-icon" class="text-lg"></i>
+        <div>
+          <p id="toast-title" class="font-semibold"></p>
+          <p id="toast-message" class="text-sm text-gray-600"></p>
+        </div>
+      </div>
+      <button onclick="hideToast()" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
+  // Debug info
+  console.log('=== TEMPLATE DEBUG INFO ===');
+  console.log('Wishlist URL:', "{% url 'products:toggle_wishlist' %}");
+  console.log('Product List URL:', "{% url 'products:product_list_user' %}");
+  console.log('User authenticated:', {{ user.is_authenticated|yesno:"true,false" }});
+  console.log('CSRF token present:', '{{ csrf_token }}' !== '');
+
+  // Show/Hide Toast
+  function showToast(type, title, message) {
+    const toast = document.getElementById('message-toast');
+    const icon = document.getElementById('toast-icon');
+    const toastTitle = document.getElementById('toast-title');
+    const toastMessage = document.getElementById('toast-message');
+    
+    // Set styles based on type
+    if (type === 'success') {
+      toast.classList.remove('border-red-400', 'border-yellow-400');
+      toast.classList.add('border-green-400');
+      icon.className = 'fas fa-check-circle text-green-500';
+    } else if (type === 'error') {
+      toast.classList.remove('border-green-400', 'border-yellow-400');
+      toast.classList.add('border-red-400');
+      icon.className = 'fas fa-exclamation-circle text-red-500';
+    } else if (type === 'warning') {
+      toast.classList.remove('border-green-400', 'border-red-400');
+      toast.classList.add('border-yellow-400');
+      icon.className = 'fas fa-exclamation-triangle text-yellow-500';
+    }
+    
+    toastTitle.textContent = title;
+    toastMessage.textContent = message;
+    toast.classList.remove('hidden');
+    
+    // Auto hide after 5 seconds
+    setTimeout(hideToast, 5000);
+  }
+  
+  function hideToast() {
+    document.getElementById('message-toast').classList.add('hidden');
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
       document.getElementById('product-skeletons').style.display = 'none';
       document.getElementById('product-grid').style.display = 'grid';
     }, 1000);
-  });
 
-  const input = document.getElementById('search-input');
-  const clearBtn = document.getElementById('clear-btn');
+    const input = document.getElementById('search-input');
+    const clearBtn = document.getElementById('clear-btn');
 
-  function toggleClearBtn() {
-    clearBtn.classList.toggle('hidden', !input.value);
-  }
+    function toggleClearBtn() {
+      clearBtn.classList.toggle('hidden', !input.value);
+    }
 
-  input.addEventListener('input', toggleClearBtn);
-  clearBtn.addEventListener('click', () => {
-    input.value = '';
+    input.addEventListener('input', toggleClearBtn);
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      toggleClearBtn();
+      input.focus();
+    });
     toggleClearBtn();
-    input.focus();
   });
-  toggleClearBtn();
 
+  // Enhanced Wishlist Functionality with Debugging
   document.addEventListener('DOMContentLoaded', () => {
     const wishlistButtons = document.querySelectorAll('.wishlist-btn');
+    
     wishlistButtons.forEach(button => {
       button.addEventListener('click', async () => {
         const productId = button.dataset.productId;
+        const originalHTML = button.innerHTML;
+        
+        console.log('=== WISHLIST CLICK DEBUG ===');
+        console.log('Product ID:', productId);
+        
+        // Show loading state
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
         try {
-          const response = await fetch("".replace('0', productId), {
+          const response = await fetch("{% url 'products:toggle_wishlist' %}", {
             method: 'POST',
             headers: {
               'X-CSRFToken': '{{ csrf_token }}',
-              'X-Requested-With': 'XMLHttpRequest',
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
             },
+            body: JSON.stringify({ 
+              product_id: productId 
+            })
           });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
           const data = await response.json();
+          
           const icon = button.querySelector('i');
+          
           if (data.status === 'added') {
             button.classList.remove('text-gray-600');
             button.classList.add('text-red-500');
-            icon.classList.remove('far');
-            icon.classList.add('fas');
+            icon.className = 'fas fa-heart text-lg';
+            button.title = 'Remove from Wishlist';
+            showToast('success', 'Wishlist', 'Product added to wishlist!');
           } else if (data.status === 'removed') {
             button.classList.add('text-gray-600');
             button.classList.remove('text-red-500');
-            icon.classList.remove('fas');
-            icon.classList.add('far');
+            icon.className = 'far fa-heart text-lg';
+            button.title = 'Add to Wishlist';
+            showToast('success', 'Wishlist', 'Product removed from wishlist!');
+          } else if (data.error) {
+            showToast('error', 'Error', data.error);
           }
         } catch (error) {
           console.error('Error toggling wishlist:', error);
+          showToast('error', 'Wishlist Error', 'Please try again.');
+          button.innerHTML = originalHTML;
+        } finally {
+          button.disabled = false;
         }
       });
     });
   });
 
+  // Add to Cart Functionality
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".cart-btn").forEach(button => {
       button.addEventListener("click", function () {
         const btn = this;
         const productId = btn.getAttribute("data-product-id");
         const variantId = btn.getAttribute("data-variant-id");
+        const originalHTML = btn.innerHTML;
 
-        fetch("", {
+        // Show loading state
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+
+        fetch("{% url 'shop:add_to_cart' %}", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-CSRFToken": "{{ csrf_token }}",
+            "X-Requested-With": "XMLHttpRequest"
           },
           body: JSON.stringify({
             product_id: productId,
             variant_id: variantId,
+            quantity: 1
           }),
         })
-        .then(response => response.json())
-        .then(data => {
-          const icon = btn.querySelector('i');
-          if (data.added) {
-            btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
-            btn.classList.add('bg-green-600', 'hover:bg-green-700');
-            icon.classList.remove('fa-shopping-cart');
-            icon.classList.add('fa-check-circle');
-            btn.innerHTML = '<i class="fas fa-check-circle"></i> In Cart';
-          } else if (data.removed) {
-            btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
-            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
-            icon.classList.remove('fa-check-circle');
-            icon.classList.add('fa-shopping-cart');
-            btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
           }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            if (data.added) {
+              btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+              btn.classList.add('bg-green-600', 'hover:bg-green-700');
+              btn.innerHTML = '<i class="fas fa-check-circle"></i> In Cart';
+              showToast('success', 'Cart', data.message || 'Product added to cart!');
+            } else if (data.removed) {
+              btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+              btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+              btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+              showToast('success', 'Cart', data.message || 'Product removed from cart!');
+            }
+          } else {
+            throw new Error(data.error || 'Something went wrong');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('error', 'Error', error.message || 'Something went wrong!');
+          btn.innerHTML = originalHTML;
+        })
+        .finally(() => {
+          btn.disabled = false;
         });
       });
     });

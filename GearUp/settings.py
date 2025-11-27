@@ -109,7 +109,6 @@ INSTALLED_APPS = [
     'common.admin.auth_dashboard',
     'common.user.cart_wishlist',
     'common.orders',
-    'common.user.user_profile',
     'common.user.address',
 ]
 

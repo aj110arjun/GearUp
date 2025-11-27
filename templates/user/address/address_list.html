@@ -10,14 +10,14 @@
         <nav class="mb-6" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-2 text-sm text-gray-600">
                 <li>
-                    <a href="{% url 'home' %}" class="hover:text-blue-600 transition-colors">
+                    <a href="{% url 'user_home:home' %}" class="hover:text-blue-600 transition-colors">
                         <i class="fas fa-home mr-1"></i>
                         Home
                     </a>
                 </li>
                 <li class="flex items-center">
                     <i class="fas fa-chevron-right text-gray-400 text-xs mx-2"></i>
-                    <a href="{% url 'profile:profile' %}" class="hover:text-blue-600 transition-colors">
+                    <a href="{% url 'user_auth:profile' %}" class="hover:text-blue-600 transition-colors">
                         Profile
                     </a>
                 </li>
