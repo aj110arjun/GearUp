@@ -18,6 +18,7 @@ urlpatterns = [
     path('details/<slug:product_slug>/', views.product_detail, name='product_detail'),
     path('<slug:product_slug>/edit/', views.product_edit, name='product_edit'),
     path('<slug:product_slug>/', views.product_detail_user, name='product_detail_user'),
+    path('ajax/cart-items/', views.ajax_cart_count, name='ajax_cart_items'),
     
     # Root pattern
     path('', views.product_list_user, name='product_list_user'),
