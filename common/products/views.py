@@ -644,35 +644,6 @@ def add_to_cart(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-def product_list(request):
-    products = Product.objects.all().prefetch_related('variants')
-    
-    # Get wishlist product IDs for current user
-    wishlist_product_ids = []
-    if request.user.is_authenticated:
-        try:
-            wishlist = Wishlist.objects.get(user=request.user)
-            wishlist_product_ids = list(wishlist.items.values_list('product_id', flat=True))
-        except Wishlist.DoesNotExist:
-            pass
-    
-    # Get cart variant IDs for current user
-    cart_variant_ids = []
-    if request.user.is_authenticated:
-        try:
-            cart = Cart.objects.get(user=request.user)
-            cart_variant_ids = list(cart.items.values_list('variant_id', flat=True))
-        except Cart.DoesNotExist:
-            pass
-    
-    context = {
-        'products': products,
-        'wishlist_product_ids': wishlist_product_ids,
-        'cart_variant_ids': cart_variant_ids,
-        # ... other context
-    }
-    return render(request, 'products/product_list.html', context)
-
 @login_required
 def ajax_cart_count(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':

@@ -138,7 +138,17 @@
                   </div>
                   <span>My Addresses</span>
               </a>
-              
+
+              {% if user.has_usable_password %}
+                <a href="{% url 'user_auth:change_password' %}" 
+                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-amber-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-amber-200">
+                  <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-lock text-amber-500 text-lg"></i>
+                  </div>
+                  <span>Change Password</span>
+                </a>
+              {% endif %}
+          
               <a href="#" 
                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-teal-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-teal-200">
                 <div class="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">

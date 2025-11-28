@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
-from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm
+from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm, CustomPasswordChangeForm
 from .models import UserModel, OTP
 from core.services import send_otp_email
 
@@ -69,7 +69,7 @@ def signin(request):
             messages.success(request, f"Welcome back, {user.first_name}!")
             
             # Redirect to next page or home
-            next_page = request.GET.get('next', 'home')
+            next_page = request.GET.get('next', 'user_home:home')
             return redirect(next_page)
     else:
         form = SigninForm()
@@ -234,5 +234,27 @@ def user_logout(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('user_home:home')
+
+@login_required
+def change_password(request):
+    """Change password when user knows current password"""
+    if request.method == 'POST':
+        form = CustomPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Update session to prevent logout
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password has been changed successfully!')
+            return redirect('user_auth:profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CustomPasswordChangeForm(request.user)
+    
+    return render(request, 'user/auth/change_password.html', {
+        'form': form,
+        'title': 'Change Password'
+    })
+
 
 
