@@ -15,6 +15,7 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('profile/upload-image/', views.profile_image_upload, name='profile_image_upload'),
+    path('change-password/', views.change_password, name='change_password'),
     
     # Custom Google OAuth URL
     path('google/', google_views.oauth2_login, name='google_login'),
