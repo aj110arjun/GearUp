@@ -39,7 +39,6 @@ def signup(request):
             request.session['otp_email'] = otp.email
             request.session['otp_created'] = otp.created_at.isoformat()
 
-            messages.success(request, f"Verification code sent to {form.cleaned_data['email']}")  # Fixed
             return redirect('user_auth:verify_otp')
     else:
         form = UserCreationForm()
@@ -66,7 +65,6 @@ def signin(request):
                 # Set session to expire when browser closes
                 request.session.set_expiry(0)
             
-            messages.success(request, f"Welcome back, {user.first_name}!")
             
             # Redirect to next page or home
             next_page = request.GET.get('next', 'user_home:home')
@@ -127,7 +125,6 @@ def verify_otp(request):
                 del request.session['otp_email']
                 del request.session['otp_created']
                 
-                messages.success(request, "Account created successfully! You can now sign in.")
                 return redirect('user_auth:signin')
             
             else:
@@ -232,7 +229,6 @@ def profile_image_upload(request):
 @login_required
 def user_logout(request):
     logout(request)
-    messages.success(request, "You have been logged out successfully.")
     return redirect('user_home:home')
 
 @login_required
