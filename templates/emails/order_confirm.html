@@ -1,0 +1,339 @@
+<!-- templates/emails/order_confirmation.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - GearUp</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin: 8px 0 0 0;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .order-info {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #10b981;
+        }
+        
+        .order-number {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        
+        .order-date {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .product-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .product-details {
+            flex: 1;
+        }
+        
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .product-variant {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .product-price {
+            font-size: 16px;
+            font-weight: 600;
+            color: #10b981;
+        }
+        
+        .summary {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .shipping-info {
+            background: #f0f9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .shipping-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0c4a6e;
+            margin-bottom: 12px;
+        }
+        
+        .next-steps {
+            background: #fef7ed;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .steps-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 12px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .step-number {
+            background: #f59e0b;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .step-text {
+            flex: 1;
+            color: #92400e;
+            font-size: 14px;
+        }
+        
+        .footer {
+            background: #1f2937;
+            color: #9ca3af;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .footer a {
+            color: #10b981;
+            text-decoration: none;
+        }
+        
+        .social-links {
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #9ca3af;
+            text-decoration: none;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">GearUp</div>
+            <h1 class="title">Order Confirmed! 🎉</h1>
+            <p class="subtitle">Thank you for your purchase. We're preparing your order.</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Order Information -->
+            <div class="order-info">
+                <div class="order-number">Order #{{ order.order_number }}</div>
+                <div class="order-date">Placed on {{ order.created_at|date:"F j, Y" }}</div>
+            </div>
+            
+            <!-- Product Details -->
+            <div class="product-card">
+                <img src="{{ order.product_image }}" alt="{{ order.product_name }}" class="product-image">
+                <div class="product-details">
+                    <div class="product-name">{{ order.product_name }}</div>
+                    {% if order.variant_size or order.variant_color %}
+                    <div class="product-variant">
+                        {% if order.variant_size %}Size: {{ order.variant_size }}{% endif %}
+                        {% if order.variant_size and order.variant_color %} • {% endif %}
+                        {% if order.variant_color %}Color: {{ order.variant_color }}{% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="product-variant">Quantity: {{ order.quantity }}</div>
+                    <div class="product-price">₹{{ order.unit_price }}</div>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="summary">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>₹{{ order.subtotal }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax</span>
+                    <span>₹{{ order.tax_amount }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span style="color: #10b981;">FREE</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total</span>
+                    <span>₹{{ order.total_amount }}</span>
+                </div>
+            </div>
+            
+            <!-- Shipping Information -->
+            {% if order.shipping_address %}
+            <div class="shipping-info">
+                <div class="shipping-title">Shipping Address</div>
+                <div style="color: #0c4a6e; line-height: 1.5;">
+                    <strong>{{ order.shipping_address.full_name }}</strong><br>
+                    {{ order.shipping_address.address_line1 }}<br>
+                    {% if order.shipping_address.address_line2 %}{{ order.shipping_address.address_line2 }}<br>{% endif %}
+                    {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.zip_code }}<br>
+                    {{ order.shipping_address.country }}<br>
+                    {% if order.shipping_address.phone_number %}
+                    📞 {{ order.shipping_address.phone_number }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Next Steps -->
+            <div class="next-steps">
+                <div class="steps-title">What's Next?</div>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-text">We'll send you a confirmation when your order ships</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-text">You'll receive tracking information once it's on the way</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-text">Your order will be delivered within 3-5 business days</div>
+                </div>
+            </div>
+            
+            <!-- CTA Button -->
+            <div style="text-align: center;">
+                <a href="{{ site_url }}{% url 'orders:order_detail' order.id %}" class="cta-button">
+                    View Order Details
+                </a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>If you have any questions, please contact our support team at <a href="mailto:pythondjango110@gmail.com">pythondjango110@gmail.com</a></p>
+            <p>GearUp Sports Equipment<br>
+            123 Sports Street, Athletic City, AC 12345</p>
+            
+            <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">
+                © 2024 GearUp. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

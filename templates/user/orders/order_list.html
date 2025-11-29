@@ -9,15 +9,33 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">My Orders</h1>
-            <p class="mt-2 text-sm text-gray-600">Track and manage your orders</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">My Orders</h1>
+                    <p class="mt-2 text-sm text-gray-600 flex items-center">
+                        <i class="fas fa-history mr-2 text-emerald-500"></i>
+                        Track and manage your orders
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">
+                        {{ orders.count }} order{{ orders.count|pluralize }}
+                    </span>
+                </div>
+            </div>
         </div>
 
         {% if messages %}
-        <div class="mb-6 space-y-2">
+        <div class="mb-6 space-y-3">
             {% for message in messages %}
-            <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}">
-                {{ message }}
+            <div class="p-4 rounded-xl border-l-4 {% if message.tags == 'success' %}bg-emerald-50 border-emerald-400 text-emerald-700{% else %}bg-red-50 border-red-400 text-red-700{% endif %} flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+                    <span class="font-medium">{{ message }}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             {% endfor %}
         </div>
@@ -26,23 +44,31 @@
         {% if orders %}
         <div class="space-y-6">
             {% for order in orders %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
                 <!-- Order Header -->
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                        <div class="mb-2 sm:mb-0">
-                            <h3 class="text-lg font-semibold text-gray-900">
-                                Order #{{ order.order_number }}
-                            </h3>
-                            <p class="text-sm text-gray-600">
-                                Placed on {{ order.created_at|date:"M d, Y" }}
-                            </p>
+                <div class="px-6 py-4 bg-emerald-50 border-b border-emerald-100">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                        <div class="flex items-center space-x-4 mb-3 lg:mb-0">
+                            <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-emerald-200">
+                                <i class="fas fa-receipt text-emerald-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">
+                                    Order #{{ order.order_number }}
+                                </h3>
+                                <p class="text-sm text-gray-600 flex items-center">
+                                    <i class="fas fa-calendar mr-1 text-emerald-500"></i>
+                                    Placed on {{ order.created_at|date:"M d, Y" }}
+                                </p>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-4">
+                        <div class="flex flex-wrap gap-2">
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ order.get_status_display_class }}">
+                                <i class="fas fa-clock mr-1 text-xs"></i>
                                 {{ order.get_order_status_display }}
                             </span>
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ order.get_payment_status_class }}">
+                                <i class="fas fa-credit-card mr-1 text-xs"></i>
                                 {{ order.get_payment_status_display }}
                             </span>
                         </div>
@@ -51,36 +77,93 @@
 
                 <!-- Order Content -->
                 <div class="p-6">
-                    <div class="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-6">
-                        <!-- Product Image -->
-                        <div class="flex-shrink-0">
-                            <img src="{{ order.product_image }}" 
-                                 alt="{{ order.product_name }}"
-                                 class="w-20 h-20 object-cover rounded-lg border border-gray-200">
-                        </div>
-
-                        <!-- Product Details -->
-                        <div class="flex-1 min-w-0">
-                            <h4 class="text-lg font-medium text-gray-900 mb-2">
-                                {{ order.product_name }}
-                            </h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                                <div>
-                                    <p><strong>SKU:</strong> {{ order.product_sku }}</p>
-                                    <p><strong>Quantity:</strong> {{ order.quantity }}</p>
-                                    <p><strong>Unit Price:</strong> ₹{{ order.unit_price }}</p>
+                    <div class="flex flex-col xl:flex-row xl:items-start space-y-6 xl:space-y-0 xl:space-x-6">
+                        <!-- Product Section -->
+                        <div class="flex-1">
+                            <div class="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4">
+                                <!-- Product Image -->
+                                <div class="flex-shrink-0 relative">
+                                    <img src="{{ order.product_image }}" 
+                                         alt="{{ order.product_name }}"
+                                         class="w-24 h-24 object-cover rounded-xl border-2 border-emerald-100 shadow-sm">
+                                    <div class="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                                        <span class="text-white text-xs font-bold">{{ order.quantity }}</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
-                                    <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+
+                                <!-- Product Details -->
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3">
+                                        {{ order.product_name }}
+                                    </h4>
+                                    
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
+                                        <div class="space-y-2">
+                                            <div class="flex items-center text-gray-600">
+                                                <i class="fas fa-hashtag mr-2 text-emerald-500 w-4"></i>
+                                                <span class="font-medium mr-2">Quantity:</span>
+                                                <span>{{ order.quantity }}</span>
+                                            </div>
+                                            <div class="flex items-center text-gray-600">
+                                                <i class="fas fa-indian-rupee-sign mr-2 text-emerald-500 w-4"></i>
+                                                <span class="font-medium mr-2">Unit Price:</span>
+                                                <span class="text-emerald-600 font-semibold">₹{{ order.unit_price }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="space-y-2">
+                                            <div class="flex items-center text-gray-600">
+                                                <i class="fas fa-wallet mr-2 text-emerald-500 w-4"></i>
+                                                <span class="font-medium mr-2">Payment:</span>
+                                                <span>{{ order.get_payment_method_display }}</span>
+                                            </div>
+                                            <div class="flex items-center text-gray-600">
+                                                <i class="fas fa-receipt mr-2 text-emerald-500 w-4"></i>
+                                                <span class="font-medium mr-2">Total:</span>
+                                                <span class="text-emerald-600 font-semibold text-lg">₹{{ order.total_amount }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Shipping Address -->
+                            {% if order.shipping_address %}
+                            <div class="mt-6 pt-6 border-t border-gray-100">
+                                <div class="flex items-center mb-3">
+                                    <i class="fas fa-map-marker-alt text-emerald-500 mr-2"></i>
+                                    <h5 class="text-sm font-semibold text-gray-900">Shipping Address</h5>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                                        <div>
+                                            <p class="font-semibold text-gray-900">{{ order.shipping_address.full_name }}</p>
+                                            <p class="mt-1">{{ order.shipping_address.address_line1 }}</p>
+                                            {% if order.shipping_address.address_line2 %}
+                                            <p>{{ order.shipping_address.address_line2 }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }}</p>
+                                            <p>{{ order.shipping_address.zip_code }}</p>
+                                            <p class="text-emerald-600">{{ order.shipping_address.country }}</p>
+                                            {% if order.shipping_address.phone_number %}
+                                            <p class="mt-2 flex items-center text-emerald-600 font-medium">
+                                                <i class="fas fa-phone mr-2"></i>
+                                                {{ order.shipping_address.phone_number }}
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <!-- Order Actions -->
-                        <div class="flex flex-col space-y-2">
+                        <div class="xl:w-48 flex flex-col space-y-3">
                             <a href="{% url 'orders:order_detail' order.id %}" 
-                               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors text-center">
+                               class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 text-center flex items-center justify-center group">
+                                <i class="fas fa-eye mr-2 group-hover:scale-110 transition-transform"></i>
                                 View Details
                             </a>
                             
@@ -88,49 +171,63 @@
                             <form method="POST" action="{% url 'orders:cancel_order' order.id %}" class="inline">
                                 {% csrf_token %}
                                 <button type="submit" 
-                                        onclick="return confirm('Are you sure you want to cancel this order?')"
-                                        class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                        onclick="return confirm('Are you sure you want to cancel order #{{ order.order_number }}? This action cannot be undone.')"
+                                        class="w-full bg-white text-red-600 px-4 py-3 rounded-lg font-semibold border-2 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200 text-center flex items-center justify-center group">
+                                    <i class="fas fa-times-circle mr-2 group-hover:scale-110 transition-transform"></i>
                                     Cancel Order
                                 </button>
                             </form>
+                            {% else %}
+                            <div class="bg-gray-100 text-gray-500 px-4 py-3 rounded-lg font-semibold text-center text-sm border border-gray-200">
+                                <i class="fas fa-lock mr-1"></i>
+                                Cancelled
+                            </div>
                             {% endif %}
                         </div>
                     </div>
-
-                    <!-- Shipping Address -->
-                    {% if order.shipping_address %}
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <h5 class="text-sm font-medium text-gray-900 mb-2">Shipping Address</h5>
-                        <div class="text-sm text-gray-600">
-                            <p>{{ order.shipping_address.full_name }}</p>
-                            <p>{{ order.shipping_address.address_line1 }}</p>
-                            {% if order.shipping_address.address_line2 %}
-                            <p>{{ order.shipping_address.address_line2 }}</p>
-                            {% endif %}
-                            <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.zip_code }}</p>
-                            <p>{{ order.shipping_address.country }}</p>
-                            {% if order.shipping_address.phone_number %}
-                            <p class="mt-1"><i class="fas fa-phone mr-1"></i>{{ order.shipping_address.phone_number }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
             {% endfor %}
         </div>
+
+        <!-- Empty State -->
         {% else %}
-        <div class="bg-white rounded-lg shadow-sm p-12 text-center">
-            <i class="fas fa-shopping-bag text-gray-400 text-6xl mb-4"></i>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">No orders yet</h3>
-            <p class="text-gray-600 mb-6">You haven't placed any orders yet.</p>
-            <a href="{% url 'shop:home' %}" 
-               class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors inline-flex items-center">
-                <i class="fas fa-shopping-cart mr-2"></i>
-                Start Shopping
-            </a>
+        <div class="bg-white rounded-2xl shadow-sm p-16 text-center border-2 border-dashed border-gray-200">
+            <div class="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-shopping-bag text-emerald-500 text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-3">No orders yet</h3>
+            <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                You haven't placed any orders yet. Start shopping to discover amazing products!
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'shop:home' %}" 
+                   class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 inline-flex items-center justify-center group">
+                    <i class="fas fa-bolt mr-2 group-hover:scale-110 transition-transform"></i>
+                    Start Shopping
+                </a>
+                <a href="{% url 'products:product_list' %}" 
+                   class="bg-white text-emerald-600 px-8 py-3 rounded-xl font-semibold border-2 border-emerald-200 hover:bg-emerald-50 transition-all duration-200 inline-flex items-center justify-center group">
+                    <i class="fas fa-compass mr-2 group-hover:scale-110 transition-transform"></i>
+                    Browse Products
+                </a>
+            </div>
         </div>
-        {% endif %}
+        {% endif %}        
     </div>
 </div>
+
+<style>
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+    
+    .hover\:shadow-md:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .border-l-4 {
+        border-left-width: 4px;
+    }
+</style>
 {% endblock %}

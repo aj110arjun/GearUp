@@ -20,4 +20,6 @@ urlpatterns = [
     # AJAX URLs
     path('ajax/cart-count/', views.ajax_cart_count, name='ajax_cart_count'),
     path('ajax/wishlist-count/', views.ajax_wishlist_count, name='ajax_wishlist_count'),
+
+    path('debug-cart/', views.debug_cart_items, name='debug_cart'),
 ]

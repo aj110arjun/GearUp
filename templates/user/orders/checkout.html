@@ -12,7 +12,7 @@
     <nav class="flex mb-8" aria-label="Breadcrumb">
       <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
-          <a href="{% url 'home' %}" class="text-gray-500 hover:text-gray-900 inline-flex items-center text-sm font-medium">
+          <a href="{% url 'user_home:home' %}" class="text-gray-500 hover:text-gray-900 inline-flex items-center text-sm font-medium">
             <i class="fas fa-home mr-2"></i>
             Home
           </a>
@@ -52,7 +52,7 @@
       
       <!-- Checkout Form -->
       <div class="lg:col-span-8">
-        <form id="checkout-form" method="POST">
+        <form id="checkout-form" method="POST" action="{% url 'orders:checkout' %}">
           {% csrf_token %}
           <input type="hidden" name="payment_method" id="selected-payment-method" value="cash_on_delivery">
           
@@ -69,7 +69,7 @@
               <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition-colors address-option">
                 <input type="radio" name="shipping_address" value="{{ address.id }}" 
                        class="mt-1 text-blue-600 shipping-address-radio" 
-                       {% if address.is_default %}checked{% endif %}>
+                       {% if address.is_default %}checked{% endif %} required>
                 <div class="ml-3">
                   <div class="flex items-center space-x-2 mb-2">
                     <span class="font-medium text-gray-900">{{ address.full_name }}</span>
@@ -97,7 +97,7 @@
               <i class="fas fa-map-marker-alt text-gray-400 text-4xl mb-4"></i>
               <h3 class="text-lg font-medium text-gray-900 mb-2">No addresses found</h3>
               <p class="text-gray-600 mb-4">Please add a shipping address to continue</p>
-              <a href="{% url 'address:address_create' %}?next={% url 'orders:checkout' %}" 
+              <a href="{% url 'adderss:address_create' %}?next={% url 'orders:checkout' %}" 
                  class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Add Address
@@ -116,7 +116,7 @@
             <div class="space-y-3">
               <!-- Cash on Delivery -->
               <label class="flex items-start p-4 border-2 border-blue-500 rounded-lg cursor-pointer bg-blue-50 payment-option" data-method="cash_on_delivery">
-                <input type="radio" name="payment_method_ui" value="cash_on_delivery" class="mt-1 text-blue-600 payment-radio" checked>
+                <input type="radio" name="payment_method_ui" value="cash_on_delivery" class="mt-1 text-blue-600 payment-radio" checked required>
                 <div class="ml-3 flex items-center space-x-3">
                   <i class="fas fa-money-bill-wave text-green-500 text-xl"></i>
                   <div>
@@ -159,7 +159,7 @@
             </div>
 
             <!-- Payment Method Details -->
-            <div id="payment-details" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+            <div id="payment-details" class="mt-4 p-4 bg-gray-50 rounded-lg">
               <!-- Razorpay Details -->
               <div id="razorpay-details" class="hidden">
                 <h4 class="font-medium text-gray-900 mb-2">Secure Payment with Razorpay</h4>
@@ -193,6 +193,18 @@
               </div>
             </div>
           </div>
+
+          <!-- Terms and Conditions -->
+          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-start">
+              <input type="checkbox" id="agree_terms" name="agree_terms" class="mt-1 text-blue-600 rounded" required>
+              <label for="agree_terms" class="ml-3 text-sm text-gray-700">
+                I agree to the <a href="#" class="text-blue-600 hover:text-blue-800">Terms and Conditions</a> and 
+                <a href="#" class="text-blue-600 hover:text-blue-800">Privacy Policy</a>. I understand that I'm purchasing physical goods and 
+                the order cannot be cancelled once processed.
+              </label>
+            </div>
+          </div>
         </form>
       </div>
 
@@ -207,9 +219,15 @@
           <div class="px-6 py-4 max-h-96 overflow-y-auto">
             {% for item in cart_items %}
             <div class="flex items-center space-x-3 mb-4 pb-4 border-b border-gray-200 last:border-b-0">
+              {% if item.variant.product.image %}
               <img src="{{ item.variant.product.image.url }}" 
                    alt="{{ item.variant.product.name }}" 
                    class="w-16 h-16 object-cover rounded-lg border border-gray-200">
+              {% else %}
+              <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                <i class="fas fa-image text-gray-400"></i>
+              </div>
+              {% endif %}
 
               <div class="flex-1 min-w-0">
                 <h3 class="text-sm font-medium text-gray-900 truncate">{{ item.variant.product.name }}</h3>
@@ -358,18 +376,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // Place order button click
   placeOrderBtn.addEventListener('click', function() {
     const shippingAddress = document.querySelector('.shipping-address-radio:checked');
-    const agreeTerms = document.getElementById('agree_terms').checked;
-    const paymentMethod = selectedPaymentMethod.value;
+    const agreeTerms = document.getElementById('agree_terms');
     
+    // Validation
     if (!shippingAddress) {
       alert('Please select a shipping address.');
       return;
     }
     
-    if (!agreeTerms) {
+    if (!agreeTerms.checked) {
       alert('Please agree to the terms and conditions.');
       return;
     }
+    
+    const paymentMethod = selectedPaymentMethod.value;
     
     // Wallet balance check
     if (paymentMethod === 'wallet') {
@@ -430,22 +450,45 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function initiateRazorpayPayment() {
     const orderTotal = parseFloat('{{ final_total }}') * 100; // Convert to paise
+    
+    // You'll need to create a Razorpay order first via your backend
+    // For now, we'll show an alert since this requires backend integration
+    alert('Razorpay integration requires backend setup. Please use Cash on Delivery for now.');
+    return;
+    
+    // This is the code you would use once Razorpay is properly set up:
+    /*
     const options = {
-      key: '{{ RAZORPAY_KEY_ID }}', // Your Razorpay Key ID from settings
+      key: '{{ RAZORPAY_KEY_ID }}',
       amount: orderTotal,
       currency: 'INR',
       name: 'GearUp',
       description: 'Order Payment',
       image: '{% static "images/logo.png" %}',
       handler: function(response) {
-        // Payment successful
-        document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
-        document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
-        document.getElementById('razorpay_signature').value = response.razorpay_signature;
+        // Add Razorpay payment details to form
+        const razorpayPaymentId = document.createElement('input');
+        razorpayPaymentId.type = 'hidden';
+        razorpayPaymentId.name = 'razorpay_payment_id';
+        razorpayPaymentId.value = response.razorpay_payment_id;
+        checkoutForm.appendChild(razorpayPaymentId);
+        
+        const razorpayOrderId = document.createElement('input');
+        razorpayOrderId.type = 'hidden';
+        razorpayOrderId.name = 'razorpay_order_id';
+        razorpayOrderId.value = response.razorpay_order_id;
+        checkoutForm.appendChild(razorpayOrderId);
+        
+        const razorpaySignature = document.createElement('input');
+        razorpaySignature.type = 'hidden';
+        razorpaySignature.name = 'razorpay_signature';
+        razorpaySignature.value = response.razorpay_signature;
+        checkoutForm.appendChild(razorpaySignature);
+        
         submitOrder();
       },
       prefill: {
-        name: '{{ user.get_full_name }}',
+        name: '{{ user.get_full_name|default:user.username }}',
         email: '{{ user.email }}',
         contact: '{{ user.phone_number|default:"" }}'
       },
@@ -456,11 +499,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const rzp = new Razorpay(options);
     rzp.open();
+    */
   }
   
   function submitOrder() {
     // Show loading overlay
     loadingOverlay.classList.remove('hidden');
+    
+    // Disable the button to prevent multiple submissions
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Processing...</span>';
     
     // Submit form
     checkoutForm.submit();
