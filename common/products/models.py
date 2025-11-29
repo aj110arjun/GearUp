@@ -99,7 +99,8 @@ class Product(models.Model):
             super().save(update_fields=['sku'])
 
     def get_absolute_url(self):
-        return reverse('products:product_detail_user', kwargs={'slug': self.slug})
+        # Use 'product_slug' to match your URL pattern
+        return reverse('products:product_detail_user', kwargs={'product_slug': self.slug})
 
     @property
     def in_stock(self):

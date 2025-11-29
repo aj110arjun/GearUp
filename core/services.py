@@ -2,6 +2,9 @@
 import random
 from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 
 def generate_otp_code():
@@ -57,3 +60,44 @@ The GearUp Team
         [email],
         fail_silently=False,
     )
+
+    # orders/utils.py
+
+
+def send_order_confirmation_email(order, request):
+    """Send beautiful order confirmation email to customer"""
+    try:
+        subject = f"Order Confirmed! 🎉 - GearUp Order #{order.order_number}"
+        
+        # Get site URL for links in email
+        site_url = f"http://{request.get_host()}"
+        
+        # Render HTML template
+        html_content = render_to_string('emails/order_confirmation.html', {
+            'order': order,
+            'site_url': site_url,
+        })
+        
+        # Create plain text version
+        text_content = strip_tags(html_content)
+        
+        # Create email
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[order.user.email],
+            reply_to=[settings.DEFAULT_FROM_EMAIL]
+        )
+        
+        # Attach HTML content
+        email.attach_alternative(html_content, "text/html")
+        
+        # Send email
+        email.send()
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error sending order confirmation email: {str(e)}")
+        return False

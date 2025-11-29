@@ -29,46 +29,29 @@ def cart_view(request):
     }
     return render(request, 'user/cart/cart_view.html', context)
 
-@require_POST
 @login_required
-def add_to_cart(request):
-    try:
-        data = json.loads(request.body)
-        variant_id = data.get('variant_id')
-        quantity = int(data.get('quantity', 1))
-        
-        variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
-        
-        if variant.stock_quantity < quantity:
-            return JsonResponse({
-                'success': False,
-                'message': f'Only {variant.stock_quantity} items available in stock'
-            })
-        
-        cart = get_or_create_cart(request.user)
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            variant=variant,
-            defaults={'quantity': quantity}
-        )
-        
-        if not created:
-            cart_item.quantity += quantity
-            if cart_item.quantity > variant.stock_quantity:
-                cart_item.quantity = variant.stock_quantity
-            cart_item.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Product added to cart successfully',
-            'cart_count': cart.total_items
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': 'Error adding product to cart'
-        })
+def add_to_cart(request, variant_id):
+    from common.user.cart_wishlist.utils import get_or_create_active_cart
+    
+    variant = get_object_or_404(ProductVariant, id=variant_id)
+    
+    # Get or create active cart
+    cart = get_or_create_active_cart(request.user)
+    
+    # Check if item already exists in cart
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        variant=variant,
+        defaults={'quantity': 1}
+    )
+    
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save()
+    
+    messages.success(request, f'Added {variant.product.name} to cart.')
+    return redirect('shop:cart')
+
 
 @require_POST
 @login_required
@@ -268,3 +251,30 @@ def ajax_cart_count(request):
 def ajax_wishlist_count(request):
     wishlist = get_or_create_wishlist(request.user)
     return JsonResponse({'count': wishlist.total_items})
+
+
+
+# Add this to your views temporarily
+@login_required
+def debug_cart_items(request):
+    """Debug view to check cart item relationships"""
+    cart = Cart.objects.filter(user=request.user, is_active=True).first()
+    if not cart:
+        return HttpResponse("No active cart")
+    
+    cart_items = cart.items.select_related('variant__product').all()
+    results = []
+    
+    for item in cart_items:
+        result = {
+            'cart_item_id': item.id,
+            'variant_id': item.variant_id,
+            'variant_exists': bool(item.variant),
+            'variant_str': str(item.variant) if item.variant else 'None',
+            'product_exists': bool(item.variant.product) if item.variant else False,
+            'product_id': item.variant.product.id if item.variant and item.variant.product else 'None',
+            'product_name': item.variant.product.name if item.variant and item.variant.product else 'None',
+        }
+        results.append(result)
+    
+    return JsonResponse({'results': results})
