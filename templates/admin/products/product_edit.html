@@ -72,6 +72,47 @@
     </div>
     {% endif %}
 
+    <!-- Image Cropping Modal -->
+    <div id="crop-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl mx-4 overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="text-xl font-semibold text-gray-900">Crop Image</h2>
+        </div>
+        <div class="p-6">
+          <div class="flex flex-col md:flex-row gap-6">
+            <div class="flex-1">
+              <div id="crop-container" class="bg-gray-100 rounded-lg overflow-hidden h-80 md:h-96 flex items-center justify-center">
+                <img id="crop-image" src="" alt="Image to crop" class="max-h-full max-w-full">
+              </div>
+            </div>
+            <div class="md:w-64 space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Aspect Ratio</label>
+                <select id="aspect-ratio" class="form-control">
+                  <option value="1">Square (1:1)</option>
+                  <option value="4/3">Standard (4:3)</option>
+                  <option value="16/9">Widescreen (16:9)</option>
+                  <option value="free">Free</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Zoom</label>
+                <input type="range" id="zoom-slider" min="0.1" max="3" step="0.1" value="1" class="w-full">
+              </div>
+              <div class="grid grid-cols-2 gap-3 pt-4">
+                <button id="cancel-crop" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                  Cancel
+                </button>
+                <button id="apply-crop" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  Apply Crop
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Form -->
     <form method="post" enctype="multipart/form-data" id="product-form" novalidate>
       {% csrf_token %}
@@ -241,8 +282,13 @@
                   {{ image_form.id }}
                   
                   {% if image_form.instance.pk and image_form.instance.image %}
-                  <div class="mb-4">
+                  <div class="mb-4 relative">
                     <img src="{{ image_form.instance.image.url }}" alt="{{ image_form.instance.alt_text }}" class="w-full h-48 object-cover rounded-lg">
+                    <button type="button" class="crop-existing-image absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors" data-image-url="{{ image_form.instance.image.url }}">
+                      <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                      </svg>
+                    </button>
                   </div>
                   {% endif %}
                   
@@ -258,7 +304,19 @@
                   <div class="space-y-3">
                     <div>
                       <label class="block text-xs font-medium text-gray-700 mb-1">Image</label>
-                      {{ image_form.image }}
+                      <div class="image-upload-container">
+                        {{ image_form.image }}
+                        <div class="image-preview-container mt-2 hidden">
+                          <div class="relative">
+                            <img id="preview-{{ forloop.counter0 }}" class="w-full h-48 object-cover rounded-lg border border-gray-200">
+                            <button type="button" class="crop-new-image absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors" data-input-id="id_images-{{ forloop.counter0 }}-image">
+                              <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label class="block text-xs font-medium text-gray-700 mb-1">Alt Text</label>
@@ -386,11 +444,20 @@
   </div>
 </div>
 
+<!-- Include Cropper.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('product-form');
   const submitBtn = document.getElementById('submit-btn');
   const submitText = document.getElementById('submit-text');
+  
+  // Cropper.js variables
+  let cropper = null;
+  let currentImageInput = null;
+  let currentPreviewImg = null;
   
   // Handle form submission
   if (form) {
@@ -452,10 +519,184 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
+      // Add image preview functionality to the new form
+      const imageInput = newForm.querySelector('input[type="file"]');
+      const previewContainer = newForm.querySelector('.image-preview-container');
+      const previewImg = newForm.querySelector('.image-preview-container img');
+      const cropBtn = newForm.querySelector('.crop-new-image');
+      
+      if (imageInput && previewContainer) {
+        imageInput.addEventListener('change', function(e) {
+          if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+              previewImg.src = e.target.result;
+              previewContainer.classList.remove('hidden');
+            }
+            
+            reader.readAsDataURL(this.files[0]);
+          }
+        });
+        
+        // Set data attribute for crop button
+        cropBtn.setAttribute('data-input-id', imageInput.id);
+      }
+      
       imageForms.appendChild(newForm);
       totalImageForms.value = formCount + 1;
     });
   }
+  
+  // Initialize image preview for existing forms
+  document.querySelectorAll('.image-form').forEach(form => {
+    const imageInput = form.querySelector('input[type="file"]');
+    const previewContainer = form.querySelector('.image-preview-container');
+    const previewImg = form.querySelector('.image-preview-container img');
+    
+    if (imageInput && previewContainer) {
+      imageInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewContainer.classList.remove('hidden');
+          }
+          
+          reader.readAsDataURL(this.files[0]);
+        }
+      });
+    }
+  });
+  
+  // Image cropping functionality
+  const cropModal = document.getElementById('crop-modal');
+  const cropImage = document.getElementById('crop-image');
+  const aspectRatio = document.getElementById('aspect-ratio');
+  const zoomSlider = document.getElementById('zoom-slider');
+  const cancelCrop = document.getElementById('cancel-crop');
+  const applyCrop = document.getElementById('apply-crop');
+  
+  // Open crop modal for new images
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('crop-new-image') || 
+        e.target.closest('.crop-new-image')) {
+      const button = e.target.classList.contains('crop-new-image') ? 
+                     e.target : e.target.closest('.crop-new-image');
+      const inputId = button.getAttribute('data-input-id');
+      const imageInput = document.getElementById(inputId);
+      
+      if (imageInput && imageInput.files && imageInput.files[0]) {
+        currentImageInput = imageInput;
+        const previewImg = button.closest('.image-preview-container').querySelector('img');
+        currentPreviewImg = previewImg;
+        
+        openCropModal(previewImg.src);
+      }
+    }
+    
+    // Open crop modal for existing images
+    if (e.target.classList.contains('crop-existing-image') || 
+        e.target.closest('.crop-existing-image')) {
+      const button = e.target.classList.contains('crop-existing-image') ? 
+                     e.target : e.target.closest('.crop-existing-image');
+      const imageUrl = button.getAttribute('data-image-url');
+      
+      openCropModal(imageUrl);
+    }
+  });
+  
+  // Open crop modal function
+  function openCropModal(imageSrc) {
+    cropImage.src = imageSrc;
+    cropModal.classList.remove('hidden');
+    
+    // Initialize cropper
+    if (cropper) {
+      cropper.destroy();
+    }
+    
+    cropper = new Cropper(cropImage, {
+      aspectRatio: 1,
+      viewMode: 1,
+      autoCropArea: 0.8,
+      responsive: true,
+      restore: false,
+      guides: true,
+      center: true,
+      highlight: false,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      toggleDragModeOnDblclick: false,
+    });
+    
+    // Set initial aspect ratio
+    updateAspectRatio();
+  }
+  
+  // Update aspect ratio
+  aspectRatio.addEventListener('change', updateAspectRatio);
+  
+  function updateAspectRatio() {
+    const ratio = aspectRatio.value;
+    if (ratio === 'free') {
+      cropper.setAspectRatio(NaN);
+    } else {
+      cropper.setAspectRatio(eval(ratio));
+    }
+  }
+  
+  // Zoom functionality
+  zoomSlider.addEventListener('input', function() {
+    cropper.zoomTo(parseFloat(this.value));
+  });
+  
+  // Cancel crop
+  cancelCrop.addEventListener('click', function() {
+    cropModal.classList.add('hidden');
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
+  });
+  
+  // Apply crop
+  applyCrop.addEventListener('click', function() {
+    if (cropper) {
+      // Get cropped canvas
+      const canvas = cropper.getCroppedCanvas({
+        width: 800,
+        height: 800,
+      });
+      
+      // Convert canvas to blob
+      canvas.toBlob(function(blob) {
+        // Create a new file from the blob
+        const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+        
+        // Create a new FileList (this is a workaround since FileList is read-only)
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        
+        // Update the file input with the cropped image
+        if (currentImageInput) {
+          currentImageInput.files = dataTransfer.files;
+          
+          // Update the preview image
+          if (currentPreviewImg) {
+            currentPreviewImg.src = URL.createObjectURL(file);
+          }
+        }
+        
+        // Close modal
+        cropModal.classList.add('hidden');
+        cropper.destroy();
+        cropper = null;
+        
+      }, 'image/jpeg', 0.9);
+    }
+  });
 });
 </script>
 
@@ -507,6 +748,55 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .peer:checked ~ div:after {
   transform: translateX(100%);
+}
+
+/* Cropper.js custom styles */
+.cropper-view-box,
+.cropper-face {
+  border-radius: 50%;
+}
+
+.cropper-view-box {
+  outline: 2px solid #4f46e5;
+  outline-color: rgba(79, 70, 229, 0.75);
+}
+
+.cropper-line {
+  background-color: #4f46e5;
+}
+
+.cropper-point {
+  background-color: #4f46e5;
+  width: 8px;
+  height: 8px;
+}
+
+.cropper-point.point-se {
+  bottom: -4px;
+  right: -4px;
+}
+
+.cropper-point.point-sw {
+  bottom: -4px;
+  left: -4px;
+}
+
+.cropper-point.point-nw {
+  top: -4px;
+  left: -4px;
+}
+
+.cropper-point.point-ne {
+  top: -4px;
+  right: -4px;
+}
+
+.cropper-point.point-e,
+.cropper-point.point-w,
+.cropper-point.point-s,
+.cropper-point.point-n {
+  width: 6px;
+  height: 6px;
 }
 </style>
 {% endblock content %}
