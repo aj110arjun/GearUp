@@ -1,0 +1,337 @@
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block title %}Transaction Details - GearUp Wallet{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8">
+            <div>
+                <a href="{% url 'wallet:transaction_history' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 mb-4">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to History
+                </a>
+                <h1 class="text-3xl font-bold text-gray-800">Transaction Details</h1>
+                <p class="text-gray-600 mt-2">Complete information about your transaction</p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-3 mt-4 md:mt-0">
+                <a href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-print"></i>
+                    Print
+                </a>
+                <a href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-download"></i>
+                    Download
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Transaction Card -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                    <!-- Card Header -->
+                    <div class="bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-4">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-xl font-bold text-white">Transaction Receipt</h2>
+                            <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-white text-sm font-semibold">
+                                {{ transaction.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Details -->
+                    <div class="p-6">
+                        <!-- Status Banner -->
+                        <div class="{% if transaction.status == 'completed' %}bg-emerald-50 border border-emerald-200
+                                   {% elif transaction.status == 'failed' %}bg-red-50 border border-red-200
+                                   {% elif transaction.status == 'pending' %}bg-yellow-50 border border-yellow-200
+                                   {% else %}bg-gray-50 border border-gray-200{% endif %} rounded-lg p-4 mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="{% if transaction.status == 'completed' %}text-emerald-600
+                                           {% elif transaction.status == 'failed' %}text-red-600
+                                           {% elif transaction.status == 'pending' %}text-yellow-600
+                                           {% else %}text-gray-600{% endif %}">
+                                    {% if transaction.status == 'completed' %}
+                                        <i class="fas fa-check-circle text-2xl"></i>
+                                    {% elif transaction.status == 'failed' %}
+                                        <i class="fas fa-times-circle text-2xl"></i>
+                                    {% elif transaction.status == 'pending' %}
+                                        <i class="fas fa-clock text-2xl"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle text-2xl"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold {% if transaction.status == 'completed' %}text-emerald-800
+                                                           {% elif transaction.status == 'failed' %}text-red-800
+                                                           {% elif transaction.status == 'pending' %}text-yellow-800
+                                                           {% else %}text-gray-800{% endif %}">
+                                        Transaction {{ transaction.get_status_display|upper }}
+                                    </h3>
+                                    <p class="text-sm {% if transaction.status == 'completed' %}text-emerald-700
+                                                    {% elif transaction.status == 'failed' %}text-red-700
+                                                    {% elif transaction.status == 'pending' %}text-yellow-700
+                                                    {% else %}text-gray-700{% endif %} mt-1">
+                                        {% if transaction.status == 'completed' %}
+                                            Your transaction was completed successfully
+                                        {% elif transaction.status == 'failed' %}
+                                            The transaction could not be processed
+                                        {% elif transaction.status == 'pending' %}
+                                            Your transaction is being processed
+                                        {% else %}
+                                            Transaction status: {{ transaction.get_status_display }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Amount Section -->
+                        <div class="text-center mb-8">
+                            <p class="text-gray-600 text-sm mb-2">Transaction Amount</p>
+                            <p class="text-4xl font-bold {% if transaction.transaction_type == 'deposit' %}text-emerald-600
+                                                       {% elif transaction.transaction_type == 'payment' %}text-orange-600
+                                                       {% else %}text-blue-600{% endif %}">
+                                {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}₹{{ transaction.amount }}
+                            </p>
+                            <p class="text-gray-500 mt-2 capitalize">{{ transaction.get_transaction_type_display }}</p>
+                        </div>
+
+                        <!-- Details Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Left Column -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Transaction ID</label>
+                                    <p class="text-gray-800 font-mono bg-gray-50 px-3 py-2 rounded border">{{ transaction.transaction_id }}</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Reference Number</label>
+                                    <p class="text-gray-800 font-mono bg-gray-50 px-3 py-2 rounded border">{{ transaction.reference }}</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Transaction Type</label>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                        {% if transaction.transaction_type == 'deposit' %}bg-emerald-100 text-emerald-800
+                                        {% elif transaction.transaction_type == 'payment' %}bg-orange-100 text-orange-800
+                                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        <i class="fas {% if transaction.transaction_type == 'deposit' %}fa-arrow-down
+                                                     {% elif transaction.transaction_type == 'payment' %}fa-arrow-up
+                                                     {% else %}fa-exchange-alt{% endif %} mr-1"></i>
+                                        {{ transaction.get_transaction_type_display }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Date & Time</label>
+                                    <p class="text-gray-800">{{ transaction.created_at|date:"F d, Y" }}</p>
+                                    <p class="text-gray-600 text-sm">{{ transaction.created_at|date:"h:i A" }}</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Status</label>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                        {% if transaction.status == 'completed' %}bg-emerald-100 text-emerald-800
+                                        {% elif transaction.status == 'failed' %}bg-red-100 text-red-800
+                                        {% elif transaction.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ transaction.get_status_display }}
+                                    </span>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Wallet Balance After</label>
+                                    <p class="text-gray-800 font-semibold">
+                                        {% if transaction.transaction_type == 'deposit' %}
+                                            ₹{{ transaction.wallet.balance }}
+                                        {% else %}
+                                            ₹{{ transaction.wallet.balance }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        {% if transaction.description %}
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <label class="block text-sm font-semibold text-gray-600 mb-2">Description</label>
+                            <p class="text-gray-800 bg-gray-50 px-4 py-3 rounded-lg border">{{ transaction.description }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Related Transactions -->
+                {% if related_transactions %}
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-link text-emerald-600"></i>
+                        Related Transactions
+                    </h3>
+                    <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Transaction ID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Type</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Amount</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    {% for related_txn in related_transactions %}
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-3">
+                                            <a href="{% url 'wallet:transaction_detail' related_txn.transaction_id %}" 
+                                               class="text-emerald-600 hover:text-emerald-700 font-mono text-sm">
+                                                {{ related_txn.transaction_id }}
+                                            </a>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium
+                                                {% if related_txn.transaction_type == 'deposit' %}bg-emerald-100 text-emerald-800
+                                                {% elif related_txn.transaction_type == 'payment' %}bg-orange-100 text-orange-800
+                                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                                {{ related_txn.get_transaction_type_display }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 font-semibold {% if related_txn.transaction_type == 'deposit' %}text-emerald-600
+                                                                         {% else %}text-orange-600{% endif %}">
+                                            {% if related_txn.transaction_type == 'deposit' %}+{% else %}-{% endif %}₹{{ related_txn.amount }}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">
+                                            {{ related_txn.created_at|date:"M d, Y" }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Help Card -->
+                <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                    <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-question-circle text-emerald-600"></i>
+                        Need Help?
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        If you have questions about this transaction, our support team is here to help.
+                    </p>
+                    <div class="space-y-2">
+                        <a href="#" class="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 text-sm">
+                            <i class="fas fa-envelope"></i>
+                            Contact Support
+                        </a>
+                        <a href="#" class="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 text-sm">
+                            <i class="fas fa-file-alt"></i>
+                            View FAQ
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Security Card -->
+                <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                    <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-shield-alt text-emerald-600"></i>
+                        Security Verified
+                    </h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center gap-2 text-green-600">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Transaction Authenticated</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-green-600">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Encrypted Connection</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-green-600">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Secure Payment</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                    <h3 class="font-semibold text-gray-800 mb-3">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <a href="{% url 'wallet:deposit_funds' %}" 
+                           class="w-full flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-sm">
+                            <i class="fas fa-plus-circle"></i>
+                            Add Funds
+                        </a>
+                        <a href="{% url 'wallet:make_payment' %}" 
+                           class="w-full flex items-center gap-2 px-3 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors text-sm">
+                            <i class="fas fa-paper-plane"></i>
+                            Make Payment
+                        </a>
+                        <a href="{% url 'wallet:transaction_history' %}" 
+                           class="w-full flex items-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm">
+                            <i class="fas fa-history"></i>
+                            View All Transactions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        body {
+            background: white !important;
+        }
+        
+        .container {
+            max-width: none !important;
+            padding: 0 !important;
+        }
+        
+        .bg-gradient-to-r {
+            background: #059669 !important;
+        }
+    }
+</style>
+
+<script>
+    // Print functionality
+    function printReceipt() {
+        window.print();
+    }
+    
+    // Add print event listener to print button
+    document.addEventListener('DOMContentLoaded', function() {
+        const printBtn = document.querySelector('a[href="#"]:has(.fa-print)');
+        if (printBtn) {
+            printBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                printReceipt();
+            });
+        }
+    });
+</script>
+{% endblock %}

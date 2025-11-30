@@ -1,0 +1,354 @@
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block title %}Add Funds - GearUp Wallet{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <a href="{% url 'wallet:wallet_dashboard' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 mb-4">
+                <i class="fas fa-arrow-left"></i>
+                Back to Wallet
+            </a>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Add Funds</h1>
+            <p class="text-gray-600">Deposit money to your wallet for seamless shopping</p>
+        </div>
+
+        <!-- Deposit Form -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+            <form method="post" id="depositForm">
+                {% csrf_token %}
+                
+                <!-- Current Balance -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+                    <div class="flex justify-between items-center">
+                        <span class="text-emerald-800 font-semibold">Current Balance:</span>
+                        <span class="text-emerald-600 font-bold text-lg">₹{{ wallet.balance }}</span>
+                    </div>
+                </div>
+
+                <!-- Amount Field -->
+                <div class="mb-6">
+                    <label for="amount" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Amount to Deposit
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">₹</span>
+                        <input 
+                            type="number" 
+                            name="amount" 
+                            id="amount"
+                            step="1"
+                            min="1"
+                            max="100000"
+                            required
+                            class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-colors text-lg font-semibold"
+                            placeholder="0"
+                        >
+                    </div>
+                    {% if form.amount.errors %}
+                        <div class="text-red-600 text-sm mt-2 flex items-center gap-1">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.amount.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Quick Amount Buttons -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Quick Select</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="setAmount(100)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium text-gray-700">₹100</button>
+                        <button type="button" onclick="setAmount(500)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium text-gray-700">₹500</button>
+                        <button type="button" onclick="setAmount(1000)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium text-gray-700">₹1000</button>
+                        <button type="button" onclick="setAmount(2000)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium text-gray-700">₹2000</button>
+                    </div>
+                </div>
+
+                <!-- Payment Summary -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">Payment Summary</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Deposit Amount:</span>
+                            <span id="summaryAmount" class="font-semibold text-gray-800">₹0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">New Balance:</span>
+                            <span id="summaryBalance" class="font-semibold text-emerald-600">₹{{ wallet.balance }}</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>Description:</span>
+                            <span id="autoDescription" class="text-right">Wallet deposit via Razorpay</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    type="button" 
+                    id="razorpayBtn"
+                    class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg hover:bg-emerald-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                    <i class="fas fa-credit-card"></i>
+                    Pay with Razorpay
+                </button>
+            </form>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 class="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                <i class="fas fa-shield-alt"></i>
+                Secure Payment Methods
+            </h4>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-sm text-blue-700">
+                    <i class="fab fa-cc-visa"></i>
+                    <span>Card</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-blue-700">
+                    <i class="fas fa-university"></i>
+                    <span>Net Banking</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-blue-700">
+                    <i class="fab fa-google-pay"></i>
+                    <span>UPI</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-blue-700">
+                    <i class="fas fa-wallet"></i>
+                    <span>Wallet</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Note -->
+        <div class="mt-6 text-center">
+            <div class="flex items-center justify-center gap-2 text-gray-500 text-sm">
+                <i class="fas fa-lock text-emerald-500"></i>
+                <span>Your payment is secured with Razorpay</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay Integration -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    // Get elements
+    const amountInput = document.getElementById('amount');
+    const razorpayBtn = document.getElementById('razorpayBtn');
+    const summaryAmount = document.getElementById('summaryAmount');
+    const summaryBalance = document.getElementById('summaryBalance');
+    const autoDescription = document.getElementById('autoDescription');
+    const walletBalance = parseFloat({{ wallet.balance }});
+
+    // Set amount function
+    function setAmount(amount) {
+        amountInput.value = amount;
+        updateSummary();
+        validateForm();
+    }
+
+    // Update payment summary
+    function updateSummary() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const newBalance = walletBalance + amount;
+        
+        summaryAmount.textContent = `₹${amount.toFixed(0)}`;
+        summaryBalance.textContent = `₹${newBalance.toFixed(2)}`;
+        autoDescription.textContent = `Wallet deposit via Razorpay - ₹${amount}`;
+    }
+
+    // Validate form
+    function validateForm() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const isValid = amount >= 1 && amount <= 100000;
+        
+        // Update input border
+        amountInput.classList.toggle('border-red-300', !isValid && amountInput.value !== '');
+        amountInput.classList.toggle('border-green-300', isValid);
+        
+        // Enable/disable button
+        razorpayBtn.disabled = !isValid;
+        
+        return isValid;
+    }
+
+    // Event listeners
+    amountInput.addEventListener('input', function(e) {
+        // Format input - allow only numbers
+        let value = e.target.value.replace(/[^\d]/g, '');
+        
+        // Remove leading zeros
+        value = value.replace(/^0+/, '');
+        
+        // Set minimum value
+        if (value === '') value = '0';
+        
+        e.target.value = value;
+        updateSummary();
+        validateForm();
+    });
+
+    // Initialize form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSummary();
+        validateForm();
+    });
+
+    // Razorpay Payment Handler
+    razorpayBtn.addEventListener('click', function() {
+        const amount = parseFloat(amountInput.value) || 0;
+        
+        if (!validateForm()) {
+            alert('Please enter a valid amount between ₹1 and ₹100,000');
+            amountInput.focus();
+            return;
+        }
+
+        // Show loading state
+        razorpayBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        razorpayBtn.disabled = true;
+
+        // Create Razorpay order via AJAX
+        fetch("{% url 'wallet:create_razorpay_order' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                amount: amount * 100, // Convert to paise
+                // No description needed - handled automatically
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Razorpay checkout options
+                const options = {
+                    key: data.key_id,
+                    amount: data.amount,
+                    currency: 'INR',
+                    name: 'GearUp Wallet',
+                    description: `Wallet Deposit - ₹${amount}`,
+                    order_id: data.order_id,
+                    handler: function(response) {
+                        // Payment successful - verify payment
+                        verifyPayment(response, amount);
+                    },
+                    prefill: {
+                        name: '{{ request.user.get_full_name|default:request.user.username }}',
+                        email: '{{ request.user.email }}',
+                    },
+                    theme: {
+                        color: '#059669'
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            // Reset button when modal is closed
+                            razorpayBtn.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Razorpay';
+                            razorpayBtn.disabled = false;
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+            } else {
+                throw new Error(data.error || 'Failed to create order');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to initialize payment. Please try again.');
+            razorpayBtn.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Razorpay';
+            razorpayBtn.disabled = false;
+        });
+    });
+
+    // Verify payment after success
+    function verifyPayment(response, amount) {
+        // Show processing state
+        razorpayBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying Payment...';
+        
+        fetch("{% url 'wallet:verify_razorpay_payment' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                amount: amount
+                // No description needed - handled automatically
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Payment verified successfully
+                showSuccessMessage(amount);
+            } else {
+                throw new Error(data.error || 'Payment verification failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Payment verification failed. Please contact support if amount was deducted.');
+            window.location.href = "{% url 'wallet:wallet_dashboard' %}";
+        });
+    }
+
+    // Show success message and redirect
+    function showSuccessMessage(amount) {
+        razorpayBtn.innerHTML = '<i class="fas fa-check-circle"></i> Payment Successful!';
+        razorpayBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+        razorpayBtn.classList.add('bg-green-600');
+        
+        setTimeout(() => {
+            window.location.href = "{% url 'wallet:wallet_dashboard' %}";
+        }, 2000);
+    }
+
+    // Input formatting
+    amountInput.addEventListener('focus', function() {
+        if (this.value === '0') {
+            this.value = '';
+        }
+    });
+
+    amountInput.addEventListener('blur', function() {
+        if (this.value === '') {
+            this.value = '0';
+            updateSummary();
+            validateForm();
+        }
+    });
+</script>
+
+<style>
+    .border-green-300 {
+        border-color: #10b981 !important;
+    }
+    
+    .border-red-300 {
+        border-color: #ef4444 !important;
+    }
+    
+    input {
+        transition: all 0.3s ease;
+    }
+    
+    input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+</style>
+{% endblock %}

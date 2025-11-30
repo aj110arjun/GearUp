@@ -1,0 +1,125 @@
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block title %}My Wallet - GearUp{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">My Wallet</h1>
+        <p class="text-gray-600 text-lg">Manage your funds and track transactions</p>
+    </div>
+
+    <!-- Wallet Balance Card -->
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl shadow-xl p-8 text-white mb-8">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-2xl font-semibold mb-2">Current Balance</h2>
+                    <p class="text-4xl font-bold">₹{{ wallet.balance }}</p>
+                    <p class="text-emerald-100 mt-2">Available for purchases and withdrawals</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                    <i class="fas fa-wallet text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <a href="{% url 'wallet:deposit_funds' %}" 
+               class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-100 group">
+                <div class="flex items-center gap-4">
+                    <div class="bg-emerald-100 p-3 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                        <i class="fas fa-plus-circle text-emerald-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800 text-lg">Add Funds</h3>
+                        <p class="text-gray-600 text-sm">Deposit money to your wallet</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'wallet:make_payment' %}" 
+               class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-100 group">
+                <div class="flex items-center gap-4">
+                    <div class="bg-orange-100 p-3 rounded-lg group-hover:bg-orange-200 transition-colors">
+                        <i class="fas fa-paper-plane text-orange-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800 text-lg">Make Payment</h3>
+                        <p class="text-gray-600 text-sm">Use wallet balance for purchases</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-history text-emerald-600"></i>
+                    Recent Transactions
+                </h3>
+            </div>
+
+            <div class="p-6">
+                {% if transactions %}
+                    <div class="space-y-4">
+                        {% for transaction in transactions %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="{% if transaction.transaction_type == 'deposit' %}bg-emerald-100 text-emerald-600
+                                           {% elif transaction.transaction_type == 'payment' %}bg-orange-100 text-orange-600
+                                           {% else %}bg-blue-100 text-blue-600{% endif %} p-3 rounded-lg">
+                                    {% if transaction.transaction_type == 'deposit' %}
+                                        <i class="fas fa-arrow-down"></i>
+                                    {% elif transaction.transaction_type == 'payment' %}
+                                        <i class="fas fa-arrow-up"></i>
+                                    {% else %}
+                                        <i class="fas fa-exchange-alt"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800 capitalize">{{ transaction.get_transaction_type_display }}</p>
+                                    <p class="text-sm text-gray-600">{{ transaction.description|default:"No description" }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ transaction.created_at|date:"d M Y, H:i" }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold {% if transaction.transaction_type == 'deposit' %}text-emerald-600
+                                                       {% elif transaction.transaction_type == 'payment' %}text-orange-600
+                                                       {% else %}text-blue-600{% endif %}">
+                                    {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}₹{{ transaction.amount }}
+                                </p>
+                                <span class="inline-block px-2 py-1 text-xs rounded-full 
+                                    {% if transaction.status == 'completed' %}bg-emerald-100 text-emerald-800
+                                    {% elif transaction.status == 'failed' %}bg-red-100 text-red-800
+                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ transaction.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-6 text-center">
+                        <a href="{% url 'wallet:transaction_history' %}" 
+                           class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold">
+                            <i class="fas fa-list"></i>
+                            View All Transactions
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-receipt text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg">No transactions yet</p>
+                        <p class="text-gray-400 text-sm mt-2">Your transaction history will appear here</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
