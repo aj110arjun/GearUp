@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from common.user.cart_wishlist.models import Cart, CartItem, Wishlist
-from .models import Product, ProductVariant, Category
+from .models import Product, ProductVariant, Category, ProductImage
 from .forms import (
     ProductCreateForm,
     ProductEditForm,
@@ -134,17 +134,22 @@ def product_detail(request, product_slug):
 
 # forms already imported above
 
+# products/views.py
 @staff_member_required
 @never_cache
 def product_create(request):
-    """Create a new product with basic information"""
+    """Create a new product with basic information and image upload"""
     
     if request.method == 'POST':
-        form = ProductCreateForm(request.POST)
+        form = ProductCreateForm(request.POST, request.FILES)
         
         if form.is_valid():
             try:
                 product = form.save(commit=False)
+                
+                # Handle image upload
+                if 'image' in request.FILES:
+                    product.image = request.FILES['image']
                 
                 # Auto-generate slug if empty
                 if not product.slug:
@@ -161,9 +166,18 @@ def product_create(request):
                 
                 # Auto-generate SKU if empty (after saving to get ID)
                 if not product.sku:
-                    # Use UUID for unique SKU
                     product.sku = f"GRP-{str(product.id)[:8].upper()}"
                     product.save(update_fields=['sku'])
+                
+                # Create a primary ProductImage record from the main image
+                if product.image:
+                    ProductImage.objects.create(
+                        product=product,
+                        image=product.image,
+                        alt_text=f"{product.name} - Main Image",
+                        is_primary=True,
+                        display_order=0
+                    )
                 
                 # Success messages
                 messages.success(
@@ -172,7 +186,7 @@ def product_create(request):
                 )
                 messages.info(
                     request, 
-                    'You can now add variants and images by editing the product.'
+                    'You can now add variants and additional images by editing the product.'
                 )
                 
                 # Redirect to product detail or edit page
@@ -189,6 +203,8 @@ def product_create(request):
                 request, 
                 'Please correct the errors below.'
             )
+            # Print form errors for debugging
+            print("Form errors:", form.errors)
     else:
         # GET request - show empty form
         form = ProductCreateForm()
@@ -205,6 +221,7 @@ def product_create(request):
     
     return render(request, 'admin/products/product_create.html', context)
 
+
 @staff_member_required
 @never_cache
 def product_edit(request, product_slug):
@@ -212,7 +229,7 @@ def product_edit(request, product_slug):
     product = get_object_or_404(Product, slug=product_slug)
     
     if request.method == 'POST':
-        form = ProductEditForm(request.POST, instance=product)
+        form = ProductEditForm(request.POST, request.FILES, instance=product)
         variant_formset = ProductVariantFormSet(request.POST, instance=product)
         image_formset = ProductImageFormSet(request.POST, request.FILES, instance=product)
         
@@ -220,7 +237,26 @@ def product_edit(request, product_slug):
             try:
                 with transaction.atomic():
                     # Save the main product form
-                    product = form.save()
+                    product = form.save(commit=False)
+                    
+                    # Handle main image update
+                    if 'image' in request.FILES:
+                        product.image = request.FILES['image']
+                        # Update or create primary ProductImage
+                        primary_image, created = ProductImage.objects.get_or_create(
+                            product=product,
+                            is_primary=True,
+                            defaults={
+                                'image': product.image,
+                                'alt_text': f"{product.name} - Main Image",
+                                'display_order': 0
+                            }
+                        )
+                        if not created:
+                            primary_image.image = product.image
+                            primary_image.save()
+                    
+                    product.save()
                     
                     # Save variants
                     variants = variant_formset.save(commit=False)
@@ -242,7 +278,12 @@ def product_edit(request, product_slug):
                     for image in image_formset.deleted_objects:
                         image.delete()
                     
-                    # Note: AdditionalImage model doesn't track 'is_primary'; skip primary-image enforcement
+                    # Ensure only one primary image
+                    primary_images = ProductImage.objects.filter(product=product, is_primary=True)
+                    if primary_images.count() > 1:
+                        # Keep the first one as primary, set others to False
+                        first_primary = primary_images.first()
+                        primary_images.exclude(pk=first_primary.pk).update(is_primary=False)
                     
                     messages.success(
                         request, 
@@ -262,6 +303,10 @@ def product_edit(request, product_slug):
                 for field, errors in form.errors.items():
                     for error in errors:
                         messages.error(request, f"{field}: {error}")
+            if variant_formset.errors:
+                messages.error(request, "Please check variant form errors.")
+            if image_formset.errors:
+                messages.error(request, "Please check image form errors.")
     else:
         form = ProductEditForm(instance=product)
         variant_formset = ProductVariantFormSet(instance=product)

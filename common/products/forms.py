@@ -1,3 +1,4 @@
+# products/forms.py
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
@@ -6,6 +7,16 @@ from django.forms import inlineformset_factory
 
 class ProductCreateForm(forms.ModelForm):
     """Simplified form for product creation - only basic fields"""
+    # Add image field to the create form
+    image = forms.ImageField(
+        required=True,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        }),
+        help_text='Main product image (required)'
+    )
+    
     class Meta:
         model = Product
         fields = ['name', 'slug', 'description', 'brand', 'category', 'sku', 'is_active']
@@ -75,8 +86,29 @@ class ProductCreateForm(forms.ModelForm):
         
         return slug
 
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image:
+            # Validate image size (max 5MB)
+            if image.size > 5 * 1024 * 1024:
+                raise ValidationError('Image file too large ( > 5MB )')
+            # Validate file type
+            if not image.name.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                raise ValidationError('Only JPG, JPEG, PNG, and WebP files are allowed.')
+        return image
+
+
 class ProductEditForm(forms.ModelForm):
     """Full form for product editing - includes all fields"""
+    # Add image field for editing main product image
+    image = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        }),
+        help_text='Change main product image (optional)'
+    )
     
     class Meta:
         model = Product
@@ -187,6 +219,17 @@ class ProductEditForm(forms.ModelForm):
             raise ValidationError('Please select a category.')
         return category
 
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image:
+            # Validate image size (max 5MB)
+            if image.size > 5 * 1024 * 1024:
+                raise ValidationError('Image file too large ( > 5MB )')
+            # Validate file type
+            if not image.name.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                raise ValidationError('Only JPG, JPEG, PNG, and WebP files are allowed.')
+        return image
+
 
 class ProductVariantForm(forms.ModelForm):
     """Form for individual product variants"""
@@ -244,24 +287,12 @@ class ProductVariantForm(forms.ModelForm):
         return stock
 
 
-# Create formset for variants
-ProductVariantFormSet = inlineformset_factory(
-    Product,
-    ProductVariant,
-    form=ProductVariantForm,
-    extra=1,  # Number of empty forms to display
-    can_delete=True,
-    min_num=0,
-    validate_min=False,
-)
-
-
 class ProductImageForm(forms.ModelForm):
     """Form for product images"""
     
     class Meta:
         model = ProductImage
-        fields = ['image', 'alt_text', 'is_primary']
+        fields = ['image', 'alt_text', 'is_primary', 'display_order']
         widgets = {
             'image': forms.FileInput(attrs={
                 'class': 'form-control',
@@ -269,20 +300,50 @@ class ProductImageForm(forms.ModelForm):
             }),
             'alt_text': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
-                'placeholder': 'Image description'
+                'placeholder': 'Image description for SEO'
             }),
             'is_primary': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
+            'display_order': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '0',
+                'min': '0'
+            }),
+        }
+        labels = {
+            'is_primary': 'Set as primary image',
+            'display_order': 'Display order (lower numbers show first)',
         }
 
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image:
+            # Validate image size (max 5MB)
+            if image.size > 5 * 1024 * 1024:
+                raise ValidationError('Image file too large ( > 5MB )')
+            # Validate file type
+            if not image.name.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                raise ValidationError('Only JPG, JPEG, PNG, and WebP files are allowed.')
+        return image
 
-# Create formset for images
+
+# Create formsets
+ProductVariantFormSet = inlineformset_factory(
+    Product,
+    ProductVariant,
+    form=ProductVariantForm,
+    extra=1,
+    can_delete=True,
+    min_num=0,
+    validate_min=False,
+)
+
 ProductImageFormSet = inlineformset_factory(
     Product,
     ProductImage,
     form=ProductImageForm,
-    extra=1,
+    extra=3,  # Show 3 empty image forms by default
     can_delete=True,
     min_num=0,
     validate_min=False,

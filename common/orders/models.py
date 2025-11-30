@@ -40,16 +40,25 @@ class Order(models.Model):
     
     order_number = models.CharField(max_length=20, unique=True)
     
-    # Single product details
-    product_id = models.PositiveIntegerField()
-    product_name = models.CharField(max_length=255)
-    product_sku = models.CharField(max_length=100, blank=True)
-    product_price = models.DecimalField(max_digits=10, decimal_places=2)
-    product_image = models.URLField(blank=True)
+    # Product relationship - using ForeignKey
+    product = models.ForeignKey(
+        'products.Product',  # Update with your actual product app name
+        on_delete=models.PROTECT,  # Prevent deletion if orders exist
+        related_name='orders'
+    )
+    
+    # Variant relationship (if you have product variants)
+    variant = models.ForeignKey(
+        'products.ProductVariant',  # Update with your actual variant model path
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='orders'
+    )
     
     # Order details
     quantity = models.PositiveIntegerField(default=1)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at time of order
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -78,7 +87,7 @@ class Order(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Order #{self.order_number} - {self.product_name}"
+        return f"Order #{self.order_number} - {self.product.name}"
 
     def save(self, *args, **kwargs):
         if not self.order_number:
@@ -97,6 +106,25 @@ class Order(models.Model):
         timestamp = int(timezone.now().timestamp())
         random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         return f"ORD{timestamp}{random_str}"
+
+    @property
+    def product_name(self):
+        """Backward compatibility - get product name from relationship"""
+        return self.product.name
+
+    @property
+    def product_image_url(self):
+        """Get product image URL from relationship"""
+        if self.product.image:
+            return self.product.image.url
+        return ''
+
+    @property
+    def product_sku(self):
+        """Get SKU from product or variant"""
+        if self.variant and self.variant.sku:
+            return self.variant.sku
+        return self.product.sku if hasattr(self.product, 'sku') else f"SKU-{self.product.id}"
 
     @property
     def can_be_cancelled(self):

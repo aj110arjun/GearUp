@@ -39,10 +39,7 @@ class Product(models.Model):
     brand = models.CharField(max_length=100)
     
     # Image
-    image = CloudinaryField(
-        'products/', 
-        default="https://res.cloudinary.com/dhpo5iq3m/image/upload/jic4cjtfmvgh0zubu8gt.png"
-    )
+    image = CloudinaryField('products/')
     
     # Categorization
     category = models.ForeignKey(
