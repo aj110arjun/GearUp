@@ -12,7 +12,7 @@
     <nav class="flex mb-8" aria-label="Breadcrumb">
       <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
-          <a href="{% url 'home' %}" class="text-gray-500 hover:text-gray-900 inline-flex items-center text-sm font-medium">
+          <a href="{% url 'user_home:home' %}" class="text-gray-500 hover:text-gray-900 inline-flex items-center text-sm font-medium">
             <i class="fas fa-home mr-2"></i>
             Home
           </a>
@@ -52,9 +52,12 @@
       
       <!-- Checkout Form -->
       <div class="lg:col-span-8">
-        <form id="checkout-form" method="POST">
+        <form id="checkout-form" method="POST" action="{% url 'orders:checkout' %}">
           {% csrf_token %}
           <input type="hidden" name="payment_method" id="selected-payment-method" value="cash_on_delivery">
+          <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+          <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+          <input type="hidden" name="razorpay_signature" id="razorpay_signature">
           
           <!-- Shipping Address -->
           <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -146,9 +149,14 @@
                   <div>
                     <span class="text-gray-700 font-medium">Wallet</span>
                     <p class="text-sm text-gray-500 mt-1">Use your GearUp wallet balance</p>
-                    {% if user.wallet_balance %}
-                    <p class="text-sm text-green-600 font-medium mt-1">
-                      Available balance: ₹{{ user.wallet_balance }}
+                    {% if wallet_balance %}
+                    <p class="text-sm font-medium mt-1 {% if wallet_balance >= final_total %}text-green-600{% else %}text-red-600{% endif %}">
+                      Available balance: ₹{{ wallet_balance }}
+                      {% if wallet_balance < final_total %}
+                      <span class="block text-xs text-red-500 mt-1">
+                        (₹{{ final_total|floatformat:2 }} needed)
+                      </span>
+                      {% endif %}
                     </p>
                     {% else %}
                     <p class="text-sm text-gray-500 mt-1">No wallet balance available</p>
@@ -159,7 +167,7 @@
             </div>
 
             <!-- Payment Method Details -->
-            <div id="payment-details" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+            <div id="payment-details" class="mt-4 p-4 bg-gray-50 rounded-lg">
               <!-- Razorpay Details -->
               <div id="razorpay-details" class="hidden">
                 <h4 class="font-medium text-gray-900 mb-2">Secure Payment with Razorpay</h4>
@@ -167,17 +175,30 @@
                 <div class="mt-3 flex items-center space-x-4 text-sm text-gray-500">
                   <span><i class="fas fa-shield-alt text-green-500 mr-1"></i> SSL Secure</span>
                   <span><i class="fas fa-lock text-green-500 mr-1"></i> Encrypted</span>
+                  <span><i class="fas fa-credit-card text-green-500 mr-1"></i> Multiple Payment Options</span>
                 </div>
               </div>
 
               <!-- Wallet Details -->
               <div id="wallet-details" class="hidden">
                 <h4 class="font-medium text-gray-900 mb-2">Pay with Wallet</h4>
-                {% if user.wallet_balance >= final_total %}
-                <p class="text-sm text-green-600">Your wallet balance (₹{{ user.wallet_balance }}) is sufficient for this order.</p>
+                {% if wallet_balance >= final_total %}
+                <p class="text-sm text-green-600 flex items-center">
+                  <i class="fas fa-check-circle mr-2"></i>
+                  Your wallet balance (₹{{ wallet_balance }}) is sufficient for this order.
+                </p>
+                <p class="text-sm text-gray-600 mt-2">
+                  Balance after payment: ₹{{ wallet_balance|add:"-final_total"|floatformat:2 }}
+                </p>
                 {% else %}
-                <p class="text-sm text-red-600">
-                  Insufficient wallet balance. You need ₹{{ final_total }} but have only ₹{{ user.wallet_balance }}.
+                <p class="text-sm text-red-600 flex items-center">
+                  <i class="fas fa-exclamation-triangle mr-2"></i>
+                  Insufficient wallet balance. You need ₹{{ final_total|floatformat:2 }} but have only ₹{{ wallet_balance|floatformat:2 }}.
+                </p>
+                <p class="text-sm text-gray-600 mt-2">
+                  <a href="{% url 'wallet:deposit_funds' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Add funds to your wallet
+                  </a>
                 </p>
                 {% endif %}
               </div>
@@ -186,11 +207,26 @@
               <div id="cod-details">
                 <h4 class="font-medium text-gray-900 mb-2">Cash on Delivery</h4>
                 <p class="text-sm text-gray-600">Pay with cash when your order is delivered.</p>
-                <div class="mt-2 text-sm text-gray-500">
-                  <p><i class="fas fa-info-circle text-blue-500 mr-1"></i> Please keep exact change ready</p>
-                  <p><i class="fas fa-clock text-blue-500 mr-1"></i> Delivery executive will collect payment</p>
+                <div class="mt-2 text-sm text-gray-500 space-y-1">
+                  <p class="flex items-center"><i class="fas fa-info-circle text-blue-500 mr-2"></i> Please keep exact change ready</p>
+                  <p class="flex items-center"><i class="fas fa-clock text-blue-500 mr-2"></i> Delivery executive will collect payment</p>
+                  <p class="flex items-center"><i class="fas fa-truck text-blue-500 mr-2"></i> Free shipping on all orders</p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Terms and Conditions -->
+          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-start">
+              <input type="checkbox" id="agree_terms" name="agree_terms" class="mt-1 text-blue-600 rounded focus:ring-blue-500">
+              <label for="agree_terms" class="ml-3 text-sm text-gray-700">
+                I agree to the 
+                <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Terms and Conditions</a>
+                and 
+                <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Privacy Policy</a>
+                . I understand that my order is subject to verification and acceptance.
+              </label>
             </div>
           </div>
         </form>
@@ -213,6 +249,12 @@
 
               <div class="flex-1 min-w-0">
                 <h3 class="text-sm font-medium text-gray-900 truncate">{{ item.variant.product.name }}</h3>
+                {% if item.variant.size or item.variant.color %}
+                <p class="text-xs text-gray-500 mt-1">
+                  {% if item.variant.size %}Size: {{ item.variant.size }}{% endif %}
+                  {% if item.variant.color %} | Color: {{ item.variant.color }}{% endif %}
+                </p>
+                {% endif %}
                 <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
                 <p class="text-sm font-semibold text-gray-900">₹{{ item.total_price }}</p>
               </div>
@@ -224,13 +266,13 @@
           <div class="px-6 py-4 space-y-3 border-t border-gray-200">
             <div class="flex justify-between text-gray-600">
               <span>Subtotal ({{ cart_item_count }} items)</span>
-              <span>₹{{ cart_total }}</span>
+              <span>₹{{ cart_total|floatformat:2 }}</span>
             </div>
             
-            {% if cart.total_discount > 0 %}
+            {% if cart.total_discount and cart.total_discount > 0 %}
             <div class="flex justify-between text-green-600">
               <span>Discount</span>
-              <span>-₹{{ cart.total_discount }}</span>
+              <span>-₹{{ cart.total_discount|floatformat:2 }}</span>
             </div>
             {% endif %}
             
@@ -240,28 +282,50 @@
             </div>
             
             <div class="flex justify-between text-gray-600">
-              <span>Tax</span>
-              <span>₹{{ tax_amount }}</span>
+              <span>Tax (10%)</span>
+              <span>₹{{ tax_amount|floatformat:2 }}</span>
             </div>
             
             <div class="border-t border-gray-200 pt-3">
               <div class="flex justify-between items-center">
-                <span class="text-lg font-semibold text-gray-900">Total</span>
-                <span class="text-2xl font-bold text-emerald-600">₹{{ final_total }}</span>
+                <span class="text-lg font-semibold text-gray-900">Total Amount</span>
+                <span class="text-2xl font-bold text-emerald-600">₹{{ final_total|floatformat:2 }}</span>
               </div>
             </div>
+
+            <!-- Wallet Balance Display -->
+            {% if wallet_balance %}
+            <div class="border-t border-gray-200 pt-3">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-600">Your Wallet Balance</span>
+                <span class="font-semibold {% if wallet_balance >= final_total %}text-green-600{% else %}text-red-600{% endif %}">
+                  ₹{{ wallet_balance|floatformat:2 }}
+                </span>
+              </div>
+              {% if wallet_balance >= final_total %}
+              <div class="text-xs text-green-600 mt-1 text-right">
+                Sufficient balance for this order
+              </div>
+              {% else %}
+              <div class="text-xs text-red-600 mt-1 text-right">
+                Additional ₹{{ final_total|add:"-wallet_balance"|floatformat:2 }} needed
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
           </div>
           
           <!-- Place Order Button -->
           <div class="px-6 py-4 border-t border-gray-200">
             <button type="button" id="place-order-btn"
-                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-sm hover:shadow-md flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed">
               <i class="fas fa-lock"></i>
               <span id="place-order-text">Place Order (Cash on Delivery)</span>
             </button>
             
             <a href="{% url 'shop:cart' %}" 
                class="block w-full mt-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-center font-medium py-3 px-4 rounded-lg transition">
+              <i class="fas fa-arrow-left mr-2"></i>
               Back to Cart
             </a>
           </div>
@@ -277,6 +341,14 @@
                 <i class="fas fa-truck text-blue-500 mr-1.5"></i>
                 Free Shipping
               </div>
+              <div class="flex items-center">
+                <i class="fas fa-undo-alt text-purple-500 mr-1.5"></i>
+                30-Day Returns
+              </div>
+              <div class="flex items-center">
+                <i class="fas fa-headset text-orange-500 mr-1.5"></i>
+                24/7 Support
+              </div>
             </div>
           </div>
         </div>
@@ -287,7 +359,7 @@
 
 <!-- Loading Overlay -->
 <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-2xl p-8 text-center max-w-sm">
+  <div class="bg-white rounded-2xl p-8 text-center max-w-sm mx-4">
     <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
       <i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i>
     </div>
@@ -327,8 +399,29 @@ document.addEventListener('DOMContentLoaded', function() {
       // Update payment details
       updatePaymentDetails(method);
       
-      // Update place order button text
+      // Update place order button text and state
       updatePlaceOrderButton(method);
+      
+      // Enable/disable place order button based on wallet balance
+      if (method === 'wallet') {
+        const walletBalance = parseFloat('{{ wallet_balance|default:0 }}');
+        const orderTotal = parseFloat('{{ final_total }}');
+        
+        if (walletBalance < orderTotal) {
+          placeOrderBtn.disabled = true;
+          placeOrderBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Insufficient Wallet Balance';
+          placeOrderBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+          placeOrderBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+        } else {
+          placeOrderBtn.disabled = false;
+          updatePlaceOrderButton(method);
+        }
+      } else {
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+        placeOrderBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+        updatePlaceOrderButton(method);
+      }
     });
   });
   
@@ -358,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Place order button click
   placeOrderBtn.addEventListener('click', function() {
     const shippingAddress = document.querySelector('.shipping-address-radio:checked');
-    const agreeTerms = document.getElementById('agree_terms').checked;
+    const agreeTerms = document.getElementById('agree_terms');
     const paymentMethod = selectedPaymentMethod.value;
     
     if (!shippingAddress) {
@@ -366,14 +459,14 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    if (!agreeTerms) {
+    if (!agreeTerms || !agreeTerms.checked) {
       alert('Please agree to the terms and conditions.');
       return;
     }
     
     // Wallet balance check
     if (paymentMethod === 'wallet') {
-      const walletBalance = parseFloat('{{ user.wallet_balance|default:0 }}');
+      const walletBalance = parseFloat('{{ wallet_balance|default:0 }}');
       const orderTotal = parseFloat('{{ final_total }}');
       
       if (walletBalance < orderTotal) {
@@ -418,44 +511,81 @@ document.addEventListener('DOMContentLoaded', function() {
     switch(method) {
       case 'razorpay':
         buttonText.textContent = 'Pay with Razorpay';
+        placeOrderBtn.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Razorpay';
         break;
       case 'wallet':
         buttonText.textContent = 'Pay with Wallet';
+        placeOrderBtn.innerHTML = '<i class="fas fa-wallet"></i> Pay with Wallet';
         break;
       case 'cash_on_delivery':
         buttonText.textContent = 'Place Order (Cash on Delivery)';
+        placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Place Order (Cash on Delivery)';
         break;
     }
   }
   
   function initiateRazorpayPayment() {
     const orderTotal = parseFloat('{{ final_total }}') * 100; // Convert to paise
-    const options = {
-      key: '{{ RAZORPAY_KEY_ID }}', // Your Razorpay Key ID from settings
-      amount: orderTotal,
-      currency: 'INR',
-      name: 'GearUp',
-      description: 'Order Payment',
-      image: '{% static "images/logo.png" %}',
-      handler: function(response) {
-        // Payment successful
-        document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
-        document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
-        document.getElementById('razorpay_signature').value = response.razorpay_signature;
-        submitOrder();
-      },
-      prefill: {
-        name: '{{ user.get_full_name }}',
-        email: '{{ user.email }}',
-        contact: '{{ user.phone_number|default:"" }}'
-      },
-      theme: {
-        color: '#10b981'
-      }
-    };
     
-    const rzp = new Razorpay(options);
-    rzp.open();
+    // Show loading
+    loadingOverlay.classList.remove('hidden');
+    
+    // Create Razorpay order via AJAX
+    fetch("{% url 'wallet:create_razorpay_order' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        amount: orderTotal
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      loadingOverlay.classList.add('hidden');
+      
+      if (data.success) {
+        const options = {
+          key: data.key_id,
+          amount: data.amount,
+          currency: 'INR',
+          name: 'GearUp',
+          description: 'Order Payment - {{ cart_item_count }} items',
+          order_id: data.order_id,
+          handler: function(response) {
+            // Payment successful
+            document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+            document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+            document.getElementById('razorpay_signature').value = response.razorpay_signature;
+            submitOrder();
+          },
+          prefill: {
+            name: '{{ user.get_full_name|default:user.username }}',
+            email: '{{ user.email }}',
+            contact: '{{ user.phone_number|default:"" }}'
+          },
+          theme: {
+            color: '#10b981'
+          },
+          modal: {
+            ondismiss: function() {
+              console.log('Payment modal closed');
+            }
+          }
+        };
+        
+        const rzp = new Razorpay(options);
+        rzp.open();
+      } else {
+        alert('Failed to initialize payment: ' + data.error);
+      }
+    })
+    .catch(error => {
+      loadingOverlay.classList.add('hidden');
+      console.error('Error:', error);
+      alert('Failed to initialize payment. Please try again.');
+    });
   }
   
   function submitOrder() {
@@ -465,25 +595,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Submit form
     checkoutForm.submit();
   }
+
+  // Add some visual enhancements
+  function initializeVisuals() {
+    // Add smooth transitions
+    const style = document.createElement('style');
+    style.textContent = `
+      .payment-option, .address-option {
+        transition: all 0.3s ease;
+      }
+      #loading-overlay {
+        backdrop-filter: blur(4px);
+      }
+      #payment-details {
+        transition: all 0.3s ease;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  initializeVisuals();
 });
 </script>
-
-<style>
-.payment-option {
-  transition: all 0.3s ease;
-}
-
-.address-option {
-  transition: all 0.3s ease;
-}
-
-#loading-overlay {
-  backdrop-filter: blur(4px);
-}
-
-/* Ensure proper spacing for payment details */
-#payment-details {
-  transition: all 0.3s ease;
-}
-</style>
 {% endblock %}

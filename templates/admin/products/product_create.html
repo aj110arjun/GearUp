@@ -72,24 +72,49 @@
     </div>
     {% endif %}
 
-    <!-- Non-field errors -->
-    {% if form.non_field_errors %}
-    <div class="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
-      <div class="flex items-start">
-        <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-        </svg>
-        <div>
-          {% for error in form.non_field_errors %}
-          <p>{{ error }}</p>
-          {% endfor %}
+    <!-- Image Cropping Modal -->
+    <div id="crop-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl mx-4 overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="text-xl font-semibold text-gray-900">Crop Product Image</h2>
+        </div>
+        <div class="p-6">
+          <div class="flex flex-col md:flex-row gap-6">
+            <div class="flex-1">
+              <div id="crop-container" class="bg-gray-100 rounded-lg overflow-hidden h-80 md:h-96 flex items-center justify-center">
+                <img id="crop-image" src="" alt="Image to crop" class="max-h-full max-w-full">
+              </div>
+            </div>
+            <div class="md:w-64 space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Aspect Ratio</label>
+                <select id="aspect-ratio" class="form-control">
+                  <option value="1">Square (1:1)</option>
+                  <option value="4/3">Standard (4:3)</option>
+                  <option value="16/9">Widescreen (16:9)</option>
+                  <option value="free">Free</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Zoom</label>
+                <input type="range" id="zoom-slider" min="0.1" max="3" step="0.1" value="1" class="w-full">
+              </div>
+              <div class="grid grid-cols-2 gap-3 pt-4">
+                <button id="cancel-crop" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                  Cancel
+                </button>
+                <button id="apply-crop" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  Apply Crop
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    {% endif %}
 
     <!-- Main Form -->
-    <form method="post" id="product-form" novalidate>
+    <form method="post" id="product-form" enctype="multipart/form-data" novalidate>
       {% csrf_token %}
       
       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -167,6 +192,49 @@
                 {{ form.category.errors.0 }}
               </p>
             {% endif %}
+          </div>
+
+          <!-- Product Image -->
+          <div>
+            <label for="id_image" class="block text-sm font-medium text-gray-700 mb-2">
+              Product Image <span class="text-red-500">*</span>
+            </label>
+            
+            <!-- Image Upload with Preview and Crop -->
+            <div class="space-y-4">
+              <input type="file" 
+                     name="image" 
+                     id="id_image"
+                     accept="image/*"
+                     class="w-full px-4 py-3 border {% if form.image.errors %}border-red-500 ring-1 ring-red-500{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                     required>
+              
+              <!-- Image Preview Container -->
+              <div id="image-preview-container" class="hidden">
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <p class="text-sm font-medium text-gray-700 mb-3">Image Preview</p>
+                  <div class="relative inline-block">
+                    <img id="image-preview" class="max-w-full h-64 object-contain rounded-lg border border-gray-300">
+                    <button type="button" id="crop-button" class="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors">
+                      <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-2">Click the crop icon to adjust the image</p>
+                </div>
+              </div>
+            </div>
+            
+            {% if form.image.errors %}
+              <p class="text-red-500 text-sm mt-2 flex items-center">
+                <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                {{ form.image.errors.0 }}
+              </p>
+            {% endif %}
+            <p class="text-gray-500 text-xs mt-1">Main product image (required). Max file size: 5MB. Allowed formats: JPG, JPEG, PNG, WebP</p>
           </div>
 
           <!-- SKU (Optional) -->
@@ -285,6 +353,10 @@
   </div>
 </div>
 
+<!-- Include Cropper.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
 <!-- JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -293,6 +365,22 @@ document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('product-form');
   const submitBtn = document.getElementById('submit-btn');
   const submitText = document.getElementById('submit-text');
+  const imageField = document.getElementById('id_image');
+  const previewContainer = document.getElementById('image-preview-container');
+  const previewImage = document.getElementById('image-preview');
+  const cropButton = document.getElementById('crop-button');
+
+  // Cropper.js variables
+  let cropper = null;
+  let currentImageFile = null;
+
+  // Image Cropping Modal Elements
+  const cropModal = document.getElementById('crop-modal');
+  const cropImage = document.getElementById('crop-image');
+  const aspectRatio = document.getElementById('aspect-ratio');
+  const zoomSlider = document.getElementById('zoom-slider');
+  const cancelCrop = document.getElementById('cancel-crop');
+  const applyCrop = document.getElementById('apply-crop');
 
   // Auto-generate slug from product name
   if (nameField && slugField) {
@@ -307,6 +395,154 @@ document.addEventListener('DOMContentLoaded', function() {
         slugField.value = slug;
       } else {
         slugField.value = '';
+      }
+    });
+  }
+
+  // Image upload and preview
+  if (imageField) {
+    imageField.addEventListener('change', function(e) {
+      const file = this.files[0];
+      if (file) {
+        // Check file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size too large. Maximum size is 5MB.');
+          this.value = '';
+          previewContainer.classList.add('hidden');
+          return;
+        }
+        
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          alert('Invalid file type. Only JPG, JPEG, PNG, and WebP files are allowed.');
+          this.value = '';
+          previewContainer.classList.add('hidden');
+          return;
+        }
+
+        // Store the current file for cropping
+        currentImageFile = file;
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImage.src = e.target.result;
+          previewContainer.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewContainer.classList.add('hidden');
+        currentImageFile = null;
+      }
+    });
+  }
+
+  // Open crop modal
+  if (cropButton) {
+    cropButton.addEventListener('click', function() {
+      if (previewImage.src && currentImageFile) {
+        openCropModal(previewImage.src);
+      }
+    });
+  }
+
+  // Open crop modal function
+  function openCropModal(imageSrc) {
+    cropImage.src = imageSrc;
+    cropModal.classList.remove('hidden');
+    
+    // Initialize cropper
+    if (cropper) {
+      cropper.destroy();
+    }
+    
+    cropper = new Cropper(cropImage, {
+      aspectRatio: 1,
+      viewMode: 1,
+      autoCropArea: 0.8,
+      responsive: true,
+      restore: false,
+      guides: true,
+      center: true,
+      highlight: false,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      toggleDragModeOnDblclick: false,
+    });
+    
+    // Set initial aspect ratio
+    updateAspectRatio();
+  }
+
+  // Update aspect ratio
+  if (aspectRatio) {
+    aspectRatio.addEventListener('change', updateAspectRatio);
+  }
+
+  function updateAspectRatio() {
+    const ratio = aspectRatio.value;
+    if (ratio === 'free') {
+      cropper.setAspectRatio(NaN);
+    } else {
+      cropper.setAspectRatio(eval(ratio));
+    }
+  }
+
+  // Zoom functionality
+  if (zoomSlider) {
+    zoomSlider.addEventListener('input', function() {
+      if (cropper) {
+        cropper.zoomTo(parseFloat(this.value));
+      }
+    });
+  }
+
+  // Cancel crop
+  if (cancelCrop) {
+    cancelCrop.addEventListener('click', function() {
+      cropModal.classList.add('hidden');
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+    });
+  }
+
+  // Apply crop
+  if (applyCrop) {
+    applyCrop.addEventListener('click', function() {
+      if (cropper) {
+        // Get cropped canvas
+        const canvas = cropper.getCroppedCanvas({
+          width: 800,
+          height: 800,
+        });
+        
+        // Convert canvas to blob
+        canvas.toBlob(function(blob) {
+          // Create a new file from the blob
+          const file = new File([blob], 'cropped-product-image.jpg', { type: 'image/jpeg' });
+          
+          // Create a new FileList (this is a workaround since FileList is read-only)
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          
+          // Update the file input with the cropped image
+          imageField.files = dataTransfer.files;
+          
+          // Update the preview image
+          previewImage.src = URL.createObjectURL(file);
+          
+          // Update current file reference
+          currentImageFile = file;
+          
+          // Close modal
+          cropModal.classList.add('hidden');
+          cropper.destroy();
+          cropper = null;
+          
+        }, 'image/jpeg', 0.9);
       }
     });
   }
@@ -328,6 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const brand = document.getElementById('id_brand');
       const category = document.getElementById('id_category');
       const description = document.getElementById('id_description');
+      const image = document.getElementById('id_image');
       
       if (!name.value.trim()) {
         isValid = false;
@@ -357,6 +594,13 @@ document.addEventListener('DOMContentLoaded', function() {
         errors.push('Description is required');
       }
       
+      if (!image.value) {
+        isValid = false;
+        image.classList.remove('border-gray-300');
+        image.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+        errors.push('Product image is required');
+      }
+      
       if (!isValid) {
         e.preventDefault();
         // Scroll to first error
@@ -377,14 +621,14 @@ document.addEventListener('DOMContentLoaded', function() {
   const inputs = document.querySelectorAll('input[required], select[required], textarea[required]');
   inputs.forEach(input => {
     input.addEventListener('input', function() {
-      if (this.value.trim()) {
+      if (this.value.trim() || (this.type === 'file' && this.value)) {
         this.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
         this.classList.add('border-gray-300');
       }
     });
     
     input.addEventListener('change', function() {
-      if (this.value.trim() || (this.tagName === 'SELECT' && this.value)) {
+      if (this.value.trim() || (this.tagName === 'SELECT' && this.value) || (this.type === 'file' && this.value)) {
         this.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
         this.classList.add('border-gray-300');
       }
@@ -394,12 +638,77 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
 .peer:checked ~ .peer-checked\:bg-indigo-600 {
   background-color: #4f46e5;
 }
 
 .peer:checked ~ .peer-checked\:after\:translate-x-full:after {
   transform: translateX(100%);
+}
+
+/* Cropper.js custom styles */
+.cropper-view-box,
+.cropper-face {
+  border-radius: 50%;
+}
+
+.cropper-view-box {
+  outline: 2px solid #4f46e5;
+  outline-color: rgba(79, 70, 229, 0.75);
+}
+
+.cropper-line {
+  background-color: #4f46e5;
+}
+
+.cropper-point {
+  background-color: #4f46e5;
+  width: 8px;
+  height: 8px;
+}
+
+.cropper-point.point-se {
+  bottom: -4px;
+  right: -4px;
+}
+
+.cropper-point.point-sw {
+  bottom: -4px;
+  left: -4px;
+}
+
+.cropper-point.point-nw {
+  top: -4px;
+  left: -4px;
+}
+
+.cropper-point.point-ne {
+  top: -4px;
+  right: -4px;
+}
+
+.cropper-point.point-e,
+.cropper-point.point-w,
+.cropper-point.point-s,
+.cropper-point.point-n {
+  width: 6px;
+  height: 6px;
 }
 </style>
 {% endblock content %}
