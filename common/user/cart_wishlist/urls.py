@@ -6,7 +6,8 @@ app_name = 'shop'
 urlpatterns = [
     # Cart URLs
     path('cart/', views.cart_view, name='cart'),
-    path('cart/add/', views.add_to_cart, name='add_to_cart'),
+    path('cart/add/<uuid:variant_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/ajax-add/', views.ajax_add_to_cart, name='ajax_add_to_cart'),
     path('cart/update/<uuid:item_id>/', views.update_cart_item, name='update_cart_item'),
     path('cart/remove/<uuid:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('cart/clear/', views.clear_cart, name='clear_cart'),
@@ -21,5 +22,6 @@ urlpatterns = [
     path('ajax/cart-count/', views.ajax_cart_count, name='ajax_cart_count'),
     path('ajax/wishlist-count/', views.ajax_wishlist_count, name='ajax_wishlist_count'),
 
+    # Debug URL
     path('debug-cart/', views.debug_cart_items, name='debug_cart'),
 ]

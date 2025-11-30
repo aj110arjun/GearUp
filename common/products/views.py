@@ -23,6 +23,7 @@ from .forms import (
     ProductImageFormSet,
     ProductVariantFormSet,
     CategoryForm,
+    ProductVariantForm,    
 )
 
 
@@ -204,6 +205,68 @@ def product_create(request):
     }
     
     return render(request, 'admin/products/product_create.html', context)
+
+
+
+@staff_member_required
+@never_cache
+def add_variant(request, product_slug):
+    """Add a new variant for a product"""
+    product = get_object_or_404(Product, slug=product_slug)
+    
+    if request.method == 'POST':
+        form = ProductVariantForm(request.POST)
+        if form.is_valid():
+            variant = form.save(commit=False)
+            variant.product = product
+            variant.save()
+            
+            messages.success(request, f'Variant added successfully for {product.name}')
+            return redirect('products:product_edit', product_slug=product.slug)
+    else:
+        form = ProductVariantForm()
+    
+    context = {
+        'product': product,
+        'form': form,
+        'title': f'Add Variant - {product.name}'
+    }
+    return render(request, 'admin/products/add_variant.html', context)
+
+@staff_member_required
+@never_cache
+def edit_variant(request, product_slug, variant_id):
+    """Edit an existing variant"""
+    product = get_object_or_404(Product, slug=product_slug)
+    variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+    
+    if request.method == 'POST':
+        form = ProductVariantForm(request.POST, instance=variant)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Variant updated successfully')
+            return redirect('products:product_edit', product_slug=product.slug)
+    else:
+        form = ProductVariantForm(instance=variant)
+    
+    context = {
+        'product': product,
+        'variant': variant,
+        'form': form,
+        'title': f'Edit Variant - {product.name}'
+    }
+    return render(request, 'admin/products/edit_variant.html', context)
+
+@staff_member_required
+@require_POST
+def delete_variant(request, variant_id):
+    """Delete a variant"""
+    variant = get_object_or_404(ProductVariant, id=variant_id)
+    product_slug = variant.product.slug
+    
+    variant.delete()
+    messages.success(request, 'Variant deleted successfully')
+    return redirect('products:product_edit', product_slug=product_slug)
 
 @staff_member_required
 @never_cache

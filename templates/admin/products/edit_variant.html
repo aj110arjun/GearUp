@@ -1,0 +1,369 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | Admin Panel - GearUp{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <nav class="flex mb-4" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2">
+          <li>
+            <a href="{% url 'products:product_list' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Products</a>
+          </li>
+          <li>
+            <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </li>
+          <li>
+            <a href="{% url 'products:product_detail' product_slug=product.slug %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">{{ product.name|truncatechars:20 }}</a>
+          </li>
+          <li>
+            <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </li>
+          <li>
+            <a href="{% url 'products:product_edit' product_slug=product.slug %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Edit</a>
+          </li>
+          <li>
+            <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </li>
+          <li>
+            <span class="text-gray-700 text-sm font-medium">Edit Variant</span>
+          </li>
+        </ol>
+      </nav>
+      <div class="flex items-start justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Edit Variant</h1>
+          <p class="mt-2 text-gray-600">Update variant details for {{ product.name }}</p>
+        </div>
+        <div class="flex items-center space-x-2 bg-blue-50 rounded-lg px-3 py-2">
+          <span class="text-sm font-medium text-blue-700">Variant ID:</span>
+          <span class="text-sm text-blue-600 font-mono">{{ variant.id|slice:":8"|upper }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <form method="post" id="variant-form">
+        {% csrf_token %}
+        
+        <div class="p-6 space-y-6">
+          {% if form.errors %}
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-red-800 mb-2">Please correct the errors below:</h3>
+            <ul class="text-sm text-red-700 list-disc list-inside space-y-1">
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <!-- Variant Details -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Size -->
+            <div>
+              <label for="{{ form.size.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Size
+              </label>
+              {{ form.size }}
+              {% if form.size.errors %}
+                <p class="text-red-500 text-sm mt-2">{{ form.size.errors.0 }}</p>
+              {% endif %}
+              <p class="text-xs text-gray-500 mt-1">Optional - e.g., S, M, L, XL, 38, 40, etc.</p>
+            </div>
+
+            <!-- Color -->
+            <div>
+              <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Color
+              </label>
+              {{ form.color }}
+              {% if form.color.errors %}
+                <p class="text-red-500 text-sm mt-2">{{ form.color.errors.0 }}</p>
+              {% endif %}
+              <p class="text-xs text-gray-500 mt-1">Optional - e.g., Red, Blue, Black, etc.</p>
+            </div>
+          </div>
+
+          <!-- Pricing -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Price -->
+            <div>
+              <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Price (₹) <span class="text-red-500">*</span>
+              </label>
+              {{ form.price }}
+              {% if form.price.errors %}
+                <p class="text-red-500 text-sm mt-2">{{ form.price.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <!-- Compare Price -->
+            <div>
+              <label for="{{ form.compare_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Compare Price (₹)
+              </label>
+              {{ form.compare_price }}
+              {% if form.compare_price.errors %}
+                <p class="text-red-500 text-sm mt-2">{{ form.compare_price.errors.0 }}</p>
+              {% endif %}
+              <p class="text-xs text-gray-500 mt-1">Original price to show discount (optional)</p>
+            </div>
+          </div>
+
+          <!-- Discount Display -->
+          {% if variant.discount_percentage > 0 %}
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-sm font-medium text-green-800">Current Discount</span>
+                <p class="text-2xl font-bold text-green-600 mt-1">{{ variant.discount_percentage }}% OFF</p>
+              </div>
+              <div class="text-right">
+                <span class="text-sm text-green-600">Savings: ₹{{ variant.get_discount_amount|floatformat:2 }}</span>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Inventory -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Stock Quantity -->
+            <div>
+              <label for="{{ form.stock_quantity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Stock Quantity <span class="text-red-500">*</span>
+              </label>
+              {{ form.stock_quantity }}
+              {% if form.stock_quantity.errors %}
+                <p class="text-red-500 text-sm mt-2">{{ form.stock_quantity.errors.0 }}</p>
+              {% endif %}
+              <div class="mt-2">
+                {% if variant.stock_quantity > 10 %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  ✓ In Stock
+                </span>
+                {% elif variant.stock_quantity > 0 %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  ⚠ Low Stock
+                </span>
+                {% else %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  ✗ Out of Stock
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Active Status -->
+            <!-- Active Status -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+                <span class="block text-sm font-medium text-gray-700">Active Status</span>
+                <span class="block text-xs text-gray-500 mt-1">Make variant available for purchase</span>
+            </div>
+            <div class="toggle-container">
+                <input type="checkbox" id="{{ form.is_active.id_for_label }}" name="{{ form.is_active.name }}" 
+                    {% if form.is_active.value %}checked{% endif %} class="toggle-input">
+                <label for="{{ form.is_active.id_for_label }}" class="toggle-label">
+                <span class="toggle-slider"></span>
+                </label>
+            </div>
+            </div>
+            </div>
+
+          </div>
+
+          <!-- Variant Summary -->
+          <div class="border-t border-gray-200 pt-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Variant Summary</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+              <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-2xl font-bold text-gray-900">
+                  {% if variant.size %}{{ variant.size }}{% else %}—{% endif %}
+                </p>
+                <p class="text-xs text-gray-600 mt-1">Size</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-2xl font-bold text-gray-900">
+                  {% if variant.color %}{{ variant.color }}{% else %}—{% endif %}
+                </p>
+                <p class="text-xs text-gray-600 mt-1">Color</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-2xl font-bold text-gray-900">₹{{ variant.price }}</p>
+                <p class="text-xs text-gray-600 mt-1">Current Price</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Form Actions -->
+        <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
+            <div class="flex space-x-3">
+              <a href="{% url 'products:product_edit' product_slug=product.slug %}"
+                 class="inline-flex items-center justify-center px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Product
+              </a>
+              <button type="button" onclick="history.back()"
+                      class="inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg border border-transparent hover:bg-gray-700 transition-all">
+                Cancel
+              </button>
+            </div>
+            <div class="flex space-x-3">
+              <button type="submit" id="submit-btn"
+                      class="inline-flex items-center justify-center px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg border border-transparent hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span id="submit-text">Update Variant</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<style>
+/* Form Controls */
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-control:read-only {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Toggle Switch Styles */
+/* Toggle Switch Styles */
+.toggle-container {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-label {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d1d5db;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.toggle-input:checked + .toggle-label .toggle-slider {
+  background-color: #4f46e5;
+}
+
+.toggle-input:checked + .toggle-label .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Focus state for accessibility */
+.toggle-input:focus + .toggle-label .toggle-slider {
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('variant-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const submitText = document.getElementById('submit-text');
+  
+  // Handle form submission
+  if (form) {
+    form.addEventListener('submit', function() {
+      submitBtn.disabled = true;
+      submitText.textContent = 'Updating...';
+      submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+    });
+  }
+
+  // Auto-calculate discount when prices change
+  const priceInput = document.getElementById('{{ form.price.id_for_label }}');
+  const comparePriceInput = document.getElementById('{{ form.compare_price.id_for_label }}');
+
+  function calculateDiscount() {
+    const price = parseFloat(priceInput.value) || 0;
+    const comparePrice = parseFloat(comparePriceInput.value) || 0;
+    
+    if (comparePrice > price && price > 0) {
+      const discount = ((comparePrice - price) / comparePrice) * 100;
+      console.log(`Discount: ${discount.toFixed(1)}%`);
+    }
+  }
+
+  if (priceInput && comparePriceInput) {
+    priceInput.addEventListener('input', calculateDiscount);
+    comparePriceInput.addEventListener('input', calculateDiscount);
+  }
+});
+</script>
+{% endblock %}

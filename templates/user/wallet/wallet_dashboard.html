@@ -1,0 +1,204 @@
+{% extends "user/wallet/base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'user_home:home' %}" class="text-gray-500 hover:text-gray-900 text-sm font-medium">
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="text-gray-400 mx-2">/</span>
+                        <span class="text-gray-700 text-sm font-medium">Wallet</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">My Wallet</h1>
+            <p class="mt-2 text-gray-600">Manage your balance and transactions</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Wallet Balance Card -->
+                <div class="wallet-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2">Current Balance</h2>
+                            <p class="text-blue-100">Available for purchases and withdrawals</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                            <i class="fas fa-wallet text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="text-4xl font-bold mb-2">₹{{ wallet.balance }}</div>
+                    <div class="flex space-x-4 mt-6">
+                        <a href="{% url 'wallet:add_money' %}" 
+                           class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add Money
+                        </a>
+                        <a href="{% url 'wallet:withdraw' %}" 
+                           class="border border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+                            <i class="fas fa-download mr-2"></i>Withdraw
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="wallet-stats-card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Total Credited</p>
+                                <p class="text-2xl font-bold text-green-600">₹{{ total_credited }}</p>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fas fa-arrow-down text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="wallet-stats-card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Total Debited</p>
+                                <p class="text-2xl font-bold text-red-600">₹{{ total_debited }}</p>
+                            </div>
+                            <div class="bg-red-100 p-3 rounded-full">
+                                <i class="fas fa-arrow-up text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="wallet-stats-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Recent Transactions</h3>
+                        <a href="{% url 'wallet:transactions' %}" class="text-blue-600 hover:text-blue-700 font-medium">
+                            View All
+                        </a>
+                    </div>
+                    
+                    {% if recent_transactions %}
+                    <div class="space-y-4">
+                        {% for transaction in recent_transactions %}
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg {% if transaction.transaction_type == 'credit' %}transaction-credit{% else %}transaction-debit{% endif %}">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center {% if transaction.transaction_type == 'credit' %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                                    <i class="fas {% if transaction.transaction_type == 'credit' %}fa-arrow-down{% else %}fa-arrow-up{% endif %}"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ transaction.get_category_display }}</p>
+                                    <p class="text-sm text-gray-500">{{ transaction.description }}</p>
+                                    <p class="text-xs text-gray-400">{{ transaction.created_at|date:"M d, Y H:i" }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold {% if transaction.transaction_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {% if transaction.transaction_type == 'credit' %}+{% else %}-{% endif %}₹{{ transaction.amount }}
+                                </p>
+                                <p class="text-sm text-gray-500">Balance: ₹{{ transaction.balance_after }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-receipt text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No transactions yet</p>
+                        <p class="text-sm text-gray-400 mt-1">Your transaction history will appear here</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Quick Actions -->
+                <div class="wallet-stats-card">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        <a href="{% url 'wallet:add_money' %}" class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-plus text-blue-600"></i>
+                            </div>
+                            <span class="font-medium text-gray-900">Add Money</span>
+                        </a>
+                        
+                        <a href="{% url 'wallet:withdraw' %}" class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-download text-green-600"></i>
+                            </div>
+                            <span class="font-medium text-gray-900">Withdraw Money</span>
+                        </a>
+                        
+                        <a href="{% url 'wallet:transactions' %}" class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-colors">
+                            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-history text-purple-600"></i>
+                            </div>
+                            <span class="font-medium text-gray-900">Transaction History</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Wallet Tips -->
+                <div class="wallet-stats-card">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Wallet Tips</h3>
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <div class="flex items-start space-x-2">
+                            <i class="fas fa-shield-alt text-green-500 mt-0.5"></i>
+                            <span>Your wallet balance is secure and insured</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fas fa-bolt text-yellow-500 mt-0.5"></i>
+                            <span>Instant refunds are credited to your wallet</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <i class="fas fa-gift text-purple-500 mt-0.5"></i>
+                            <span>Earn cashback on purchases using wallet</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for real-time balance updates -->
+<script>
+function updateWalletBalance() {
+    fetch('{% url "wallet:ajax_balance" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Update balance display if needed
+        const balanceElement = document.querySelector('.wallet-card .text-4xl');
+        if (balanceElement) {
+            balanceElement.textContent = data.formatted_balance;
+        }
+    })
+    .catch(error => console.error('Error updating balance:', error));
+}
+
+// Update balance every 30 seconds
+setInterval(updateWalletBalance, 30000);
+</script>
+{% endblock %}

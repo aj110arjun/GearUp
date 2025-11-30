@@ -19,7 +19,7 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     <span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">
-                        {{ orders.count }} order{{ orders.count|pluralize }}
+                        {{ orders.paginator.count }} order{{ orders.paginator.count|pluralize }}
                     </span>
                 </div>
             </div>
@@ -58,7 +58,7 @@
                                 </h3>
                                 <p class="text-sm text-gray-600 flex items-center">
                                     <i class="fas fa-calendar mr-1 text-emerald-500"></i>
-                                    Placed on {{ order.created_at|date:"M d, Y" }}
+                                    Placed on {{ order.created_at|date:"d M Y" }}
                                 </p>
                             </div>
                         </div>
@@ -188,6 +188,56 @@
                 </div>
             </div>
             {% endfor %}
+
+            <!-- Pagination -->
+            {% if orders.has_other_pages %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-600">
+                        Showing {{ orders.start_index }} - {{ orders.end_index }} of {{ orders.paginator.count }} orders
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        {% if orders.has_previous %}
+                        <a href="?page={{ orders.previous_page_number }}" 
+                           class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors duration-200 flex items-center">
+                            <i class="fas fa-chevron-left mr-2 text-sm"></i>
+                            Previous
+                        </a>
+                        {% else %}
+                        <span class="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg font-semibold cursor-not-allowed flex items-center">
+                            <i class="fas fa-chevron-left mr-2 text-sm"></i>
+                            Previous
+                        </span>
+                        {% endif %}
+
+                        <div class="flex items-center space-x-1">
+                            {% for i in orders.paginator.page_range %}
+                                {% if orders.number == i %}
+                                <span class="px-3 py-2 bg-emerald-600 text-white rounded-lg font-semibold">{{ i }}</span>
+                                {% elif i > orders.number|add:'-3' and i < orders.number|add:'3' %}
+                                <a href="?page={{ i }}" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors duration-200">
+                                    {{ i }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        {% if orders.has_next %}
+                        <a href="?page={{ orders.next_page_number }}" 
+                           class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors duration-200 flex items-center">
+                            Next
+                            <i class="fas fa-chevron-right ml-2 text-sm"></i>
+                        </a>
+                        {% else %}
+                        <span class="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg font-semibold cursor-not-allowed flex items-center">
+                            Next
+                            <i class="fas fa-chevron-right ml-2 text-sm"></i>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Empty State -->

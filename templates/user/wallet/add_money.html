@@ -1,0 +1,517 @@
+{% extends "user/wallet/base.html" %}
+{% load static %}
+
+{% block title %}Add Money - Wallet - GearUp{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'user_home:home' %}" class="text-gray-500 hover:text-gray-900 text-sm font-medium">
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="text-gray-400 mx-2">/</span>
+                        <a href="{% url 'wallet:dashboard' %}" class="text-gray-500 hover:text-gray-900 text-sm font-medium">Wallet</a>
+                    </div>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="text-gray-400 mx-2">/</span>
+                        <span class="text-gray-700 text-sm font-medium">Add Money</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Add Money to Wallet</h1>
+            <p class="mt-2 text-gray-600">Quick and secure wallet top-up</p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-800{% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %} border rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                    <span>{{ message }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Main Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <form method="post" id="add-money-form">
+                        {% csrf_token %}
+                        
+                        <!-- Current Balance -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-blue-800 font-medium">Current Wallet Balance</p>
+                                    <p class="text-2xl font-bold text-blue-900">₹{{ wallet.balance }}</p>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <i class="fas fa-wallet text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Amount Selection -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-800 mb-4">Select Amount</label>
+                            
+                            <!-- Predefined Amounts -->
+                            <div class="amount-radio grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                                {% for value, label in form.amount.field.choices %}
+                                    {% if value %}
+                                    <div>
+                                        <input type="radio" name="amount" value="{{ value }}" id="amount_{{ value }}" 
+                                               class="hidden" {% if not form.custom_amount.value and forloop.first %}checked{% endif %}>
+                                        <label for="amount_{{ value }}" class="block w-full text-center py-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition-colors">
+                                            <span class="font-semibold text-gray-900">{{ label }}</span>
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- Custom Amount -->
+                            <div class="mt-6">
+                                <label for="{{ form.custom_amount.id_for_label }}" class="block text-sm font-semibold text-gray-800 mb-2">
+                                    {{ form.custom_amount.label }}
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">₹</span>
+                                    {{ form.custom_amount }}
+                                </div>
+                                {% if form.custom_amount.errors %}
+                                    <p class="text-red-600 text-sm mt-2">{{ form.custom_amount.errors.0 }}</p>
+                                {% endif %}
+                                <p class="text-xs text-gray-500 mt-2">Minimum ₹10, Maximum ₹10,000</p>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method Selection -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-800 mb-4">Payment Method</label>
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-info-circle text-yellow-600 mr-3"></i>
+                                    <p class="text-yellow-800 text-sm">
+                                        Payments are securely processed via Razorpay. You can pay using UPI, Credit/Debit Card, Net Banking, or Wallet.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-4">
+                            <button type="button" id="pay-button"
+                                    class="flex-1 bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-lock"></i>
+                                <span id="pay-button-text">Pay ₹0</span>
+                            </button>
+                            <a href="{% url 'wallet:dashboard' %}" 
+                               class="px-6 py-4 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center">
+                                Cancel
+                            </a>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="payment-loading" class="hidden mt-4 text-center">
+                            <div class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                Processing payment...
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Order Summary -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Amount to Add</span>
+                            <span id="summary-amount">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Processing Fee</span>
+                            <span class="text-green-600" id="processing-fee">FREE</span>
+                        </div>
+                        <div class="border-t border-gray-200 pt-3">
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-gray-900">Total Payable</span>
+                                <span class="text-xl font-bold text-blue-600" id="total-payable">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Info -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <i class="fas fa-shield-alt text-blue-600 text-xl"></i>
+                        <h4 class="font-semibold text-blue-900">100% Secure</h4>
+                    </div>
+                    <p class="text-sm text-blue-800">
+                        Your payment is securely processed by Razorpay. We never store your card details.
+                    </p>
+                </div>
+
+                <!-- Supported Payment Methods -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Supported Methods</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <i class="fas fa-mobile-alt text-purple-500 text-2xl mb-2"></i>
+                            <p class="text-xs text-gray-600">UPI</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-credit-card text-blue-500 text-2xl mb-2"></i>
+                            <p class="text-xs text-gray-600">Cards</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-university text-green-500 text-2xl mb-2"></i>
+                            <p class="text-xs text-gray-600">Net Banking</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Razorpay Data -->
+{% if razorpay_order_id %}
+<div id="razorpay-data" 
+     data-order-id="{{ razorpay_order_id }}"
+     data-amount="{{ razorpay_amount }}"
+     data-currency="{{ razorpay_currency }}"
+     data-key-id="{{ razorpay_key_id }}"
+     data-callback-url="{{ callback_url }}"
+     style="display: none;">
+</div>
+{% endif %}
+
+<!-- Load Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<!-- Razorpay Integration Script -->
+<script>
+// Wait for Razorpay to load
+function checkRazorpayLoaded() {
+    if (typeof Razorpay !== 'undefined') {
+        initializeApp();
+    } else {
+        setTimeout(checkRazorpayLoaded, 100);
+    }
+}
+
+function initializeApp() {
+    const amountRadios = document.querySelectorAll('input[name="amount"]');
+    const customAmountInput = document.getElementById('{{ form.custom_amount.id_for_label }}');
+    const summaryAmount = document.getElementById('summary-amount');
+    const totalPayable = document.getElementById('total-payable');
+    const payButton = document.getElementById('pay-button');
+    const payButtonText = document.getElementById('pay-button-text');
+    const paymentLoading = document.getElementById('payment-loading');
+    const form = document.getElementById('add-money-form');
+    
+    let currentAmount = 0;
+    let razorpayInstance = null;
+    
+    function updateSummary() {
+        let amount = 0;
+        
+        // Check if custom amount is filled
+        if (customAmountInput.value) {
+            amount = parseFloat(customAmountInput.value) || 0;
+            // Uncheck all radio buttons when custom amount is used
+            amountRadios.forEach(radio => radio.checked = false);
+        } else {
+            // Get selected radio button value
+            const selectedRadio = document.querySelector('input[name="amount"]:checked');
+            if (selectedRadio) {
+                amount = parseFloat(selectedRadio.value) || 0;
+            }
+        }
+        
+        currentAmount = amount;
+        
+        // Update summary
+        summaryAmount.textContent = `₹${amount}`;
+        totalPayable.textContent = `₹${amount}`;
+        
+        // Update button text and state
+        if (amount > 0) {
+            payButtonText.textContent = `Pay ₹${amount}`;
+            payButton.disabled = false;
+        } else {
+            payButtonText.textContent = 'Pay ₹0';
+            payButton.disabled = true;
+        }
+    }
+    
+    // Event listeners for amount selection
+    amountRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                customAmountInput.value = '';
+                updateSummary();
+            }
+        });
+    });
+    
+    customAmountInput.addEventListener('input', function() {
+        if (this.value) {
+            amountRadios.forEach(radio => radio.checked = false);
+        }
+        updateSummary();
+    });
+    
+    customAmountInput.addEventListener('blur', function() {
+        const value = parseFloat(this.value) || 0;
+        if (value < 10) {
+            this.value = 10;
+        } else if (value > 10000) {
+            this.value = 10000;
+        }
+        updateSummary();
+    });
+    
+    // Razorpay Payment Handler
+    payButton.addEventListener('click', function() {
+        const amount = currentAmount;
+        
+        if (amount <= 0) {
+            alert('Please select or enter an amount to add.');
+            return;
+        }
+        
+        if (amount < 10) {
+            alert('Minimum amount to add is ₹10.');
+            return;
+        }
+        
+        if (amount > 10000) {
+            alert('Maximum amount to add is ₹10,000.');
+            return;
+        }
+        
+        // Show loading state
+        payButton.disabled = true;
+        paymentLoading.classList.remove('hidden');
+        
+        // Check if we already have Razorpay data (from previous form submission)
+        const existingRazorpayData = document.getElementById('razorpay-data');
+        if (existingRazorpayData && existingRazorpayData.dataset.orderId) {
+            // Use existing Razorpay data
+            initializeRazorpay(existingRazorpayData);
+            return;
+        }
+        
+        // Submit form to create Razorpay order
+        const formData = new FormData(form);
+        
+        fetch('{% url "wallet:add_money" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Extract Razorpay order details from the response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const razorpayData = doc.querySelector('#razorpay-data');
+            
+            if (razorpayData && razorpayData.dataset.orderId) {
+                initializeRazorpay(razorpayData);
+            } else {
+                // Check for error messages in the response
+                const errorMessage = doc.querySelector('.bg-red-50') || doc.querySelector('.messages .error');
+                if (errorMessage) {
+                    throw new Error(errorMessage.textContent.trim());
+                } else {
+                    throw new Error('Failed to create payment order. Please check your Razorpay configuration.');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+            payButton.disabled = false;
+            paymentLoading.classList.add('hidden');
+        });
+    });
+    
+    function initializeRazorpay(razorpayData) {
+        const orderId = razorpayData.dataset.orderId;
+        const amount = razorpayData.dataset.amount;
+        const currency = razorpayData.dataset.currency;
+        const keyId = razorpayData.dataset.keyId;
+        
+        console.log('Initializing Razorpay with:', { orderId, amount, currency, keyId });
+        
+        // Check if Razorpay is available
+        if (typeof Razorpay === 'undefined') {
+            alert('Payment system is not available. Please refresh the page and try again.');
+            payButton.disabled = false;
+            paymentLoading.classList.add('hidden');
+            return;
+        }
+        
+        // Initialize Razorpay checkout
+        const options = {
+            key: keyId,
+            amount: amount,
+            currency: currency,
+            name: "GearUp",
+            description: "Wallet Top-up",
+            order_id: orderId,
+            handler: function(response) {
+                console.log('Payment successful:', response);
+                // Payment successful - verify payment
+                verifyPayment(response);
+            },
+            prefill: {
+                name: "{{ request.user.get_full_name|default:request.user.email }}",
+                email: "{{ request.user.email }}",
+            },
+            theme: {
+                color: "#3B82F6"
+            },
+            modal: {
+                ondismiss: function() {
+                    console.log('Payment modal dismissed');
+                    // Reset button state when modal is closed
+                    payButton.disabled = false;
+                    paymentLoading.classList.add('hidden');
+                }
+            }
+        };
+        
+        try {
+            razorpayInstance = new Razorpay(options);
+            razorpayInstance.open();
+            
+            // Hide loading state since Razorpay modal is open
+            paymentLoading.classList.add('hidden');
+        } catch (error) {
+            console.error('Razorpay initialization error:', error);
+            alert('Error initializing payment: ' + error.message);
+            payButton.disabled = false;
+            paymentLoading.classList.add('hidden');
+        }
+    }
+    
+    function verifyPayment(response) {
+        // Show loading state during verification
+        paymentLoading.classList.remove('hidden');
+        
+        console.log('Verifying payment:', response);
+        
+        fetch('{% url "wallet:verify_payment" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Payment verification response:', data);
+            if (data.success) {
+                // Show success message and redirect
+                alert(data.message);
+                window.location.href = '{% url "wallet:dashboard" %}';
+            } else {
+                alert('Payment failed: ' + data.message);
+                window.location.href = '{% url "wallet:add_money" %}';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Payment verification failed. Please contact support.');
+            window.location.href = '{% url "wallet:add_money" %}';
+        })
+        .finally(() => {
+            paymentLoading.classList.add('hidden');
+        });
+    }
+    
+    // Initialize summary
+    updateSummary();
+}
+
+// Start the application
+document.addEventListener('DOMContentLoaded', function() {
+    checkRazorpayLoaded();
+});
+</script>
+
+<style>
+.amount-radio input[type="radio"]:checked + label {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    color: #3b82f6;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+.amount-radio label {
+    transition: all 0.3s ease;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+</style>
+{% endblock %}

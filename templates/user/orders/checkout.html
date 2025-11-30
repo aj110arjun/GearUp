@@ -453,11 +453,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // You'll need to create a Razorpay order first via your backend
     // For now, we'll show an alert since this requires backend integration
-    alert('Razorpay integration requires backend setup. Please use Cash on Delivery for now.');
-    return;
+    // alert('Razorpay integration requires backend setup. Please use Cash on Delivery for now.');
+    // return;
     
     // This is the code you would use once Razorpay is properly set up:
-    /*
     const options = {
       key: '{{ RAZORPAY_KEY_ID }}',
       amount: orderTotal,
@@ -499,7 +498,228 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const rzp = new Razorpay(options);
     rzp.open();
-    */
+    
+  }
+  
+  function submitOrder() {
+    // Show loading overlay
+    loadingOverlay.classList.remove('hidden');
+    
+    // Disable the button to prevent multiple submissions
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Processing...</span>';
+    
+    // Submit form
+    checkoutForm.submit();
+  }
+});
+</script>
+<!-- Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const checkoutForm = document.getElementById('checkout-form');
+  const loadingOverlay = document.getElementById('loading-overlay');
+  const placeOrderBtn = document.getElementById('place-order-btn');
+  const selectedPaymentMethod = document.getElementById('selected-payment-method');
+  const paymentDetails = document.getElementById('payment-details');
+  
+  // Payment method selection
+  const paymentOptions = document.querySelectorAll('.payment-radio');
+  paymentOptions.forEach(radio => {
+    radio.addEventListener('change', function() {
+      const method = this.value;
+      selectedPaymentMethod.value = method;
+      
+      // Update visual selection
+      document.querySelectorAll('.payment-option').forEach(option => {
+        option.style.borderColor = '#e5e7eb';
+        option.style.backgroundColor = 'transparent';
+      });
+      
+      const selectedOption = this.closest('.payment-option');
+      selectedOption.style.borderColor = '#3b82f6';
+      selectedOption.style.backgroundColor = '#dbeafe';
+      
+      // Update payment details
+      updatePaymentDetails(method);
+      
+      // Update place order button text
+      updatePlaceOrderButton(method);
+    });
+  });
+  
+  // Address selection
+  const addressOptions = document.querySelectorAll('.shipping-address-radio');
+  addressOptions.forEach(radio => {
+    radio.addEventListener('change', function() {
+      // Update visual selection
+      document.querySelectorAll('.address-option').forEach(option => {
+        option.style.borderColor = '#e5e7eb';
+      });
+      
+      const selectedOption = this.closest('.address-option');
+      selectedOption.style.borderColor = '#3b82f6';
+    });
+  });
+  
+  // Initialize first payment method as selected
+  const firstPayment = document.querySelector('.payment-radio:checked');
+  if (firstPayment) {
+    const selectedOption = firstPayment.closest('.payment-option');
+    selectedOption.style.borderColor = '#3b82f6';
+    selectedOption.style.backgroundColor = '#dbeafe';
+    updatePaymentDetails(firstPayment.value);
+  }
+  
+  // Place order button click
+  placeOrderBtn.addEventListener('click', function() {
+    const shippingAddress = document.querySelector('.shipping-address-radio:checked');
+    const agreeTerms = document.getElementById('agree_terms');
+    
+    // Validation
+    if (!shippingAddress) {
+      alert('Please select a shipping address.');
+      return;
+    }
+    
+    if (!agreeTerms.checked) {
+      alert('Please agree to the terms and conditions.');
+      return;
+    }
+    
+    const paymentMethod = selectedPaymentMethod.value;
+    
+    // Wallet balance check
+    if (paymentMethod === 'wallet') {
+      const walletBalance = parseFloat('{{ user.wallet_balance|default:0 }}');
+      const orderTotal = parseFloat('{{ final_total }}');
+      
+      if (walletBalance < orderTotal) {
+        alert('Insufficient wallet balance. Please choose another payment method.');
+        return;
+      }
+    }
+    
+    // Handle different payment methods
+    if (paymentMethod === 'razorpay') {
+      initiateRazorpayPayment();
+    } else {
+      // For COD and Wallet, submit form directly
+      submitOrder();
+    }
+  });
+  
+  function updatePaymentDetails(method) {
+    // Hide all details first
+    document.querySelectorAll('#payment-details > div').forEach(detail => {
+      detail.classList.add('hidden');
+    });
+    
+    // Show selected method details
+    paymentDetails.classList.remove('hidden');
+    
+    switch(method) {
+      case 'razorpay':
+        document.getElementById('razorpay-details').classList.remove('hidden');
+        break;
+      case 'wallet':
+        document.getElementById('wallet-details').classList.remove('hidden');
+        break;
+      case 'cash_on_delivery':
+        document.getElementById('cod-details').classList.remove('hidden');
+        break;
+    }
+  }
+  
+  function updatePlaceOrderButton(method) {
+    const buttonText = document.getElementById('place-order-text');
+    switch(method) {
+      case 'razorpay':
+        buttonText.textContent = 'Pay with Razorpay';
+        break;
+      case 'wallet':
+        buttonText.textContent = 'Pay with Wallet';
+        break;
+      case 'cash_on_delivery':
+        buttonText.textContent = 'Place Order (Cash on Delivery)';
+        break;
+    }
+  }
+  
+  function initiateRazorpayPayment() {
+    // Show loading
+    loadingOverlay.classList.remove('hidden');
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Creating Order...</span>';
+    
+    // Get form data
+    const formData = new FormData(checkoutForm);
+    
+    // Create Razorpay order via AJAX
+    fetch("{% url 'orders:create_razorpay_order' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Initialize Razorpay checkout
+        const options = {
+          key: data.key,
+          amount: data.amount,
+          currency: data.currency,
+          name: data.name,
+          description: data.description,
+          order_id: data.razorpay_order_id,
+          handler: function(response) {
+            // Payment successful - redirect to success page
+            window.location.href = "{% url 'orders:payment_success' %}?payment_id=" + 
+                                  response.razorpay_payment_id + 
+                                  "&order_id=" + response.razorpay_order_id + 
+                                  "&signature=" + response.razorpay_signature;
+          },
+          prefill: data.prefill,
+          notes: data.notes,
+          theme: {
+            color: '#10b981'
+          },
+          modal: {
+            ondismiss: function() {
+              // Handle modal close
+              loadingOverlay.classList.add('hidden');
+              placeOrderBtn.disabled = false;
+              placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i><span>Pay with Razorpay</span>';
+            }
+          }
+        };
+        
+        const rzp = new Razorpay(options);
+        
+        // Hide loading and open Razorpay
+        loadingOverlay.classList.add('hidden');
+        rzp.open();
+        
+      } else {
+        // Handle error
+        loadingOverlay.classList.add('hidden');
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i><span>Pay with Razorpay</span>';
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      loadingOverlay.classList.add('hidden');
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i><span>Pay with Razorpay</span>';
+      alert('Network error. Please try again.');
+    });
   }
   
   function submitOrder() {

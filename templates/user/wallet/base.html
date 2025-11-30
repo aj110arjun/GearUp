@@ -1,0 +1,51 @@
+{% extends "user/base.html" %}
+{% load static %}
+
+{% block title %}Wallet - GearUp{% endblock %}
+
+{% block extra_css %}
+<style>
+.wallet-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.transaction-credit {
+    border-left: 4px solid #10b981;
+}
+
+.transaction-debit {
+    border-left: 4px solid #ef4444;
+}
+
+.amount-radio input[type="radio"] {
+    display: none;
+}
+
+.amount-radio label {
+    display: inline-block;
+    padding: 12px 24px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.amount-radio input[type="radio"]:checked + label {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    color: #3b82f6;
+}
+
+.wallet-stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,406 @@
+{% extends "user/wallet/base.html" %}
+{% load static %}
+
+{% block title %}Transaction History - Wallet - GearUp{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'user_home:home' %}" class="text-gray-500 hover:text-gray-900 text-sm font-medium">
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="text-gray-400 mx-2">/</span>
+                        <a href="{% url 'wallet:dashboard' %}" class="text-gray-500 hover:text-gray-900 text-sm font-medium">Wallet</a>
+                    </div>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="text-gray-400 mx-2">/</span>
+                        <span class="text-gray-700 text-sm font-medium">Transaction History</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Transaction History</h1>
+                    <p class="mt-2 text-gray-600">View all your wallet transactions</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex space-x-3">
+                    <a href="{% url 'wallet:dashboard' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Wallet
+                    </a>
+                    <button onclick="window.print()" 
+                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-print mr-2"></i>
+                        Print
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Summary -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="bg-blue-50 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-wallet text-blue-600 text-xl"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">Current Balance</p>
+                    <p class="text-2xl font-bold text-gray-900">₹{{ wallet.balance }}</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-green-50 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-arrow-down text-green-600 text-xl"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">Total Credited</p>
+                    <p class="text-2xl font-bold text-green-600">₹{{ total_credited }}</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-red-50 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-arrow-up text-red-600 text-xl"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">Total Debited</p>
+                    <p class="text-2xl font-bold text-red-600">₹{{ total_debited }}</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-purple-50 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-exchange-alt text-purple-600 text-xl"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">Total Transactions</p>
+                    <p class="text-2xl font-bold text-purple-600">{{ total_transactions }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Transaction Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                    <select name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Types</option>
+                        <option value="credit" {% if transaction_type == 'credit' %}selected{% endif %}>Credit</option>
+                        <option value="debit" {% if transaction_type == 'debit' %}selected{% endif %}>Debit</option>
+                    </select>
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select name="category" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Categories</option>
+                        <option value="purchase" {% if category == 'purchase' %}selected{% endif %}>Purchase</option>
+                        <option value="refund" {% if category == 'refund' %}selected{% endif %}>Refund</option>
+                        <option value="cashback" {% if category == 'cashback' %}selected{% endif %}>Cashback</option>
+                        <option value="referral" {% if category == 'referral' %}selected{% endif %}>Referral</option>
+                        <option value="promotional" {% if category == 'promotional' %}selected{% endif %}>Promotional</option>
+                        <option value="withdrawal" {% if category == 'withdrawal' %}selected{% endif %}>Withdrawal</option>
+                    </select>
+                </div>
+
+                <!-- Date From -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                    <input type="date" name="date_from" value="{{ date_from }}" 
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- Date To -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                    <input type="date" name="date_to" value="{{ date_to }}" 
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="flex items-end space-x-3">
+                    <button type="submit" 
+                            class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center">
+                        <i class="fas fa-filter mr-2"></i>Apply
+                    </button>
+                    <a href="{% url 'wallet:transactions' %}" 
+                       class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                        Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Transactions List -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Transactions 
+                        {% if page_obj.paginator.count %}
+                        <span class="text-gray-600 text-sm font-normal">({{ page_obj.paginator.count }} records)</span>
+                        {% endif %}
+                    </h3>
+                    
+                    <!-- Export Options -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Export:</span>
+                        <button onclick="exportToCSV()" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            CSV
+                        </button>
+                        <span class="text-gray-400">|</span>
+                        <button onclick="window.print()" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {% if page_obj %}
+            <div class="divide-y divide-gray-200">
+                {% for transaction in page_obj %}
+                <div class="p-6 hover:bg-gray-50 transition-colors {% if transaction.transaction_type == 'credit' %}border-l-4 border-green-500{% else %}border-l-4 border-red-500{% endif %}">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                        <div class="flex items-start space-x-4 mb-4 lg:mb-0">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center {% if transaction.transaction_type == 'credit' %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %}">
+                                <i class="fas {% if transaction.transaction_type == 'credit' %}fa-arrow-down{% else %}fa-arrow-up{% endif %} text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="font-semibold text-gray-900 text-lg">{{ transaction.get_category_display }}</p>
+                                        <p class="text-sm text-gray-600 mt-1">{{ transaction.description }}</p>
+                                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if transaction.status == 'completed' %}bg-green-100 text-green-800{% elif transaction.status == 'pending' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                                {{ transaction.get_status_display }}
+                                            </span>
+                                            {% if transaction.reference_id %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                Ref: {{ transaction.reference_id }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 sm:mt-0 sm:text-right">
+                                        <p class="text-lg font-bold {% if transaction.transaction_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {% if transaction.transaction_type == 'credit' %}+{% else %}-{% endif %}₹{{ transaction.amount }}
+                                        </p>
+                                        <p class="text-sm text-gray-600 mt-1">Balance: ₹{{ transaction.balance_after }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">{{ transaction.created_at|date:"M d, Y H:i" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div class="text-sm text-gray-700 mb-4 sm:mb-0">
+                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} transactions
+                    </div>
+                    <div class="flex space-x-2">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if transaction_type %}&type={{ transaction_type }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-chevron-left mr-1"></i> Previous
+                        </a>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <span class="px-3 py-2 border border-blue-500 bg-blue-500 text-white rounded-lg">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% if transaction_type %}&type={{ transaction_type }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if transaction_type %}&type={{ transaction_type }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            Next <i class="fas fa-chevron-right ml-1"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-16">
+                <div class="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-receipt text-gray-400 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold text-gray-900 mb-3">No transactions found</h3>
+                <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                    {% if transaction_type or category or date_from or date_to %}
+                    No transactions match your current filters. Try adjusting your search criteria.
+                    {% else %}
+                    You haven't made any transactions yet. Your transaction history will appear here once you start using your wallet.
+                    {% endif %}
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    {% if transaction_type or category or date_from or date_to %}
+                    <a href="{% url 'wallet:transactions' %}" 
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                        Clear Filters
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'wallet:dashboard' %}" 
+                       class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Wallet
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-green-50 p-3 rounded-lg mr-4">
+                        <i class="fas fa-arrow-down text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Last Credit</p>
+                        <p class="text-xl font-bold text-gray-900">
+                            {% if last_credit %}
+                            ₹{{ last_credit.amount }}
+                            {% else %}
+                            ₹0
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {% if last_credit %}
+                            {{ last_credit.created_at|date:"M d, Y" }}
+                            {% else %}
+                            No credits yet
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-red-50 p-3 rounded-lg mr-4">
+                        <i class="fas fa-arrow-up text-red-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Last Debit</p>
+                        <p class="text-xl font-bold text-gray-900">
+                            {% if last_debit %}
+                            ₹{{ last_debit.amount }}
+                            {% else %}
+                            ₹0
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {% if last_debit %}
+                            {{ last_debit.created_at|date:"M d, Y" }}
+                            {% else %}
+                            No debits yet
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="bg-blue-50 p-3 rounded-lg mr-4">
+                        <i class="fas fa-calendar text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">This Month</p>
+                        <p class="text-xl font-bold text-gray-900">₹{{ monthly_total }}</p>
+                        <p class="text-xs text-gray-500">Total transactions this month</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export to CSV Script -->
+<script>
+function exportToCSV() {
+    // Create CSV content
+    let csvContent = "Date,Type,Category,Amount,Balance After,Description,Status,Reference ID\\n";
+    
+    // Add transaction data
+    {% for transaction in page_obj %}
+    csvContent += `"{{ transaction.created_at|date:'Y-m-d H:i' }}","{{ transaction.get_transaction_type_display }}","{{ transaction.get_category_display }}","{{ transaction.amount }}","{{ transaction.balance_after }}","{{ transaction.description }}","{{ transaction.get_status_display }}","{{ transaction.reference_id }}"\\n`;
+    {% endfor %}
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'wallet-transactions-{{ current_date|date:"Y-m-d" }}.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Print styles
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .bg-gray-50 {
+        background-color: white !important;
+    }
+    
+    .shadow-sm {
+        box-shadow: none !important;
+    }
+    
+    .border {
+        border: 1px solid #e5e7eb !important;
+    }
+}
+</script>
+
+<style>
+.transaction-credit {
+    border-left: 4px solid #10b981;
+}
+
+.transaction-debit {
+    border-left: 4px solid #ef4444;
+}
+
+.amount-radio input[type="radio"]:checked + label {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    color: #3b82f6;
+}
+
+.amount-radio label {
+    transition: all 0.3s ease;
+}
+</style>
+{% endblock %}

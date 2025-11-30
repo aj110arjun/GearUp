@@ -1,0 +1,199 @@
+{% extends "user/base.html" %}
+{% load static %}
+
+{% block title %}Payment Successful - GearUp{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Success Card -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-green-100">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-8 text-center">
+                <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check-circle text-white text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Payment Successful!</h1>
+                <p class="text-green-100 text-lg">Thank you for your order. Your payment has been processed successfully.</p>
+            </div>
+
+            <!-- Order Details -->
+            <div class="px-6 py-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <!-- Order Summary -->
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-receipt text-emerald-600 mr-3"></i>
+                            Order Summary
+                        </h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Orders:</span>
+                                <span class="font-semibold">{{ orders.count }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Amount:</span>
+                                <span class="font-semibold text-emerald-600">
+                                    ₹{{ orders.0.total_amount|default:0 }}
+                                    {% if orders.count > 1 %} + {% endif %}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Payment Method:</span>
+                                <span class="font-semibold">Razorpay</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- What's Next -->
+                    <div class="bg-blue-50 rounded-xl p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-shipping-fast text-blue-600 mr-3"></i>
+                            What's Next?
+                        </h2>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <i class="fas fa-envelope text-blue-500 mt-1 mr-3"></i>
+                                <span class="text-gray-700">Order confirmation sent to your email</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-clock text-blue-500 mt-1 mr-3"></i>
+                                <span class="text-gray-700">Your order will be processed within 24 hours</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-truck text-blue-500 mt-1 mr-3"></i>
+                                <span class="text-gray-700">Expected delivery in 3-5 business days</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Order Numbers -->
+                {% if orders %}
+                <div class="bg-yellow-50 rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-list-ol text-yellow-600 mr-2"></i>
+                        Your Order Numbers
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for order in orders %}
+                        <span class="bg-white px-3 py-2 rounded-lg border border-yellow-200 text-sm font-mono text-gray-700">
+                            {{ order.order_number }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'orders:order_list' %}" 
+                       class="bg-emerald-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+                        <i class="fas fa-clipboard-list"></i>
+                        View My Orders
+                    </a>
+                    <a href="{% url 'products:product_list_user' %}" 
+                       class="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
+                        <i class="fas fa-shopping-bag"></i>
+                        Continue Shopping
+                    </a>
+                </div>
+            </div>
+
+            <!-- Support Section -->
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-6">
+                <div class="text-center">
+                    <p class="text-gray-600 mb-2">Need help with your order?</p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <a href="mailto:support@gearup.com" 
+                           class="text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-2">
+                            <i class="fas fa-envelope"></i>
+                            support@gearup.com
+                        </a>
+                        <span class="text-gray-400 hidden sm:block">•</span>
+                        <a href="tel:+911234567890" 
+                           class="text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-2">
+                            <i class="fas fa-phone"></i>
+                            +91 12345 67890
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl p-6 text-center shadow-sm border border-gray-100">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-box text-blue-600 text-xl"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">Track Your Order</h3>
+                <p class="text-gray-600 text-sm">Monitor your order status in real-time</p>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 text-center shadow-sm border border-gray-100">
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-undo-alt text-green-600 text-xl"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">Easy Returns</h3>
+                <p class="text-gray-600 text-sm">30-day return policy for all items</p>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 text-center shadow-sm border border-gray-100">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-headset text-purple-600 text-xl"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">24/7 Support</h3>
+                <p class="text-gray-600 text-sm">We're here to help you anytime</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confetti Effect Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Simple confetti effect
+    function createConfetti() {
+        const colors = ['#10b981', '#059669', '#047857', '#ec4899', '#8b5cf6', '#3b82f6'];
+        const container = document.querySelector('body');
+        
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.cssText = `
+                position: fixed;
+                width: 10px;
+                height: 10px;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                top: -10px;
+                left: ${Math.random() * 100}vw;
+                border-radius: 2px;
+                animation: fall linear forwards;
+                animation-duration: ${Math.random() * 3 + 2}s;
+                z-index: 1000;
+            `;
+            container.appendChild(confetti);
+            
+            // Remove confetti after animation
+            setTimeout(() => confetti.remove(), 5000);
+        }
+    }
+    
+    // Add CSS for confetti animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(${Math.random() * 360}deg);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Trigger confetti
+    createConfetti();
+});
+</script>
+{% endblock %}
