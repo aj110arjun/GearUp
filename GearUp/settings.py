@@ -79,6 +79,11 @@ LOGIN_REDIRECT_URL = '/'  # After successful login
 LOGOUT_REDIRECT_URL = 'user_auth:signin'  # After logout
 ACCOUNT_LOGOUT_REDIRECT_URL = 'user_auth:signin'
 
+CURRENCY_SYMBOL = '₹'
+DEFAULT_CURRENCY = 'INR'
+RAZORPAY_KEY_ID=config('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET=config('RAZORPAY_KEY_SECRET')
+
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': config('CLOUDINARY_API_KEY'),
@@ -110,6 +115,7 @@ INSTALLED_APPS = [
     'common.user.cart_wishlist',
     'common.orders',
     'common.user.address',
+    'common.wallet',
 ]
 
 MIDDLEWARE = [
