@@ -523,7 +523,7 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         btn.disabled = true;
 
-        fetch("{% url 'shop:add_to_cart' %}", {
+        fetch("{% url 'shop:ajax_add_to_cart' %}", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

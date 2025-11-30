@@ -110,6 +110,7 @@ INSTALLED_APPS = [
     'common.user.cart_wishlist',
     'common.orders',
     'common.user.address',
+    'common.wallet',
 ]
 
 MIDDLEWARE = [
@@ -165,6 +166,13 @@ DATABASES = {
         'USER': config('DB_USER'),
     }
 }
+
+RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
+
+# Payment Settings
+PAYMENT_SUCCESS_URL = 'orders:payment_success'
+PAYMENT_FAILURE_URL = 'orders:payment_failure'
 
 
 # Password validation

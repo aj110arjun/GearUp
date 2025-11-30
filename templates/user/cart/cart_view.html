@@ -1,5 +1,6 @@
 {% extends "user/base.html" %}
 {% load static %}
+{% load cart_wishlist_tags %}
 {% block title %} Shopping Cart {% endblock %}
 
 {% block content %}
@@ -168,7 +169,22 @@
               {% endfor %}
             </div>
           </div>
-          
+
+         <div class="mb-3">
+            {% if item.in_wishlist %}
+            <span class="inline-flex items-center text-sm text-purple-600 font-medium">
+                <i class="fas fa-heart mr-1"></i>
+                Also in your wishlist
+            </span>
+            {% else %}
+            <button onclick="moveToWishlist('{{ item.variant.product.id }}', '{{ item.id }}')"
+                    class="inline-flex items-center text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                <i class="far fa-heart mr-1"></i>
+                Move to Wishlist
+            </button>
+            {% endif %}
+        </div>
+                  
           <!-- Continue Shopping -->
           <div class="mt-6">
             <a href="{% url 'user_home:home' %}"
@@ -300,7 +316,125 @@
 </div>
 
 <script>
-// Utility Functions
+function moveToWishlist(productId, cartItemId) {
+    console.log('Moving to wishlist - Product ID:', productId, 'Cart Item ID:', cartItemId);
+    
+    if (!productId) {
+        showNotification('Error: Product ID is missing', 'error');
+        return;
+    }
+    
+    // Use the correct URL pattern from your Django URLs
+    fetch(`/shop/wishlist/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Remove from cart after successfully adding to wishlist
+            removeFromCart(cartItemId);
+            showNotification('Item moved to wishlist successfully!', 'success');
+        } else {
+            showNotification(data.message || 'Error moving to wishlist', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error moving to wishlist. Please try again.', 'error');
+    });
+}
+
+function removeFromWishlist(wishlistItemId) {
+    console.log('Removing from wishlist:', wishlistItemId);
+    
+    fetch(`/shop/wishlist/remove/${wishlistItemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Remove the wishlist item from DOM
+            const wishlistItem = document.querySelector(`.wishlist-item[data-item-id="${wishlistItemId}"]`);
+            if (wishlistItem) {
+                wishlistItem.remove();
+            }
+            
+            // Update wishlist count
+            updateWishlistCount(data.wishlist_count);
+            showNotification('Item removed from wishlist', 'success');
+            
+            // Check if wishlist is empty
+            if (data.wishlist_count === 0) {
+                location.reload(); // Reload to show empty state
+            }
+        } else {
+            showNotification(data.message || 'Error removing from wishlist', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error removing from wishlist', 'error');
+    });
+}
+
+function updateWishlistCount(count) {
+    const wishlistCount = document.getElementById('wishlist-count');
+    if (wishlistCount) wishlistCount.textContent = count;
+}
+
+function addToCartFromWishlist(variantId, wishlistItemId) {
+    console.log('Adding to cart:', variantId, 'Removing from wishlist:', wishlistItemId);
+    
+    // Use the correct endpoint for adding to cart with variant_id in URL
+    fetch(`/shop/cart/add/${variantId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Remove from wishlist after successfully adding to cart
+            removeFromWishlist(wishlistItemId);
+            updateCartCount(data.cart_count);
+            showNotification('Item added to cart!', 'success');
+        } else {
+            showNotification(data.message || 'Error adding to cart', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error adding to cart. Please try again.', 'error');
+    });
+}
+
 function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {

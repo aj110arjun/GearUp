@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -17,11 +17,41 @@ def get_or_create_wishlist(user):
     wishlist, created = Wishlist.objects.get_or_create(user=user)
     return wishlist
 
+def is_product_in_cart(user, product):
+    """Check if any variant of a product is in user's cart"""
+    return CartItem.objects.filter(
+        cart__user=user,
+        variant__product=product
+    ).exists()
+
+def is_product_in_wishlist(user, product):
+    """Check if product is in user's wishlist"""
+    return WishlistItem.objects.filter(
+        wishlist__user=user,
+        product=product
+    ).exists()
+
+def get_cart_item_for_product(user, product):
+    """Get cart item for any variant of a product"""
+    return CartItem.objects.filter(
+        cart__user=user,
+        variant__product=product
+    ).first()
+
 # Cart Views
 @login_required
 def cart_view(request):
     cart = get_or_create_cart(request.user)
     cart_items = cart.items.select_related('variant__product').all()
+    
+    # Check which products are in wishlist
+    wishlist_product_ids = WishlistItem.objects.filter(
+        wishlist__user=request.user
+    ).values_list('product_id', flat=True)
+    
+    # Add wishlist status to each cart item
+    for item in cart_items:
+        item.in_wishlist = item.variant.product.id in wishlist_product_ids
     
     context = {
         'cart': cart,
@@ -34,6 +64,16 @@ def add_to_cart(request, variant_id):
     from common.user.cart_wishlist.utils import get_or_create_active_cart
     
     variant = get_object_or_404(ProductVariant, id=variant_id)
+    product = variant.product
+    
+    # Check if product is already in wishlist
+    if is_product_in_wishlist(request.user, product):
+        # Remove from wishlist first
+        WishlistItem.objects.filter(
+            wishlist__user=request.user,
+            product=product
+        ).delete()
+        messages.info(request, f'{product.name} was moved from wishlist to cart.')
     
     # Get or create active cart
     cart = get_or_create_active_cart(request.user)
@@ -48,10 +88,63 @@ def add_to_cart(request, variant_id):
     if not created:
         cart_item.quantity += 1
         cart_item.save()
+        messages.success(request, f'Updated quantity for {product.name} in cart.')
+    else:
+        messages.success(request, f'Added {product.name} to cart.')
     
-    messages.success(request, f'Added {variant.product.name} to cart.')
     return redirect('shop:cart')
 
+@require_POST
+@login_required
+def ajax_add_to_cart(request):
+    """AJAX endpoint for adding items to cart from wishlist"""
+    try:
+        data = json.loads(request.body)
+        variant_id = data.get('variant_id')
+        
+        if not variant_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'Variant ID is required'
+            })
+        
+        variant = get_object_or_404(ProductVariant, id=variant_id)
+        product = variant.product
+        
+        # Check if product is already in wishlist
+        if is_product_in_wishlist(request.user, product):
+            # Remove from wishlist first
+            WishlistItem.objects.filter(
+                wishlist__user=request.user,
+                product=product
+            ).delete()
+        
+        # Get or create active cart
+        from common.user.cart_wishlist.utils import get_or_create_active_cart
+        cart = get_or_create_active_cart(request.user)
+        
+        # Check if item already exists in cart
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            variant=variant,
+            defaults={'quantity': 1}
+        )
+        
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Product added to cart successfully',
+            'cart_count': cart.total_items
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error adding to cart: {str(e)}'
+        })
 
 @require_POST
 @login_required
@@ -105,6 +198,7 @@ def remove_from_cart(request, item_id):
             id=item_id, 
             cart__user=request.user
         )
+        product = cart_item.variant.product
         cart_item.delete()
         
         cart = get_or_create_cart(request.user)
@@ -136,6 +230,14 @@ def wishlist_view(request):
     wishlist = get_or_create_wishlist(request.user)
     wishlist_items = wishlist.items.select_related('product').all()
     
+    # Check which products are already in cart
+    cart_product_ids = CartItem.objects.filter(
+        cart__user=request.user
+    ).values_list('variant__product_id', flat=True)
+    
+    for item in wishlist_items:
+        item.in_cart = item.product.id in cart_product_ids
+    
     context = {
         'wishlist': wishlist,
         'wishlist_items': wishlist_items,
@@ -146,6 +248,18 @@ def wishlist_view(request):
 def add_to_wishlist(request, product_id):
     try:
         product = get_object_or_404(Product, id=product_id, is_active=True)
+        
+        # Check if product is already in cart
+        if is_product_in_cart(request.user, product):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'This product is already in your cart. Remove it from cart first to add to wishlist.'
+                })
+            else:
+                messages.error(request, 'This product is already in your cart. Remove it from cart first to add to wishlist.')
+                return redirect(request.META.get('HTTP_REFERER', 'products:home'))
+        
         wishlist = get_or_create_wishlist(request.user)
         
         wishlist_item, created = WishlistItem.objects.get_or_create(
@@ -212,9 +326,10 @@ def move_to_cart(request, item_id):
             id=item_id, 
             wishlist__user=request.user
         )
+        product = wishlist_item.product
         
         # Get the first available variant
-        variant = wishlist_item.product.variants.filter(is_active=True, stock_quantity__gt=0).first()
+        variant = product.variants.filter(is_active=True, stock_quantity__gt=0).first()
         
         if variant:
             cart = get_or_create_cart(request.user)
@@ -252,9 +367,7 @@ def ajax_wishlist_count(request):
     wishlist = get_or_create_wishlist(request.user)
     return JsonResponse({'count': wishlist.total_items})
 
-
-
-# Add this to your views temporarily
+# Debug view
 @login_required
 def debug_cart_items(request):
     """Debug view to check cart item relationships"""

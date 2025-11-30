@@ -19,6 +19,10 @@ urlpatterns = [
     path('<slug:product_slug>/edit/', views.product_edit, name='product_edit'),
     path('<slug:product_slug>/', views.product_detail_user, name='product_detail_user'),
     path('ajax/cart-items/', views.ajax_cart_count, name='ajax_cart_items'),
+
+    path('<slug:product_slug>/variants/add/', views.add_variant, name='add_variant'),
+    path('<slug:product_slug>/variants/<uuid:variant_id>/edit/', views.edit_variant, name='edit_variant'),
+    path('variants/<uuid:variant_id>/delete/', views.delete_variant, name='delete_variant'),
     
     # Root pattern
     path('', views.product_list_user, name='product_list_user'),
