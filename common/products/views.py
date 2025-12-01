@@ -13,6 +13,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.views import View
 
 from common.user.cart_wishlist.models import Cart, CartItem, Wishlist
 from .models import Product, ProductVariant, Category, ProductImage
@@ -23,6 +24,7 @@ from .forms import (
     ProductImageFormSet,
     ProductVariantFormSet,
     CategoryForm,
+    ProductVariantForm
 )
 
 
@@ -326,6 +328,20 @@ def product_edit(request, product_slug):
     
     return render(request, 'admin/products/product_edit.html', context)
 
+# In your product edit view
+def get_context_data(self, **kwargs):
+    context = super().get_context_data(**kwargs)
+    product = self.get_object()
+    variants = product.variants.all()
+    
+    context.update({
+        'variants': variants,
+        'active_variants_count': variants.filter(is_active=True).count(),
+        'total_stock': sum(variant.stock_quantity for variant in variants),
+        'low_stock_count': variants.filter(stock_quantity__lte=10).count(),
+    })
+    return context
+
 
 @staff_member_required
 @never_cache
@@ -524,7 +540,7 @@ def product_list_user(request):
         
         # Get wishlist product IDs
         try:
-            from wishlist.models import Wishlist  # Adjust import based on your app structure
+            from common.user.cart_wishlist.models import Wishlist  # Adjust import based on your app structure
             wishlist_product_ids = Wishlist.objects.filter(
                 user=request.user
             ).values_list('product_id', flat=True)
@@ -632,6 +648,7 @@ def toggle_wishlist(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
 
 @require_POST
 @login_required
@@ -702,3 +719,106 @@ def ajax_cart_count(request):
             'count': cart_count
         })
     return JsonResponse({'error': 'Invalid request'})
+
+# products/views.py
+
+
+class ManageVariantsView(View):
+    """View for managing product variants"""
+    
+    def get(self, request, product_slug):
+        product = get_object_or_404(Product, slug=product_slug)
+        variants = product.variants.all().order_by('size', 'color')
+        
+        # Calculate summary statistics
+        active_variants_count = variants.filter(is_active=True).count()
+        total_stock = sum(variant.stock_quantity for variant in variants)
+        low_stock_count = variants.filter(stock_quantity__lte=10).count()
+        
+        context = {
+            'product': product,
+            'variants': variants,
+            'active_variants_count': active_variants_count,
+            'total_stock': total_stock,
+            'low_stock_count': low_stock_count,
+        }
+        return render(request, 'admin/products/manage_variants.html', context)
+
+class AddVariantView(View):
+    """View for adding new variants"""
+    
+    def get(self, request, product_slug):
+        product = get_object_or_404(Product, slug=product_slug)
+        form = ProductVariantForm()
+        
+        context = {
+            'product': product,
+            'form': form,
+            'title': 'Add Variant',
+        }
+        return render(request, 'admin/products/variant_form.html', context)
+    
+    def post(self, request, product_slug):
+        product = get_object_or_404(Product, slug=product_slug)
+        form = ProductVariantForm(request.POST)
+        
+        if form.is_valid():
+            variant = form.save(commit=False)
+            variant.product = product
+            variant.save()
+            
+            messages.success(request, f'Variant "{variant}" added successfully!')
+            return redirect('products:manage_variants', product_slug=product.slug)
+        
+        context = {
+            'product': product,
+            'form': form,
+            'title': 'Add Variant',
+        }
+        return render(request, 'admin/products/variant_form.html', context)
+
+class EditVariantView(View):
+    """View for editing existing variants"""
+    
+    def get(self, request, product_slug, variant_id):
+        product = get_object_or_404(Product, slug=product_slug)
+        variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+        form = ProductVariantForm(instance=variant)
+        
+        context = {
+            'product': product,
+            'variant': variant,
+            'form': form,
+            'title': 'Edit Variant',
+        }
+        return render(request, 'admin/products/variant_form.html', context)
+    
+    def post(self, request, product_slug, variant_id):
+        product = get_object_or_404(Product, slug=product_slug)
+        variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+        form = ProductVariantForm(request.POST, instance=variant)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Variant "{variant}" updated successfully!')
+            return redirect('products:manage_variants', product_slug=product.slug)
+        
+        context = {
+            'product': product,
+            'variant': variant,
+            'form': form,
+            'title': 'Edit Variant',
+        }
+        return render(request, 'admin/products/variant_form.html', context)
+
+class DeleteVariantView(View):
+    """View for deleting variants"""
+    
+    def post(self, request, product_slug, variant_id):
+        product = get_object_or_404(Product, slug=product_slug)
+        variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+        variant_name = str(variant)
+        variant.delete()
+        
+        messages.success(request, f'Variant "{variant_name}" deleted successfully!')
+        return redirect('products:manage_variants', product_slug=product.slug)
