@@ -1,0 +1,340 @@
+<!-- templates/products/variant_form.html -->
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ product.name }} | Admin Panel - GearUp{% endblock title %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header Section -->
+    <div class="mb-8">
+      <nav class="flex mb-4" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2">
+          <li>
+            <a href="{% url 'products:product_list' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Products</a>
+          </li>
+          <li>
+            <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </li>
+          <li>
+            <a href="{% url 'products:product_detail' product_slug=product.slug %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">{{ product.name }}</a>
+          </li>
+          <li>
+            <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </li>
+          <li>
+            <a href="{% url 'products:manage_variants' product_slug=product.slug %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">Variants</a>
+          </li>
+          <li>
+            <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </li>
+          <li>
+            <span class="text-gray-700 text-sm font-medium">{{ title }}</span>
+          </li>
+        </ol>
+      </nav>
+      <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+      <p class="mt-2 text-gray-600">{% if variant %}Edit{% else %}Add new{% endif %} variant for {{ product.name }}</p>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-6 space-y-3">
+      {% for message in messages %}
+      <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% elif message.tags == 'info' %}bg-blue-50 border-blue-200 text-blue-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-700{% else %}bg-green-50 border-green-200 text-green-700{% endif %} border rounded-lg p-4">
+        <div class="flex items-start">
+          {% if message.tags == 'error' %}
+          <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+          {% else %}
+          <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+          {% endif %}
+          <span>{{ message }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Variant Form -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="border-b border-gray-200 px-6 py-4">
+        <h2 class="text-lg font-semibold text-gray-900">Variant Details</h2>
+      </div>
+      
+      <form method="post" class="p-6 space-y-6">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div class="flex">
+            <svg class="w-5 h-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <div class="text-sm text-red-600">
+              {{ form.non_field_errors }}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Size -->
+          <div>
+            <label for="{{ form.size.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              Size <span class="text-gray-400 text-xs">(Optional)</span>
+            </label>
+            <input type="text" 
+                   name="{{ form.size.name }}" 
+                   id="{{ form.size.id_for_label }}"
+                   value="{{ form.size.value|default:'' }}"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 placeholder-gray-400"
+                   placeholder="e.g., M, L, XL">
+            {% if form.size.errors %}
+            <p class="text-red-500 text-sm mt-2">{{ form.size.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Color -->
+          <div>
+            <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              Color <span class="text-gray-400 text-xs">(Optional)</span>
+            </label>
+            <input type="text" 
+                   name="{{ form.color.name }}" 
+                   id="{{ form.color.id_for_label }}"
+                   value="{{ form.color.value|default:'' }}"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 placeholder-gray-400"
+                   placeholder="e.g., Red, Blue">
+            {% if form.color.errors %}
+            <p class="text-red-500 text-sm mt-2">{{ form.color.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Price -->
+          <div>
+            <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              Price (₹) <span class="text-red-500">*</span>
+            </label>
+            <input type="number" 
+                   name="{{ form.price.name }}" 
+                   id="{{ form.price.id_for_label }}"
+                   value="{{ form.price.value|default:'' }}"
+                   step="0.01"
+                   min="0"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                   placeholder="0.00"
+                   required>
+            {% if form.price.errors %}
+            <p class="text-red-500 text-sm mt-2">{{ form.price.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Compare Price -->
+          <div>
+            <label for="{{ form.compare_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              Compare Price (₹) <span class="text-gray-400 text-xs">(Optional)</span>
+            </label>
+            <input type="number" 
+                   name="{{ form.compare_price.name }}" 
+                   id="{{ form.compare_price.id_for_label }}"
+                   value="{{ form.compare_price.value|default:'' }}"
+                   step="0.01"
+                   min="0"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                   placeholder="0.00">
+            {% if form.compare_price.errors %}
+            <p class="text-red-500 text-sm mt-2">{{ form.compare_price.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Stock Quantity -->
+          <div>
+            <label for="{{ form.stock_quantity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              Stock Quantity <span class="text-red-500">*</span>
+            </label>
+            <input type="number" 
+                   name="{{ form.stock_quantity.name }}" 
+                   id="{{ form.stock_quantity.id_for_label }}"
+                   value="{{ form.stock_quantity.value|default:'' }}"
+                   min="0"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                   placeholder="0"
+                   required>
+            {% if form.stock_quantity.errors %}
+            <p class="text-red-500 text-sm mt-2">{{ form.stock_quantity.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Is Active -->
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div>
+              <p class="text-sm font-medium text-gray-900">Active</p>
+              <p class="text-xs text-gray-600">Make this variant available for purchase</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" 
+                     name="{{ form.is_active.name }}" 
+                     id="{{ form.is_active.id_for_label }}"
+                     class="sr-only peer" 
+                     {% if form.is_active.value or not variant %}checked{% endif %}>
+              <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+          <a href="{% url 'products:manage_variants' product_slug=product.slug %}" 
+             class="inline-flex items-center px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-200">
+            Cancel
+          </a>
+          <button type="submit" 
+                  class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-sm">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            {% if variant %}Update Variant{% else %}Create Variant{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Form input styles */
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Toggle switch styles */
+.peer:checked ~ div {
+  background-color: #4f46e5 !important;
+}
+
+.peer:checked ~ div:after {
+  transform: translateX(100%) !important;
+  border-color: white !important;
+}
+
+/* Ensure the toggle switch has proper transitions */
+.w-11.h-6 {
+  transition: background-color 0.2s;
+}
+
+.w-11.h-6:after {
+  transition: transform 0.2s;
+}
+
+/* Focus states for accessibility */
+.peer:focus ~ div {
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Error states */
+input:invalid {
+  border-color: #ef4444;
+}
+
+input:invalid:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Placeholder styling */
+::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+:-ms-input-placeholder {
+  color: #9ca3af;
+}
+
+::-ms-input-placeholder {
+  color: #9ca3af;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Add real-time validation feedback
+  const inputs = document.querySelectorAll('input[required]');
+  inputs.forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value.trim()) {
+        this.classList.remove('border-red-500');
+        this.classList.add('border-gray-300');
+      }
+    });
+    
+    input.addEventListener('blur', function() {
+      if (!this.value.trim() && this.hasAttribute('required')) {
+        this.classList.add('border-red-500');
+        this.classList.remove('border-gray-300');
+      }
+    });
+  });
+
+  // Price validation - ensure price is not negative
+  const priceInput = document.getElementById('{{ form.price.id_for_label }}');
+  if (priceInput) {
+    priceInput.addEventListener('change', function() {
+      if (this.value < 0) {
+        this.value = 0;
+      }
+    });
+  }
+
+  // Compare price validation
+  const comparePriceInput = document.getElementById('{{ form.compare_price.id_for_label }}');
+  if (comparePriceInput) {
+    comparePriceInput.addEventListener('change', function() {
+      if (this.value < 0) {
+        this.value = 0;
+      }
+    });
+  }
+
+  // Stock quantity validation
+  const stockInput = document.getElementById('{{ form.stock_quantity.id_for_label }}');
+  if (stockInput) {
+    stockInput.addEventListener('change', function() {
+      if (this.value < 0) {
+        this.value = 0;
+      }
+    });
+  }
+});
+</script>
+{% endblock content %}

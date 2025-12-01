@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - GearUp Survival Toolkit</title>
     <!-- Use only one Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/tailwindcss@3.4.10/dist/tailwind.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
@@ -46,6 +47,9 @@
         .password-toggle:hover {
             color: #065f46;
         }
+        .referral-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -59,6 +63,34 @@
                 </a>
                 <h1 class="text-4xl font-bold mt-16 mb-6">Equip for Adventure. Prepare for Anything.</h1>
                 <p class="text-lg opacity-90">Your trusted source for premium survival gear, outdoor equipment, and emergency preparedness kits. Join our community of prepared adventurers.</p>
+                
+                <!-- Referral Benefits Section -->
+                <div class="mt-10 p-6 bg-white/10 rounded-lg backdrop-blur-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center mr-3">
+                            <i class="fas fa-gift text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">Referral Rewards Program</h3>
+                    </div>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-emerald-300 mr-2"></i>
+                            <span>Get <strong>100 points</strong> for each friend who signs up</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-emerald-300 mr-2"></i>
+                            <span>Earn <strong>10% discount</strong> on your first purchase</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-emerald-300 mr-2"></i>
+                            <span>Unlock <strong>exclusive gear</strong> at higher tiers</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-emerald-300 mr-2"></i>
+                            <span><strong>Share your referral code</strong> after signing up</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
             <div class="flex space-x-4">
                 <div class="tool-icon p-4 rounded-lg">
@@ -87,6 +119,19 @@
                         <i class="fas fa-campground mr-2"></i>
                         GearUp
                     </a>
+                    
+                    <!-- Mobile Referral Badge -->
+                    {% if referral_code %}
+                    <div class="mt-4 p-4 referral-badge text-white rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-gift mr-3 text-lg"></i>
+                            <div>
+                                <p class="font-bold">Referral Bonus Active!</p>
+                                <p class="text-sm opacity-90">You'll get extra points for signing up</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
                 
                 <div class="bg-white py-8 px-6 shadow-lg rounded-lg sm:px-10 border border-emerald-100">
@@ -95,6 +140,27 @@
                             <i class="fas fa-user-plus text-emerald-700 text-xl"></i>
                         </div>
                     </div>
+                    
+                    <!-- Referral Header (if referral code exists) -->
+                    {% if referral_code %}
+                    <div class="mb-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-handshake text-emerald-600 text-xl"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-emerald-800">
+                                    <i class="fas fa-bolt text-amber-500 mr-1"></i>
+                                    You're joining through a referral!
+                                </p>
+                                <p class="text-xs text-emerald-600 mt-1">
+                                    You'll receive <span class="font-bold">100 bonus points</span> after verification
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <h2 class="text-3xl font-bold text-gray-900 mb-2 text-center">Join GearUp</h2>
                     <p class="text-gray-600 mb-8 text-center">Create your account and get prepared</p>
                     
@@ -123,6 +189,11 @@
                     
                     <form method="post" class="space-y-6" novalidate>
                         {% csrf_token %}
+                        
+                        <!-- Hidden referral code field -->
+                        {% if referral_code %}
+                        <input type="hidden" name="referral_code" value="{{ referral_code }}">
+                        {% endif %}
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- First Name Field with Error -->
@@ -187,7 +258,45 @@
                             {% endif %}
                         </div>
                         
-                        <!-- Password Field with Error - FIXED -->
+                        <!-- Referral Code Field (Optional) -->
+                        <div>
+                            <label for="id_referral_code" class="block text-sm font-medium text-gray-700">
+                                Referral Code <span class="text-gray-400 font-normal">(Optional)</span>
+                            </label>
+                            <div class="mt-1">
+                                <div class="flex">
+                                    <input id="id_referral_code" 
+                                           name="referral_code_input" 
+                                           type="text" 
+                                           value="{% if not referral_code %}{{ form.referral_code_input.value|default:'' }}{% endif %}" 
+                                           {% if referral_code %}readonly{% endif %}
+                                           placeholder="Enter friend's referral code"
+                                           class="appearance-none block w-full px-3 py-2 border {% if form.referral_code_input.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-l-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                    {% if referral_code %}
+                                    <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-emerald-300 bg-emerald-50 text-emerald-700 text-sm">
+                                        <i class="fas fa-check mr-2"></i> Pre-filled
+                                    </span>
+                                    {% else %}
+                                    <button type="button" id="validate-referral-btn" class="inline-flex items-center px-4 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 text-sm">
+                                        <i class="fas fa-check mr-2"></i> Validate
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% if form.referral_code_input.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.referral_code_input.errors %}
+                                    <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <p class="mt-1 text-xs text-gray-500">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Enter a friend's code to give them referral points
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Password Field with Error -->
                         <div>
                             <label for="id_password1" class="block text-sm font-medium text-gray-700">Password</label>
                             <div class="mt-1 relative">
@@ -219,7 +328,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- Confirm Password Field with Error - FIXED -->
+                        <!-- Confirm Password Field with Error -->
                         <div>
                             <label for="id_password2" class="block text-sm font-medium text-gray-700">Confirm Password</label>
                             <div class="mt-1 relative">
@@ -242,15 +351,55 @@
                             {% endif %}
                         </div>
                         
+                        <!-- Terms and Conditions -->
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="terms" name="terms" type="checkbox" required
+                                       class="focus:ring-emerald-500 h-4 w-4 text-emerald-600 border-gray-300 rounded">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="terms" class="font-medium text-gray-700">
+                                    I agree to the 
+                                    <a href="#" class="text-emerald-600 hover:text-emerald-500">Terms of Service</a> 
+                                    and 
+                                    <a href="#" class="text-emerald-600 hover:text-emerald-500">Privacy Policy</a>
+                                </label>
+                                <p class="text-gray-500 text-xs mt-1">
+                                    By creating an account, you agree to receive promotional emails. You can unsubscribe at any time.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Referral Bonus Notice -->
+                        {% if referral_code %}
+                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-gift text-amber-600"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-amber-800">
+                                        🎉 Welcome Bonus Activated!
+                                    </h3>
+                                    <div class="mt-2 text-sm text-amber-700">
+                                        <p>You'll receive <strong>100 bonus points</strong> to spend on survival gear after verifying your email.</p>
+                                        <p class="text-xs mt-1">Points will be credited within 24 hours of email verification.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
                         <div>
                             <button type="submit" 
                                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
+                                <i class="fas fa-user-plus mr-2"></i>
                                 Create Account
                             </button>
                         </div>
                     </form>
                     
-                    <!-- Rest of your social login and signin link sections -->
+                    <!-- Social Login Section -->
                     <div class="mt-6">
                         <div class="relative">
                             <div class="absolute inset-0 flex items-center">
@@ -280,11 +429,32 @@
                         </div>
                     </div>
                     
-                    <div class="mt-6 text-center">
-                        <p class="text-sm text-gray-600">
+                    <!-- Referral Link Section -->
+                    <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="text-sm text-gray-600 text-center">
+                            <i class="fas fa-users mr-2 text-emerald-600"></i>
                             Already have an account? 
                             <a href="{% url 'user_auth:signin' %}" class="font-medium text-emerald-600 hover:text-emerald-500">Sign in</a>
+                            to get your own referral code
                         </p>
+                    </div>
+                    
+                    <!-- Referral FAQ -->
+                    <div class="mt-6 text-center">
+                        <details class="text-sm">
+                            <summary class="text-gray-500 hover:text-emerald-600 cursor-pointer">
+                                <i class="fas fa-question-circle mr-1"></i>
+                                How does the referral program work?
+                            </summary>
+                            <div class="mt-2 p-3 bg-gray-50 rounded text-left text-xs text-gray-600">
+                                <ul class="space-y-1">
+                                    <li><strong>For you:</strong> Get 100 points when a friend signs up using your code</li>
+                                    <li><strong>For your friend:</strong> Get 100 bonus points when they verify their email</li>
+                                    <li><strong>Points can be used:</strong> For discounts on survival gear and emergency kits</li>
+                                    <li><strong>Share your code:</strong> After signing up, you'll get a unique referral code to share</li>
+                                </ul>
+                            </div>
+                        </details>
                     </div>
                 </div>
                 
@@ -313,6 +483,54 @@
                 }
             });
         });
+        
+        // Referral code validation (optional client-side validation)
+        document.getElementById('validate-referral-btn')?.addEventListener('click', function() {
+            const referralCode = document.getElementById('id_referral_code').value.trim();
+            
+            if (!referralCode) {
+                alert('Please enter a referral code');
+                return;
+            }
+            
+            // Optional: Add AJAX validation here
+            // This would check if the referral code exists on the server
+            
+            // For now, just show a success message
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Validating...';
+            btn.disabled = true;
+            
+            // Simulate API call
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i> Valid!';
+                btn.classList.remove('bg-gray-50', 'hover:bg-gray-100', 'text-gray-700');
+                btn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+                btn.disabled = false;
+                
+                // Revert after 3 seconds
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+                    btn.classList.add('bg-gray-50', 'hover:bg-gray-100', 'text-gray-700');
+                }, 3000);
+            }, 1000);
+        });
+        
+        // Auto-uppercase referral code
+        document.getElementById('id_referral_code')?.addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        });
+        
+        // Check if URL has referral parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const refParam = urlParams.get('ref');
+        
+        if (refParam && !document.getElementById('id_referral_code').value) {
+            document.getElementById('id_referral_code').value = refParam.toUpperCase();
+        }
     </script>
 </body>
 </html>
