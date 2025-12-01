@@ -68,32 +68,32 @@
     height: 8px;
   }
 
-  /* Referral styles */
-  .referral-gradient {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  .cropper-point.point-se {
+    bottom: -4px;
+    right: -4px;
   }
-  .referral-tag {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
+
+  .cropper-point.point-sw {
+    bottom: -4px;
+    left: -4px;
   }
-  .pulse-animation {
-    animation: pulse 2s infinite;
+
+  .cropper-point.point-nw {
+    top: -4px;
+    left: -4px;
   }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+
+  .cropper-point.point-ne {
+    top: -4px;
+    right: -4px;
   }
-  
-  /* Additional styles */
-  .form-control {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent;
-  }
-  .cropper-existing-image {
-    background: rgba(16, 185, 129, 0.9);
-  }
-  .cropper-existing-image:hover {
-    background: rgba(5, 150, 105, 0.9);
+
+  .cropper-point.point-e,
+  .cropper-point.point-w,
+  .cropper-point.point-s,
+  .cropper-point.point-n {
+    width: 6px;
+    height: 6px;
   }
 </style>
 
@@ -102,7 +102,6 @@
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl mx-4 overflow-hidden">
     <div class="border-b border-gray-200 px-6 py-4">
       <h2 class="text-xl font-semibold text-gray-900">Crop Profile Picture</h2>
-      <p class="text-sm text-gray-500 mt-1">Adjust the crop area to your preference</p>
     </div>
     <div class="p-6">
       <div class="flex flex-col md:flex-row gap-6">
@@ -124,21 +123,6 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Zoom</label>
             <input type="range" id="zoom-slider" min="0.1" max="3" step="0.1" value="1" class="w-full">
-            <div class="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Small</span>
-              <span>Normal</span>
-              <span>Large</span>
-            </div>
-          </div>
-          <div class="pt-4 space-y-3">
-            <button id="rotate-left" type="button" class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center">
-              <i class="fas fa-undo-alt mr-2"></i>
-              Rotate Left
-            </button>
-            <button id="rotate-right" type="button" class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center">
-              <i class="fas fa-redo-alt mr-2"></i>
-              Rotate Right
-            </button>
           </div>
           <div class="grid grid-cols-2 gap-3 pt-4">
             <button id="cancel-crop" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
@@ -149,52 +133,6 @@
             </button>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Copy Success Notification -->
-<div id="copy-notification" class="fixed top-6 right-6 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300 flex items-center space-x-3">
-  <i class="fas fa-check-circle text-lg"></i>
-  <span class="font-medium">Copied to clipboard!</span>
-</div>
-
-<!-- Share Options Modal -->
-<div id="share-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-semibold text-gray-900">Share Referral Link</h2>
-      <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600">
-        <i class="fas fa-times text-lg"></i>
-      </button>
-    </div>
-    <div class="space-y-4">
-      <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-        <div class="flex-1 truncate text-sm" id="share-link-text">
-          {{ request.scheme }}://{{ request.get_host }}{% url "user_auth:signup" %}?ref={{ user.referral_code }}
-        </div>
-        <button onclick="copyShareLink()" class="text-emerald-600 hover:text-emerald-700">
-          <i class="far fa-copy text-lg"></i>
-        </button>
-      </div>
-      <div class="grid grid-cols-4 gap-3 pt-4">
-        <button onclick="shareOnFacebook()" class="flex flex-col items-center p-4 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors">
-          <i class="fab fa-facebook text-2xl mb-2"></i>
-          <span class="text-xs">Facebook</span>
-        </button>
-        <button onclick="shareOnTwitter()" class="flex flex-col items-center p-4 bg-blue-100 text-blue-400 rounded-xl hover:bg-blue-200 transition-colors">
-          <i class="fab fa-twitter text-2xl mb-2"></i>
-          <span class="text-xs">Twitter</span>
-        </button>
-        <button onclick="shareOnWhatsApp()" class="flex flex-col items-center p-4 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors">
-          <i class="fab fa-whatsapp text-2xl mb-2"></i>
-          <span class="text-xs">WhatsApp</span>
-        </button>
-        <button onclick="shareViaEmail()" class="flex flex-col items-center p-4 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors">
-          <i class="fas fa-envelope text-2xl mb-2"></i>
-          <span class="text-xs">Email</span>
-        </button>
       </div>
     </div>
   </div>
@@ -276,6 +214,16 @@
                 <span>My Wishlist</span>
               </a>
 
+              {% if user.has_usable_password %}
+                <a href="#" 
+                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-amber-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-amber-200">
+                  <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-lock text-amber-500 text-lg"></i>
+                  </div>
+                  <span>Change Password</span>
+                </a>
+              {% endif %}
+
               <a href="{% url 'adderss:address_list' %}" 
                 class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-blue-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-blue-200">
                   <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -315,69 +263,6 @@
 
         <!-- Main Content -->
         <div class="xl:col-span-3">
-          <!-- Referral Card - Added at the top -->
-          <div class="bg-emerald-600 text-white rounded-3xl shadow-xl mb-8 overflow-hidden card-hover">
-    <div class="p-8">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <div class="mb-6 lg:mb-0 lg:mr-8">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
-                        <i class="fas fa-gift text-2xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-2xl font-bold">Refer & Earn Rewards</h3>
-                        <p class="text-emerald-100 opacity-90 mt-1">Share your code and earn points with every friend who joins!</p>
-                    </div>
-                </div>
-                
-                <div class="flex flex-wrap gap-4 mt-6">
-                    <div class="bg-white bg-opacity-10 rounded-xl px-4 py-3 backdrop-blur-sm">
-                        <div class="text-sm text-emerald-200">Referrals</div>
-                        <div class="text-2xl font-bold">{{ user.total_referrals }}</div>
-                    </div>
-                    <div class="bg-white bg-opacity-10 rounded-xl px-4 py-3 backdrop-blur-sm">
-                        <div class="text-sm text-emerald-200">Points Earned</div>
-                        <div class="text-2xl font-bold">{{ user.referral_points }}</div>
-                    </div>
-                    <div class="bg-white bg-opacity-10 rounded-xl px-4 py-3 backdrop-blur-sm">
-                        <div class="text-sm text-emerald-200">Current Tier</div>
-                        <div class="text-2xl font-bold">{{ user.referral_tier }}</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="lg:text-right">
-                <div class="mb-4">
-                    <div class="text-sm text-emerald-200 mb-2">Your Referral Code</div>
-                    <div class="flex items-center justify-center lg:justify-end">
-                        <div class="bg-white text-emerald-700 px-6 py-3 rounded-xl font-mono text-2xl font-bold mr-4">
-                            {{ user.referral_code }}
-                        </div>
-                        <button onclick="copyReferralCode('{{ user.referral_code }}')" 
-                                class="bg-white text-emerald-600 hover:bg-emerald-50 w-12 h-12 rounded-xl flex items-center justify-center transition-colors group">
-                            <i class="far fa-copy text-xl group-hover:scale-110 transition-transform"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button onclick="copyReferralLink('{{ request.scheme }}://{{ request.get_host }}{% url "user_auth:signup" %}?ref={{ user.referral_code }}')"
-                            class="bg-white text-emerald-600 hover:bg-emerald-50 px-6 py-3 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2">
-                        <i class="fas fa-link"></i>
-                        <span>Copy Link</span>
-                    </button>
-                    <button onclick="openShareModal()"
-                            class="bg-emerald-800 text-white hover:bg-emerald-900 px-6 py-3 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2">
-                        <i class="fas fa-share-alt"></i>
-                        <span>Share</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-          <!-- Profile Edit Form Card -->
           <div class="bg-white rounded-3xl shadow-lg border border-emerald-100 p-8 card-hover">
             <!-- Header with Stats -->
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
@@ -387,18 +272,6 @@
                   Personal Information
                 </h2>
                 <p class="text-gray-600">Update your profile details and preferences</p>
-              </div>
-              
-              <!-- Profile Completion -->
-              <div class="mt-4 lg:mt-0">
-                <div class="flex items-center space-x-3">
-                  <div class="w-48 bg-emerald-100 rounded-full h-3">
-                    <div class="bg-emerald-500 h-3 rounded-full transition-all duration-500" 
-                         style="width: {{ user.profile_completion_percentage }}%"></div>
-                  </div>
-                  <span class="text-sm font-semibold text-emerald-600">{{ user.profile_completion_percentage }}% Complete</span>
-                </div>
-                <p class="text-sm text-gray-500 mt-1 text-right">Profile Completion</p>
               </div>
             </div>
 
@@ -438,7 +311,6 @@
                               class="crop-existing-image absolute -top-2 -right-2 bg-emerald-500 text-white rounded-full p-2 shadow-lg hover:bg-emerald-600 transition-colors"
                               data-image-url="{{ user.profile_image.url }}"
                               title="Crop Image">
-                        <i class="fas fa-crop-alt text-sm"></i>
                       </button>
                     {% else %}
                       <div id="profile-preview-default" class="w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg overflow-hidden">
@@ -769,135 +641,6 @@
               </div>
             </form>
           </div>
-          
-          <!-- Referral Stats Card -->
-          <div class="mt-8 bg-white rounded-3xl shadow-lg border border-emerald-100 p-8 card-hover">
-            <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-              <i class="fas fa-chart-line text-emerald-500 mr-3"></i>
-              Referral Statistics
-            </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-2xl border border-blue-200">
-                <div class="flex items-center justify-between mb-4">
-                  <div>
-                    <div class="text-sm text-blue-600 font-medium">Total Referrals</div>
-                    <div class="text-3xl font-bold text-gray-800">{{ user.total_referrals }}</div>
-                  </div>
-                  <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-users text-blue-600 text-xl"></i>
-                  </div>
-                </div>
-                <p class="text-sm text-blue-500">Friends who joined using your code</p>
-              </div>
-              
-              <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border border-green-200">
-                <div class="flex items-center justify-between mb-4">
-                  <div>
-                    <div class="text-sm text-green-600 font-medium">Points Earned</div>
-                    <div class="text-3xl font-bold text-gray-800">{{ user.referral_points }}</div>
-                  </div>
-                  <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-coins text-green-600 text-xl"></i>
-                  </div>
-                </div>
-                <p class="text-sm text-green-500">Total points from referrals</p>
-              </div>
-              
-              <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-200">
-                <div class="flex items-center justify-between mb-4">
-                  <div>
-                    <div class="text-sm text-purple-600 font-medium">Current Tier</div>
-                    <div class="text-3xl font-bold text-gray-800">{{ user.referral_tier }}</div>
-                  </div>
-                  <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-trophy text-purple-600 text-xl"></i>
-                  </div>
-                </div>
-                <p class="text-sm text-purple-500">Your reward level</p>
-              </div>
-            </div>
-            
-            {% if user.referred_by %}
-            <div class="mt-8 p-6 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-2xl border border-amber-200">
-              <div class="flex items-center">
-                <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center mr-4">
-                  <i class="fas fa-handshake text-amber-600"></i>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-gray-800">You were referred by</h4>
-                  <p class="text-gray-600">
-                    <span class="font-medium">{{ user.referred_by.get_display_name }}</span>
-                    <span class="mx-2">•</span>
-                    <span class="text-sm text-amber-600 bg-amber-100 px-2 py-1 rounded-lg">
-                      Code: {{ user.referred_by.referral_code }}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
-            {% endif %}
-            
-            <div class="mt-8 pt-8 border-t border-gray-200">
-              <h4 class="text-lg font-semibold text-gray-800 mb-4">How to earn more points:</h4>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-gray-50 p-4 rounded-xl">
-                  <div class="flex items-center mb-3">
-                    <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
-                      <i class="fas fa-share-alt text-emerald-600 text-sm"></i>
-                    </div>
-                    <span class="font-medium text-gray-800">Share Your Link</span>
-                  </div>
-                  <p class="text-sm text-gray-600">Copy and share your referral link with friends</p>
-                </div>
-                
-                <div class="bg-gray-50 p-4 rounded-xl">
-                  <div class="flex items-center mb-3">
-                    <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
-                      <i class="fas fa-user-plus text-emerald-600 text-sm"></i>
-                    </div>
-                    <span class="font-medium text-gray-800">Friends Sign Up</span>
-                  </div>
-                  <p class="text-sm text-gray-600">Friends sign up using your referral code</p>
-                </div>
-                
-                <div class="bg-gray-50 p-4 rounded-xl">
-                  <div class="flex items-center mb-3">
-                    <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
-                      <i class="fas fa-gift text-emerald-600 text-sm"></i>
-                    </div>
-                    <span class="font-medium text-gray-800">Earn Rewards</span>
-                  </div>
-                  <p class="text-sm text-gray-600">Earn points that can be used for discounts</p>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Recent Referrals -->
-            {% if user.referrals_given.all %}
-            <div class="mt-8 pt-8 border-t border-gray-200">
-              <h4 class="text-lg font-semibold text-gray-800 mb-4">Recent Referrals</h4>
-              <div class="space-y-3">
-                {% for referral in user.referrals_given.all|slice:":5" %}
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                      <i class="fas fa-user text-emerald-600"></i>
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-800">{{ referral.referred_user.get_display_name }}</p>
-                      <p class="text-xs text-gray-500">{{ referral.created_at|date:"M d, Y" }}</p>
-                    </div>
-                  </div>
-                  <span class="{% if referral.is_successful %}bg-emerald-100 text-emerald-700{% else %}bg-yellow-100 text-yellow-700{% endif %} px-3 py-1 rounded-full text-xs font-medium">
-                    {% if referral.is_successful %}Completed{% else %}Pending{% endif %}
-                  </span>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-            {% endif %}
-          </div>
         </div>
       </div>
     </div>
@@ -908,6 +651,7 @@
 // Cropper.js variables
 let cropper = null;
 let currentImageInput = null;
+let currentPreviewImg = null;
 
 // Image cropping functionality
 const cropModal = document.getElementById('crop-modal');
@@ -916,8 +660,6 @@ const aspectRatio = document.getElementById('aspect-ratio');
 const zoomSlider = document.getElementById('zoom-slider');
 const cancelCrop = document.getElementById('cancel-crop');
 const applyCrop = document.getElementById('apply-crop');
-const rotateLeft = document.getElementById('rotate-left');
-const rotateRight = document.getElementById('rotate-right');
 
 // Handle image upload and open crop modal
 function handleImageUpload(input) {
@@ -990,24 +732,12 @@ zoomSlider.addEventListener('input', function() {
   cropper.zoomTo(parseFloat(this.value));
 });
 
-// Rotate functionality
-rotateLeft.addEventListener('click', function() {
-  cropper.rotate(-45);
-});
-
-rotateRight.addEventListener('click', function() {
-  cropper.rotate(45);
-});
-
 // Cancel crop
 cancelCrop.addEventListener('click', function() {
   cropModal.classList.add('hidden');
   if (cropper) {
     cropper.destroy();
     cropper = null;
-  }
-  if (currentImageInput) {
-    currentImageInput.value = '';
   }
 });
 
@@ -1217,104 +947,6 @@ function createSocialLinkElement(platform, username) {
   return linkDiv;
 }
 
-// Referral Functions
-function copyReferralCode(code) {
-  navigator.clipboard.writeText(code).then(() => {
-    showCopyNotification('Referral code copied!');
-  }).catch(err => {
-    // Fallback method
-    const textArea = document.createElement('textarea');
-    textArea.value = code;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-    showCopyNotification('Referral code copied!');
-  });
-}
-
-function copyReferralLink(link) {
-  navigator.clipboard.writeText(link).then(() => {
-    showCopyNotification('Referral link copied!');
-  }).catch(err => {
-    // Fallback method
-    const textArea = document.createElement('textarea');
-    textArea.value = link;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-    showCopyNotification('Referral link copied!');
-  });
-}
-
-function showCopyNotification(message) {
-  const notification = document.getElementById('copy-notification');
-  const notificationText = notification.querySelector('span');
-  
-  notificationText.textContent = message;
-  notification.classList.remove('translate-x-full');
-  
-  setTimeout(() => {
-    notification.classList.add('translate-x-full');
-  }, 3000);
-}
-
-// Share modal functions
-function openShareModal() {
-  document.getElementById('share-modal').classList.remove('hidden');
-}
-
-function closeShareModal() {
-  document.getElementById('share-modal').classList.add('hidden');
-}
-
-function copyShareLink() {
-  const link = document.getElementById('share-link-text').textContent.trim();
-  copyReferralLink(link);
-}
-
-// Share referral link via social media
-function shareOnFacebook() {
-  const link = encodeURIComponent('{{ request.scheme }}://{{ request.get_host }}{% url "user_auth:signup" %}?ref={{ user.referral_code }}');
-  const text = encodeURIComponent("Join GearUp Survival Toolkit using my referral code and get bonus points!");
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${link}&quote=${text}`, '_blank');
-}
-
-function shareOnTwitter() {
-  const link = encodeURIComponent('{{ request.scheme }}://{{ request.get_host }}{% url "user_auth:signup" %}?ref={{ user.referral_code }}');
-  const text = encodeURIComponent("Join GearUp Survival Toolkit using my referral code! Get bonus points on signup. Code: {{ user.referral_code }}");
-  window.open(`https://twitter.com/intent/tweet?url=${link}&text=${text}`, '_blank');
-}
-
-function shareOnWhatsApp() {
-  const link = encodeURIComponent('{{ request.scheme }}://{{ request.get_host }}{% url "user_auth:signup" %}?ref={{ user.referral_code }}');
-  const text = encodeURIComponent(`Join GearUp Survival Toolkit using my referral code: {{ user.referral_code }}
-
-Sign up using this link: ${link}
-
-Get bonus points when you join!`);
-  window.open(`https://wa.me/?text=${text}`, '_blank');
-}
-
-function shareViaEmail() {
-  const link = '{{ request.scheme }}://{{ request.get_host }}{% url "user_auth:signup" %}?ref={{ user.referral_code }}';
-  const subject = encodeURIComponent("Join GearUp with my referral code!");
-  const body = encodeURIComponent(`Hey!
-
-I wanted to share my GearUp Survival Toolkit referral code with you. When you sign up using my code, you'll get bonus points!
-
-My referral code: {{ user.referral_code }}
-Sign up here: ${link}
-
-GearUp has amazing survival gear, outdoor equipment, and emergency kits. Join me and let's get prepared together!
-
-Best regards,
-{{ user.get_display_name }}`);
-  
-  window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-}
-
 // Initialize social media links on page load
 document.addEventListener('DOMContentLoaded', function() {
   // Update all social media links
@@ -1324,16 +956,13 @@ document.addEventListener('DOMContentLoaded', function() {
   updateSocialLink('linkedin', document.getElementById('id_linkedin')?.value || '');
 });
 
-// Form submission handler
 document.getElementById('profileForm')?.addEventListener('submit', function(e) {
   const submitButton = document.getElementById('submitButton');
-  if (submitButton) {
-    submitButton.disabled = true;
-    submitButton.innerHTML = `
-      <i class="fas fa-spinner fa-spin"></i>
-      <span>Saving Changes...</span>
-    `;
-  }
+  submitButton.disabled = true;
+  submitButton.innerHTML = `
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Saving Changes...</span>
+  `;
 });
 </script>
 {% endblock %}
