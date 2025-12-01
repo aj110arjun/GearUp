@@ -194,101 +194,76 @@
             </div>
           </div>
 
-          <!-- Product Variants Summary -->
+          <!-- Product Variants -->
           <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="border-b border-gray-200 px-6 py-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h2 class="text-lg font-semibold text-gray-900">Product Variants</h2>
-                  <p class="text-sm text-gray-600 mt-1">Manage sizes, colors, and pricing</p>
-                </div>
-                <a href="{% url 'products:manage_variants' product_slug=product.slug %}" 
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-all duration-200">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Manage Variants
-                </a>
-              </div>
+              <h2 class="text-lg font-semibold text-gray-900">Product Variants</h2>
+              <p class="text-sm text-gray-600 mt-1">Manage sizes, colors, and pricing</p>
             </div>
             <div class="p-6">
-              {% if variants %}
-              <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {% for variant in variants %}
-                  <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="flex justify-between items-start mb-2">
-                      <div>
-                        <h4 class="font-medium text-gray-900">
-                          {% if variant.size %}{{ variant.size }}{% endif %}
-                          {% if variant.color %}{% if variant.size %} - {% endif %}{{ variant.color }}{% endif %}
-                        </h4>
-                        <p class="text-sm text-gray-600">SKU: {{ variant.sku }}</p>
-                      </div>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if variant.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                        {{ variant.is_active|yesno:"Active,Inactive" }}
-                      </span>
+              {{ variant_formset.management_form }}
+              
+              <div id="variant-forms" class="space-y-4">
+                {% for variant_form in variant_formset %}
+                <div class="variant-form border border-gray-200 rounded-lg p-4 relative">
+                  {{ variant_form.id }}
+                  
+                  {% if variant_form.instance.pk %}
+                  <div class="absolute top-2 right-2">
+                    <label class="flex items-center text-sm text-red-600 cursor-pointer hover:text-red-700">
+                      {{ variant_form.DELETE }}
+                      <span class="ml-2">Delete</span>
+                    </label>
+                  </div>
+                  {% endif %}
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Size</label>
+                      {{ variant_form.size }}
                     </div>
-                    <div class="space-y-1 text-sm">
-                      <div class="flex justify-between">
-                        <span class="text-gray-600">Price:</span>
-                        <span class="font-medium">₹{{ variant.price }}</span>
-                      </div>
-                      {% if variant.compare_price %}
-                      <div class="flex justify-between">
-                        <span class="text-gray-600">Compare Price:</span>
-                        <span class="font-medium text-red-600 line-through">₹{{ variant.compare_price }}</span>
-                      </div>
-                      {% endif %}
-                      <div class="flex justify-between">
-                        <span class="text-gray-600">Stock:</span>
-                        <span class="font-medium {% if variant.stock_quantity <= 10 %}text-red-600{% elif variant.stock_quantity <= 50 %}text-yellow-600{% else %}text-green-600{% endif %}">
-                          {{ variant.stock_quantity }}
-                        </span>
-                      </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Color</label>
+                      {{ variant_form.color }}
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Price (₹) *</label>
+                      {{ variant_form.price }}
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Compare Price (₹)</label>
+                      {{ variant_form.compare_price }}
                     </div>
                   </div>
-                  {% endfor %}
-                </div>
-                
-                <!-- Variants Summary -->
-                <div class="bg-gray-50 rounded-lg p-4 mt-4">
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p class="text-2xl font-bold text-gray-900">{{ variants|length }}</p>
-                      <p class="text-sm text-gray-600">Total Variants</p>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Stock Quantity</label>
+                      {{ variant_form.stock_quantity }}
                     </div>
-                    <div>
-                      <p class="text-2xl font-bold text-green-600">{{ active_variants_count }}</p>
-                      <p class="text-sm text-gray-600">Active</p>
-                    </div>
-                    <div>
-                      <p class="text-2xl font-bold text-blue-600">{{ total_stock }}</p>
-                      <p class="text-sm text-gray-600">Total Stock</p>
-                    </div>
-                    <div>
-                      <p class="text-2xl font-bold text-indigo-600">{{ low_stock_count }}</p>
-                      <p class="text-sm text-gray-600">Low Stock</p>
+                    <div class="flex items-center">
+                      <label class="flex items-center cursor-pointer">
+                        {{ variant_form.is_active }}
+                        <span class="ml-2 text-sm text-gray-700">Active</span>
+                      </label>
                     </div>
                   </div>
+                  
+                  {% if variant_form.errors %}
+                  <div class="mt-2 text-red-500 text-xs">
+                    {{ variant_form.errors }}
+                  </div>
+                  {% endif %}
                 </div>
+                {% endfor %}
               </div>
-              {% else %}
-              <div class="text-center py-8">
-                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              
+              <button type="button" id="add-variant" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No Variants Added</h3>
-                <p class="text-gray-600 mb-4">Add variants to manage different sizes, colors, and pricing options.</p>
-                <a href="{% url 'products:manage_variants' product_slug=product.slug %}" 
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-all duration-200">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add First Variant
-                </a>
-              </div>
-              {% endif %}
+                Add Variant
+              </button>
             </div>
           </div>
 
@@ -489,6 +464,34 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function() {
       submitBtn.disabled = true;
       submitText.textContent = 'Updating...';
+    });
+  }
+  
+  // Dynamic formset handling for variants
+  const addVariantBtn = document.getElementById('add-variant');
+  const variantForms = document.getElementById('variant-forms');
+  const totalForms = document.querySelector('#id_variants-TOTAL_FORMS');
+  
+  if (addVariantBtn && variantForms && totalForms) {
+    addVariantBtn.addEventListener('click', function() {
+      const formCount = parseInt(totalForms.value);
+      const newForm = document.querySelector('.variant-form').cloneNode(true);
+      
+      // Update form index
+      newForm.innerHTML = newForm.innerHTML.replace(/variants-\d+-/g, `variants-${formCount}-`);
+      newForm.innerHTML = newForm.innerHTML.replace(/variants-\d+/g, `variants-${formCount}`);
+      
+      // Clear values
+      newForm.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type !== 'checkbox') {
+          input.value = '';
+        } else {
+          input.checked = false;
+        }
+      });
+      
+      variantForms.appendChild(newForm);
+      totalForms.value = formCount + 1;
     });
   }
   

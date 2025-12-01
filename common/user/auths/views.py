@@ -19,32 +19,20 @@ def signup(request):
     if 'signup_data' in request.session and 'otp_sent' in request.session:
         return redirect('user_auth:verify_otp')
 
-    # Get referral code from URL parameters
-    referral_code = request.GET.get('ref', '').strip().upper()
-
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
-        
+
         if form.is_valid():
-            # Store form data in session including referral code
-            signup_data = {
+            # Store form data in session
+            request.session['signup_data'] = {
                 'email': form.cleaned_data['email'],
                 'first_name': form.cleaned_data['first_name'],
                 'last_name': form.cleaned_data['last_name'],
                 'password': form.cleaned_data['password1'],
             }
-            
-            # Store referral code if provided
-            referral_code_input = form.cleaned_data.get('referral_code_input', '').strip().upper()
-            if referral_code_input:
-                signup_data['referral_code'] = referral_code_input
-            elif referral_code:
-                signup_data['referral_code'] = referral_code
-            
-            request.session['signup_data'] = signup_data
 
             # Generate and send OTP
-            otp = OTP.create_otp(form.cleaned_data['email'])
+            otp = OTP.create_otp(form.cleaned_data['email'])  # Fixed method name
             send_otp_email(otp.email, otp.otp_code)
 
             request.session['otp_sent'] = True
@@ -56,8 +44,7 @@ def signup(request):
         form = UserCreationForm()
 
     context = {
-        'form': form,
-        'referral_code': referral_code if referral_code else None
+        'form': form
     }
     return render(request, 'user/auth/signup.html', context)
 
@@ -98,8 +85,7 @@ def verify_otp(request):
         return redirect('user_home:home')
     
     if 'signup_data' not in request.session or 'otp_sent' not in request.session:
-        messages.error(request, "Session expired. Please sign up again.")
-        return redirect('user_auth:signup')
+        return redirect('signup')
     
     signup_data = request.session['signup_data']
     otp_email = request.session.get('otp_email')
@@ -110,17 +96,6 @@ def verify_otp(request):
     except OTP.DoesNotExist:
         messages.error(request, "OTP expired or invalid. Please sign up again.")
         return redirect('user_auth:signup')
-    
-    # Get or create referral settings
-    try:
-        # Try to get existing settings
-        settings = ReferralSettings.objects.first()
-        if not settings:
-            # Create default settings if none exist
-            settings = ReferralSettings.objects.create()
-    except Exception as e:
-        # Fallback if there's any error with the model
-        settings = None
     
     if request.method == 'POST':
         form = OTPVerificationForm(request.POST)
@@ -144,92 +119,27 @@ def verify_otp(request):
                 user.set_password(signup_data['password'])
                 user.save()
                 
-                # --- REFERRAL HANDLING ---
-                referral_code = signup_data.get('referral_code')
-                if referral_code:
-                    # Create referral relationship
-                    referral = create_referral_relationship(user, referral_code)
-                    
-                    if referral:
-                        # Get signup bonus points from settings or use default
-                        if settings:
-                            bonus_points = settings.signup_bonus_points
-                        else:
-                            bonus_points = 100  # Default value
-                        
-                        # Award signup bonus to referred user
-                        user.add_referral_points(
-                            bonus_points,
-                            f"Signup bonus via referral from {referral.referrer.email}"
-                        )
-                        
-                        # Increment referrer's referral count (this also awards points to referrer)
-                        referral.referrer.increment_referral_count()
-                        
-                        # Mark referral as successful
-                        referral.mark_successful()
-                        
-                        messages.success(request, 
-                            f"🎉 Welcome {user.first_name}! You received {bonus_points} bonus points "
-                            f"for using a referral code!"
-                        )
-                    else:
-                        messages.warning(request, 
-                            "Referral code was invalid or expired, but your account was created successfully."
-                        )
-                else:
-                    # No referral code - award standard signup bonus if settings exist
-                    if settings and settings.signup_bonus_points > 0:
-                        user.add_referral_points(
-                            settings.signup_bonus_points,
-                            "Welcome signup bonus"
-                        )
-                        messages.success(request, 
-                            f"Welcome {user.first_name}! You received {settings.signup_bonus_points} points as a welcome bonus!"
-                        )
-                    elif not settings or settings.signup_bonus_points <= 0:
-                        # Award default bonus if no settings or no bonus configured
-                        user.add_referral_points(50, "Welcome signup bonus")
-                        messages.success(request, 
-                            f"Welcome {user.first_name}! You received 50 points as a welcome bonus!"
-                        )
-                
-                # Log the user in
-                login(request, user)
-                
                 # Clean up session
-                keys_to_delete = ['signup_data', 'otp_sent', 'otp_email', 'otp_created']
-                for key in keys_to_delete:
-                    if key in request.session:
-                        del request.session[key]
+                del request.session['signup_data']
+                del request.session['otp_sent']
+                del request.session['otp_email']
+                del request.session['otp_created']
                 
-                # Redirect to dashboard or home
-                return redirect('user_home:home')
+                return redirect('user_auth:signin')
             
             else:
                 if otp.is_expired():
                     form.add_error('otp_code', "OTP has expired. Please request a new one.")
-                    messages.error(request, "OTP has expired. Please request a new one.")
                 else:
                     form.add_error('otp_code', "Invalid OTP code. Please try again.")
-                    messages.error(request, "Invalid OTP code. Please try again.")
     
     else:
         form = OTPVerificationForm()
     
-    # Calculate remaining time for display
+    # Calculate remaining time
     remaining_time = max(0, (otp.expires_at - timezone.now()).total_seconds())
     minutes = int(remaining_time // 60)
     seconds = int(remaining_time % 60)
-    
-    # Check if user signed up with referral code
-    has_referral = 'referral_code' in signup_data and signup_data['referral_code']
-    
-    # Get referral bonus amount for display
-    if settings:
-        referral_bonus = settings.signup_bonus_points
-    else:
-        referral_bonus = 100  # Default value
     
     context = {
         'form': form,
@@ -237,8 +147,6 @@ def verify_otp(request):
         'remaining_time': int(remaining_time),
         'timer_display': f"{minutes:02d}:{seconds:02d}",
         'is_expired': otp.is_expired(),
-        'has_referral': has_referral,
-        'referral_bonus': referral_bonus,
     }
     return render(request, 'user/auth/verify_otp.html', context)
 

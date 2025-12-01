@@ -44,9 +44,7 @@ class Order(models.Model):
     product = models.ForeignKey(
         'products.Product',  # Update with your actual product app name
         on_delete=models.PROTECT,  # Prevent deletion if orders exist
-        related_name='orders',
-        blank=True,
-        null=True
+        related_name='orders'
     )
     
     # Variant relationship (if you have product variants)
