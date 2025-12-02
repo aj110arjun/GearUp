@@ -65,7 +65,11 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Delivered</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ orders.filter.order_status='delivered'|length }}</p>
+                        {% comment %} 
+                        First method: Using Django template filters
+                        You need to pass a context variable from the view for this to work
+                        {% endcomment %}
+                        <p class="text-2xl font-bold text-gray-900">{{ delivered_count }}</p>
                     </div>
                 </div>
             </div>
@@ -76,7 +80,11 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">In Progress</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ orders.filter.order_status__in=['pending','confirmed','processing','shipped']|length }}</p>
+                        {% comment %}
+                        Second method: Using custom template tag (recommended)
+                        Or calculate in the view and pass as context
+                        {% endcomment %}
+                        <p class="text-2xl font-bold text-gray-900">{{ in_progress_count }}</p>
                     </div>
                 </div>
             </div>
@@ -151,10 +159,6 @@
                                         {{ order.product_name }}
                                     </h4>
                                     <div class="space-y-2 text-sm text-gray-600">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-tag text-gray-400 mr-2 w-4"></i>
-                                            <span><strong>SKU:</strong> {{ order.product_sku|default:"N/A" }}</span>
-                                        </div>
                                         <div class="flex items-center">
                                             <i class="fas fa-layer-group text-gray-400 mr-2 w-4"></i>
                                             <span><strong>Quantity:</strong> {{ order.quantity }}</span>
@@ -244,7 +248,7 @@
                             {% endif %}
 
                             <!-- Track Order Button -->
-                            {% if order.order_status in ['shipped', 'processing'] %}
+                            {% if order.order_status in 'shipped,processing' %}
                             <button class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
                                 <i class="fas fa-shipping-fast mr-2"></i>
                                 Track Order

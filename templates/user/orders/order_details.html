@@ -47,16 +47,12 @@
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">Product Details</h2>
             <div class="flex items-start space-x-4">
-                <img src="{{ order.product_image }}" 
-                     alt="{{ order.product_name }}"
+                <img src="{{ order.product.image.url }}" 
+                     alt="{{ order.product.name }}"
                      class="w-24 h-24 object-cover rounded-lg border border-gray-200">
                 <div class="flex-1">
-                    <h3 class="text-lg font-medium text-gray-900">{{ order.product_name }}</h3>
+                    <h3 class="text-lg font-medium text-gray-900">{{ order.product.name }}</h3>
                     <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div>
-                            <p><strong>SKU:</strong> {{ order.product_sku }}</p>
-                            <p><strong>Quantity:</strong> {{ order.quantity }}</p>
-                        </div>
                         <div>
                             <p><strong>Unit Price:</strong> ₹{{ order.unit_price }}</p>
                             <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
