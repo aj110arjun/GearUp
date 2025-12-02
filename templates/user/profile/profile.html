@@ -214,16 +214,6 @@
                 <span>My Wishlist</span>
               </a>
 
-              {% if user.has_usable_password %}
-                <a href="#" 
-                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-amber-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-amber-200">
-                  <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-lock text-amber-500 text-lg"></i>
-                  </div>
-                  <span>Change Password</span>
-                </a>
-              {% endif %}
-
               <a href="{% url 'adderss:address_list' %}" 
                 class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-blue-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-blue-200">
                   <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
