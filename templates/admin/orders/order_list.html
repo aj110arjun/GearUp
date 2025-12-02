@@ -1,0 +1,597 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Order Management{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="rounded-lg p-4 {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800{% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% elif message.tags == 'warning' %}bg-amber-50 border border-amber-200 text-amber-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %} flex items-center justify-between">
+                <div class="flex items-center">
+                    {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle mr-3 text-lg"></i>
+                    {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle mr-3 text-lg"></i>
+                    {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle mr-3 text-lg"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle mr-3 text-lg"></i>
+                    {% endif %}
+                    <span class="font-medium">{{ message }}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-current opacity-50 hover:opacity-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h4 class="text-2xl font-bold text-gray-900 mb-1">Order Management</h4>
+                <p class="text-gray-600">Manage and track customer orders</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'auth_dashboard:dashboard' %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg transition duration-200 flex items-center gap-2">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <button onclick="showExportModal()"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg transition duration-200 flex items-center gap-2">
+                    <i class="fas fa-download"></i>
+                    <span>Export</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition duration-200">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h6 class="text-gray-600 text-sm mb-2">Total Orders</h6>
+                        <h3 class="text-3xl font-bold text-gray-900">{{ total_orders }}</h3>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-full">
+                        <i class="fas fa-shopping-bag text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition duration-200">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h6 class="text-gray-600 text-sm mb-2">Total Revenue</h6>
+                        <h3 class="text-3xl font-bold text-gray-900">₹{{ total_revenue|floatformat:2 }}</h3>
+                    </div>
+                    <div class="bg-green-100 p-4 rounded-full">
+                        <i class="fas fa-rupee-sign text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition duration-200">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h6 class="text-gray-600 text-sm mb-2">Avg Order Value</h6>
+                        <h3 class="text-3xl font-bold text-gray-900">₹{{ average_order_value|floatformat:2 }}</h3>
+                    </div>
+                    <div class="bg-purple-100 p-4 rounded-full">
+                        <i class="fas fa-chart-bar text-purple-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition duration-200">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h6 class="text-gray-600 text-sm mb-2">Pending Orders</h6>
+                        <h3 class="text-3xl font-bold text-gray-900">{{ status_stats.pending|default:0 }}</h3>
+                    </div>
+                    <div class="bg-yellow-100 p-4 rounded-full">
+                        <i class="fas fa-clock text-yellow-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Summary -->
+        <div class="grid grid-cols-2 md:grid-cols-7 gap-2 mb-8">
+            {% for status, display in ORDER_STATUS_CHOICES %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 text-center">
+                <div class="text-lg font-bold text-gray-900">
+                    {% for item in status_counts %}
+                        {% if item.order_status == status %}
+                            {{ item.count }}
+                        {% endif %}
+                    {% empty %}
+                        0
+                    {% endfor %}
+                </div>
+                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">{{ display }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+            <h6 class="text-lg font-bold text-gray-900 mb-4">Filters & Search</h6>
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div class="lg:col-span-2">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" 
+                               class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               name="search" 
+                               placeholder="Search by order #, customer, or product..."
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                
+                <!-- Status Filters -->
+                <div class="grid grid-cols-2 gap-2">
+                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            name="order_status">
+                        <option value="">All Order Status</option>
+                        {% for value, label in ORDER_STATUS_CHOICES %}
+                        <option value="{{ value }}" {% if order_status_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            name="payment_status">
+                        <option value="">All Payment Status</option>
+                        {% for value, label in PAYMENT_STATUS_CHOICES %}
+                        <option value="{{ value }}" {% if payment_status_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Date and Method Filters -->
+                <div class="grid grid-cols-2 gap-2">
+                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            name="payment_method">
+                        <option value="">All Payment Methods</option>
+                        {% for value, label in PAYMENT_METHOD_CHOICES %}
+                        <option value="{{ value }}" {% if payment_method_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            name="date_filter">
+                        <option value="">All Time</option>
+                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>Last 30 Days</option>
+                        <option value="year" {% if date_filter == 'year' %}selected{% endif %}>Last Year</option>
+                    </select>
+                </div>
+                
+                <!-- Advanced Filters Toggle -->
+                <div class="lg:col-span-4">
+                    <button type="button" 
+                            onclick="toggleAdvancedFilters()"
+                            class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Advanced Filters</span>
+                    </button>
+                </div>
+                
+                <!-- Advanced Filters (Hidden by default) -->
+                <div id="advancedFilters" class="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-4 hidden">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="date" 
+                               name="start_date" 
+                               value="{{ start_date }}"
+                               class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Start Date">
+                        
+                        <input type="date" 
+                               name="end_date" 
+                               value="{{ end_date }}"
+                               class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="End Date">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" 
+                               name="min_amount" 
+                               value="{{ min_amount }}"
+                               class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Min Amount" step="0.01">
+                        
+                        <input type="number" 
+                               name="max_amount" 
+                               value="{{ max_amount }}"
+                               class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Max Amount" step="0.01">
+                    </div>
+                    
+                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                            name="sort">
+                        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
+                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+                        <option value="-total_amount" {% if sort_by == '-total_amount' %}selected{% endif %}>Highest Amount</option>
+                        <option value="total_amount" {% if sort_by == 'total_amount' %}selected{% endif %}>Lowest Amount</option>
+                        <option value="order_number" {% if sort_by == 'order_number' %}selected{% endif %}>Order # A-Z</option>
+                        <option value="-order_number" {% if sort_by == '-order_number' %}selected{% endif %}>Order # Z-A</option>
+                    </select>
+                    
+                    <div class="flex gap-2">
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                            <i class="fas fa-filter"></i>
+                            <span>Apply Filters</span>
+                        </button>
+                        <a href="{% url 'orders:admin_order_list' %}" 
+                           class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200 flex items-center justify-center">
+                            <i class="fas fa-redo"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div>
+                        <h5 class="text-lg font-bold text-gray-900">Orders List</h5>
+                        <p class="text-gray-600 text-sm">
+                            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} orders
+                        </p>
+                    </div>
+                    
+                    <!-- Bulk Actions -->
+                    <div class="flex items-center gap-2">
+                        <button onclick="printSelectedOrders()"
+                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-2">
+                            <i class="fas fa-print"></i>
+                            <span>Print</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider" style="width: 15%;">Order #</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider" style="width: 20%;">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider" style="width: 20%;">Product</th>
+                            <th class="px6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider" style="width: 10%;">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider" style="width: 15%;">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider" style="width: 10%;">Payment</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider" style="width: 10%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for order in orders %}
+                        <tr class="hover:bg-blue-50 hover:bg-opacity-30 transition duration-150">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-bold text-gray-900">
+                                    <a href="{% url 'orders:admin_order_detail' order.id %}" 
+                                       class="hover:text-blue-600 hover:underline">
+                                        {{ order.order_number }}
+                                    </a>
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ order.created_at|date:"M d, Y" }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm mr-3">
+                                        {{ order.user.first_name|first|upper }}{{ order.user.last_name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ order.user.get_full_name|default:order.user.email }}
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            {{ order.user.email }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    {% if order.product_image_url %}
+                                    <img src="{{ order.product_image_url }}" 
+                                         class="h-10 w-10 rounded-lg object-cover mr-3 border border-gray-200"
+                                         alt="{{ order.product_name }}">
+                                    {% else %}
+                                    <div class="h-10 w-10 rounded-lg bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-bold text-sm mr-3">
+                                        {{ order.product_name|first|upper }}
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                            {{ order.product_name }}
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            Qty: {{ order.quantity }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-bold text-gray-900">
+                                    ₹{{ order.total_amount|floatformat:2 }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ order.payment_method|title }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ order.get_status_display_class }}">
+                                    {{ order.get_order_status_display }}
+                                </span>
+                                {% if order.order_status == 'shipped' %}
+                                <div class="text-xs text-gray-500 mt-1">
+                                    {% if order.tracking_number %}
+                                    <a href="#" class="hover:underline">Track</a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ order.get_payment_status_class }}">
+                                    {{ order.get_payment_status_display }}
+                                </span>
+                                {% if order.paid_at %}
+                                <div class="text-xs text-gray-500 mt-1">
+                                    {{ order.paid_at|date:"M d" }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <a href="{% url 'orders:admin_order_detail' order.id %}" 
+                                       class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="#" 
+                                       class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                                       title="Print Invoice">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    {% if order.can_be_cancelled %}
+                                    <button onclick="showCancelModal('{{ order.id }}', '{{ order.order_number }}')"
+                                            class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                            title="Cancel Order">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-shopping-bag text-gray-400 text-6xl mb-4"></i>
+                                    <h5 class="text-xl font-semibold text-gray-600 mb-2">No orders found</h5>
+                                    {% if search_query or order_status_filter or date_filter %}
+                                    <p class="text-gray-500 mb-4">Try adjusting your filters or search terms</p>
+                                    <a href="{% url 'orders:admin_order_list' %}" 
+                                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700">
+                                        <i class="fas fa-redo mr-2"></i>Reset Filters
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div class="bg-white px-6 py-4 border-t border-gray-200">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing <span class="font-medium">{{ page_obj.start_index }}</span> to <span class="font-medium">{{ page_obj.end_index }}</span> of <span class="font-medium">{{ page_obj.paginator.count }}</span> entries
+                        </p>
+                    </div>
+                    <nav class="flex items-center space-x-2">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if order_status_filter %}&order_status={{ order_status_filter }}{% endif %}{% if payment_status_filter %}&payment_status={{ payment_status_filter }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                           class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if order_status_filter %}&order_status={{ order_status_filter }}{% endif %}{% if payment_status_filter %}&payment_status={{ payment_status_filter }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                               class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if order_status_filter %}&order_status={{ order_status_filter }}{% endif %}{% if payment_status_filter %}&payment_status={{ payment_status_filter }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                           class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Order Modal -->
+<div id="cancelModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Cancel Order</h3>
+                <button onclick="closeCancelModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-lg">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-red-500 mt-0.5 mr-3"></i>
+                    <p class="text-sm text-red-700">Are you sure you want to cancel this order?</p>
+                </div>
+            </div>
+            
+            <form method="post" action="" id="cancelOrderForm">
+                {% csrf_token %}
+                <input type="hidden" name="order_id" id="cancelOrderId">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for cancellation
+                    </label>
+                    <textarea name="cancellation_reason" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" 
+                              rows="3" 
+                              placeholder="Enter reason for cancellation..."
+                              required></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" 
+                            onclick="closeCancelModal()"
+                            class="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-300 font-medium">
+                        Confirm Cancellation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Export Orders</h3>
+                <button onclick="closeExportModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3">
+                <button class="w-full flex items-center justify-center px-4 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition duration-200">
+                    <i class="fas fa-file-csv mr-2"></i>Export as CSV
+                </button>
+                <button class="w-full flex items-center justify-center px-4 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition duration-200">
+                    <i class="fas fa-file-excel mr-2"></i>Export as Excel
+                </button>
+                <button class="w-full flex items-center justify-center px-4 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition duration-200">
+                    <i class="fas fa-file-pdf mr-2"></i>Export as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+    
+    .modal-open {
+        animation: slideIn 0.3s ease-out forwards;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+    // Advanced filters toggle
+    function toggleAdvancedFilters() {
+        const filters = document.getElementById('advancedFilters');
+        filters.classList.toggle('hidden');
+    }
+    
+    // Cancel order modal
+    function showCancelModal(orderId, orderNumber) {
+        const modal = document.getElementById('cancelModal');
+        const form = document.getElementById('cancelOrderForm');
+        const orderIdInput = document.getElementById('cancelOrderId');
+        
+        orderIdInput.value = orderId;
+        form.action = `/admin/orders/${orderId}/cancel/`; // Update with your URL
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeCancelModal() {
+        const modal = document.getElementById('cancelModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+    
+    // Export modal
+    function showExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+    
+    // Close modals on outside click
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'cancelModal') closeCancelModal();
+        if (e.target.id === 'exportModal') closeExportModal();
+    });
+    
+    // Close modals on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCancelModal();
+            closeExportModal();
+        }
+    });
+    
+    // Print functionality
+    function printSelectedOrders() {
+        window.print();
+    }
+</script>
+
+{% endblock %}

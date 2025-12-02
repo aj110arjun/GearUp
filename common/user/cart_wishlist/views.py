@@ -9,9 +9,33 @@ from common.products.models import Product, ProductVariant
 import json
 
 # Helper functions
+# Update this helper function in cart_wishlist/views.py
 def get_or_create_cart(user):
-    cart, created = Cart.objects.get_or_create(user=user)
-    return cart
+    """Get active cart or create a new one"""
+    try:
+        # First, try to get an active cart
+        cart = Cart.objects.get(user=user, is_active=True)
+        return cart
+    except Cart.DoesNotExist:
+        # If no active cart exists, check for any cart
+        cart = Cart.objects.filter(user=user).first()
+        if cart:
+            # Reactivate existing cart
+            cart.is_active = True
+            cart.save()
+            return cart
+        else:
+            # Create new cart with is_active=True
+            cart = Cart.objects.create(user=user, is_active=True)
+            return cart
+    except Cart.MultipleObjectsReturned:
+        # Handle multiple active carts (shouldn't happen, but just in case)
+        carts = Cart.objects.filter(user=user, is_active=True)
+        # Deactivate all except the first one
+        for cart in carts[1:]:
+            cart.is_active = False
+            cart.save()
+        return carts.first()
 
 def get_or_create_wishlist(user):
     wishlist, created = Wishlist.objects.get_or_create(user=user)

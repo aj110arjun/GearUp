@@ -1,20 +1,25 @@
-# products/forms.py
+import os
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
+from django.core.validators import FileExtensionValidator
+from cloudinary.models import CloudinaryField
 from .models import Product, Category, ProductVariant, ProductImage
 from django.forms import inlineformset_factory
+from PIL import Image
+import io
 
 class ProductCreateForm(forms.ModelForm):
     """Simplified form for product creation - only basic fields"""
-    # Add image field to the create form
     image = forms.ImageField(
         required=True,
         widget=forms.FileInput(attrs={
             'class': 'form-control',
             'accept': 'image/*'
         }),
-        help_text='Main product image (required)'
+        help_text='Main product image (required)',
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])]
     )
     
     class Meta:
@@ -57,6 +62,40 @@ class ProductCreateForm(forms.ModelForm):
             'sku': 'Leave blank to auto-generate SKU after saving',
         }
 
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image and hasattr(image, 'file'):  # It's a file upload
+            # Check file size (limit to 10MB)
+            if hasattr(image, 'size') and image.size > 10 * 1024 * 1024:  # 10MB
+                raise ValidationError('Image file size cannot exceed 10MB.')
+            
+            # Check image dimensions
+            try:
+                # Seek to beginning of file
+                if hasattr(image, 'seek'):
+                    image.seek(0)
+                
+                img = Image.open(image)
+                width, height = img.size
+                
+                # Ensure minimum dimensions
+                if width < 300 or height < 300:
+                    raise ValidationError('Image dimensions should be at least 300x300 pixels.')
+                
+                # Ensure aspect ratio is reasonable
+                ratio = width / height
+                if ratio < 0.5 or ratio > 2:
+                    raise ValidationError('Image aspect ratio should be between 0.5 and 2.')
+                    
+            except Exception as e:
+                raise ValidationError('Invalid image file.')
+            
+            # Reset file pointer after reading
+            if hasattr(image, 'seek'):
+                image.seek(0)
+        
+        return image
+
     def clean_sku(self):
         sku = self.cleaned_data.get('sku')
         if sku:
@@ -86,28 +125,17 @@ class ProductCreateForm(forms.ModelForm):
         
         return slug
 
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        if image:
-            # Validate image size (max 5MB)
-            if image.size > 5 * 1024 * 1024:
-                raise ValidationError('Image file too large ( > 5MB )')
-            # Validate file type
-            if not image.name.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                raise ValidationError('Only JPG, JPEG, PNG, and WebP files are allowed.')
-        return image
-
 
 class ProductEditForm(forms.ModelForm):
     """Full form for product editing - includes all fields"""
-    # Add image field for editing main product image
     image = forms.ImageField(
         required=False,
         widget=forms.FileInput(attrs={
             'class': 'form-control',
             'accept': 'image/*'
         }),
-        help_text='Change main product image (optional)'
+        help_text='Change main product image (optional)',
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])]
     )
     
     class Meta:
@@ -221,13 +249,36 @@ class ProductEditForm(forms.ModelForm):
 
     def clean_image(self):
         image = self.cleaned_data.get('image')
-        if image:
-            # Validate image size (max 5MB)
-            if image.size > 5 * 1024 * 1024:
-                raise ValidationError('Image file too large ( > 5MB )')
-            # Validate file type
-            if not image.name.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                raise ValidationError('Only JPG, JPEG, PNG, and WebP files are allowed.')
+        if image and hasattr(image, 'file'):  # It's a file upload, not CloudinaryResource
+            # Check file size (limit to 10MB)
+            if hasattr(image, 'size') and image.size > 10 * 1024 * 1024:  # 10MB
+                raise ValidationError('Image file size cannot exceed 10MB.')
+            
+            # Check image dimensions
+            try:
+                # Seek to beginning of file
+                if hasattr(image, 'seek'):
+                    image.seek(0)
+                
+                img = Image.open(image)
+                width, height = img.size
+                
+                # Ensure minimum dimensions
+                if width < 300 or height < 300:
+                    raise ValidationError('Image dimensions should be at least 300x300 pixels.')
+                
+                # Ensure aspect ratio is reasonable
+                ratio = width / height
+                if ratio < 0.5 or ratio > 2:
+                    raise ValidationError('Image aspect ratio should be between 0.5 and 2.')
+                    
+            except Exception as e:
+                raise ValidationError(f'Invalid image file: {str(e)}')
+            
+            # Reset file pointer after reading
+            if hasattr(image, 'seek'):
+                image.seek(0)
+        
         return image
 
 
@@ -250,7 +301,8 @@ class ProductVariantForm(forms.ModelForm):
                 'class': 'form-control form-control-sm',
                 'placeholder': '0.00',
                 'step': '0.01',
-                'min': '0'
+                'min': '0',
+                'required': True
             }),
             'compare_price': forms.NumberInput(attrs={
                 'class': 'form-control form-control-sm',
@@ -267,10 +319,16 @@ class ProductVariantForm(forms.ModelForm):
                 'class': 'form-check-input'
             }),
         }
+        labels = {
+            'price': 'Price (₹) *',
+            'compare_price': 'Compare Price (₹)',
+        }
 
     def clean_price(self):
         price = self.cleaned_data.get('price')
-        if price is not None and price < 0:
+        if price is None:
+            raise ValidationError('Price is required.')
+        if price < 0:
             raise ValidationError('Price cannot be negative.')
         return price
 
@@ -290,14 +348,19 @@ class ProductVariantForm(forms.ModelForm):
 class ProductImageForm(forms.ModelForm):
     """Form for product images"""
     
+    image = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        }),
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])]
+    )
+    
     class Meta:
         model = ProductImage
-        fields = ['image', 'alt_text', 'is_primary', 'display_order']
+        fields = ['image', 'alt_text', 'is_primary']
         widgets = {
-            'image': forms.FileInput(attrs={
-                'class': 'form-control',
-                'accept': 'image/*'
-            }),
             'alt_text': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': 'Image description for SEO'
@@ -305,26 +368,50 @@ class ProductImageForm(forms.ModelForm):
             'is_primary': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
-            'display_order': forms.NumberInput(attrs={
-                'class': 'form-control form-control-sm',
-                'placeholder': '0',
-                'min': '0'
-            }),
         }
         labels = {
             'is_primary': 'Set as primary image',
             'display_order': 'Display order (lower numbers show first)',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If instance exists and has image, make the field not required
+        if self.instance and self.instance.pk and self.instance.image:
+            self.fields['image'].required = False
+
     def clean_image(self):
         image = self.cleaned_data.get('image')
-        if image:
-            # Validate image size (max 5MB)
-            if image.size > 5 * 1024 * 1024:
-                raise ValidationError('Image file too large ( > 5MB )')
-            # Validate file type
-            if not image.name.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                raise ValidationError('Only JPG, JPEG, PNG, and WebP files are allowed.')
+        if image and hasattr(image, 'file'):  # It's a file upload, not CloudinaryResource
+            # Check file size (limit to 10MB)
+            if hasattr(image, 'size') and image.size > 10 * 1024 * 1024:  # 10MB
+                raise ValidationError('Image file size cannot exceed 10MB.')
+            
+            # Check image dimensions
+            try:
+                # Seek to beginning of file
+                if hasattr(image, 'seek'):
+                    image.seek(0)
+                
+                img = Image.open(image)
+                width, height = img.size
+                
+                # Ensure minimum dimensions
+                if width < 300 or height < 300:
+                    raise ValidationError('Image dimensions should be at least 300x300 pixels.')
+                
+                # Ensure aspect ratio is reasonable
+                ratio = width / height
+                if ratio < 0.5 or ratio > 2:
+                    raise ValidationError('Image aspect ratio should be between 0.5 and 2.')
+                    
+            except Exception as e:
+                raise ValidationError(f'Invalid image file: {str(e)}')
+            
+            # Reset file pointer after reading
+            if hasattr(image, 'seek'):
+                image.seek(0)
+        
         return image
 
 
@@ -343,10 +430,11 @@ ProductImageFormSet = inlineformset_factory(
     Product,
     ProductImage,
     form=ProductImageForm,
-    extra=3,  # Show 3 empty image forms by default
+    extra=1,  # Show only 1 empty image form by default
     can_delete=True,
     min_num=0,
     validate_min=False,
+    max_num=10,  # Limit to 10 images
 )
 
 

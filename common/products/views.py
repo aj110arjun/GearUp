@@ -1,9 +1,9 @@
 import json
-
+import os
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from django.db.models import Q, Count, Sum,  Min, Max
+from django.db.models import Q, Count, Sum, Min, Max
 from django.db import transaction
 from django.utils.text import slugify
 from django.contrib.admin.views.decorators import staff_member_required
@@ -13,6 +13,8 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from PIL import Image
+import io
 
 from common.user.cart_wishlist.models import Cart, CartItem, Wishlist
 from .models import Product, ProductVariant, Category, ProductImage
@@ -83,34 +85,14 @@ def product_listing(request):
     
     return render(request, 'admin/products/product_list.html', context)
 
-@staff_member_required
+@staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_detail(request, product_slug):
-    # Try different prefetch options based on your model structure
-    try:
-        # Option 1: If you have a separate ProductImage model
-        product = get_object_or_404(
-            Product.objects.prefetch_related('productimage_set', 'variants', 'category'), 
-            slug=product_slug
-        )
-        # Get images based on the relationship name
-        images = product.productimage_set.all()
-    except:
-        try:
-            # Option 2: If the related name is 'images'
-            product = get_object_or_404(
-                Product.objects.prefetch_related('images', 'variants', 'category'), 
-                slug=product_slug
-            )
-            images = product.images.all()
-        except:
-            # Option 3: If it's a single image field or different relationship
-            product = get_object_or_404(
-                Product.objects.prefetch_related('variants', 'category'), 
-                slug=product_slug
-            )
-            images = []
-    
+    product = get_object_or_404(
+        Product.objects.prefetch_related('images', 'variants', 'category'), 
+        slug=product_slug
+    )
+    images = product.images.all()
     variants = product.variants.all()
     
     # Stock summary
@@ -132,10 +114,7 @@ def product_detail(request, product_slug):
     return render(request, 'admin/products/product_detail.html', context)
 
 
-# forms already imported above
-
-# products/views.py
-@staff_member_required
+@staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_create(request):
     """Create a new product with basic information and image upload"""
@@ -203,7 +182,6 @@ def product_create(request):
                 request, 
                 'Please correct the errors below.'
             )
-            # Print form errors for debugging
             print("Form errors:", form.errors)
     else:
         # GET request - show empty form
@@ -222,43 +200,39 @@ def product_create(request):
     return render(request, 'admin/products/product_create.html', context)
 
 
-@staff_member_required
+@staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_edit(request, product_slug):
     """Full product editing with variants and images"""
     product = get_object_or_404(Product, slug=product_slug)
     
     if request.method == 'POST':
+        print("POST request received")
+        print("FILES in request:", dict(request.FILES))
+        print("POST data keys:", request.POST.keys())
+        
         form = ProductEditForm(request.POST, request.FILES, instance=product)
         variant_formset = ProductVariantFormSet(request.POST, instance=product)
         image_formset = ProductImageFormSet(request.POST, request.FILES, instance=product)
+        
+        # Debug: Check all forms
+        print(f"Form valid: {form.is_valid()}")
+        print(f"Variant formset valid: {variant_formset.is_valid()}")
+        print(f"Image formset valid: {image_formset.is_valid()}")
+        
+        # Check each image form individually
+        for i, image_form in enumerate(image_formset):
+            print(f"Image form {i} valid: {image_form.is_valid()}")
+            if not image_form.is_valid():
+                print(f"Image form {i} errors: {image_form.errors}")
         
         if form.is_valid() and variant_formset.is_valid() and image_formset.is_valid():
             try:
                 with transaction.atomic():
                     # Save the main product form
-                    product = form.save(commit=False)
+                    product = form.save()
                     
-                    # Handle main image update
-                    if 'image' in request.FILES:
-                        product.image = request.FILES['image']
-                        # Update or create primary ProductImage
-                        primary_image, created = ProductImage.objects.get_or_create(
-                            product=product,
-                            is_primary=True,
-                            defaults={
-                                'image': product.image,
-                                'alt_text': f"{product.name} - Main Image",
-                                'display_order': 0
-                            }
-                        )
-                        if not created:
-                            primary_image.image = product.image
-                            primary_image.save()
-                    
-                    product.save()
-                    
-                    # Save variants
+                    # Handle variants
                     variants = variant_formset.save(commit=False)
                     for variant in variants:
                         variant.product = product
@@ -268,14 +242,58 @@ def product_edit(request, product_slug):
                     for variant in variant_formset.deleted_objects:
                         variant.delete()
                     
-                    # Save images
+                    # Handle images
                     images = image_formset.save(commit=False)
-                    for image in images:
+                    for i, image in enumerate(images):
                         image.product = product
+                        
+                        # Check if this image form has a file
+                        image_form = image_formset.forms[i]
+                        if 'image' in image_form.cleaned_data and image_form.cleaned_data['image']:
+                            # Check if it's a new file upload (has name attribute) or CloudinaryResource
+                            img_data = image_form.cleaned_data['image']
+                            if hasattr(img_data, 'name'):
+                                print(f"Image {i}: Saving new image file: {img_data.name}")
+                            else:
+                                print(f"Image {i}: Cloudinary resource - {type(img_data)}")
+                        
+                        # Validate image dimensions before saving (only for new file uploads)
+                        if image.image and hasattr(image.image, 'file'):
+                            try:
+                                # Open image to check dimensions
+                                # Seek to beginning if it's a file object
+                                if hasattr(image.image, 'seek'):
+                                    image.image.seek(0)
+                                
+                                img = Image.open(image.image)
+                                width, height = img.size
+                                print(f"Image {i}: Dimensions: {width}x{height}")
+                                
+                                # Ensure minimum dimensions
+                                if width < 300 or height < 300:
+                                    messages.warning(
+                                        request, 
+                                        f'Image {i+1} is small ({width}x{height}). Recommended minimum is 300x300 pixels.'
+                                    )
+                                
+                                # Reset file pointer
+                                if hasattr(image.image, 'seek'):
+                                    image.image.seek(0)
+                            except Exception as e:
+                                print(f"Error checking image dimensions: {e}")
+                        elif image.image:
+                            print(f"Image {i}: Cloudinary image - skipping dimension check")
+                        
                         image.save()
                     
                     # Delete marked images
                     for image in image_formset.deleted_objects:
+                        # If deleting a primary image, make another one primary
+                        if image.is_primary:
+                            remaining_images = ProductImage.objects.filter(product=product).exclude(pk=image.pk)
+                            if remaining_images.exists():
+                                remaining_images.first().is_primary = True
+                                remaining_images.first().save()
                         image.delete()
                     
                     # Ensure only one primary image
@@ -284,6 +302,12 @@ def product_edit(request, product_slug):
                         # Keep the first one as primary, set others to False
                         first_primary = primary_images.first()
                         primary_images.exclude(pk=first_primary.pk).update(is_primary=False)
+                    elif primary_images.count() == 0:
+                        # If no primary image, set the first one as primary
+                        first_image = ProductImage.objects.filter(product=product).first()
+                        if first_image:
+                            first_image.is_primary = True
+                            first_image.save()
                     
                     messages.success(
                         request, 
@@ -296,17 +320,32 @@ def product_edit(request, product_slug):
                     request, 
                     f'An error occurred while updating the product: {str(e)}'
                 )
+                print(f"Error: {str(e)}")
+                import traceback
+                traceback.print_exc()
         else:
-            messages.error(request, 'Please correct the errors below.')
-            # Add form errors to messages
-            if form.errors:
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        messages.error(request, f"{field}: {error}")
-            if variant_formset.errors:
-                messages.error(request, "Please check variant form errors.")
-            if image_formset.errors:
-                messages.error(request, "Please check image form errors.")
+            # Collect all errors
+            all_errors = []
+            
+            if not form.is_valid():
+                all_errors.append(f"Product form errors: {form.errors}")
+            
+            if not variant_formset.is_valid():
+                all_errors.append(f"Variant formset errors: {variant_formset.errors}")
+            
+            if not image_formset.is_valid():
+                all_errors.append(f"Image formset errors: {image_formset.errors}")
+            
+            error_message = "Please correct the errors below."
+            if all_errors:
+                error_message += " " + " ".join(all_errors)
+            
+            messages.error(request, error_message)
+            
+            # Debug form errors
+            print("Form errors:", form.errors)
+            print("Variant formset errors:", variant_formset.errors)
+            print("Image formset errors:", image_formset.errors)
     else:
         form = ProductEditForm(instance=product)
         variant_formset = ProductVariantFormSet(instance=product)
@@ -327,7 +366,10 @@ def product_edit(request, product_slug):
     return render(request, 'admin/products/product_edit.html', context)
 
 
-@staff_member_required
+
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def category_list(request):
     # Get all categories with related data and annotate with counts
@@ -393,12 +435,12 @@ def category_list(request):
     return render(request, 'admin/categories/category_list.html', context)
 
 
-@staff_member_required
+@staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def category_create(request):
     return handle_category_form(request)
 
-@staff_member_required
+@staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def category_edit(request, category_slug):
     category = get_object_or_404(Category, slug=category_slug)
@@ -427,7 +469,7 @@ def handle_category_form(request, category_instance=None):
             action = "updated" if is_edit else "created"
             messages.success(request, f'Category "{category.name}" has been {action} successfully!')
             
-            return redirect('products:category_list')  # You'll need to create this view
+            return redirect('products:category_list')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -457,11 +499,6 @@ def product_list_user(request):
     category_id = request.GET.get('category')
     search_query = request.GET.get('q')
     sort_by = request.GET.get('sort', '')
-    
-    # Debug prints
-    print(f"Category ID: {category_id}")
-    print(f"Search Query: {search_query}")
-    print(f"Sort By: {sort_by}")
     
     # Apply filters
     if category_id and category_id != '':

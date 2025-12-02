@@ -133,7 +133,7 @@ def admin_user_list(request):
     
     return render(request, 'admin/users/user_list.html', context)
 
-@staff_member_required(login_url='user_auth:signin')
+@staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def admin_user_detail(request, user_id):
     """Admin user detail view - shows basic user information"""
