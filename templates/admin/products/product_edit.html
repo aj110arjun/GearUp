@@ -46,6 +46,14 @@
             </svg>
             Back to Product
           </a>
+          <!-- Add Delete Product Button -->
+          <button type="button" id="delete-product-btn"
+                  class="inline-flex items-center px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg border border-red-700 shadow-sm hover:bg-red-700 transition-all duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete Product
+          </button>
         </div>
       </div>
     </div>
@@ -72,11 +80,46 @@
     </div>
     {% endif %}
 
+    <!-- Form Errors -->
+    {% if form.errors or variant_formset.errors or image_formset.errors %}
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+      <h3 class="text-lg font-semibold text-red-700 mb-2">Please correct the following errors:</h3>
+      <ul class="list-disc list-inside text-red-600 space-y-1">
+        {% for field, errors in form.errors.items %}
+          <li>{{ field }}: {{ errors.0 }}</li>
+        {% endfor %}
+        
+        {% for form in variant_formset %}
+          {% for field, errors in form.errors.items %}
+            {% if errors %}
+              <li>Variant {{ forloop.parentloop.counter }} - {{ field }}: {{ errors.0 }}</li>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+        
+        {% for form in image_formset %}
+          {% for field, errors in form.errors.items %}
+            {% if errors %}
+              <li>Image {{ forloop.parentloop.counter }} - {{ field }}: {{ errors.0 }}</li>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
     <!-- Image Cropping Modal -->
     <div id="crop-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl mx-4 overflow-hidden">
         <div class="border-b border-gray-200 px-6 py-4">
-          <h2 class="text-xl font-semibold text-gray-900">Crop Image</h2>
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900">Crop Image</h2>
+            <button type="button" id="close-crop-modal" class="text-gray-400 hover:text-gray-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="p-6">
           <div class="flex flex-col md:flex-row gap-6">
@@ -108,6 +151,46 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900">Delete Product</h2>
+            <button type="button" id="close-delete-modal" class="text-gray-400 hover:text-gray-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="mb-6">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Are you sure?</h3>
+            <p class="text-gray-600 text-center">
+              You are about to delete <span class="font-semibold">"{{ product.name }}"</span>. This action cannot be undone.
+            </p>
+            <p class="text-sm text-red-600 text-center mt-2">
+              All variants, images, and related data will be permanently deleted.
+            </p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+              Cancel
+            </button>
+            <button type="button" id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+              Yes, Delete Product
+            </button>
           </div>
         </div>
       </div>
@@ -197,22 +280,35 @@
           <!-- Product Variants -->
           <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="border-b border-gray-200 px-6 py-4">
-              <h2 class="text-lg font-semibold text-gray-900">Product Variants</h2>
-              <p class="text-sm text-gray-600 mt-1">Manage sizes, colors, and pricing</p>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="text-lg font-semibold text-gray-900">Product Variants</h2>
+                  <p class="text-sm text-gray-600 mt-1">Manage sizes, colors, and pricing</p>
+                </div>
+                <button type="button" id="add-variant" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Variant
+                </button>
+              </div>
             </div>
             <div class="p-6">
               {{ variant_formset.management_form }}
               
               <div id="variant-forms" class="space-y-4">
                 {% for variant_form in variant_formset %}
-                <div class="variant-form border border-gray-200 rounded-lg p-4 relative">
+                <div class="variant-form group border border-gray-200 rounded-lg p-4 relative hover:border-gray-300 transition-colors">
                   {{ variant_form.id }}
                   
                   {% if variant_form.instance.pk %}
-                  <div class="absolute top-2 right-2">
-                    <label class="flex items-center text-sm text-red-600 cursor-pointer hover:text-red-700">
+                  <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <label class="flex items-center text-xs bg-red-50 text-red-600 hover:text-red-700 hover:bg-red-100 px-2 py-1 rounded cursor-pointer transition-colors">
                       {{ variant_form.DELETE }}
-                      <span class="ml-2">Delete</span>
+                      <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span class="ml-1">Delete</span>
                     </label>
                   </div>
                   {% endif %}
@@ -257,50 +353,87 @@
                 </div>
                 {% endfor %}
               </div>
-              
-              <button type="button" id="add-variant" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Add Variant
-              </button>
             </div>
           </div>
 
           <!-- Product Images -->
+          <!-- Product Images Section - Updated -->
           <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="border-b border-gray-200 px-6 py-4">
-              <h2 class="text-lg font-semibold text-gray-900">Product Images</h2>
-              <p class="text-sm text-gray-600 mt-1">Upload and manage product images</p>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="text-lg font-semibold text-gray-900">Product Images</h2>
+                  <p class="text-sm text-gray-600 mt-1">
+                    Upload and manage product images. Primary images cannot be deleted.
+                  </p>
+                </div>
+                <button type="button" id="add-image" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Image
+                </button>
+              </div>
             </div>
             <div class="p-6">
               {{ image_formset.management_form }}
               
               <div id="image-forms" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {% for image_form in image_formset %}
-                <div class="image-form border border-gray-200 rounded-lg p-4 relative">
+                <div class="image-form group border border-gray-200 rounded-lg p-4 relative hover:border-gray-300 transition-colors 
+                            {% if image_form.instance.is_primary %}border-2 border-indigo-300 bg-indigo-50{% endif %}">
                   {{ image_form.id }}
                   
+                  <!-- Primary Image Badge -->
+                  {% if image_form.instance.is_primary %}
+                  <div class="absolute top-2 left-2 z-10">
+                    <span class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-md">
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                      Primary Image
+                    </span>
+                  </div>
+                  {% endif %}
+                  
+                  <!-- Image Preview -->
                   {% if image_form.instance.pk and image_form.instance.image %}
                   <div class="mb-4 relative">
                     <img src="{{ image_form.instance.image.url }}" alt="{{ image_form.instance.alt_text }}" class="w-full h-48 object-cover rounded-lg">
-                    <button type="button" class="crop-existing-image absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors" data-image-url="{{ image_form.instance.image.url }}">
-                      <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                    <div class="absolute top-2 right-2 flex gap-1">
+                      <button type="button" class="crop-existing-image bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors" data-image-url="{{ image_form.instance.image.url }}" title="Crop Image">
+                        <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  {% endif %}
+                  
+                  <!-- Delete Button (Hidden for Primary Images) -->
+                  {% if not image_form.instance.is_primary %}
+                    {% if image_form.instance.pk %}
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <label class="flex items-center text-xs bg-red-50 text-red-600 hover:text-red-700 hover:bg-red-100 px-2 py-1 rounded cursor-pointer transition-colors">
+                        {{ image_form.DELETE }}
+                        <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span class="ml-1">Delete</span>
+                      </label>
+                    </div>
+                    {% endif %}
+                  {% else %}
+                    <!-- Message for Primary Image -->
+                    <div class="text-xs text-indigo-600 mb-2">
+                      <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                    </button>
-                  </div>
+                      This Image Can't be Deleted. What You Can do is Change The Image
+                    </div>
                   {% endif %}
                   
-                  {% if image_form.instance.pk %}
-                  <div class="absolute top-2 right-2 bg-white rounded px-2 py-1">
-                    <label class="flex items-center text-xs text-red-600 cursor-pointer hover:text-red-700">
-                      {{ image_form.DELETE }}
-                      <span class="ml-1">Delete</span>
-                    </label>
-                  </div>
-                  {% endif %}
-                  
+                  <!-- Form Fields -->
                   <div class="space-y-3">
                     <div>
                       <label class="block text-xs font-medium text-gray-700 mb-1">Image</label>
@@ -309,25 +442,44 @@
                         <div class="image-preview-container mt-2 hidden">
                           <div class="relative">
                             <img id="preview-{{ forloop.counter0 }}" class="w-full h-48 object-cover rounded-lg border border-gray-200">
-                            <button type="button" class="crop-new-image absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors" data-input-id="id_images-{{ forloop.counter0 }}-image">
-                              <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                              </svg>
-                            </button>
+                            <div class="absolute top-2 right-2 flex gap-1">
+                              <button type="button" class="crop-new-image bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors" data-input-id="id_images-{{ forloop.counter0 }}-image" title="Crop Image">
+                                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                    
                     <div>
                       <label class="block text-xs font-medium text-gray-700 mb-1">Alt Text</label>
                       {{ image_form.alt_text }}
                     </div>
-                    <div>
+                    
+                    <!-- Primary Image Checkbox (Only for non-primary images) -->
+                    {% if not image_form.instance.is_primary %}
+                    <div class="flex items-center">
                       <label class="flex items-center cursor-pointer">
                         {{ image_form.is_primary }}
-                        <span class="ml-2 text-sm text-gray-700">Primary Image</span>
+                        <span class="ml-2 text-sm text-gray-700">Set as Primary</span>
                       </label>
                     </div>
+                    {% else %}
+                      {{ image_form.is_primary.as_hidden }}
+                      <div class="text-xs text-indigo-600 mt-1">
+                        <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        This is the primary image
+                      </div>
+                    {% endif %}
+                    
+                    {% if image_form.instance.pk %}
+                    <span class="text-xs text-gray-500">ID: {{ image_form.instance.id }}</span>
+                    {% endif %}
                   </div>
                   
                   {% if image_form.errors %}
@@ -338,13 +490,6 @@
                 </div>
                 {% endfor %}
               </div>
-              
-              <button type="button" id="add-image" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Add Image
-              </button>
             </div>
           </div>
 
@@ -456,8 +601,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Cropper.js variables
   let cropper = null;
-  let currentImageInput = null;
-  let currentPreviewImg = null;
+  let currentImageInputId = null;
+  let originalImageBlob = null;
   
   // Handle form submission
   if (form) {
@@ -483,15 +628,31 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Clear values
       newForm.querySelectorAll('input, select, textarea').forEach(input => {
-        if (input.type !== 'checkbox') {
+        if (input.type !== 'checkbox' && input.type !== 'hidden') {
           input.value = '';
-        } else {
+        } else if (input.type === 'checkbox') {
           input.checked = false;
         }
       });
       
+      // Remove delete button for new form
+      const deleteBtn = newForm.querySelector('label[for*="DELETE"]');
+      if (deleteBtn) {
+        deleteBtn.closest('.absolute').remove();
+      }
+      
+      // Clear any existing errors
+      const errorDiv = newForm.querySelector('.text-red-500');
+      if (errorDiv) errorDiv.innerHTML = '';
+      
       variantForms.appendChild(newForm);
       totalForms.value = formCount + 1;
+      
+      // Show a brief highlight effect on the new form
+      newForm.style.boxShadow = '0 0 0 2px rgba(79, 70, 229, 0.3)';
+      setTimeout(() => {
+        newForm.style.boxShadow = '';
+      }, 1000);
     });
   }
   
@@ -512,12 +673,28 @@ document.addEventListener('DOMContentLoaded', function() {
       // Clear values and remove existing image preview
       newForm.querySelectorAll('img').forEach(img => img.remove());
       newForm.querySelectorAll('input, select, textarea').forEach(input => {
-        if (input.type !== 'checkbox') {
+        if (input.type !== 'checkbox' && input.type !== 'hidden') {
           input.value = '';
-        } else {
+        } else if (input.type === 'checkbox') {
           input.checked = false;
         }
       });
+      
+      // Remove delete button for new form
+      const deleteBtn = newForm.querySelector('label[for*="DELETE"]');
+      if (deleteBtn) {
+        deleteBtn.closest('.absolute').remove();
+      }
+      
+      // Remove existing image preview
+      const existingImg = newForm.querySelector('img[src*="cloudinary"]');
+      if (existingImg) {
+        existingImg.closest('.mb-4').remove();
+      }
+      
+      // Clear any existing errors
+      const errorDiv = newForm.querySelector('.text-red-500');
+      if (errorDiv) errorDiv.innerHTML = '';
       
       // Add image preview functionality to the new form
       const imageInput = newForm.querySelector('input[type="file"]');
@@ -528,6 +705,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (imageInput && previewContainer) {
         imageInput.addEventListener('change', function(e) {
           if (this.files && this.files[0]) {
+            originalImageBlob = this.files[0];
             const reader = new FileReader();
             
             reader.onload = function(e) {
@@ -545,6 +723,12 @@ document.addEventListener('DOMContentLoaded', function() {
       
       imageForms.appendChild(newForm);
       totalImageForms.value = formCount + 1;
+      
+      // Show a brief highlight effect on the new form
+      newForm.style.boxShadow = '0 0 0 2px rgba(79, 70, 229, 0.3)';
+      setTimeout(() => {
+        newForm.style.boxShadow = '';
+      }, 1000);
     });
   }
   
@@ -557,6 +741,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (imageInput && previewContainer) {
       imageInput.addEventListener('change', function(e) {
         if (this.files && this.files[0]) {
+          originalImageBlob = this.files[0];
           const reader = new FileReader();
           
           reader.onload = function(e) {
@@ -570,6 +755,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
+// Prevent deleting primary images
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.name && e.target.name.includes('DELETE')) {
+    const formElement = e.target.closest('.image-form');
+    if (formElement && formElement.classList.contains('border-indigo-300')) {
+      // This is a primary image, prevent deletion
+      e.target.checked = false;
+      showNotification('Primary images cannot be deleted. Set another image as primary first.', 'error');
+      return;
+    }
+  }
+});
+  
   // Image cropping functionality
   const cropModal = document.getElementById('crop-modal');
   const cropImage = document.getElementById('crop-image');
@@ -577,6 +775,14 @@ document.addEventListener('DOMContentLoaded', function() {
   const zoomSlider = document.getElementById('zoom-slider');
   const cancelCrop = document.getElementById('cancel-crop');
   const applyCrop = document.getElementById('apply-crop');
+  const closeCropModalBtn = document.getElementById('close-crop-modal');
+  
+  // Delete product functionality
+  const deleteProductBtn = document.getElementById('delete-product-btn');
+  const deleteModal = document.getElementById('delete-modal');
+  const closeDeleteModalBtn = document.getElementById('close-delete-modal');
+  const cancelDeleteBtn = document.getElementById('cancel-delete');
+  const confirmDeleteBtn = document.getElementById('confirm-delete');
   
   // Open crop modal for new images
   document.addEventListener('click', function(e) {
@@ -588,11 +794,17 @@ document.addEventListener('DOMContentLoaded', function() {
       const imageInput = document.getElementById(inputId);
       
       if (imageInput && imageInput.files && imageInput.files[0]) {
-        currentImageInput = imageInput;
-        const previewImg = button.closest('.image-preview-container').querySelector('img');
-        currentPreviewImg = previewImg;
+        currentImageInputId = inputId;
+        originalImageBlob = imageInput.files[0];
         
-        openCropModal(previewImg.src);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          openCropModal(e.target.result);
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+      } else if (imageInput) {
+        // If no file selected, show an alert
+        alert('Please select an image first before cropping.');
       }
     }
     
@@ -603,6 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      e.target : e.target.closest('.crop-existing-image');
       const imageUrl = button.getAttribute('data-image-url');
       
+      currentImageInputId = null; // No input for existing images
       openCropModal(imageUrl);
     }
   });
@@ -611,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function openCropModal(imageSrc) {
     cropImage.src = imageSrc;
     cropModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
     
     // Initialize cropper
     if (cropper) {
@@ -654,47 +868,187 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Cancel crop
   cancelCrop.addEventListener('click', function() {
+    closeCropModal();
+  });
+  
+  // Close crop modal with X button
+  closeCropModalBtn.addEventListener('click', function() {
+    closeCropModal();
+  });
+  
+  // Close crop modal function
+  function closeCropModal() {
     cropModal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
     if (cropper) {
       cropper.destroy();
       cropper = null;
     }
-  });
+  }
   
   // Apply crop
   applyCrop.addEventListener('click', function() {
     if (cropper) {
       // Get cropped canvas
       const canvas = cropper.getCroppedCanvas({
-        width: 800,
-        height: 800,
+        width: 1200,
+        height: 1200,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
       });
       
-      // Convert canvas to blob
+      // Convert canvas to blob with higher quality
       canvas.toBlob(function(blob) {
-        // Create a new file from the blob
-        const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
-        
-        // Create a new FileList (this is a workaround since FileList is read-only)
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        
-        // Update the file input with the cropped image
-        if (currentImageInput) {
-          currentImageInput.files = dataTransfer.files;
-          
-          // Update the preview image
-          if (currentPreviewImg) {
-            currentPreviewImg.src = URL.createObjectURL(file);
-          }
+        if (!blob) {
+          alert('Failed to crop image. Please try again.');
+          return;
         }
         
-        // Close modal
-        cropModal.classList.add('hidden');
-        cropper.destroy();
-        cropper = null;
+        // Create a new file from the blob with a proper name
+        const fileName = originalImageBlob ? originalImageBlob.name : 'cropped-image.jpg';
+        const file = new File([blob], fileName, { 
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
         
-      }, 'image/jpeg', 0.9);
+        // If we have an input to update (new image upload)
+        if (currentImageInputId) {
+          const imageInput = document.getElementById(currentImageInputId);
+          if (imageInput) {
+            // Create a new FileList
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            
+            // Update the file input
+            imageInput.files = dataTransfer.files;
+            
+            // Trigger change event
+            const event = new Event('change', { bubbles: true });
+            imageInput.dispatchEvent(event);
+            
+            // Update preview
+            const previewContainer = imageInput.closest('.image-upload-container');
+            if (previewContainer) {
+              const previewImg = previewContainer.querySelector('.image-preview-container img');
+              if (previewImg) {
+                previewImg.src = URL.createObjectURL(file);
+                const container = previewImg.closest('.image-preview-container');
+                if (container) {
+                  container.classList.remove('hidden');
+                }
+              }
+            }
+            
+            // Show success message
+            showNotification('Image cropped successfully! Click "Update Product" to save.', 'success');
+          }
+        } else {
+          // For existing images, we need to handle differently
+          showNotification('For existing images, please download the cropped image and re-upload it.', 'info');
+        }
+        
+        closeCropModal();
+        
+      }, 'image/jpeg', 0.95); // Higher quality
+    }
+  });
+  
+  // Delete product functionality
+  if (deleteProductBtn) {
+    deleteProductBtn.addEventListener('click', function() {
+      deleteModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+  
+  // Close delete modal
+  function closeDeleteModal() {
+    deleteModal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+  }
+  
+  if (closeDeleteModalBtn) {
+    closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+  }
+  
+  if (cancelDeleteBtn) {
+    cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+  }
+  
+  // Confirm delete
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', function() {
+      // Create a form and submit it
+      const deleteForm = document.createElement('form');
+      deleteForm.method = 'POST';
+      deleteForm.action = '';
+      
+      // Add CSRF token
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = '{{ csrf_token }}';
+      deleteForm.appendChild(csrfInput);
+      
+      // Submit the form
+      document.body.appendChild(deleteForm);
+      deleteForm.submit();
+    });
+  }
+  
+  // Show notification function
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg ${
+      type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
+      type === 'error' ? 'bg-red-50 text-red-800 border border-red-200' :
+      'bg-blue-50 text-blue-800 border border-blue-200'
+    }`;
+    notification.innerHTML = `
+      <div class="flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${
+            type === 'success' ? 'M5 13l4 4L19 7' :
+            type === 'error' ? 'M6 18L18 6M6 6l12 12' :
+            'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+          }" />
+        </svg>
+        <span>${message}</span>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 5000);
+  }
+  
+  // Close modal on escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !cropModal.classList.contains('hidden')) {
+      closeCropModal();
+    }
+    if (e.key === 'Escape' && !deleteModal.classList.contains('hidden')) {
+      closeDeleteModal();
+    }
+  });
+  
+  // Close modal on background click
+  cropModal.addEventListener('click', function(e) {
+    if (e.target === cropModal) {
+      closeCropModal();
+    }
+  });
+  
+  deleteModal.addEventListener('click', function(e) {
+    if (e.target === deleteModal) {
+      closeDeleteModal();
     }
   });
 });
@@ -735,6 +1089,25 @@ document.addEventListener('DOMContentLoaded', function() {
   border: 1px solid #d1d5db;
   border-radius: 0.25rem;
   cursor: pointer;
+}
+
+/* Primary image styling */
+.border-indigo-300 {
+  border-color: #a5b4fc;
+}
+
+.bg-indigo-50 {
+  background-color: #eef2ff;
+}
+
+/* Disabled delete button for primary images */
+.image-form.border-indigo-300 label[for*="DELETE"] {
+  display: none !important;
+}
+
+/* Info message styling */
+.text-indigo-600 {
+  color: #4f46e5;
 }
 
 .form-check-input:checked {
@@ -797,6 +1170,92 @@ document.addEventListener('DOMContentLoaded', function() {
 .cropper-point.point-n {
   width: 6px;
   height: 6px;
+}
+
+/* Image preview styles */
+.image-preview-container img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.image-preview-container.hidden {
+  display: none;
+}
+
+/* File input styling */
+input[type="file"] {
+  padding: 0.5rem;
+  border: 2px dashed #d1d5db;
+  border-radius: 0.5rem;
+  width: 100%;
+  cursor: pointer;
+}
+
+input[type="file"]:hover {
+  border-color: #4f46e5;
+}
+
+input[type="file"]::file-selector-button {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: #4338ca;
+}
+
+/* Delete button styles */
+label[for*="DELETE"] {
+  transition: all 0.2s;
+}
+
+label[for*="DELETE"]:hover {
+  transform: scale(1.05);
+}
+
+/* Form transition effects */
+.variant-form, .image-form {
+  transition: all 0.3s ease;
+}
+
+/* Disabled form styles */
+.variant-form[style*="opacity: 0.5"], 
+.image-form[style*="opacity: 0.5"] {
+  position: relative;
+}
+
+.variant-form[style*="opacity: 0.5"]::after,
+.image-form[style*="opacity: 0.5"]::after {
+  content: "Marked for deletion";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Animation for new forms */
+@keyframes highlight {
+  0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.highlight-new {
+  animation: highlight 1s ease;
 }
 </style>
 {% endblock content %}

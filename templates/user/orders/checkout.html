@@ -524,69 +524,102 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  function initiateRazorpayPayment() {
-    const orderTotal = parseFloat('{{ final_total }}') * 100; // Convert to paise
+  // Update the initiateRazorpayPayment function
+function initiateRazorpayPayment() {
+    const orderTotal = parseFloat('{{ final_total }}');
     
     // Show loading
     loadingOverlay.classList.remove('hidden');
     
     // Create Razorpay order via AJAX
-    fetch("{% url 'wallet:create_razorpay_order' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}'
-      },
-      body: JSON.stringify({
-        amount: orderTotal
-      })
+    fetch("{% url 'orders:create_razorpay_order' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({})
     })
     .then(response => response.json())
     .then(data => {
-      loadingOverlay.classList.add('hidden');
-      
-      if (data.success) {
-        const options = {
-          key: data.key_id,
-          amount: data.amount,
-          currency: 'INR',
-          name: 'GearUp',
-          description: 'Order Payment - {{ cart_item_count }} items',
-          order_id: data.order_id,
-          handler: function(response) {
-            // Payment successful
-            document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
-            document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
-            document.getElementById('razorpay_signature').value = response.razorpay_signature;
-            submitOrder();
-          },
-          prefill: {
-            name: '{{ user.get_full_name|default:user.username }}',
-            email: '{{ user.email }}',
-            contact: '{{ user.phone_number|default:"" }}'
-          },
-          theme: {
-            color: '#10b981'
-          },
-          modal: {
-            ondismiss: function() {
-              console.log('Payment modal closed');
-            }
-          }
-        };
+        loadingOverlay.classList.add('hidden');
         
-        const rzp = new Razorpay(options);
-        rzp.open();
-      } else {
-        alert('Failed to initialize payment: ' + data.error);
-      }
+        if (data.success) {
+            const options = {
+                key: data.key_id,
+                amount: data.amount,
+                currency: 'INR',
+                name: 'GearUp',
+                description: 'Order Payment',
+                order_id: data.order_id,
+                handler: function(response) {
+                    // Payment successful
+                    console.log('Payment successful:', response);
+                    
+                    // Set the hidden fields
+                    document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+                    document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+                    document.getElementById('razorpay_signature').value = response.razorpay_signature;
+                    
+                    // Submit the form
+                    submitOrder();
+                },
+                prefill: {
+                    name: '{{ user.get_full_name|default:user.username }}',
+                    email: '{{ user.email }}',
+                    contact: '{{ user.phone_number|default:"" }}'
+                },
+                theme: {
+                    color: '#10b981'
+                },
+                modal: {
+                    ondismiss: function() {
+                        console.log('Payment modal closed');
+                        alert('Payment was cancelled. Please try again.');
+                    }
+                },
+                notes: {
+                    order_type: 'cart_checkout',
+                    user_id: '{{ user.id }}'
+                }
+            };
+            
+            const rzp = new Razorpay(options);
+            rzp.open();
+            
+            // Handle errors
+            rzp.on('payment.failed', function(response) {
+                console.error('Payment failed:', response.error);
+                alert('Payment failed. Please try again. Error: ' + 
+                      (response.error.description || response.error.reason || 'Unknown error'));
+            });
+            
+        } else {
+            alert('Failed to initialize payment: ' + data.error);
+        }
     })
     .catch(error => {
-      loadingOverlay.classList.add('hidden');
-      console.error('Error:', error);
-      alert('Failed to initialize payment. Please try again.');
+        loadingOverlay.classList.add('hidden');
+        console.error('Error:', error);
+        alert('Failed to initialize payment. Please try again.');
     });
-  }
+}
+
+// Add this function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
   
   function submitOrder() {
     // Show loading overlay
@@ -616,5 +649,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   initializeVisuals();
 });
+</script>
+<script>
+// Test Razorpay initialization
+console.log('Razorpay test:', typeof Razorpay !== 'undefined' ? 'Loaded' : 'Not loaded');
+console.log('Final total:', '{{ final_total }}');
+console.log('Payment method:', document.getElementById('selected-payment-method').value);
 </script>
 {% endblock %}

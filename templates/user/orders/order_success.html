@@ -1,0 +1,237 @@
+<!-- templates/user/orders/order_success.html -->
+{% extends "user/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Order Successful - GearUp{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Success Message -->
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
+                <i class="fas fa-check text-green-600 text-3xl"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Order Successful!</h1>
+            <p class="text-lg text-gray-600 mb-2">Thank you for your purchase.</p>
+            <p class="text-gray-500">Your order has been placed successfully.</p>
+        </div>
+
+        {% if order %}
+        <!-- Order Details Card -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden mb-8">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1">Order Confirmation</h2>
+                        <p class="text-blue-100 text-sm">Order #{{ order.order_number }}</p>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <span class="inline-flex items-center px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg">
+                            <i class="fas fa-receipt mr-2"></i>
+                            Order Details
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-8">
+                <!-- Order Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Information</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Order Number</span>
+                                <span class="font-medium">{{ order.order_number }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Order Date</span>
+                                <span class="font-medium">{{ order.created_at|date:"F j, Y" }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Order Time</span>
+                                <span class="font-medium">{{ order.created_at|date:"g:i A" }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Payment Method</span>
+                                <span class="font-medium">{{ order.get_payment_method_display }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Payment Status</span>
+                                <span class="font-medium text-green-600">{{ order.get_payment_status_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Subtotal</span>
+                                <span class="font-medium">₹{{ order.subtotal|intcomma }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tax (10%)</span>
+                                <span class="font-medium">₹{{ order.tax_amount|intcomma }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Shipping</span>
+                                <span class="font-medium text-green-600">FREE</span>
+                            </div>
+                            <div class="border-t border-gray-200 pt-3 mt-3">
+                                <div class="flex justify-between">
+                                    <span class="text-lg font-bold text-gray-900">Total Amount</span>
+                                    <span class="text-2xl font-bold text-emerald-600">₹{{ order.total_amount|intcomma }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Information -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Product Details</h3>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="flex items-start space-x-4">
+                            {% if order.product_image_url %}
+                            <img src="{{ order.product_image_url }}" 
+                                 class="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                                 alt="{{ order.product_name }}">
+                            {% endif %}
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-900">{{ order.product_name }}</h4>
+                                <p class="text-sm text-gray-600 mt-1">Quantity: {{ order.quantity }}</p>
+                                <p class="text-sm text-gray-600">Unit Price: ₹{{ order.unit_price|intcomma }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Shipping Address -->
+                {% if order.shipping_address %}
+                <div class="border-t border-gray-200 pt-6 mt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h3>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <p class="font-medium text-gray-900">{{ order.shipping_address.full_name }}</p>
+                        <p class="text-gray-600">{{ order.shipping_address.address_line1 }}</p>
+                        {% if order.shipping_address.address_line2 %}
+                        <p class="text-gray-600">{{ order.shipping_address.address_line2 }}</p>
+                        {% endif %}
+                        <p class="text-gray-600">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} - {{ order.shipping_address.pincode }}</p>
+                        {% if order.shipping_address.phone %}
+                        <p class="text-gray-600 mt-2"><i class="fas fa-phone mr-2"></i>{{ order.shipping_address.phone }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="{% url 'orders:order_list' %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors flex items-center justify-center space-x-2">
+                <i class="fas fa-shopping-bag"></i>
+                <span>View My Orders</span>
+            </a>
+            
+            <a href="{% url 'products:product_list_user' %}" 
+               class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors flex items-center justify-center space-x-2">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Continue Shopping</span>
+            </a>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="mt-12 bg-blue-50 border border-blue-200 rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-3">What happens next?</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-full mb-3">
+                        <i class="fas fa-box text-lg"></i>
+                    </div>
+                    <h4 class="font-medium text-blue-900 mb-1">Order Processing</h4>
+                    <p class="text-sm text-blue-700">We'll process your order within 24 hours.</p>
+                </div>
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-full mb-3">
+                        <i class="fas fa-shipping-fast text-lg"></i>
+                    </div>
+                    <h4 class="font-medium text-blue-900 mb-1">Shipping</h4>
+                    <p class="text-sm text-blue-700">Your order will be shipped within 3-5 business days.</p>
+                </div>
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-full mb-3">
+                        <i class="fas fa-phone-alt text-lg"></i>
+                    </div>
+                    <h4 class="font-medium text-blue-900 mb-1">Need Help?</h4>
+                    <p class="text-sm text-blue-700">Contact our support team for any queries.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Invoice -->
+        {% if order %}
+        <div class="mt-8 text-center">
+            <a href="#" 
+               class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+                <i class="fas fa-download mr-2"></i>
+                Download Invoice (Coming Soon)
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Auto-redirect to orders page after 30 seconds
+setTimeout(function() {
+    window.location.href = "{% url 'orders:order_list' %}";
+}, 30000);
+
+// Add confetti effect (optional)
+document.addEventListener('DOMContentLoaded', function() {
+    // Simple confetti effect using emojis
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
+});
+</script>
+
+<style>
+/* Add some animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bg-white {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.bg-gradient-to-r {
+    background-size: 200% 200%;
+    animation: gradientBG 3s ease infinite;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+</style>
+{% endblock %}

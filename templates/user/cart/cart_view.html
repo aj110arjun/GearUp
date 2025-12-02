@@ -564,7 +564,37 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 800);
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Checkout page loaded');
+    console.log('Cart items: {{ cart_items|length }}');
+    console.log('Cart object:', '{{ cart }}');
+    console.log('Wallet balance: {{ wallet_balance }}');
+    console.log('Final total: {{ final_total }}');
 
+    // Check if all required data is present
+    const cartItems = '{{ cart_items|length }}';
+    const finalTotal = parseFloat('{{ final_total }}');
+    const walletBalance = parseFloat('{{ wallet_balance|default:0 }}');
+    
+    console.log('Cart items length:', cartItems);
+    console.log('Final total:', finalTotal);
+    console.log('Wallet balance:', walletBalance);
+    
+    // Check for issues
+    if (cartItems === '0') {
+        console.error('Cart is empty!');
+        alert('Your cart is empty. Please add items to cart first.');
+        setTimeout(() => {
+            window.location.href = "{% url 'shop:cart' %}";
+        }, 1000);
+    }
+    
+    if (isNaN(finalTotal) || finalTotal <= 0) {
+        console.error('Invalid final total:', finalTotal);
+    }
+});
+</script>
 <style>
 .cart-item {
   transition: all 0.3s ease;

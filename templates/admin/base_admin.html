@@ -104,12 +104,12 @@
         <span>User Management</span>
       </a>
       
-      <a href="" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if 'category' in request.resolver_match.url_name %}active-link{% endif %}">
+      <a href="{% url 'products:category_list' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if 'category' in request.resolver_match.url_name %}active-link{% endif %}">
         <i class="fas fa-tags w-5 text-center"></i>
         <span>Categories</span>
       </a>
       
-      <a href="" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if 'order' in request.resolver_match.url_name %}active-link{% endif %}">
+      <a href="{% url 'orders:admin_order_list' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if 'order' in request.resolver_match.url_name %}active-link{% endif %}">
         <i class="fas fa-shopping-bag w-5 text-center"></i>
         <span>Orders</span>
         <span class="ml-auto bg-yellow-500 text-yellow-900 text-xs px-2 py-1 rounded-full font-semibold">New</span>
