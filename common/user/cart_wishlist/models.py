@@ -31,11 +31,11 @@ class Cart(models.Model):
 
     @property
     def total_discount(self):
-        return sum(item.total_discount for item in self.items.all())
+        return 0  # Since we don't have compare_price, discount is always 0
 
     @property
     def final_total(self):
-        return self.subtotal - self.total_discount
+        return self.subtotal  # Same as subtotal since no discount
 
 class CartItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -69,9 +69,7 @@ class CartItem(models.Model):
 
     @property
     def total_discount(self):
-        if self.variant.compare_price and self.variant.compare_price > self.variant.price:
-            return (self.variant.compare_price - self.variant.price) * self.quantity
-        return 0
+        return 0  # No discount since no compare_price
 
     @property
     def is_available(self):

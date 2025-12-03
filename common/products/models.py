@@ -159,7 +159,6 @@ class ProductVariant(models.Model):
     
     # Pricing
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    compare_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
     # Inventory
     stock_quantity = models.IntegerField(default=0)

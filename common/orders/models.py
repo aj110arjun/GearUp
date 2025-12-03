@@ -32,6 +32,19 @@ class Order(models.Model):
         ('wallet', 'Wallet'),
     ]
 
+    RETURN_REASON_CHOICES = [
+        ('product_defective', 'Product Defective/Damaged'),
+        ('wrong_item', 'Wrong Item Received'),
+        ('size_issue', 'Size Not Fit'),
+        ('color_issue', 'Color Not as Expected'),
+        ('quality_issue', 'Quality Issue'),
+        ('not_as_described', 'Not as Described'),
+        ('changed_mind', 'Changed Mind'),
+        ('duplicate_order', 'Duplicate Order'),
+        ('late_delivery', 'Late Delivery'),
+        ('other', 'Other'),
+    ]
+
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
@@ -68,6 +81,16 @@ class Order(models.Model):
     order_status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
+
+    return_requested_at = models.DateTimeField(null=True, blank=True)
+    return_reason = models.CharField(max_length=50, choices=RETURN_REASON_CHOICES, null=True, blank=True)
+    return_description = models.TextField(null=True, blank=True)
+    return_images = models.JSONField(null=True, blank=True)  # Store image URLs as JSON array
+    return_approved_at = models.DateTimeField(null=True, blank=True)
+    return_rejected_at = models.DateTimeField(null=True, blank=True)
+    return_rejection_reason = models.TextField(null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
     
     razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)
     razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
@@ -133,6 +156,38 @@ class Order(models.Model):
     @property
     def can_be_cancelled(self):
         return self.order_status in ['pending', 'confirmed']
+    
+    @property
+    def can_be_returned(self):
+        """Check if order is eligible for return"""
+        # SIMPLE CHECK: Only check if order is delivered and no return has been requested
+        if self.order_status != 'delivered':
+            return False
+        
+        # Check if already has return request (using existing fields)
+        if (self.return_requested_at or 
+            self.return_approved_at or 
+            self.return_rejected_at or
+            self.returned_at):
+            return False
+        
+        # Check if return status is already set (if you're using return_status field)
+        if hasattr(self, 'return_status') and self.return_status != 'none':
+            return False
+        
+        return True
+    
+    @property
+    def is_return_requested(self):
+        return self.order_status == 'return_requested'
+
+    @property
+    def is_return_approved(self):
+        return self.order_status == 'returned'
+
+    @property
+    def is_return_rejected(self):
+        return self.order_status == 'delivered'
 
     def get_status_display_class(self):
         status_classes = {
@@ -142,6 +197,10 @@ class Order(models.Model):
             'shipped': 'bg-purple-100 text-purple-800',
             'delivered': 'bg-green-100 text-green-800',
             'cancelled': 'bg-red-100 text-red-800',
+            'returned': 'bg-red-100 text-red-800',
+            'return_requested': 'bg-orange-100 text-orange-800',
+            'return_rejected': 'bg-red-100 text-red-800',
+            'return_approved': 'bg-blue-100 text-blue-800',
         }
         return status_classes.get(self.order_status, 'bg-gray-100 text-gray-800')
 
@@ -151,5 +210,7 @@ class Order(models.Model):
             'paid': 'bg-green-100 text-green-800',
             'failed': 'bg-red-100 text-red-800',
             'refunded': 'bg-gray-100 text-gray-800',
+            'refund_pending': 'bg-orange-100 text-orange-800',
+            
         }
         return status_classes.get(self.payment_status, 'bg-gray-100 text-gray-800')

@@ -1,124 +1,678 @@
-<!-- templates/orders/order_detail.html -->
+<!-- templates/user/orders/order_detail.html -->
 {% extends "user/base.html" %}
 {% load static %}
 
 {% block title %}Order Details - GearUp{% endblock %}
 
 {% block content %}
-<div class="bg-gray-50 min-h-screen py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="bg-gradient-to-b from-gray-50 to-white min-h-screen py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Order Details</h1>
-                    <p class="mt-2 text-sm text-gray-600">Order #{{ order.order_number }}</p>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Order Details</h1>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-blue-50 text-blue-800 border border-blue-200">
+                            #{{ order.order_number }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500">Placed on {{ order.created_at|date:"F d, Y" }}</p>
                 </div>
-                <a href="{% url 'orders:order_list' %}" 
-                   class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors">
-                    Back to Orders
-                </a>
-            </div>
-        </div>
-
-        <!-- Order Status -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="text-center">
-                    <div class="text-sm font-medium text-gray-600 mb-2">Order Status</div>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ order.get_status_display_class }}">
-                        {{ order.get_order_status_display }}
-                    </span>
-                </div>
-                <div class="text-center">
-                    <div class="text-sm font-medium text-gray-600 mb-2">Payment Status</div>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ order.get_payment_status_class }}">
-                        {{ order.get_payment_status_display }}
-                    </span>
-                </div>
-                <div class="text-center">
-                    <div class="text-sm font-medium text-gray-600 mb-2">Order Date</div>
-                    <div class="text-sm font-medium text-gray-900">{{ order.created_at|date:"M d, Y" }}</div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'orders:order_list' %}" 
+                       class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow">
+                        <svg class="w-5 h-5 mr-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                        </svg>
+                        Back to Orders
+                    </a>
+                    <!-- Download Invoice Button -->
+                    <a href="{% url 'orders:download_invoice' order.id %}" 
+                       target="_blank"
+                       class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-green-500 border border-emerald-600 rounded-lg text-sm font-medium text-white hover:from-emerald-700 hover:to-green-600 transition-all duration-200 shadow-sm hover:shadow-md">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                        Download Invoice
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Product Details -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Product Details</h2>
-            <div class="flex items-start space-x-4">
-                <img src="{{ order.product.image.url }}" 
-                     alt="{{ order.product.name }}"
-                     class="w-24 h-24 object-cover rounded-lg border border-gray-200">
-                <div class="flex-1">
-                    <h3 class="text-lg font-medium text-gray-900">{{ order.product.name }}</h3>
-                    <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div>
-                            <p><strong>Unit Price:</strong> ₹{{ order.unit_price }}</p>
-                            <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+        <!-- Order Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500 mb-2">Order Status</p>
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold {{ order.get_status_display_class }}">
+                    {{ order.get_order_status_display }}
+                </span>
+            </div>
+            <div class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500 mb-2">Payment Status</p>
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold {{ order.get_payment_status_class }}">
+                    {{ order.get_payment_status_display }}
+                </span>
+            </div>
+            <div class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm border border-gray-200 p-5">
+                <p class="text-sm font-medium text-gray-500 mb-2">Order Date</p>
+                <p class="text-lg font-bold text-gray-900">{{ order.created_at|date:"M d, Y" }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ order.created_at|time:"g:i A" }}</p>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-8">
+            {% for message in messages %}
+            <div class="p-4 rounded-xl border shadow-sm
+                {% if message.tags == 'success' %}bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-800
+                {% elif message.tags == 'error' %}bg-gradient-to-r from-red-50 to-rose-50 border-red-200 text-red-800
+                {% elif message.tags == 'warning' %}bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 text-yellow-800
+                {% else %}bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 text-blue-800{% endif %}">
+                <div class="flex items-center">
+                    {% if message.tags == 'success' %}
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    {% elif message.tags == 'error' %}
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    {% elif message.tags == 'warning' %}
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    {% else %}
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    {% endif %}
+                    <div>
+                        <p class="font-medium">{{ message }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Cancel Button (Show only for pending, processing, shipped orders) -->
+        {% if order.order_status in "pending,processing,shipped" and order.payment_status == 'paid' %}
+        <div class="mb-8 bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl shadow-sm border border-red-100 p-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-red-500 mr-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <div>
+                        <h3 class="text-lg font-bold text-red-800 mb-2">Want to cancel this order?</h3>
+                        <p class="text-sm text-red-600">
+                            You can cancel this order as it hasn't been delivered yet.
+                            {% if order.order_status == 'shipped' %}
+                            <span class="font-semibold">Note: Order is already shipped, cancellation may not be possible.</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <form method="POST" action="{% url 'orders:cancel_order' order.id %}" class="md:w-auto w-full">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            onclick="return confirm('Are you sure you want to cancel order #{{ order.order_number }}? This action cannot be undone and refund may take 5-7 business days.')"
+                            class="w-full md:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        Cancel Order
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Product Details -->
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-sm border border-gray-100 p-8">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/>
+                        </svg>
+                        Product Details
+                    </h2>
+                    <div class="flex items-start space-x-6">
+                        <div class="flex-shrink-0">
+                            {% if order.product.image %}
+                            <div class="w-32 h-32 rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+                                <img src="{{ order.product.image.url }}" 
+                                     alt="{{ order.product.name }}"
+                                     class="w-full h-full object-cover">
+                            </div>
+                            {% else %}
+                            <div class="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl border border-gray-200 flex items-center justify-center shadow-sm">
+                                <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-xl font-bold text-gray-900 truncate">{{ order.product.name }}</h3>
+                            {% if order.variant %}
+                            <p class="text-sm text-gray-600 mt-2">
+                                <span class="font-medium">Variant:</span> {{ order.variant.variant_value }}
+                            </p>
+                            {% endif %}
+                            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+                                <div class="space-y-4">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"/>
+                                        </svg>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Quantity</p>
+                                            <p class="font-semibold text-gray-900">{{ order.quantity }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                                            <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Unit Price</p>
+                                            <p class="font-semibold text-gray-900">₹{{ order.unit_price }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Payment Method</p>
+                                            <p class="font-semibold text-gray-900">{{ order.get_payment_method_display }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Order Date</p>
+                                            <p class="font-semibold text-gray-900">{{ order.created_at|date:"M d, Y" }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-sm border border-gray-100 p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd"/>
+                            </svg>
+                            Order Summary
+                        </h2>
+                        <a href="{% url 'orders:download_invoice' order.id %}" 
+                        target="_blank"
+                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-violet-100 border border-purple-200 rounded-lg text-sm font-medium text-purple-700 hover:from-purple-200 hover:to-violet-200 transition-all duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                            Download Receipt
+                        </a>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <span class="text-gray-600">Product Total</span>
+                            <span class="font-semibold text-gray-900">₹{{ order.subtotal }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <span class="text-gray-600">Tax (10%)</span>
+                            <span class="text-gray-900">₹{{ order.tax_amount }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <span class="text-gray-600">Shipping</span>
+                            <span class="font-medium text-emerald-600">FREE</span>
+                        </div>
+                        
+                        <!-- Show Total Amount -->
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <span class="text-gray-600 font-medium">Total Amount</span>
+                            <span class="text-lg font-bold text-gray-900">₹{{ order.total_amount }}</span>
+                        </div>
+                        
+                        <!-- Show Refund if applicable -->
+                        {% if order.payment_status == 'refunded' or order.return_status == 'completed' %}
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <span class="text-gray-600">Refund Amount</span>
+                            <span class="font-bold text-red-600">- ₹{{ order.total_amount }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="pt-4 mt-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-bold text-gray-900">
+                                    {% if order.payment_status == 'refunded' or order.return_status == 'completed' %}
+                                    Net Amount
+                                    {% else %}
+                                    Amount Paid
+                                    {% endif %}
+                                </span>
+                                <span class="text-2xl font-extrabold 
+                                    {% if order.payment_status == 'refunded' or order.return_status == 'completed' %}
+                                    text-red-600
+                                    {% else %}
+                                    bg-gradient-to-r from-emerald-600 to-green-500 bg-clip-text text-transparent
+                                    {% endif %}">
+                                    {% if order.payment_status == 'refunded' or order.return_status == 'completed' %}
+                                    ₹0.00
+                                    {% else %}
+                                    ₹{{ order.total_amount }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% if order.payment_status == 'refunded' or order.return_status == 'completed' %}
+                            <p class="text-sm text-red-600 mt-2 text-right">
+                                <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                </svg>
+                                Full refund processed
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Timeline -->
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-sm border border-gray-100 p-8">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        Order Timeline
+                    </h2>
+                    <div class="relative">
+                        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 via-blue-300 to-blue-200"></div>
+                        
+                        <div class="space-y-8">
+                            <!-- Order Placed -->
+                            <div class="relative flex items-start">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center ring-4 ring-white shadow">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div class="ml-8">
+                                    <p class="text-base font-semibold text-gray-900">Order Placed</p>
+                                    <p class="text-sm text-gray-500 mt-1">{{ order.created_at|date:"F j, Y g:i A" }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Payment -->
+                            {% if order.paid_at %}
+                            <div class="relative flex items-start">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center ring-4 ring-white shadow">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div class="ml-8">
+                                    <p class="text-base font-semibold text-gray-900">Payment {{ order.get_payment_status_display }}</p>
+                                    <p class="text-sm text-gray-500 mt-1">{{ order.paid_at|date:"F j, Y g:i A" }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Order Status -->
+                            {% if order.order_status != 'pending' %}
+                            <div class="relative flex items-start">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full 
+                                    {% if order.order_status == 'delivered' %}bg-gradient-to-r from-green-500 to-emerald-500
+                                    {% elif order.order_status == 'shipped' %}bg-gradient-to-r from-blue-500 to-cyan-500
+                                    {% elif order.order_status == 'processing' %}bg-gradient-to-r from-yellow-500 to-amber-500
+                                    {% elif order.order_status == 'confirmed' %}bg-gradient-to-r from-indigo-500 to-purple-500
+                                    {% else %}bg-gradient-to-r from-gray-500 to-gray-400{% endif %} 
+                                    flex items-center justify-center ring-4 ring-white shadow">
+                                    {% if order.order_status == 'delivered' %}
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {% elif order.order_status == 'shipped' %}
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                                        <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-1h4v1a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H20a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7h-3v5h3V7zm-6 0v5h3V7H8z"/>
+                                    </svg>
+                                    {% else %}
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-8">
+                                    <p class="text-base font-semibold text-gray-900">{{ order.get_order_status_display }}</p>
+                                    {% if order.delivered_at %}
+                                    <p class="text-sm text-gray-500 mt-1">{{ order.delivered_at|date:"F j, Y g:i A" }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Return Timeline -->
+                            {% if order.return_requested_at %}
+                            <div class="relative flex items-start">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center ring-4 ring-white shadow">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div class="ml-8">
+                                    <p class="text-base font-semibold text-gray-900">Return Requested</p>
+                                    <p class="text-sm text-gray-500 mt-1">{{ order.return_requested_at|date:"F j, Y g:i A" }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if order.return_approved_at %}
+                            <div class="relative flex items-start">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center ring-4 ring-white shadow">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div class="ml-8">
+                                    <p class="text-base font-semibold text-gray-900">Return Approved</p>
+                                    <p class="text-sm text-gray-500 mt-1">{{ order.return_approved_at|date:"F j, Y g:i A" }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if order.returned_at %}
+                            <div class="relative flex items-start">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 flex items-center justify-center ring-4 ring-white shadow">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div class="ml-8">
+                                    <p class="text-base font-semibold text-gray-900">Return Completed</p>
+                                    <p class="text-sm text-gray-500 mt-1">{{ order.returned_at|date:"F j, Y g:i A" }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Order Summary -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Order Summary</h2>
-            <div class="space-y-3">
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Subtotal</span>
-                    <span class="text-gray-900">₹{{ order.subtotal }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Tax</span>
-                    <span class="text-gray-900">₹{{ order.tax_amount }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Shipping</span>
-                    <span class="text-green-600">FREE</span>
-                </div>
-                <div class="border-t border-gray-200 pt-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-lg font-semibold text-gray-900">Total</span>
-                        <span class="text-2xl font-bold text-emerald-600">₹{{ order.total_amount }}</span>
+            <!-- Right Column -->
+            <div class="space-y-8">
+                <!-- Shipping Information -->
+                <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-sm border border-gray-100 p-8">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                        </svg>
+                        Shipping Information
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        {% if order.shipping_address %}
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-gray-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                </svg>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-gray-500 mb-3">Shipping Address</p>
+                                    <div class="text-sm text-gray-700 space-y-1.5">
+                                        <p class="font-semibold text-gray-900">{{ order.shipping_address.full_name }}</p>
+                                        <p>{{ order.shipping_address.address_line1 }}</p>
+                                        {% if order.shipping_address.address_line2 %}
+                                        <p>{{ order.shipping_address.address_line2 }}</p>
+                                        {% endif %}
+                                        <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.zip_code }}</p>
+                                        <p>{{ order.shipping_address.country }}</p>
+                                        {% if order.shipping_address.phone_number %}
+                                        <div class="pt-3 flex items-center text-gray-900 font-medium">
+                                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                            </svg>
+                                            {{ order.shipping_address.phone_number }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-gray-500 italic text-center py-8">No shipping address provided</p>
+                        {% endif %}
+                        
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-emerald-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-gray-500 mb-3">Payment Details</p>
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Payment Method:</span>
+                                            <span class="font-semibold text-gray-900">{{ order.get_payment_method_display }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-600">Payment Status:</span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ order.get_payment_status_class }}">
+                                                {% if order.payment_status == 'refunded' %}
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                                </svg>
+                                                Refunded
+                                                {% else %}
+                                                {{ order.get_payment_status_display }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        {% if order.paid_at %}
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Paid On:</span>
+                                            <span class="font-medium text-gray-900">{{ order.paid_at|date:"M d, Y" }}</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if order.refunded_at %}
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Refunded On:</span>
+                                            <span class="font-medium text-red-600">{{ order.refunded_at|date:"M d, Y" }}</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if order.razorpay_payment_id %}
+                                        <div class="pt-2 border-t border-gray-100">
+                                            <p class="text-xs text-gray-500 mb-1">Transaction ID:</p>
+                                            <p class="font-mono text-xs text-gray-700 break-all">{{ order.razorpay_payment_id }}</p>
+                                        </div>
+                                        {% endif %}
+                                        {% if order.razorpay_refund_id %}
+                                        <div class="pt-2 border-t border-gray-100">
+                                            <p class="text-xs text-gray-500 mb-1">Refund ID:</p>
+                                            <p class="font-mono text-xs text-gray-700 break-all">{{ order.razorpay_refund_id }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Return Status Sections -->
+                <!-- Return Eligible -->
+                {% if can_return %}
+                <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-sm border border-blue-100 p-8">
+                    <div class="flex items-start mb-6">
+                        <svg class="w-8 h-8 text-blue-500 mr-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-blue-800 mb-2">Not Satisfied with your purchase?</h3>
+                            <p class="text-sm text-blue-600 mb-4">
+                                {% if order.delivered_at %}
+                                Delivered on {{ order.delivered_at|date:"M d, Y" }}
+                                {% endif %}
+                                You can request a return within 30 days of delivery.
+                            </p>
+                            <a href="{% url 'orders:request_return' order.id %}"
+                               class="inline-flex items-center justify-center w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                Request Return
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Return Requested -->
+                {% if is_return_requested %}
+                <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl shadow-sm border border-orange-100 p-8">
+                    <div class="flex items-start">
+                        <svg class="w-8 h-8 text-orange-500 mr-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-orange-800">Return Request Pending</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Under Review
+                                </span>
+                            </div>
+                            <div class="space-y-4">
+                                <p class="text-sm text-orange-700">
+                                    Submitted on <strong>{{ order.return_requested_at|date:"F j, Y" }}</strong> at <strong>{{ order.return_requested_at|time:"g:i A" }}</strong>.
+                                </p>
+                                
+                                {% if order.return_reason %}
+                                <div class="bg-orange-100 p-4 rounded-lg">
+                                    <p class="text-sm font-medium text-orange-800 mb-2">Return Details</p>
+                                    <div class="space-y-2">
+                                        <p class="text-sm text-orange-700">
+                                            <strong>Reason:</strong> {{ order.get_return_reason_display }}
+                                        </p>
+                                        {% if order.return_description %}
+                                        <p class="text-sm text-orange-700">
+                                            <strong>Description:</strong> {{ order.return_description }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Return Approved -->
+                {% if is_return_approved %}
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-sm border border-green-100 p-8">
+                    <div class="flex items-start">
+                        <svg class="w-8 h-8 text-green-500 mr-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-green-800">Return Approved</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Approved
+                                </span>
+                            </div>
+                            <div class="space-y-4">
+                                <p class="text-sm text-green-700">
+                                    Approved on <strong>{{ order.return_approved_at|date:"F j, Y" }}</strong>.
+                                </p>
+                                <div class="bg-green-100 p-4 rounded-lg">
+                                    <h4 class="text-sm font-medium text-green-800 mb-2">Next Steps:</h4>
+                                    <ul class="text-sm text-green-700 space-y-2">
+                                        <li class="flex items-start">
+                                            <svg class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Pickup scheduled within 3-5 business days
+                                        </li>
+                                        <li class="flex items-start">
+                                            <svg class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Keep product in original packaging
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Return Rejected -->
+                {% if is_return_rejected %}
+                <div class="bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl shadow-sm border border-red-100 p-8">
+                    <div class="flex items-start">
+                        <svg class="w-8 h-8 text-red-500 mr-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-red-800">Return Request Rejected</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Rejected
+                                </span>
+                            </div>
+                            <div class="space-y-4">
+                                <p class="text-sm text-red-700">
+                                    Rejected on <strong>{{ order.return_rejected_at|date:"F j, Y" }}</strong>.
+                                </p>
+                                
+                                {% if order.return_rejection_reason %}
+                                <div class="bg-red-100 p-4 rounded-lg">
+                                    <p class="text-sm font-medium text-red-800 mb-2">Reason for Rejection:</p>
+                                    <p class="text-sm text-red-700">{{ order.return_rejection_reason }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
-
-        <!-- Shipping Address -->
-        {% if order.shipping_address %}
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Shipping Address</h2>
-            <div class="text-gray-600">
-                <p class="font-medium">{{ order.shipping_address.full_name }}</p>
-                <p>{{ order.shipping_address.address_line1 }}</p>
-                {% if order.shipping_address.address_line2 %}
-                <p>{{ order.shipping_address.address_line2 }}</p>
-                {% endif %}
-                <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.zip_code }}</p>
-                <p>{{ order.shipping_address.country }}</p>
-                {% if order.shipping_address.phone_number %}
-                <p class="mt-2"><i class="fas fa-phone mr-2"></i>{{ order.shipping_address.phone_number }}</p>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Order Actions -->
-        {% if order.can_be_cancelled %}
-        <div class="mt-6 text-center">
-            <form method="POST" action="{% url 'orders:cancel_order' order.id %}">
-                {% csrf_token %}
-                <button type="submit" 
-                        onclick="return confirm('Are you sure you want to cancel this order?')"
-                        class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-                    Cancel Order
-                </button>
-            </form>
-        </div>
-        {% endif %}
     </div>
 </div>
+<style>
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+</style>
 {% endblock %}
