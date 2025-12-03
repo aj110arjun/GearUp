@@ -143,3 +143,20 @@ class OrderCancelForm(forms.Form):
             'placeholder': 'Enter reason for cancellation...'
         })
     )
+
+
+
+class ReturnRequestForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['return_reason', 'return_description']
+        widgets = {
+            'return_reason': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500',
+            }),
+            'return_description': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500',
+                'rows': 4,
+                'placeholder': 'Please provide details about why you want to return this product...'
+            }),
+        }

@@ -1,0 +1,176 @@
+<!-- templates/orders/receipt_pdf.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: 80mm 150mm;
+            margin: 5mm;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+        }
+        
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #000;
+        }
+        
+        .store-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .store-address {
+            font-size: 10px;
+        }
+        
+        .receipt-title {
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0;
+            text-transform: uppercase;
+        }
+        
+        .receipt-info {
+            margin-bottom: 10px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+        
+        .info-label {
+            font-weight: bold;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        
+        .items-table td {
+            padding: 4px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        
+        .items-table .total-row {
+            border-top: 2px solid #000;
+            font-weight: bold;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .thank-you {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #000;
+            font-style: italic;
+        }
+        
+        .footer {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-header">
+        <div class="store-name">GEARUP</div>
+        <div class="store-address">
+            123 Sports Avenue, Mumbai<br>
+            GSTIN: 27ABCDE1234F1Z5<br>
+            {{ invoice_date|date:"d/m/Y H:i" }}
+        </div>
+    </div>
+    
+    <div class="receipt-title">Payment Receipt</div>
+    
+    <div class="receipt-info">
+        <div class="info-row">
+            <span class="info-label">Receipt #:</span>
+            <span>{{ order.order_number }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Date:</span>
+            <span>{{ invoice_date|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Customer:</span>
+            <span>{{ order.user.get_full_name|default:order.user.username|truncatechars:15 }}</span>
+        </div>
+    </div>
+    
+    <table class="items-table">
+        <tr>
+            <td colspan="2">{{ order.product.name|truncatechars:30 }}</td>
+        </tr>
+        <tr>
+            <td>{{ order.quantity }} × ₹{{ order.unit_price }}</td>
+            <td class="text-right">₹{{ order.subtotal }}</td>
+        </tr>
+        <tr>
+            <td>Tax (10%)</td>
+            <td class="text-right">₹{{ order.tax_amount }}</td>
+        </tr>
+        <tr>
+            <td>Shipping</td>
+            <td class="text-right">FREE</td>
+        </tr>
+        {% if order.payment_status == 'refunded' %}
+        <tr>
+            <td>Refund</td>
+            <td class="text-right">- ₹{{ order.total_amount }}</td>
+        </tr>
+        {% endif %}
+        <tr class="total-row">
+            <td>TOTAL</td>
+            <td class="text-right">₹{% if order.payment_status == 'refunded' %}0.00{% else %}{{ order.total_amount }}{% endif %}</td>
+        </tr>
+    </table>
+    
+    <div class="receipt-info">
+        <div class="info-row">
+            <span class="info-label">Payment:</span>
+            <span>{{ order.get_payment_method_display }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Status:</span>
+            <span>{{ order.get_payment_status_display }}</span>
+        </div>
+        {% if order.razorpay_payment_id %}
+        <div class="info-row">
+            <span class="info-label">Txn ID:</span>
+            <span>{{ order.razorpay_payment_id|truncatechars:15 }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="thank-you">
+        Thank you for shopping with us!
+    </div>
+    
+    <div class="footer">
+        For any queries, contact support@gearup.com<br>
+        This is a computer generated receipt
+    </div>
+</body>
+</html>

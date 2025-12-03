@@ -1,0 +1,213 @@
+<!-- templates/admin/orders/rejected_returns.html -->
+{% extends "admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Rejected Returns - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Rejected Returns</h1>
+                <p class="mt-2 text-sm text-gray-600">View rejected return requests</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <a href="{% url 'orders:admin_return_requests' %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    Back to Pending
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div class="flex items-center">
+                <div class="bg-red-100 p-3 rounded-lg mr-4">
+                    <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Total Rejected</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ rejected_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div class="flex items-center">
+                <div class="bg-yellow-100 p-3 rounded-lg mr-4">
+                    <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">This Month</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ this_month_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div class="flex items-center">
+                <div class="bg-gray-100 p-3 rounded-lg mr-4">
+                    <svg class="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Saved Amount</p>
+                    <p class="text-2xl font-bold text-gray-900">₹{{ saved_amount|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejected Returns Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Rejected Return Requests</h2>
+                    <p class="text-sm text-gray-600 mt-1">Review rejected return requests and reasons</p>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="{% url 'orders:admin_approved_returns' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        View Approved
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if rejected_returns %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Details</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Return Reason</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rejected On</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rejection Reason</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for order in rejected_returns %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                {% if order.product.image %}
+                                <div class="flex-shrink-0 h-10 w-10 mr-3">
+                                    <img class="h-10 w-10 rounded-md object-cover" 
+                                         src="{{ order.product.image.url }}" 
+                                         alt="{{ order.product.name }}">
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">#{{ order.order_number }}</div>
+                                    <div class="text-sm text-gray-500">{{ order.product.name }}</div>
+                                    <div class="text-xs text-gray-400">
+                                        Qty: {{ order.quantity }} • ₹{{ order.total_amount }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ order.user.get_full_name|default:order.user.username }}</div>
+                            <div class="text-sm text-gray-500">{{ order.user.email }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ order.get_return_reason_display }}</div>
+                            {% if order.return_description %}
+                            <div class="text-sm text-gray-500 mt-1">{{ order.return_description|truncatechars:80 }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ order.return_rejected_at|date:"M d, Y" }}</div>
+                            <div class="text-sm text-gray-500">{{ order.return_rejected_at|date:"g:i A" }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-700">
+                                {% if order.return_rejection_reason %}
+                                {{ order.return_rejection_reason|truncatechars:100 }}
+                                {% else %}
+                                <span class="text-gray-400 italic">No reason provided</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'orders:admin_view_return' order.id %}" 
+                                   class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    View Details
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if rejected_returns.has_other_pages %}
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Showing {{ rejected_returns.start_index }} to {{ rejected_returns.end_index }} of {{ rejected_returns.paginator.count }} results
+                </div>
+                <div class="flex space-x-2">
+                    {% if rejected_returns.has_previous %}
+                    <a href="?page={{ rejected_returns.previous_page_number }}" 
+                       class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Previous
+                    </a>
+                    {% endif %}
+                    
+                    {% for num in rejected_returns.paginator.page_range %}
+                        {% if rejected_returns.number == num %}
+                        <span class="px-3 py-1 border border-blue-500 bg-blue-50 text-blue-600 rounded-md text-sm font-medium">
+                            {{ num }}
+                        </span>
+                        {% elif num > rejected_returns.number|add:'-3' and num < rejected_returns.number|add:'3' %}
+                        <a href="?page={{ num }}" 
+                           class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            {{ num }}
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if rejected_returns.has_next %}
+                    <a href="?page={{ rejected_returns.next_page_number }}" 
+                       class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="p-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No rejected returns</h3>
+            <p class="mt-1 text-gray-500">No return requests have been rejected yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

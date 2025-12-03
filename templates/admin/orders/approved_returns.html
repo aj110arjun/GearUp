@@ -1,0 +1,236 @@
+<!-- templates/admin/orders/approved_returns.html -->
+{% extends "admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Approved Returns - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Approved Returns</h1>
+                <p class="mt-2 text-sm text-gray-600">View and manage approved return requests</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <a href="{% url 'orders:admin_return_requests' %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    </svg>
+                    Back to Pending
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div class="flex items-center">
+                <div class="bg-green-100 p-3 rounded-lg mr-4">
+                    <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Total Approved</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ approved_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div class="flex items-center">
+                <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Pending Refunds</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ pending_refund_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div class="flex items-center">
+                <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                    <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                        <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Total Refunded</p>
+                    <p class="text-2xl font-bold text-gray-900">₹{{ total_refunded|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approved Returns Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Approved Return Requests</h2>
+                    <p class="text-sm text-gray-600 mt-1">Process refunds or mark returns as completed</p>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="{% url 'orders:admin_rejected_returns' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        View Rejected
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if approved_returns %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Details</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved On</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Refund Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for order in approved_returns %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                {% if order.product.image %}
+                                <div class="flex-shrink-0 h-10 w-10 mr-3">
+                                    <img class="h-10 w-10 rounded-md object-cover" 
+                                         src="{{ order.product.image.url }}" 
+                                         alt="{{ order.product.name }}">
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">#{{ order.order_number }}</div>
+                                    <div class="text-sm text-gray-500">{{ order.product.name }}</div>
+                                    <div class="text-xs text-gray-400">
+                                        Qty: {{ order.quantity }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ order.user.get_full_name|default:order.user.username }}</div>
+                            <div class="text-sm text-gray-500">{{ order.user.email }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ order.return_approved_at|date:"M d, Y" }}</div>
+                            <div class="text-sm text-gray-500">{{ order.return_approved_at|date:"g:i A" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-lg font-bold text-gray-900">₹{{ order.total_amount }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if order.payment_status == 'refunded' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                Refunded
+                            </span>
+                            {% elif order.payment_status == 'refund_pending' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                </svg>
+                                Pending Refund
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                Not Processed
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'orders:admin_view_return' order.id %}" 
+                                   class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    View
+                                </a>
+                                {% if order.payment_status != 'refunded' %}
+                                <form method="POST" action="{% url 'orders:admin_complete_return' order.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            onclick="return confirm('Process refund of ₹{{ order.total_amount }} for order #{{ order.order_number }}?')"
+                                            class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Process Refund
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if approved_returns.has_other_pages %}
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Showing {{ approved_returns.start_index }} to {{ approved_returns.end_index }} of {{ approved_returns.paginator.count }} results
+                </div>
+                <div class="flex space-x-2">
+                    {% if approved_returns.has_previous %}
+                    <a href="?page={{ approved_returns.previous_page_number }}" 
+                       class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Previous
+                    </a>
+                    {% endif %}
+                    
+                    {% for num in approved_returns.paginator.page_range %}
+                        {% if approved_returns.number == num %}
+                        <span class="px-3 py-1 border border-blue-500 bg-blue-50 text-blue-600 rounded-md text-sm font-medium">
+                            {{ num }}
+                        </span>
+                        {% elif num > approved_returns.number|add:'-3' and num < approved_returns.number|add:'3' %}
+                        <a href="?page={{ num }}" 
+                           class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            {{ num }}
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if approved_returns.has_next %}
+                    <a href="?page={{ approved_returns.next_page_number }}" 
+                       class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="p-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No approved returns</h3>
+            <p class="mt-1 text-gray-500">No return requests have been approved yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
