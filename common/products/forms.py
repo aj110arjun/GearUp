@@ -287,7 +287,7 @@ class ProductVariantForm(forms.ModelForm):
     
     class Meta:
         model = ProductVariant
-        fields = ['size', 'color', 'price', 'compare_price', 'stock_quantity', 'is_active']
+        fields = ['size', 'color', 'price', 'stock_quantity', 'is_active']
         widgets = {
             'size': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
@@ -304,12 +304,7 @@ class ProductVariantForm(forms.ModelForm):
                 'min': '0',
                 'required': True
             }),
-            'compare_price': forms.NumberInput(attrs={
-                'class': 'form-control form-control-sm',
-                'placeholder': '0.00',
-                'step': '0.01',
-                'min': '0'
-            }),
+            
             'stock_quantity': forms.NumberInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': '0',
@@ -332,11 +327,7 @@ class ProductVariantForm(forms.ModelForm):
             raise ValidationError('Price cannot be negative.')
         return price
 
-    def clean_compare_price(self):
-        compare_price = self.cleaned_data.get('compare_price')
-        if compare_price is not None and compare_price < 0:
-            raise ValidationError('Compare price cannot be negative.')
-        return compare_price
+    
 
     def clean_stock_quantity(self):
         stock = self.cleaned_data.get('stock_quantity')

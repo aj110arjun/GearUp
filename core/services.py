@@ -107,6 +107,28 @@ class WalletService:
             wallet.save()
             
             return transaction
+        
+    @staticmethod
+    def make_refund(wallet, amount, description=""):
+        """Process a refund to wallet"""
+        with db_transaction.atomic():
+            if amount <= 0:
+                raise ValueError("Refund amount must be greater than zero")
+            
+            # Create transaction record
+            transaction = Transaction.objects.create(
+                wallet=wallet,
+                transaction_type='refund',
+                amount=amount,
+                description=description,
+                status='completed',
+            )
+            
+            # Update wallet balance (add amount back to wallet)
+            wallet.balance += amount
+            wallet.save()
+            
+            return transaction
 
     @staticmethod
     def get_transaction_history(wallet, limit=10):

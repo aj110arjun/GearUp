@@ -115,6 +115,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google', 
     'cloudinary',
     'cloudinary_storage',
+    'weasyprint',
     
     'common.user.auths',
     'common.user.home',

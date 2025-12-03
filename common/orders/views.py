@@ -1,31 +1,39 @@
-# orders/views.py
+import os
+import random
+import string
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
-from decimal import Decimal
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Sum, Count, F
 from django.utils.decorators import method_decorator
 from datetime import datetime, timedelta
 from django.urls import reverse_lazy
-from core.razorpay_service import RazorpayService
 from django.http import JsonResponse
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST, require_http_methods
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 
-import random
-import string
+from io import BytesIO
+from decimal import Decimal
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
 
 from common.user.address.models import Address
 from .models import Order
-from .forms import OrderStatusForm
+from .forms import OrderStatusForm, ReturnRequestForm
 from common.user.cart_wishlist.models import Cart, CartItem
 from common.wallet.models import Wallet, Transaction
+
 from core.services import WalletService
+from core.razorpay_service import RazorpayService
 
 
 @login_required(login_url='user_auth:signin')
@@ -246,8 +254,16 @@ def order_list(request):
         'shipping_address'
     ).order_by('-created_at')
     
+    # Calculate counts for summary cards
+    delivered_count = orders.filter(order_status='delivered').count()
+    in_progress_count = orders.filter(
+        order_status__in=['processing', 'shipped', 'pending']
+    ).count()
+    
     context = {
         'orders': orders,
+        'delivered_count': delivered_count,
+        'in_progress_count': in_progress_count,
         'active_tab': 'orders'
     }
     return render(request, 'user/orders/order_list.html', context)
@@ -258,10 +274,27 @@ def order_detail(request, order_id):
     """Display order details"""
     order = get_object_or_404(Order, id=order_id, user=request.user)
     
+    # Simple check: Show return button if order is delivered and no return has been requested
+    can_return = (
+        order.order_status == 'delivered' and
+        not order.return_requested_at and
+        not order.return_approved_at and
+        not order.return_rejected_at
+    )
+    
+    # Check return status based on existing fields
+    is_return_requested = bool(order.return_requested_at)
+    is_return_approved = bool(order.return_approved_at)
+    is_return_rejected = bool(order.return_rejected_at)
+    
     context = {
-        'order': order
+        'order': order,
+        'can_return': can_return,
+        'is_return_requested': is_return_requested,
+        'is_return_approved': is_return_approved,
+        'is_return_rejected': is_return_rejected,
     }
-    return render(request, 'user/orders/order_details.html', context)
+    return render(request, 'user/orders/order_detail.html', context)
 
 @login_required(login_url='user_auth:signin')
 @never_cache
@@ -281,16 +314,38 @@ def cancel_order(request, order_id):
     if order.payment_status == 'paid' and order.payment_method in ['razorpay', 'wallet']:
         
         order.order_status = 'cancelled'
-        wallet.balance += order.total_amount
-        transaction.create(
-            wallet=wallet,
-            transaction_type='refund',
-            description=f'Your Refund for order #{order.order_number} has been credited on your wallet',
-            amount=order.total_amount,
-            status='refunded'
-        )
+        # wallet.balance += order.total_amount
+        # transaction.create(
+        #     wallet=wallet,
+        #     transaction_type='refund',
+        #     description=f'Your Refund for order #{order.order_number} has been credited on your wallet',
+        #     amount=order.total_amount,
+        #     status='refunded'
+        # )
         
-        wallet.save()
+        # wallet.save()
+
+        try:
+            refund_amount = order.total_amount
+            transaction_obj = WalletService.make_refund(
+                wallet=wallet,
+                amount=refund_amount,
+                description=f"Refund for cancelled order #{order.order_number}"
+            )
+            
+            # Update order status and payment status
+            order.payment_status = 'refunded'
+            
+            messages.success(request, f'Return approved for order #{order.order_number}. ₹{refund_amount} has been refunded to customer wallet.')
+            
+        except ValueError as e:
+            # Handle refund errors
+            messages.error(request, f'Refund failed: {str(e)}')
+            return redirect('orders:admin_view_return', order_id=order_id)
+        except Exception as e:
+            # Handle other errors
+            messages.error(request, f'Error processing refund: {str(e)}')
+            return redirect('orders:admin_view_return', order_id=order_id)
 
     order.payment_status = 'refunded' if order.payment_status == 'paid' else 'failed'
     order.save()
@@ -551,6 +606,18 @@ def admin_order_update_status(request, order_id):
     # Store old status for comparison
     old_status = order.order_status
     
+    # Update order status
+    order.order_status = new_status
+    
+    # Update timestamps based on status
+    if new_status == 'delivered':
+        order.delivered_at = timezone.now()  # SET DELIVERED_AT HERE
+        messages.success(request, f'Order #{order.order_number} marked as delivered.')
+    elif new_status == 'cancelled':
+        order.cancelled_at = timezone.now()
+    elif new_status == 'returned':
+        order.returned_at = timezone.now()
+    
     # Process refund if order is being cancelled and was paid
     if new_status == 'cancelled' and order.payment_status == 'paid':
         try:
@@ -584,50 +651,6 @@ def admin_order_update_status(request, order_id):
             messages.error(request, f'Order cancelled but refund failed: {str(e)}')
             # Still mark as cancelled but payment status remains paid
             order.payment_status = 'paid'
-    
-    # Process refund if order is returned and was paid
-    elif new_status == 'returned' and order.payment_status == 'paid':
-        try:
-            # Get user's wallet
-            wallet = Wallet.objects.get(user=order.user)
-            
-            # Refund amount to wallet
-            refund_amount = order.total_amount
-            transaction = WalletService.make_refund(
-                wallet=wallet,
-                amount=refund_amount,
-                description=f"Refund for returned order #{order.order_number}",
-                reference_id=str(order.id)
-            )
-            
-            # Update order payment status to refunded
-            order.payment_status = 'refunded'
-            
-            messages.success(request, f'Order #{order.order_number} marked as returned and ₹{refund_amount} refunded to customer wallet.')
-            
-        except Wallet.DoesNotExist:
-            # Create wallet for user if it doesn't exist
-            wallet = Wallet.objects.create(
-                user=order.user,
-                balance=order.total_amount
-            )
-            order.payment_status = 'refunded'
-            messages.success(request, f'Order #{order.order_number} returned and ₹{order.total_amount} refunded to newly created wallet.')
-            
-        except Exception as e:
-            messages.error(request, f'Order returned but refund failed: {str(e)}')
-            # Still mark as returned but payment status remains paid
-    
-    # Update order status
-    order.order_status = new_status
-    
-    # Update timestamps based on status
-    if new_status == 'delivered':
-        order.delivered_at = timezone.now()
-    elif new_status == 'cancelled':
-        order.cancelled_at = timezone.now()
-    elif new_status == 'returned':
-        order.returned_at = timezone.now()
     
     order.save()
     
@@ -741,3 +764,494 @@ def admin_order_export(request):
     
     messages.info(request, 'Export functionality coming soon.')
     return redirect('orders:admin_order_list')
+
+
+
+@login_required
+@never_cache
+@require_http_methods(["GET", "POST"])
+def request_return(request, order_id):
+    """User requests a return for a delivered product"""
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    # Check if order can be returned
+    if not order.can_be_returned:
+        messages.error(request, 'This order cannot be returned. Return window may have expired or order is not delivered.')
+        return redirect('orders:order_detail', order_id=order_id)
+    
+    if request.method == 'POST':
+        form = ReturnRequestForm(request.POST, request.FILES, instance=order)
+        
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    order = form.save(commit=False)
+                    
+                    # Store uploaded images if any
+                    images = []
+                    if 'return_images' in request.FILES:
+                        from django.core.files.storage import default_storage
+                        for image in request.FILES.getlist('return_images'):
+                            # Save image to storage
+                            file_path = default_storage.save(
+                                f'returns/{order.order_number}/{image.name}',
+                                image
+                            )
+                            images.append(default_storage.url(file_path))
+                    
+                    if images:
+                        order.return_images = images
+                    
+                    # Update order status
+                    order.order_status = 'return_requested'
+                    order.return_requested_at = timezone.now()
+                    order.payment_status = 'refund_pending'
+                    order.save()
+                    
+                    # Send notification to admin (you can implement this)
+                    # send_return_notification_to_admin(order)
+                    
+                    messages.success(request, 'Return request submitted successfully! We will review your request and get back to you within 3-5 business days.')
+                    
+                    # Send email notification to user
+                    # send_return_request_email(order.user.email, order)
+                    
+                    return redirect('orders:order_detail', order_id=order_id)
+                    
+            except Exception as e:
+                messages.error(request, f'Error submitting return request: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ReturnRequestForm(instance=order)
+    
+    context = {
+        'order': order,
+        'form': form,
+        'return_reasons': Order.RETURN_REASON_CHOICES,
+    }
+    
+    return render(request, 'user/orders/request_return.html', context)
+
+@staff_member_required
+@require_http_methods(["GET", "POST"])
+def admin_approve_return(request, order_id):
+    """Admin approves a return request and processes refund to wallet"""
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Check if this is a valid return request
+    if order.order_status != 'return_requested':
+        messages.error(request, 'This order does not have a pending return request.')
+        return redirect('orders:admin_order_detail', order_id=order_id)
+    
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Get or create user's wallet
+                wallet, created = Wallet.objects.get_or_create(user=order.user)
+                
+                # Calculate refund amount
+                refund_amount = order.total_amount
+                
+                # Process refund to wallet
+                try:
+                    # Use WalletService to process refund
+                    transaction_obj = WalletService.make_refund(
+                        wallet=wallet,
+                        amount=refund_amount,
+                        description=f"Refund for returned order #{order.order_number}"
+                    )
+                    
+                    # Update order status and payment status
+                    order.order_status = 'return_approved'
+                    order.return_approved_at = timezone.now()
+                    order.payment_status = 'refunded'
+                    
+                    messages.success(request, f'Return approved for order #{order.order_number}. ₹{refund_amount} has been refunded to customer wallet.')
+                    
+                except ValueError as e:
+                    # Handle refund errors
+                    messages.error(request, f'Refund failed: {str(e)}')
+                    return redirect('orders:admin_view_return', order_id=order_id)
+                except Exception as e:
+                    # Handle other errors
+                    messages.error(request, f'Error processing refund: {str(e)}')
+                    return redirect('orders:admin_view_return', order_id=order_id)
+                
+                # Save order after successful refund
+                order.save()
+                
+                # Send notification to user about approved return
+                # send_return_approved_email(order.user.email, order)
+                
+                # Create return instructions for customer
+                return_instructions = {
+                    'pickup_address': order.shipping_address,
+                    'contact_person': f"{order.user.get_full_name() or order.user.username}",
+                    'contact_phone': order.shipping_address.phone_number if order.shipping_address else '',
+                    'instructions': 'Please pack the product in its original packaging with all accessories.',
+                    'pickup_schedule': 'Within 3-5 business days',
+                    'refund_amount': f"₹{refund_amount}",
+                    'refund_status': 'Processed to wallet',
+                    'transaction_id': transaction_obj.reference if hasattr(transaction_obj, 'reference') else transaction_obj.id
+                }
+                
+                # Log the approval
+                print(f"Return approved for order #{order.order_number}. Refund: ₹{refund_amount}, Transaction: {transaction_obj.id}")
+                
+                return redirect('orders:admin_view_return', order_id=order_id)
+                
+        except Exception as e:
+            messages.error(request, f'Error approving return: {str(e)}')
+            return redirect('orders:admin_view_return', order_id=order_id)
+    
+    # For GET request, show approval form
+    context = {
+        'order': order,
+        'title': f'Approve Return - Order #{order.order_number}',
+        'refund_amount': order.total_amount,
+    }
+    
+    return render(request, 'admin/orders/approve_return.html', context)
+
+
+@staff_member_required
+@require_http_methods(["GET", "POST"])
+def admin_reject_return(request, order_id):
+    """Admin rejects a return request"""
+    order = get_object_or_404(Order, id=order_id)
+    
+    if order.order_status != 'return_requested':
+        messages.error(request, 'This order does not have a pending return request.')
+        return redirect('orders:admin_order_detail', order_id=order_id)
+    
+    if request.method == 'POST':
+        rejection_reason = request.POST.get('rejection_reason', '').strip()
+        
+        if not rejection_reason:
+            messages.error(request, 'Please provide a reason for rejecting the return.')
+            return redirect('orders:admin_order_detail', order_id=order_id)
+        
+        try:
+            with transaction.atomic():
+                # Update order status
+                order.order_status = 'return_rejected'
+                order.return_rejected_at = timezone.now()
+                order.return_rejection_reason = rejection_reason
+                order.payment_status = 'paid'  # Reset payment status
+                order.save()
+                
+                # Send notification to user about rejected return
+                # send_return_rejected_email(order.user.email, order, rejection_reason)
+                
+                messages.success(request, f'Return rejected for order #{order.order_number}. User has been notified.')
+                
+                return redirect('orders:admin_order_detail', order_id=order_id)
+                
+        except Exception as e:
+            messages.error(request, f'Error rejecting return: {str(e)}')
+    
+    context = {
+        'order': order,
+        'title': f'Reject Return - Order #{order.order_number}',
+    }
+    
+    return render(request, 'admin/orders/reject_return.html', context)
+
+@staff_member_required
+@require_POST
+def admin_complete_return(request, order_id):
+    """Admin marks return as completed and processes refund"""
+    order = get_object_or_404(Order, id=order_id)
+    
+    if order.order_status != 'return_approved':
+        messages.error(request, 'This order is not approved for return.')
+        return redirect('orders:admin_order_detail', order_id=order_id)
+    
+    try:
+        with transaction.atomic():
+            # Update order status
+            order.order_status = 'returned'
+            order.returned_at = timezone.now()
+            
+            # Process refund if payment was made
+            if order.payment_status in ['paid', 'refund_pending']:
+                try:
+                    # Get user's wallet
+                    wallet, created = Wallet.objects.get_or_create(user=order.user)
+                    
+                    # Refund amount to wallet
+                    refund_amount = order.total_amount
+                    
+                    # Create wallet transaction
+                    transaction_obj = WalletService.make_refund(
+                        wallet=wallet,
+                        amount=refund_amount,
+                        description=f"Refund for returned order #{order.order_number}",
+                        reference_id=str(order.id)
+                    )
+                    
+                    # Update wallet balance
+                    wallet.balance += refund_amount
+                    wallet.save()
+                    
+                    order.payment_status = 'refunded'
+                    messages.success(request, f'Return completed and ₹{refund_amount} refunded to customer wallet.')
+                    
+                except Exception as e:
+                    order.payment_status = 'refund_pending'
+                    messages.warning(request, f'Return completed but refund failed: {str(e)}')
+            
+            order.save()
+            
+            # Restock product variant
+            if order.variant:
+                order.variant.stock_quantity += order.quantity
+                order.variant.save()
+            
+            # Send notification to user about completed return
+            # send_return_completed_email(order.user.email, order)
+            
+            return redirect('orders:admin_order_detail', order_id=order_id)
+            
+    except Exception as e:
+        messages.error(request, f'Error completing return: {str(e)}')
+        return redirect('orders:admin_order_detail', order_id=order_id)
+    
+# Add these imports at the top
+from django.core.paginator import Paginator
+
+# Add these admin return management views
+@staff_member_required(login_url='auth_dashboard:signin')
+def admin_return_requests(request):
+    """Admin view for pending return requests"""
+    # FIXED: Get pending return requests (orders with return_requested_at but not approved/rejected)
+    pending_returns = Order.objects.filter(
+        return_requested_at__isnull=False,  # Has return request
+        return_approved_at__isnull=True,    # Not approved yet
+        return_rejected_at__isnull=True     # Not rejected yet
+    ).select_related('user', 'product', 'shipping_address').order_by('-return_requested_at')
+    
+    # Get counts for stats
+    pending_count = pending_returns.count()
+    approved_count = Order.objects.filter(return_approved_at__isnull=False).count()
+    rejected_count = Order.objects.filter(return_rejected_at__isnull=False).count()
+    
+    # Get total refunds (only refunded orders)
+    total_refunds = Order.objects.filter(payment_status='refunded').aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0
+    
+    # FIXED: Get recently processed returns (last 5 approved OR rejected)
+    recent_returns = Order.objects.filter(
+        Q(return_approved_at__isnull=False) | Q(return_rejected_at__isnull=False)
+    ).select_related('user', 'product').order_by('-updated_at')[:5]
+    
+    context = {
+        'return_requests': pending_returns,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'total_refunds': total_refunds,
+        'recent_returns': recent_returns,
+    }
+    
+    return render(request, 'admin/orders/return_requests.html', context)
+
+@staff_member_required(login_url='auth_dashboard:signin')
+def admin_approved_returns(request):
+    """Admin view for approved returns"""
+    # Get approved returns
+    approved_returns = Order.objects.filter(
+        return_approved_at__isnull=False
+    ).select_related('user', 'product').order_by('-return_approved_at')
+    
+    # Get counts for stats
+    approved_count = approved_returns.count()
+    pending_refund_count = approved_returns.filter(payment_status='refund_pending').count()
+    
+    # Get total refunded amount
+    total_refunded = approved_returns.filter(payment_status='refunded').aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0
+    
+    # Pagination
+    paginator = Paginator(approved_returns, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'approved_returns': page_obj,
+        'approved_count': approved_count,
+        'pending_refund_count': pending_refund_count,
+        'total_refunded': total_refunded,
+    }
+    
+    return render(request, 'admin/orders/approved_returns.html', context)
+
+@staff_member_required(login_url='auth_dashboard:signin')
+def admin_rejected_returns(request):
+    """Admin view for rejected returns"""
+    # Get rejected returns
+    rejected_returns = Order.objects.filter(
+        return_rejected_at__isnull=False
+    ).select_related('user', 'product').order_by('-return_rejected_at')
+    
+    # Get counts for stats
+    rejected_count = rejected_returns.count()
+    
+    # Get this month's rejected returns
+    from django.utils import timezone
+    from datetime import datetime, timedelta
+    
+    today = timezone.now()
+    first_day_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    this_month_count = rejected_returns.filter(
+        return_rejected_at__gte=first_day_of_month
+    ).count()
+    
+    # Calculate saved amount (total amount of rejected returns)
+    saved_amount = rejected_returns.aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0
+    
+    # Pagination
+    paginator = Paginator(rejected_returns, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'rejected_returns': page_obj,
+        'rejected_count': rejected_count,
+        'this_month_count': this_month_count,
+        'saved_amount': saved_amount,
+    }
+    
+    return render(request, 'admin/orders/rejected_returns.html', context)
+
+@staff_member_required(login_url='auth_dashboard:signin')
+def admin_view_return(request, order_id):
+    """Admin view for detailed return information"""
+    order = get_object_or_404(Order, id=order_id)
+    
+    context = {
+        'order': order,
+        'title': f'Return Details - Order #{order.order_number}',
+    }
+    
+    return render(request, 'admin/orders/view_return.html', context)
+
+# Update the order_detail view to include return options
+@login_required(login_url='user_auth:signin')
+@never_cache
+def order_detail(request, order_id):
+    """Display order details"""
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    context = {
+        'order': order,
+        'can_return': order.can_be_returned,
+        'is_return_requested': order.is_return_requested,
+        'is_return_approved': order.is_return_approved,
+        'is_return_rejected': order.is_return_rejected,
+    }
+    return render(request, 'user/orders/order_details.html', context)
+
+@login_required
+def download_invoice(request, order_id):
+    """Generate and download PDF invoice using HTML template"""
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    # Prepare context data
+    context = {
+        'order': order,
+        'invoice_date': timezone.now(),
+        'user': request.user,
+        'settings': settings,
+    }
+    
+    # Render HTML template
+    html_string = render_to_string('user/orders/invoice_pdf.html', context)
+    
+    # Create PDF
+    font_config = FontConfiguration()
+    
+    # You can add custom CSS if needed
+    css_string = """
+    @page {
+        size: A4;
+        margin: 1.5cm;
+        @bottom-center {
+            content: "Page " counter(page) " of " counter(pages);
+            font-size: 10px;
+            color: #666;
+        }
+    }
+    """
+    
+    html = HTML(string=html_string)
+    
+    # Generate PDF
+    pdf_file = html.write_pdf(
+        stylesheets=[CSS(string=css_string)],
+        font_config=font_config
+    )
+    
+    # Create HTTP response
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    filename = f'invoice_{order.order_number}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+# orders/views.py
+
+
+
+# Simple receipt version
+@login_required
+def download_receipt(request, order_id):
+    """Generate and download simple receipt"""
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    context = {
+        'order': order,
+        'invoice_date': timezone.now(),
+        'user': request.user,
+    }
+    
+    html_string = render_to_string('orders/receipt_pdf.html', context)
+    html = HTML(string=html_string)
+    pdf_file = html.write_pdf()
+    
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    filename = f'receipt_{order.order_number}_{timezone.now().strftime("%Y%m%d")}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+
+# Admin version
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required
+def admin_download_invoice(request, order_id):
+    """Generate invoice for admin (any order)"""
+    order = get_object_or_404(Order, id=order_id)
+    
+    context = {
+        'order': order,
+        'invoice_date': timezone.now(),
+        'is_admin': True,
+        'generated_by': request.user.get_full_name(),
+    }
+    
+    html_string = render_to_string('orders/invoice_pdf.html', context)
+    html = HTML(string=html_string)
+    pdf_file = html.write_pdf()
+    
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    filename = f'admin_invoice_{order.order_number}_{timezone.now().strftime("%Y%m%d")}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
