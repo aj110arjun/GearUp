@@ -6,9 +6,6 @@ from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
-from common.user.cart_wishlist.models import Cart, CartItem
-from common.wallet.models import Wallet
-from core.services import WalletService
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Sum, Count, F
@@ -26,6 +23,9 @@ import string
 from common.user.address.models import Address
 from .models import Order
 from .forms import OrderStatusForm
+from common.user.cart_wishlist.models import Cart, CartItem
+from common.wallet.models import Wallet, Transaction
+from core.services import WalletService
 
 
 @login_required(login_url='user_auth:signin')
@@ -130,10 +130,11 @@ def process_checkout(request, cart, cart_items, wallet):
         
         # Deduct amount from wallet
         try:
+            product_names = ", ".join([item.variant.product.name for item in cart_items])
             transaction_obj = WalletService.make_payment(
                 wallet,
                 final_total,
-                f"Order payment for {len(cart_items)} items"
+                f"Order payment for {product_names}."
             )
         except ValueError as e:
             messages.error(request, str(e))
@@ -217,8 +218,7 @@ def process_checkout(request, cart, cart_items, wallet):
         created_orders.append(order)
     
     # Deactivate the cart
-    cart.is_active = False
-    cart.save()
+    cart.delete()
     
     # If only one order was created, redirect to its success page
     if len(created_orders) == 1:
@@ -227,7 +227,7 @@ def process_checkout(request, cart, cart_items, wallet):
     else:
         # If multiple orders, redirect to orders list
         messages.success(request, f'Order placed successfully! {len(created_orders)} individual order(s) created.')
-        return redirect('orders:list')
+        return redirect('orders:order_list')
         
     
 
@@ -269,12 +269,29 @@ def order_detail(request, order_id):
 def cancel_order(request, order_id):
     """Cancel an order"""
     order = get_object_or_404(Order, id=order_id, user=request.user)
+    wallet = get_object_or_404(Wallet, user=request.user)
+    transaction = Transaction.objects.filter(wallet=wallet)
+
+
     
     if not order.can_be_cancelled:
         print(request, 'This order cannot be cancelled.')
         return redirect('orders:order_list')
     
-    order.order_status = 'cancelled'
+    if order.payment_status == 'paid' and order.payment_method in ['razorpay', 'wallet']:
+        
+        order.order_status = 'cancelled'
+        wallet.balance += order.total_amount
+        transaction.create(
+            wallet=wallet,
+            transaction_type='refund',
+            description=f'Your Refund for order #{order.order_number} has been credited on your wallet',
+            amount=order.total_amount,
+            status='refunded'
+        )
+        
+        wallet.save()
+
     order.payment_status = 'refunded' if order.payment_status == 'paid' else 'failed'
     order.save()
     

@@ -100,7 +100,6 @@ class WalletService:
                 amount=amount,
                 description=description,
                 status='completed',
-                reference=f"PAY_{uuid.uuid4().hex[:10]}"
             )
             
             # Update wallet balance

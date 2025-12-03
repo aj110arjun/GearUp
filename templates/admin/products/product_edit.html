@@ -657,80 +657,103 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Dynamic formset handling for images
-  const addImageBtn = document.getElementById('add-image');
-  const imageForms = document.getElementById('image-forms');
-  const totalImageForms = document.querySelector('#id_images-TOTAL_FORMS');
-  
-  if (addImageBtn && imageForms && totalImageForms) {
-    addImageBtn.addEventListener('click', function() {
-      const formCount = parseInt(totalImageForms.value);
-      const newForm = document.querySelector('.image-form').cloneNode(true);
-      
-      // Update form index
-      newForm.innerHTML = newForm.innerHTML.replace(/images-\d+-/g, `images-${formCount}-`);
-      newForm.innerHTML = newForm.innerHTML.replace(/images-\d+/g, `images-${formCount}`);
-      
-      // Clear values and remove existing image preview
-      newForm.querySelectorAll('img').forEach(img => img.remove());
-      newForm.querySelectorAll('input, select, textarea').forEach(input => {
-        if (input.type !== 'checkbox' && input.type !== 'hidden') {
-          input.value = '';
-        } else if (input.type === 'checkbox') {
+const addImageBtn = document.getElementById('add-image');
+const imageForms = document.getElementById('image-forms');
+const totalImageForms = document.querySelector('#id_images-TOTAL_FORMS');
+
+if (addImageBtn && imageForms && totalImageForms) {
+  addImageBtn.addEventListener('click', function() {
+    const formCount = parseInt(totalImageForms.value);
+    
+    // Find a non-primary image form to clone (or use the first form if no non-primary exists)
+    const nonPrimaryForms = document.querySelectorAll('.image-form:not(.border-indigo-300)');
+    const templateForm = nonPrimaryForms.length > 0 ? nonPrimaryForms[0] : document.querySelector('.image-form');
+    
+    const newForm = templateForm.cloneNode(true);
+    
+    // Update form index
+    newForm.innerHTML = newForm.innerHTML.replace(/images-\d+-/g, `images-${formCount}-`);
+    newForm.innerHTML = newForm.innerHTML.replace(/images-\d+/g, `images-${formCount}`);
+    
+    // Remove primary image styling and badge
+    newForm.classList.remove('border-indigo-300', 'bg-indigo-50');
+    
+    // Remove primary image badge if it exists
+    const primaryBadge = newForm.querySelector('.absolute.top-2.left-2');
+    if (primaryBadge) {
+      primaryBadge.remove();
+    }
+    
+    // Remove "This is the primary image" text
+    const primaryText = newForm.querySelector('.text-indigo-600');
+    if (primaryText) {
+      primaryText.remove();
+    }
+    
+    // Clear values and remove existing image preview
+    newForm.querySelectorAll('img').forEach(img => img.remove());
+    newForm.querySelectorAll('input, select, textarea').forEach(input => {
+      if (input.type !== 'checkbox' && input.type !== 'hidden') {
+        input.value = '';
+      } else if (input.type === 'checkbox') {
+        // UNCHECK the is_primary checkbox for new images
+        if (input.name && input.name.includes('is_primary')) {
           input.checked = false;
+        }
+      }
+    });
+    
+    // Remove delete button for new form
+    const deleteBtn = newForm.querySelector('label[for*="DELETE"]');
+    if (deleteBtn) {
+      deleteBtn.closest('.absolute').remove();
+    }
+    
+    // Remove existing image preview
+    const existingImg = newForm.querySelector('img[src*="cloudinary"]');
+    if (existingImg) {
+      existingImg.closest('.mb-4').remove();
+    }
+    
+    // Clear any existing errors
+    const errorDiv = newForm.querySelector('.text-red-500');
+    if (errorDiv) errorDiv.innerHTML = '';
+    
+    // Add image preview functionality to the new form
+    const imageInput = newForm.querySelector('input[type="file"]');
+    const previewContainer = newForm.querySelector('.image-preview-container');
+    const previewImg = newForm.querySelector('.image-preview-container img');
+    const cropBtn = newForm.querySelector('.crop-new-image');
+    
+    if (imageInput && previewContainer) {
+      imageInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+          originalImageBlob = this.files[0];
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewContainer.classList.remove('hidden');
+          }
+          
+          reader.readAsDataURL(this.files[0]);
         }
       });
       
-      // Remove delete button for new form
-      const deleteBtn = newForm.querySelector('label[for*="DELETE"]');
-      if (deleteBtn) {
-        deleteBtn.closest('.absolute').remove();
-      }
-      
-      // Remove existing image preview
-      const existingImg = newForm.querySelector('img[src*="cloudinary"]');
-      if (existingImg) {
-        existingImg.closest('.mb-4').remove();
-      }
-      
-      // Clear any existing errors
-      const errorDiv = newForm.querySelector('.text-red-500');
-      if (errorDiv) errorDiv.innerHTML = '';
-      
-      // Add image preview functionality to the new form
-      const imageInput = newForm.querySelector('input[type="file"]');
-      const previewContainer = newForm.querySelector('.image-preview-container');
-      const previewImg = newForm.querySelector('.image-preview-container img');
-      const cropBtn = newForm.querySelector('.crop-new-image');
-      
-      if (imageInput && previewContainer) {
-        imageInput.addEventListener('change', function(e) {
-          if (this.files && this.files[0]) {
-            originalImageBlob = this.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-              previewImg.src = e.target.result;
-              previewContainer.classList.remove('hidden');
-            }
-            
-            reader.readAsDataURL(this.files[0]);
-          }
-        });
-        
-        // Set data attribute for crop button
-        cropBtn.setAttribute('data-input-id', imageInput.id);
-      }
-      
-      imageForms.appendChild(newForm);
-      totalImageForms.value = formCount + 1;
-      
-      // Show a brief highlight effect on the new form
-      newForm.style.boxShadow = '0 0 0 2px rgba(79, 70, 229, 0.3)';
-      setTimeout(() => {
-        newForm.style.boxShadow = '';
-      }, 1000);
-    });
-  }
+      // Set data attribute for crop button
+      cropBtn.setAttribute('data-input-id', imageInput.id);
+    }
+    
+    imageForms.appendChild(newForm);
+    totalImageForms.value = formCount + 1;
+    
+    // Show a brief highlight effect on the new form
+    newForm.style.boxShadow = '0 0 0 2px rgba(79, 70, 229, 0.3)';
+    setTimeout(() => {
+      newForm.style.boxShadow = '';
+    }, 1000);
+  });
+}
   
   // Initialize image preview for existing forms
   document.querySelectorAll('.image-form').forEach(form => {

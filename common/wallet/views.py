@@ -22,7 +22,7 @@ except Exception as e:
 @login_required
 def wallet_dashboard(request):
     wallet, created = Wallet.objects.get_or_create(user=request.user)
-    transactions = WalletService.get_transaction_history(wallet, 10)
+    transactions = WalletService.get_transaction_history(wallet, 5)
     
     context = {
         'wallet': wallet,
@@ -81,7 +81,7 @@ def make_payment(request):
 @login_required
 def transaction_history(request):
     wallet, created = Wallet.objects.get_or_create(user=request.user)
-    transactions = wallet.transactions.all()
+    transactions = Transaction.objects.filter(wallet=wallet)
     
     return render(request, 'user/wallet/transaction_history.html', {
         'transactions': transactions,
@@ -99,7 +99,6 @@ def transaction_detail(request, transaction_id):
     
     # Get related transactions (same reference for refunds, etc.)
     related_transactions = Transaction.objects.filter(
-        reference=transaction.reference,
         wallet__user=request.user
     ).exclude(id=transaction.id)
     

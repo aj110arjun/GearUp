@@ -359,18 +359,14 @@ class ProductImageForm(forms.ModelForm):
     
     class Meta:
         model = ProductImage
-        fields = ['image', 'alt_text', 'is_primary']
+        fields = ['image', 'alt_text']
         widgets = {
             'alt_text': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': 'Image description for SEO'
             }),
-            'is_primary': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            }),
         }
         labels = {
-            'is_primary': 'Set as primary image',
             'display_order': 'Display order (lower numbers show first)',
         }
 
