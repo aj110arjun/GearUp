@@ -206,7 +206,7 @@
               </a>
               
               <!-- Fix other URLs or remove if not implemented -->
-              <a href="#" 
+              <a href="{% url 'shop:wishlist' %}" 
                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-pink-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-pink-200">
                 <div class="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center">
                   <i class="fas fa-heart text-pink-500 text-lg"></i>
@@ -232,12 +232,20 @@
                 </a>
               {% endif %}
           
-              <a href="#" 
+              <a href="{% url 'shop:cart' %}" 
                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-teal-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-teal-200">
                 <div class="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
                   <i class="fas fa-shopping-cart text-teal-500 text-lg"></i>
                 </div>
                 <span>Shopping Cart</span>
+              </a>
+
+              <a href="{% url 'orders:order_list' %}" 
+                class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-purple-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-purple-200">
+                  <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <i class="fas fa-shopping-bag text-purple-500 text-lg"></i>
+                  </div>
+                  <span>My Orders</span>
               </a>
               
               <a href="{% url 'user_auth:logout' %}" 

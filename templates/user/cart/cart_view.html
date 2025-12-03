@@ -581,14 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Final total:', finalTotal);
     console.log('Wallet balance:', walletBalance);
     
-    // Check for issues
-    if (cartItems === '0') {
-        console.error('Cart is empty!');
-        alert('Your cart is empty. Please add items to cart first.');
-        setTimeout(() => {
-            window.location.href = "{% url 'shop:cart' %}";
-        }, 1000);
-    }
+    
     
     if (isNaN(finalTotal) || finalTotal <= 0) {
         console.error('Invalid final total:', finalTotal);
