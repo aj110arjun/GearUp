@@ -4,427 +4,545 @@
 {% block title %}My Wishlist - GearUp{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
+<style>
+  .gradient-bg {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  }
+  
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .price-tag {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+  
+  .sale-badge {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+  
+  .stock-badge {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .stock-badge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    100% { left: 100%; }
+  }
+</style>
+
+<div class="min-h-screen gradient-bg py-8">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     
-    <!-- Header -->
-    <div class="mb-8">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <!-- Enhanced Header -->
+    <div class="mb-12">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">My Wishlist</h1>
-          <p class="text-gray-600 mt-2">Save your favorite items for later</p>
+          <div class="flex items-center gap-3 mb-3">
+            <div class="p-3 bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl shadow-lg">
+              <i class="fas fa-heart text-white text-xl"></i>
+            </div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              My Wishlist
+            </h1>
+          </div>
+          <p class="text-gray-600 text-lg mt-3 ml-2">
+            Save items you love and shop them later
+            {% if wishlist_items %}
+            <span class="text-emerald-600 font-semibold ml-2">
+              • {{ wishlist.total_items }} item{{ wishlist.total_items|pluralize }}
+            </span>
+            {% endif %}
+          </p>
         </div>
         
         {% if wishlist_items %}
-        <div class="flex items-center gap-4">
-          <span class="text-lg font-semibold text-gray-700">
-            {{ wishlist.total_items }} item{{ wishlist.total_items|pluralize }}
-          </span>
-          <a href="{% url 'user_home:home' %}" 
-             class="bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-2">
-            <i class="fas fa-plus"></i>
-            Continue Shopping
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <a href="{% url 'products:product_list_user' %}" 
+             class="group relative bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center gap-3 overflow-hidden">
+            <span class="relative z-10">
+              <i class="fas fa-plus"></i>
+              Continue Shopping
+            </span>
+            <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </a>
         </div>
         {% endif %}
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       
       <!-- Wishlist Items -->
       <div class="lg:col-span-3">
         {% if wishlist_items %}
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             
-            <!-- Wishlist Header -->
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-              <div class="flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-800">
-                  Saved Items
-                </h2>
-                <div class="flex items-center gap-4 text-sm text-gray-600">
-                  <span>{{ wishlist_items|length }} product{{ wishlist_items|length|pluralize }}</span>
+            <!-- Enhanced Wishlist Header -->
+            <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-5 border-b border-gray-200">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-bookmark text-emerald-500"></i>
+                    Saved Items
+                  </h2>
+                  <p class="text-sm text-gray-600 mt-1">
+                    {% now "F j, Y" %} • Updated just now
+                  </p>
+                </div>
+                <div class="flex items-center gap-4">
+                  <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
+                    <i class="fas fa-filter text-gray-500 text-sm"></i>
+                    <span class="text-sm font-medium text-gray-700">
+                      {{ wishlist_items|length }} product{{ wishlist_items|length|pluralize }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Wishlist Items Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
-              {% for item in wishlist_items %}
-              <div class="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 overflow-hidden group wishlist-item" data-item-id="{{ item.id }}">
-                
-                <!-- Product Image -->
-                <div class="relative overflow-hidden bg-gray-50">
-                  <img src="{{ item.product.image.url }}" 
-                       alt="{{ item.product.name }}"
-                       class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                       onerror="this.src='{% static 'images/placeholder.jpg' %}'">
-                  
-                  <!-- Quick Actions Overlay -->
-                  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    {% with first_variant=item.product.variants.first %}
-                    {% if first_variant and first_variant.stock_quantity > 0 %}
-                    <button onclick="moveToCart('{{ item.id }}')"
-                            class="bg-white text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-sm flex items-center gap-2">
-                      <i class="fas fa-cart-plus"></i>
-                      Add to Cart
-                    </button>
-                    {% endif %}
-                    {% endwith %}
+            <!-- Enhanced Wishlist Items Grid -->
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {% for item in wishlist_items %}
+                <div class="group relative">
+                  <!-- Main Card -->
+                  <div class="bg-white rounded-xl card-hover border border-gray-100 overflow-hidden shadow-sm group-hover:shadow-xl relative z-10">
                     
-                    <a href="{% url 'products:product_detail_user' item.product.slug %}"
-                       class="bg-white text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-sm flex items-center gap-2">
-                      <i class="fas fa-eye"></i>
-                      View
-                    </a>
-                  </div>
-
-                  <!-- Remove Button -->
-                  <button onclick="removeFromWishlist('{{ item.id }}')"
-                          class="absolute top-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-md opacity-0 group-hover:opacity-100">
-                    <i class="fas fa-times text-red-600"></i>
-                  </button>
-
-                  <!-- Stock Status -->
-                  <div class="absolute top-3 left-3">
-                    {% with first_variant=item.product.variants.first %}
-                    {% if first_variant %}
-                      {% if first_variant.stock_quantity > 0 %}
-                        <span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                          IN STOCK
-                        </span>
-                      {% else %}
-                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                          OUT OF STOCK
-                        </span>
-                      {% endif %}
-                    {% endif %}
-                    {% endwith %}
-                  </div>
-
-                  <!-- Sale Badge -->
-                  {% with first_variant=item.product.variants.first %}
-                  {% if first_variant and first_variant.compare_price and first_variant.compare_price > first_variant.price %}
-                  <div class="absolute bottom-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                    SALE
-                  </div>
-                  {% endif %}
-                  {% endwith %}
-                </div>
-
-                <!-- Product Info -->
-                <div class="p-4">
-                  <!-- Category -->
-                  <p class="text-xs text-gray-500 mb-1">{{ item.product.category.name }}</p>
-                  
-                  <!-- Product Name -->
-                  <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors h-12 overflow-hidden">
-                    <a href="{% url 'products:product_detail_user' item.product.slug %}" class="hover:underline">
-                      {{ item.product.name|title }}
-                    </a>
-                  </h3>
-
-                  <!-- Brand -->
-                  {% if item.product.brand %}
-                  <p class="text-sm text-gray-600 mb-3">by {{ item.product.brand }}</p>
-                  {% endif %}
-
-                  <!-- Rating -->
-                  <div class="flex items-center gap-1 mb-3">
-                    <div class="flex text-yellow-400 text-sm">
-                      <i class="fas fa-star"></i>
-                      <i class="fas fa-star"></i>
-                      <i class="fas fa-star"></i>
-                      <i class="fas fa-star"></i>
-                      <i class="fas fa-star-half-alt"></i>
-                    </div>
-                    <span class="text-xs text-gray-600">(4.5)</span>
-                  </div>
-
-                  <!-- Price -->
-                  <div class="flex items-center gap-2 mb-4">
-                    {% with first_variant=item.product.variants.first %}
-                    {% if first_variant %}
-                      <span class="text-xl font-bold text-emerald-600">₹{{ first_variant.price }}</span>
+                    <!-- Product Image with Overlay -->
+                    <div class="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+                      <div class="aspect-w-4 aspect-h-3">
+                        <img src="{{ item.product.image.url }}" 
+                             alt="{{ item.product.name }}"
+                             class="object-cover w-full h-56 transform group-hover:scale-110 transition-transform duration-500"
+                             onerror="this.src='{% static 'images/placeholder.jpg' %}'">
+                      </div>
                       
-                      {% if first_variant.compare_price and first_variant.compare_price > first_variant.price %}
-                        <span class="text-sm text-gray-400 line-through">₹{{ first_variant.compare_price }}</span>
-                        <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-semibold">
-                          {% widthratio first_variant.compare_price|add:"-1" first_variant.price 100 as discount_percentage %}
-                          {{ discount_percentage }}% OFF
+                      <!-- Image Overlay -->
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="absolute bottom-4 left-4 right-4 flex gap-2">
+                          {% with first_variant=item.product.variants.first %}
+                          {% if first_variant and first_variant.stock_quantity > 0 %}
+                          <button onclick="moveToCartAndRefresh('{{ item.id }}')"
+                                  class="flex-1 bg-white text-gray-800 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm transform group-hover:translate-y-0 translate-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-75">
+                            <i class="fas fa-bolt text-emerald-500"></i>
+                            Quick Add
+                          </button>
+                          {% endif %}
+                          {% endwith %}
+                          
+                          <a href="{% url 'products:product_detail_user' item.product.slug %}"
+                             class="flex-1 bg-emerald-500 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-emerald-600 transition-all duration-200 flex items-center justify-center gap-2 text-sm transform group-hover:translate-y-0 translate-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150">
+                            <i class="fas fa-eye"></i>
+                            View
+                          </a>
+                        </div>
+                      </div>
+
+                      <!-- Top Badges -->
+                      <div class="absolute top-4 left-4 right-4 flex justify-between items-start">
+                        <!-- Stock Status -->
+                        {% with first_variant=item.product.variants.first %}
+                        {% if first_variant %}
+                          {% if first_variant.stock_quantity > 0 %}
+                            <span class="stock-badge bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                              <i class="fas fa-check-circle mr-1"></i>
+                              IN STOCK
+                            </span>
+                          {% else %}
+                            <span class="stock-badge bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                              <i class="fas fa-times-circle mr-1"></i>
+                              OUT OF STOCK
+                            </span>
+                          {% endif %}
+                        {% endif %}
+                        {% endwith %}
+
+                        <!-- Wishlist Button -->
+                        <button onclick="removeFromWishlist('{{ item.id }}')"
+                                class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-red-50 transition-all duration-200 shadow-lg transform group-hover:scale-100 scale-90">
+                          <i class="fas fa-heart text-red-500 text-lg"></i>
+                        </button>
+                      </div>
+
+                      <!-- Sale Badge -->
+                      {% with first_variant=item.product.variants.first %}
+                      {% if first_variant and first_variant.compare_price and first_variant.compare_price > first_variant.price %}
+                      <div class="absolute bottom-4 right-4 sale-badge text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                        <i class="fas fa-tag mr-1"></i>
+                        SALE
+                      </div>
+                      {% endif %}
+                      {% endwith %}
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="p-5">
+                      <!-- Category & Brand -->
+                      <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                          {{ item.product.category.name }}
                         </span>
-                      {% endif %}
-                    {% else %}
-                      <span class="text-lg text-gray-500">No variants available</span>
-                    {% endif %}
-                    {% endwith %}
-                  </div>
+                        {% if item.product.brand %}
+                        <span class="text-xs text-gray-500">
+                          <i class="fas fa-crown text-yellow-400 mr-1"></i>
+                          {{ item.product.brand }}
+                        </span>
+                        {% endif %}
+                      </div>
 
-                  <!-- Action Buttons -->
-                  <div class="flex flex-col gap-2">
-                    {% with first_variant=item.product.variants.first %}
-                    {% if first_variant %}
-                      {% if first_variant.stock_quantity > 0 %}
-                        <button onclick="addToCartFromWishlist('{{ first_variant.id }}', '{{ item.id }}')"
-                                class="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 text-sm">
-                          <i class="fas fa-cart-plus"></i>
-                          Add to Cart
-                        </button>
-                      {% else %}
-                        <button disabled
-                                class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-semibold cursor-not-allowed flex items-center justify-center gap-2 text-sm">
-                          <i class="fas fa-times-circle"></i>
-                          Out of Stock
-                        </button>
-                      {% endif %}
-                    {% else %}
-                      <button disabled
-                              class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg font-semibold cursor-not-allowed flex items-center justify-center gap-2 text-sm">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        Not Available
-                      </button>
-                    {% endif %}
-                    {% endwith %}
-                    
-                    <button onclick="removeFromWishlist('{{ item.id }}')"
-                            class="w-full border border-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm">
-                      <i class="fas fa-trash"></i>
-                      Remove
-                    </button>
-                  </div>
+                      <!-- Product Name -->
+                      <h3 class="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors h-14">
+                        <a href="{% url 'products:product_detail_user' item.product.slug %}" 
+                           class="hover:underline decoration-2 decoration-emerald-500">
+                          {{ item.product.name|title }}
+                        </a>
+                      </h3>
 
-                  <!-- Added Date -->
-                  <div class="text-xs text-gray-500 mt-3 text-center">
-                    Added {{ item.added_at|timesince }} ago
+                      <!-- Rating -->
+                      <div class="flex items-center gap-2 mb-4">
+                        <div class="flex">
+                          {% for i in "12345"|make_list %}
+                          <i class="fas fa-star text-yellow-400 text-sm"></i>
+                          {% endfor %}
+                        </div>
+                        <span class="text-xs text-gray-500">(4.8 • 128 reviews)</span>
+                      </div>
+
+                      <!-- Price -->
+                      <div class="mb-5">
+                        {% with first_variant=item.product.variants.first %}
+                        {% if first_variant %}
+                          <div class="flex items-center gap-2">
+                            <span class="price-tag text-white text-2xl font-bold px-4 py-2 rounded-lg inline-block">
+                              ₹{{ first_variant.price }}
+                            </span>
+                            
+                            {% if first_variant.compare_price and first_variant.compare_price > first_variant.price %}
+                            <div class="flex flex-col">
+                              <span class="text-sm text-gray-400 line-through">₹{{ first_variant.compare_price }}</span>
+                              <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded">
+                                Save ₹{{ first_variant.compare_price|add:"-"|add:first_variant.price }}
+                              </span>
+                            </div>
+                            {% endif %}
+                          </div>
+                        {% else %}
+                          <span class="text-gray-400">Price not available</span>
+                        {% endif %}
+                        {% endwith %}
+                      </div>
+
+                      <!-- Action Buttons -->
+                      <div class="space-y-3">
+                        {% with first_variant=item.product.variants.first %}
+                        {% if first_variant %}
+                          {% if first_variant.stock_quantity > 0 %}
+                            <button onclick="addToCartFromWishlist('{{ first_variant.id }}', '{{ item.id }}')"
+                                    class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group/btn relative overflow-hidden">
+                              <span class="relative z-10 flex items-center gap-2">
+                                <i class="fas fa-shopping-cart"></i>
+                                Add to Cart
+                              </span>
+                              <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                            </button>
+                          {% else %}
+                            <button disabled
+                                    class="w-full bg-gradient-to-r from-gray-300 to-gray-400 text-gray-500 py-3 rounded-xl font-semibold cursor-not-allowed flex items-center justify-center gap-2">
+                              <i class="fas fa-times-circle"></i>
+                              Out of Stock
+                            </button>
+                          {% endif %}
+                        {% else %}
+                          <button disabled
+                                  class="w-full bg-gradient-to-r from-gray-300 to-gray-400 text-gray-500 py-3 rounded-xl font-semibold cursor-not-allowed flex items-center justify-center gap-2">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Not Available
+                          </button>
+                        {% endif %}
+                        {% endwith %}
+                        
+                        <div class="flex gap-2">
+                          <button onclick="removeFromWishlist('{{ item.id }}')"
+                                  class="flex-1 border-2 border-gray-200 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all duration-200 flex items-center justify-center gap-2 text-sm">
+                            <i class="fas fa-trash"></i>
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Added Date -->
+                      <div class="mt-4 pt-4 border-t border-gray-100 text-center">
+                        <span class="text-xs text-gray-500 flex items-center justify-center gap-1">
+                          <i class="fas fa-clock"></i>
+                          Added {{ item.added_at|timesince }} ago
+                        </span>
+                      </div>
+                    </div>
                   </div>
+                  
+                  <!-- Background Glow Effect -->
+                  <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Footer Stats -->
+            <div class="border-t border-gray-100 px-6 py-4 bg-gray-50/50">
+              <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600">
+                  <i class="fas fa-info-circle text-emerald-500 mr-2"></i>
+                  Items are saved for 90 days • Auto-removed after inactivity
                 </div>
               </div>
-              {% endfor %}
             </div>
           </div>
 
-          <!-- Bulk Actions -->
-          <div class="mt-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <div class="text-sm text-gray-600">
-              Items in your wishlist are saved for 90 days
-            </div>
-            
-            <div class="flex gap-3">
-              <button onclick="clearWishlist()"
-                      class="border border-red-600 text-red-600 px-6 py-2 rounded-lg font-semibold hover:bg-red-50 transition-colors flex items-center gap-2">
-                <i class="fas fa-trash"></i>
-                Clear All
-              </button>
+          <!-- Enhanced Bulk Actions -->
+          <div class="mt-8 p-6 bg-gradient-to-r from-gray-50 to-white rounded-2xl border border-gray-200 shadow-sm">
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+              <div class="flex-1">
+                <h3 class="font-bold text-gray-900 mb-2">Wishlist Tools</h3>
+                <p class="text-sm text-gray-600">
+                  Manage your saved items efficiently with these tools
+                </p>
+              </div>
               
-              <a href="{% url 'shop:cart' %}"
-                 class="bg-gray-800 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors flex items-center gap-2">
-                <i class="fas fa-shopping-cart"></i>
-                View Cart
-              </a>
+              <div class="flex flex-wrap gap-3">
+                <button onclick="clearWishlist()"
+                        class="group relative border-2 border-red-200 text-red-600 px-6 py-3 rounded-xl font-semibold hover:bg-red-50 transition-all duration-300 flex items-center gap-2 overflow-hidden">
+                  <span class="relative z-10">
+                    <i class="fas fa-trash"></i>
+                    Clear All
+                  </span>
+                  <div class="absolute inset-0 bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </button>
+                
+                <button onclick="addAllAvailableToCart()"
+                        class="group relative bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2 overflow-hidden">
+                  <span class="relative z-10">
+                    <i class="fas fa-cart-arrow-down"></i>
+                    Add All to Cart
+                  </span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </button>
+                
+                <a href="{% url 'shop:cart' %}"
+                   class="group relative bg-gradient-to-r from-gray-800 to-gray-900 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2 overflow-hidden">
+                  <span class="relative z-10">
+                    <i class="fas fa-shopping-cart"></i>
+                    View Cart
+                  </span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-gray-900 to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </a>
+              </div>
             </div>
           </div>
 
         {% else %}
-          <!-- Empty Wishlist State -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div class="max-w-md mx-auto">
-              <div class="bg-red-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-heart text-red-400 text-3xl"></i>
+          <!-- Enhanced Empty Wishlist State -->
+          <div class="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-xl border border-gray-100 p-12 text-center overflow-hidden relative">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-5">
+              <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-full -translate-y-32 translate-x-32"></div>
+              <div class="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-br from-red-400 to-pink-400 rounded-full translate-y-32 -translate-x-32"></div>
+            </div>
+            
+            <div class="relative z-10 max-w-2xl mx-auto">
+              <div class="relative inline-block mb-8">
+                <div class="w-32 h-32 bg-gradient-to-br from-red-400 to-pink-500 rounded-3xl flex items-center justify-center mx-auto shadow-2xl transform rotate-3">
+                  <i class="fas fa-heart text-white text-5xl"></i>
+                </div>
+                <div class="absolute -top-2 -right-2 w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                  <i class="fas fa-plus text-white"></i>
+                </div>
               </div>
               
-              <h3 class="text-2xl font-bold text-gray-900 mb-4">Your wishlist is empty</h3>
-              <p class="text-gray-600 mb-6">
-                Save items you love to your wishlist. Review them anytime and easily move them to your cart.
+              <h3 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">
+                Your Wishlist is Waiting
+              </h3>
+              <p class="text-lg text-gray-600 mb-8 max-w-md mx-auto">
+                Start building your collection of favorite products. Save items you love and access them anytime.
               </p>
               
-              <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
                 <a href="{% url 'products:product_list_user' %}"
-                   class="bg-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors">
-                  Start Shopping
+                   class="group relative bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden">
+                  <span class="relative z-10">
+                    <i class="fas fa-store mr-2"></i>
+                    Start Shopping
+                  </span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </a>
+                
                 <a href="{% url 'shop:cart' %}"
-                   class="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                   class="group relative border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-emerald-300 transition-all duration-300 flex items-center justify-center gap-3">
                   View Cart
                 </a>
               </div>
 
-              <!-- Features -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-8 border-t border-gray-200">
-                <div class="text-center">
-                  <div class="bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-save text-blue-500"></i>
+              <!-- Features Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 pt-12 border-t border-gray-200">
+                <div class="text-center group">
+                  <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-save text-blue-500 text-2xl"></i>
                   </div>
-                  <h4 class="font-semibold text-gray-800 mb-1">Save Items</h4>
-                  <p class="text-xs text-gray-600">Keep track of products you love</p>
+                  <h4 class="font-bold text-gray-800 mb-2">Save for Later</h4>
+                  <p class="text-sm text-gray-600">Keep track of products you love</p>
                 </div>
                 
-                <div class="text-center">
-                  <div class="bg-green-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-bell text-green-500"></i>
+                <div class="text-center group">
+                  <div class="w-16 h-16 bg-gradient-to-br from-green-100 to-green-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-bell text-green-500 text-2xl"></i>
                   </div>
-                  <h4 class="font-semibold text-gray-800 mb-1">Get Notified</h4>
-                  <p class="text-xs text-gray-600">Alerts for price drops</p>
+                  <h4 class="font-bold text-gray-800 mb-2">Price Alerts</h4>
+                  <p class="text-sm text-gray-600">Get notified when prices drop</p>
                 </div>
                 
-                <div class="text-center">
-                  <div class="bg-purple-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-share text-purple-500"></i>
+                <div class="text-center group">
+                  <div class="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-share-alt text-purple-500 text-2xl"></i>
                   </div>
-                  <h4 class="font-semibold text-gray-800 mb-1">Share Lists</h4>
-                  <p class="text-xs text-gray-600">Share with friends & family</p>
+                  <h4 class="font-bold text-gray-800 mb-2">Share & Collaborate</h4>
+                  <p class="text-sm text-gray-600">Share lists with friends & family</p>
                 </div>
+              </div>
+              
+              <!-- Quick Tips -->
+              <div class="mt-12 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200">
+                <h4 class="font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                  <i class="fas fa-lightbulb"></i>
+                  Quick Tip
+                </h4>
+                <p class="text-sm text-emerald-700">
+                  Click the heart icon <i class="fas fa-heart text-red-500 mx-1"></i> on any product page to add it to your wishlist.
+                  You can also create multiple wishlists for different occasions!
+                </p>
               </div>
             </div>
           </div>
         {% endif %}
       </div>
-
-      <!-- Sidebar -->
-      <div class="lg:col-span-1">
-        {% if wishlist_items %}
-        <!-- Wishlist Summary -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 sticky top-4">
-          
-          <!-- Summary Header -->
-          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
-            <h2 class="text-lg font-semibold text-gray-800">Wishlist Summary</h2>
-          </div>
-
-          <!-- Summary Content -->
-          <div class="p-6 space-y-4">
-            <!-- Stats -->
-            <div class="space-y-3">
-              <div class="flex justify-between text-gray-600">
-                <span>Total Items</span>
-                <span class="font-semibold">{{ wishlist.total_items }}</span>
-              </div>
-              
-              <div class="flex justify-between text-gray-600">
-                <span>In Stock</span>
-                <span class="font-semibold text-green-600">
-                  {% with available_items=wishlist_items|length %}
-                    {{ available_items }} available
-                  {% endwith %}
-                </span>
-              </div>
-              
-              <div class="flex justify-between text-gray-600">
-                <span>Price Range</span>
-                <span class="font-semibold">
-                  {% with min_price=0 max_price=0 %}
-                    <!-- You can calculate min/max prices here -->
-                    Various
-                  {% endwith %}
-                </span>
-              </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="border-t border-gray-200 pt-4">
-              <h3 class="font-semibold text-gray-800 mb-3">Quick Actions</h3>
-              
-              <div class="space-y-2">
-                <button onclick="addAllAvailableToCart()"
-                        class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 text-sm">
-                  <i class="fas fa-cart-arrow-down"></i>
-                  Add All Available to Cart
-                </button>
-                
-                <button onclick="shareWishlist()"
-                        class="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm">
-                  <i class="fas fa-share-alt"></i>
-                  Share Wishlist
-                </button>
-              </div>
-            </div>
-
-            <!-- Tips -->
-            <div class="bg-blue-50 rounded-lg p-4 mt-4">
-              <h4 class="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                <i class="fas fa-lightbulb"></i>
-                Pro Tip
-              </h4>
-              <p class="text-sm text-blue-700">
-                Items in your wishlist are saved for 90 days. You'll get notified if prices drop!
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recently Viewed -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mt-6 p-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Recently Viewed</h3>
-          <div class="space-y-3">
-            <!-- Placeholder for recently viewed items -->
-            <div class="text-center py-4 text-gray-500">
-              <i class="fas fa-eye-slash text-2xl mb-2"></i>
-              <p class="text-sm">No recently viewed items</p>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-      </div>
     </div>
-
-    <!-- Recommendations Section -->
-    {% if wishlist_items %}
-    <div class="mt-16">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Based on Your Wishlist</h2>
-        <a href="{% url 'user_home:home' %}" class="text-emerald-600 hover:text-emerald-700 font-semibold">
-          View All
-        </a>
-      </div>
-      
-      <!-- Add recommended products grid here -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <!-- Placeholder for recommended products -->
-        <div class="text-center py-8 text-gray-500">
-          <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-          <p>Loading recommendations...</p>
-        </div>
-      </div>
-    </div>
-    {% endif %}
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
+// CSRF Token Helper Function
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// NEW: Move to Cart with Refresh Function
+function moveToCartAndRefresh(itemId) {
+  // Use Django template for the move-to-cart URL
+  fetch(`{% url 'shop:move_to_cart' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId), {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      showNotification(data.message, 'success');
+      // Refresh the page after 1 second to update the wishlist
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      showNotification(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showNotification('Error moving to cart', 'error');
+  });
+}
+
 // Wishlist Management Functions
 function removeFromWishlist(itemId) {
   if (!confirm('Are you sure you want to remove this item from your wishlist?')) {
     return;
   }
   
-  fetch(`/shop/wishlist/remove/${itemId}/`, {
+  fetch(`{% url 'shop:remove_from_wishlist' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId), {
     method: 'POST',
     headers: {
       'X-CSRFToken': getCookie('csrftoken'),
-      'X-Requested-With': 'XMLHttpRequest'
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/json'
     }
   })
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
   .then(data => {
     if (data.success) {
       // Remove item from DOM with animation
       const itemElement = document.querySelector(`.wishlist-item[data-item-id="${itemId}"]`);
-      itemElement.style.opacity = '0';
-      itemElement.style.transform = 'scale(0.8)';
-      
-      setTimeout(() => {
-        itemElement.remove();
+      if (itemElement) {
+        itemElement.style.transition = 'all 0.3s ease';
+        itemElement.style.opacity = '0';
+        itemElement.style.transform = 'scale(0.8)';
         
-        // Update wishlist count
-        updateWishlistCount(data.wishlist_count);
-        
-        // Check if wishlist is empty
-        if (data.wishlist_count == 0) {
-          location.reload(); // Reload to show empty state
-        }
-      }, 300);
+        setTimeout(() => {
+          itemElement.remove();
+          
+          // Update wishlist count in the header
+          updateWishlistCount(data.wishlist_count);
+          
+          // Check if wishlist is empty
+          const remainingItems = document.querySelectorAll('.wishlist-item');
+          if (remainingItems.length === 0) {
+            setTimeout(() => location.reload(), 500);
+          }
+        }, 300);
+      }
       
       showNotification(data.message, 'success');
     } else {
@@ -438,23 +556,33 @@ function removeFromWishlist(itemId) {
 }
 
 function addToCartFromWishlist(variantId, wishlistItemId) {
-  fetch('/shop/cart/add/', {
+  // Use Django template for the cart URL
+  fetch('{% url "shop:add_to_cart" %}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRFToken': getCookie('csrftoken')
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest'
     },
     body: JSON.stringify({
       variant_id: variantId,
       quantity: 1
     })
   })
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
   .then(data => {
     if (data.success) {
       // Remove from wishlist after adding to cart
       removeFromWishlist(wishlistItemId);
+      
+      // Update cart count in navbar
       updateCartCount(data.cart_count);
+      
       showNotification('Item added to cart!', 'success');
     } else {
       showNotification(data.message, 'error');
@@ -467,53 +595,54 @@ function addToCartFromWishlist(variantId, wishlistItemId) {
 }
 
 function moveToCart(itemId) {
-  fetch(`/shop/wishlist/move-to-cart/${itemId}/`, {
+  // Use Django template for the move-to-cart URL
+  fetch(`{% url 'shop:move_to_cart' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId), {
     method: 'POST',
     headers: {
-      'X-CSRFToken': getCookie('csrftoken')
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/json'
     }
   })
   .then(response => {
-    if (response.ok) {
-      location.reload(); // Reload to reflect changes
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      // Remove item from DOM
+      const itemElement = document.querySelector(`.wishlist-item[data-item-id="${itemId}"]`);
+      if (itemElement) {
+        itemElement.style.transition = 'all 0.3s ease';
+        itemElement.style.opacity = '0';
+        itemElement.style.transform = 'scale(0.8)';
+        
+        setTimeout(() => {
+          itemElement.remove();
+          
+          // Update counts
+          updateCartCount(data.cart_count);
+          updateWishlistCount(data.wishlist_count);
+          
+          // Check if wishlist is empty
+          const remainingItems = document.querySelectorAll('.wishlist-item');
+          if (remainingItems.length === 0) {
+            setTimeout(() => location.reload(), 500);
+          }
+        }, 300);
+      }
+      
+      showNotification(data.message, 'success');
+    } else {
+      showNotification(data.message, 'error');
     }
   })
   .catch(error => {
     console.error('Error:', error);
     showNotification('Error moving to cart', 'error');
   });
-}
-
-function addAllAvailableToCart() {
-  const availableItems = document.querySelectorAll('.wishlist-item:has(.bg-green-500)');
-  
-  if (availableItems.length === 0) {
-    showNotification('No available items to add to cart', 'info');
-    return;
-  }
-  
-  if (!confirm(`Add ${availableItems.length} available items to cart?`)) {
-    return;
-  }
-  
-  let addedCount = 0;
-  let errorCount = 0;
-  
-  availableItems.forEach(item => {
-    const variantId = item.querySelector('button[onclick*="addToCartFromWishlist"]')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-    const itemId = item.dataset.itemId;
-    
-    if (variantId) {
-      addToCartFromWishlist(variantId, itemId);
-      addedCount++;
-    } else {
-      errorCount++;
-    }
-  });
-  
-  if (errorCount > 0) {
-    showNotification(`Added ${addedCount} items, ${errorCount} failed`, 'warning');
-  }
 }
 
 function clearWishlist() {
@@ -533,65 +662,136 @@ function clearWishlist() {
   
   setTimeout(() => {
     showNotification(`Cleared ${removedCount} items from wishlist`, 'success');
+    // Refresh after clearing to show empty state
+    setTimeout(() => location.reload(), 1000);
   }, 500);
 }
 
-function shareWishlist() {
-  // In a real implementation, this would generate a shareable link
-  showNotification('Share feature coming soon!', 'info');
-}
-
-// Utility Functions (same as cart template)
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
+// Add the addAllAvailableToCart function
+function addAllAvailableToCart() {
+  const availableItems = document.querySelectorAll('.wishlist-item');
+  const inStockItems = Array.from(availableItems).filter(item => 
+    item.querySelector('.bg-gradient-to-r.from-green-500.to-emerald-500')
+  );
+  
+  if (inStockItems.length === 0) {
+    showNotification('No available items to add to cart', 'info');
+    return;
+  }
+  
+  if (!confirm(`Add ${inStockItems.length} available items to cart?`)) {
+    return;
+  }
+  
+  let addedCount = 0;
+  let errorCount = 0;
+  
+  inStockItems.forEach(item => {
+    const itemId = item.dataset.itemId;
+    const addButton = item.querySelector('button[onclick*="addToCartFromWishlist"]');
+    if (addButton) {
+      const onclickAttr = addButton.getAttribute('onclick');
+      const match = onclickAttr.match(/'([^']+)'/);
+      if (match) {
+        const variantId = match[1];
+        addToCartFromWishlist(variantId, itemId);
+        addedCount++;
+      } else {
+        errorCount++;
       }
     }
+  });
+  
+  if (errorCount > 0) {
+    setTimeout(() => {
+      showNotification(`Added ${addedCount} items, ${errorCount} failed`, 'warning');
+    }, 1000);
   }
-  return cookieValue;
 }
 
+// Helper function to update cart count
 function updateCartCount(count) {
-  const cartCount = document.getElementById('cart-count');
-  if (cartCount) cartCount.textContent = count;
+  const cartCountElements = document.querySelectorAll('.cart-count, #cart-count');
+  cartCountElements.forEach(element => {
+    if (element) {
+      element.textContent = count;
+      element.classList.remove('hidden');
+    }
+  });
 }
 
+// Helper function to update wishlist count
 function updateWishlistCount(count) {
-  const wishlistCount = document.getElementById('wishlist-count');
-  if (wishlistCount) wishlistCount.textContent = count;
+  const wishlistCountElements = document.querySelectorAll('.wishlist-count, #wishlist-count');
+  wishlistCountElements.forEach(element => {
+    if (element) {
+      element.textContent = count;
+    }
+  });
+  
+  // Also update the header count if it exists
+  const headerCount = document.querySelector('.text-lg.font-semibold.text-gray-700');
+  if (headerCount) {
+    headerCount.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+  }
 }
 
+// Notification System
 function showNotification(message, type = 'info') {
-  // Simple notification implementation
+  // Remove existing notifications
+  const existingNotifications = document.querySelectorAll('.custom-notification');
+  existingNotifications.forEach(notification => notification.remove());
+  
+  // Create new notification
   const notification = document.createElement('div');
-  notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+  notification.className = `custom-notification fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform ${
     type === 'success' ? 'bg-green-500 text-white' :
     type === 'error' ? 'bg-red-500 text-white' :
     type === 'warning' ? 'bg-yellow-500 text-white' :
     'bg-blue-500 text-white'
   }`;
   notification.textContent = message;
+  notification.style.transform = 'translateY(-20px)';
+  notification.style.opacity = '0';
   
   document.body.appendChild(notification);
   
+  // Animate in
   setTimeout(() => {
-    notification.remove();
+    notification.style.transform = 'translateY(0)';
+    notification.style.opacity = '1';
+  }, 10);
+  
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    notification.style.transform = 'translateY(-20px)';
+    notification.style.opacity = '0';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 300);
   }, 3000);
 }
 
-// Initialize hover effects
+// Add CSS for notification
 document.addEventListener('DOMContentLoaded', function() {
-  // Add any initialization code here
+  // Add notification styles if not already present
+  if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+      .custom-notification {
+        transition: all 0.3s ease;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 });
 </script>
 
 <style>
+/* Enhanced styles */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -599,13 +799,23 @@ document.addEventListener('DOMContentLoaded', function() {
   overflow: hidden;
 }
 
-.wishlist-item {
-  transition: all 0.3s ease;
+.aspect-w-4 {
+  position: relative;
+  padding-bottom: 75%; /* 4:3 Aspect Ratio */
 }
 
-.wishlist-item.removing {
-  opacity: 0;
-  transform: scale(0.8);
+.aspect-w-4 > * {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.wishlist-item {
+  transition: all 0.3s ease;
 }
 
 /* Smooth animations for actions */
@@ -613,22 +823,23 @@ document.addEventListener('DOMContentLoaded', function() {
   transition: all 0.2s ease;
 }
 
-/* Custom scrollbar for the wishlist grid */
-.grid::-webkit-scrollbar {
-  width: 6px;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.grid::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 10px;
 }
 
-.grid::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 10px;
 }
 
-.grid::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
 </style>

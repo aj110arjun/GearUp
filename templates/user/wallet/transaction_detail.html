@@ -38,9 +38,6 @@
                     <div class="bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-4">
                         <div class="flex justify-between items-center">
                             <h2 class="text-xl font-bold text-white">Transaction Receipt</h2>
-                            <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-white text-sm font-semibold">
-                                {{ transaction.get_status_display }}
-                            </span>
                         </div>
                     </div>
 
@@ -97,7 +94,13 @@
                             <p class="text-4xl font-bold {% if transaction.transaction_type == 'deposit' %}text-emerald-600
                                                        {% elif transaction.transaction_type == 'payment' %}text-orange-600
                                                        {% else %}text-blue-600{% endif %}">
-                                {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}₹{{ transaction.amount }}
+                                {% if transaction.transaction_type == 'deposit' or transaction.transaction_type == 'refund' %}
+                                +
+                                {% else %}
+                                -
+                                {% endif %}
+
+                                ₹{{ transaction.amount }}
                             </p>
                             <p class="text-gray-500 mt-2 capitalize">{{ transaction.get_transaction_type_display }}</p>
                         </div>
@@ -109,11 +112,6 @@
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-600 mb-1">Transaction ID</label>
                                     <p class="text-gray-800 font-mono bg-gray-50 px-3 py-2 rounded border">{{ transaction.transaction_id }}</p>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-600 mb-1">Reference Number</label>
-                                    <p class="text-gray-800 font-mono bg-gray-50 px-3 py-2 rounded border">{{ transaction.reference }}</p>
                                 </div>
                                 
                                 <div>
@@ -171,57 +169,6 @@
                         {% endif %}
                     </div>
                 </div>
-
-                <!-- Related Transactions -->
-                {% if related_transactions %}
-                <div class="mt-8">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <i class="fas fa-link text-emerald-600"></i>
-                        Related Transactions
-                    </h3>
-                    <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Transaction ID</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Type</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Amount</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    {% for related_txn in related_transactions %}
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-4 py-3">
-                                            <a href="{% url 'wallet:transaction_detail' related_txn.transaction_id %}" 
-                                               class="text-emerald-600 hover:text-emerald-700 font-mono text-sm">
-                                                {{ related_txn.transaction_id }}
-                                            </a>
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium
-                                                {% if related_txn.transaction_type == 'deposit' %}bg-emerald-100 text-emerald-800
-                                                {% elif related_txn.transaction_type == 'payment' %}bg-orange-100 text-orange-800
-                                                {% else %}bg-blue-100 text-blue-800{% endif %}">
-                                                {{ related_txn.get_transaction_type_display }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 font-semibold {% if related_txn.transaction_type == 'deposit' %}text-emerald-600
-                                                                         {% else %}text-orange-600{% endif %}">
-                                            {% if related_txn.transaction_type == 'deposit' %}+{% else %}-{% endif %}₹{{ related_txn.amount }}
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">
-                                            {{ related_txn.created_at|date:"M d, Y" }}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
 
             <!-- Sidebar -->

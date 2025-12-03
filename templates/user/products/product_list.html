@@ -285,6 +285,7 @@
                       class="cart-btn w-full py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 {% if first_variant.id in cart_variant_ids %}bg-green-600 text-white hover:bg-green-700{% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}"
                       data-product-id="{{ product.id }}" 
                       data-variant-id="{{ first_variant.id }}"
+                      data-in-cart="{% if first_variant.id in cart_variant_ids %}true{% else %}false{% endif %}"
                       title="{% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}">
                 <i class="{% if first_variant.id in cart_variant_ids %}fas fa-check-circle{% else %}fas fa-shopping-cart{% endif %}"></i>
                 {% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}
@@ -425,12 +426,15 @@
     document.getElementById('message-toast').classList.add('hidden');
   }
 
+  // Initialize page
   document.addEventListener('DOMContentLoaded', function() {
+    // Hide skeleton loader and show products after 1 second
     setTimeout(function() {
       document.getElementById('product-skeletons').style.display = 'none';
       document.getElementById('product-grid').style.display = 'grid';
     }, 1000);
 
+    // Search input clear functionality
     const input = document.getElementById('search-input');
     const clearBtn = document.getElementById('clear-btn');
 
@@ -447,19 +451,16 @@
     toggleClearBtn();
   });
 
-  // Enhanced Wishlist Functionality with Debugging
+  // Enhanced Wishlist Functionality
   document.addEventListener('DOMContentLoaded', () => {
     const wishlistButtons = document.querySelectorAll('.wishlist-btn');
     
     wishlistButtons.forEach(button => {
       button.addEventListener('click', async () => {
         const productId = button.dataset.productId;
-        const originalHTML = button.innerHTML;
-        
-        console.log('=== WISHLIST CLICK DEBUG ===');
-        console.log('Product ID:', productId);
         
         // Show loading state
+        const originalHTML = button.innerHTML;
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         button.disabled = true;
         
@@ -502,28 +503,38 @@
         } catch (error) {
           console.error('Error toggling wishlist:', error);
           showToast('error', 'Wishlist Error', 'Please try again.');
-          button.innerHTML = originalHTML;
         } finally {
+          // Restore button state
           button.disabled = false;
+          // Don't restore original HTML, keep the updated state
+          // The icon is already updated above
         }
       });
     });
   });
 
-  // Add to Cart Functionality
+  // Enhanced Add to Cart Functionality - FIXED VERSION
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".cart-btn").forEach(button => {
       button.addEventListener("click", function () {
         const btn = this;
         const productId = btn.getAttribute("data-product-id");
         const variantId = btn.getAttribute("data-variant-id");
+        const isInCart = btn.dataset.inCart === 'true';
+        
+        console.log('Cart button clicked:', { productId, variantId, isInCart });
+        
+        // Store original state for error recovery
+        const originalClass = btn.className;
         const originalHTML = btn.innerHTML;
-
+        const originalTitle = btn.title;
+        
         // Show loading state
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
         btn.disabled = true;
+        btn.classList.remove('hover:bg-emerald-700', 'hover:bg-green-700');
 
-        fetch("{% url 'shop:add_to_cart' %}", {
+        fetch("{% url 'shop:toggle_cart_item' %}", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -543,32 +554,67 @@
           return response.json();
         })
         .then(data => {
+          console.log('Cart response:', data);
+          
           if (data.success) {
             if (data.added) {
+              // Update button to "In Cart" state
               btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
               btn.classList.add('bg-green-600', 'hover:bg-green-700');
               btn.innerHTML = '<i class="fas fa-check-circle"></i> In Cart';
+              btn.title = 'In Cart';
+              btn.dataset.inCart = 'true';
+              
               showToast('success', 'Cart', data.message || 'Product added to cart!');
+              
             } else if (data.removed) {
-              btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+              // Update button to "Add to Cart" state
               btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+              btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
               btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+              btn.title = 'Add to Cart';
+              btn.dataset.inCart = 'false';
+              
               showToast('success', 'Cart', data.message || 'Product removed from cart!');
             }
+            
+            // Update cart count if available
+            if (data.cart_count !== undefined) {
+              updateCartCount(data.cart_count);
+            }
+            
           } else {
             throw new Error(data.error || 'Something went wrong');
           }
         })
         .catch(error => {
-          console.error('Error:', error);
-          showToast('error', 'Error', error.message || 'Something went wrong!');
+          console.error('Cart Error:', error);
+          
+          // Restore original state on error
+          btn.className = originalClass;
           btn.innerHTML = originalHTML;
+          btn.title = originalTitle;
+          
+          showToast('error', 'Error', error.message || 'Something went wrong!');
         })
         .finally(() => {
           btn.disabled = false;
         });
       });
     });
+
+    // Helper function to update cart count in navbar (if you have one)
+    function updateCartCount(count) {
+      const cartCountElement = document.querySelector('.cart-count');
+      if (cartCountElement) {
+        cartCountElement.textContent = count;
+        if (count > 0) {
+          cartCountElement.classList.remove('hidden');
+        } else {
+          cartCountElement.classList.add('hidden');
+        }
+      }
+    }
   });
 </script>
 {% endblock %}

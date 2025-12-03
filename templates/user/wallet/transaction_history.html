@@ -65,7 +65,7 @@
                                     <span class="font-semibold {% if transaction.transaction_type == 'deposit' %}text-emerald-600
                                                                {% elif transaction.transaction_type == 'payment' %}text-orange-600
                                                                {% else %}text-blue-600{% endif %}">
-                                        {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}₹{{ transaction.amount }}
+                                        {% if transaction.transaction_type == 'deposit' or transaction.transaction_type == 'refund' %}+{% else %}-{% endif %}₹{{ transaction.amount }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
