@@ -22,9 +22,6 @@ class Address(models.Model):
     country = models.CharField(max_length=100, default='India')
     address_type = models.CharField(max_length=10, choices=ADDRESS_TYPE_CHOICES, default='home')
     
-    # Add the instructions field if you need it
-    instructions = models.TextField(blank=True, help_text='Delivery instructions (optional)')
-    
     is_default = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     

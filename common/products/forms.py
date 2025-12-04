@@ -1,14 +1,21 @@
+import io
+import logging
 import os
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import FileExtensionValidator
-from cloudinary.models import CloudinaryField
-from .models import Product, Category, ProductVariant, ProductImage
 from django.forms import inlineformset_factory
+
+from cloudinary.models import CloudinaryField
 from PIL import Image
-import io
+
+from .models import Product, Category, ProductVariant, ProductImage
+
+
+logger = logging.getLogger(__name__)
 
 class ProductCreateForm(forms.ModelForm):
     """Simplified form for product creation - only basic fields"""
@@ -425,6 +432,7 @@ ProductImageFormSet = inlineformset_factory(
 )
 
 
+
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
@@ -432,7 +440,8 @@ class CategoryForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter category name'
+                'placeholder': 'Enter category name',
+                'required': True
             }),
             'slug': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -441,41 +450,60 @@ class CategoryForm(forms.ModelForm):
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': 'Enter category description'
+                'placeholder': 'Enter category description (optional)'
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
         }
-        labels = {
-            'is_active': 'Publish Category',
-        }
-        help_texts = {
-            'slug': 'URL-friendly version of the name (auto-generated if left empty)',
-        }
-
-    def clean_slug(self):
-        slug = self.cleaned_data.get('slug')
-        if not slug:
-            name = self.cleaned_data.get('name')
-            if name:
-                slug = slugify(name)
-
-        if slug:
-            queryset = Category.objects.filter(slug=slug)
-            if self.instance and self.instance.pk:
-                queryset = queryset.exclude(pk=self.instance.pk)
-            if queryset.exists():
-                raise ValidationError('A category with this slug already exists.')
-
-        return slug
 
     def clean_name(self):
+        """
+        Form-level validation for case-insensitive unique name
+        """
         name = self.cleaned_data.get('name')
+        
+        if not name:
+            raise ValidationError('Category name is required.')
+        
+        # Case-insensitive uniqueness check
         if name:
-            queryset = Category.objects.filter(name=name)
+            queryset = Category.objects.filter(name__iexact=name)
+            
+            # Exclude current instance if editing
             if self.instance and self.instance.pk:
                 queryset = queryset.exclude(pk=self.instance.pk)
+            
             if queryset.exists():
-                raise ValidationError('A category with this name already exists.')
+                # Find the existing name (with its original case)
+                existing_name = queryset.first().name
+                raise ValidationError(
+                    f'A category with name "{existing_name}" already exists. '
+                    f'Names are case-insensitive.'
+                )
+        
         return name
+
+    def clean_slug(self):
+        """
+        Form-level validation for unique slug
+        """
+        slug = self.cleaned_data.get('slug')
+        name = self.cleaned_data.get('name')
+        
+        # Generate slug from name if slug is empty
+        if not slug and name:
+            slug = slugify(name)
+        
+        # Ensure slug is unique
+        if slug:
+            queryset = Category.objects.filter(slug=slug)
+            
+            # Exclude current instance if editing
+            if self.instance and self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            
+            if queryset.exists():
+                raise ValidationError('A category with this slug already exists.')
+        
+        return slug

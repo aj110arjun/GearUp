@@ -17,7 +17,6 @@ class AddressForm(forms.ModelForm):
             'zip_code',
             'country',
             'address_type',
-            'instructions',
             'is_default'
         ]
         widgets = {
@@ -56,17 +55,7 @@ class AddressForm(forms.ModelForm):
             'address_type': forms.Select(attrs={
                 'class': 'form-input'
             }),
-            'instructions': forms.Textarea(attrs={
-                'class': 'form-input',
-                'placeholder': 'Delivery instructions (optional) - Minimum 5 words required',
-                'rows': 3
-            }),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Make instructions field required for validation
-        self.fields['instructions'].required = False
 
     def clean_full_name(self):
         full_name = self.cleaned_data.get('full_name', '').strip()
@@ -178,21 +167,6 @@ class AddressForm(forms.ModelForm):
             raise ValidationError("Country should contain only letters, spaces, and hyphens.")
         
         return country
-
-    def clean_instructions(self):
-        instructions = self.cleaned_data.get('instructions', '').strip()
-        if instructions:
-            # Count words (split by spaces and filter out empty strings)
-            words = [word for word in instructions.split() if word.strip()]
-            
-            if len(words) < 5:
-                raise ValidationError("Delivery instructions must contain at least 5 words.")
-            
-            # Check for excessive special characters
-            if re.search(r'[!$%^&*()_+=<>?/\\|\[\]{}~`]{2,}', instructions):
-                raise ValidationError("Delivery instructions contain too many consecutive special characters.")
-        
-        return instructions
 
     def clean(self):
         cleaned_data = super().clean()

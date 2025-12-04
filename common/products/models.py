@@ -1,8 +1,10 @@
 import uuid
+
 from django.db import models
 from django.utils.text import slugify
 from django.urls import reverse
 from cloudinary.models import CloudinaryField
+from django.core.exceptions import ValidationError
 
 
 class Category(models.Model):
@@ -20,10 +22,42 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def clean(self):
+        """
+        Model-level validation for case-insensitive unique name
+        """
+        super().clean()
+        
+        # Check for case-insensitive duplicate names
+        if self.name:
+            queryset = Category.objects.filter(name__iexact=self.name)
+            if self.pk:
+                queryset = queryset.exclude(pk=self.pk)
+            
+            if queryset.exists():
+                raise ValidationError(
+                    {'name': 'A category with this name already exists (case-insensitive).'}
+                )
 
     def save(self, *args, **kwargs):
-        if not self.slug:
+        """
+        Save method with case-insensitive name check and slug generation
+        """
+        # Run full model validation
+        self.full_clean()
+        
+        # Generate slug from name if empty
+        if not self.slug and self.name:
             self.slug = slugify(self.name)
+            
+            # Ensure slug is unique
+            base_slug = self.slug
+            counter = 1
+            while Category.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
