@@ -35,18 +35,8 @@ def home(request):
             products_data.append({
                 'product': product,
                 'price': first_variant.price,
-                'original_price': first_variant.compare_price if first_variant.compare_price else None,
-                'discount': True if first_variant.compare_price and first_variant.compare_price > first_variant.price else False,
                 'in_stock': first_variant.stock_quantity > 0
             })
-    
-    # Calculate discount percentage for template
-    for product_data in products_data:
-        if product_data['original_price'] and product_data['price']:
-            discount_amount = product_data['original_price'] - product_data['price']
-            product_data['discount_percentage'] = int((discount_amount / product_data['original_price']) * 100)
-        else:
-            product_data['discount_percentage'] = 0
     
     context = {
         'products': products_data,

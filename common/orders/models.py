@@ -1,10 +1,12 @@
-# orders/models.py
+import random
+import string
+import uuid
+
 from django.db import models
 from django.conf import settings
 from decimal import Decimal
-import random
-import string
 from django.utils import timezone
+from django.utils.text import slugify
 
 User = settings.AUTH_USER_MODEL
 
@@ -44,7 +46,12 @@ class Order(models.Model):
         ('late_delivery', 'Late Delivery'),
         ('other', 'Other'),
     ]
-
+    order_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
@@ -52,6 +59,7 @@ class Order(models.Model):
     )
     
     order_number = models.CharField(max_length=20, unique=True)
+    slug = models.SlugField(max_length=225, unique=True, blank=True)
     
     # Product relationship - using ForeignKey
     product = models.ForeignKey(
@@ -126,6 +134,18 @@ class Order(models.Model):
         
         if not self.total_amount:
             self.total_amount = self.subtotal + self.tax_amount + self.shipping_cost
+        
+        if not self.slug:
+            # Create a unique slug using order number and a small portion of UUID
+            self.slug = slugify(f"{self.order_number}")
+        
+        # Ensure slug is unique
+        if not self.pk:  # For new orders
+            original_slug = self.slug
+            counter = 1
+            while Order.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
             
         super().save(*args, **kwargs)
 
