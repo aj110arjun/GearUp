@@ -1,5 +1,8 @@
 import json
 import os
+import io 
+import logging
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -14,7 +17,6 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from PIL import Image
-import io
 
 from common.user.cart_wishlist.models import Cart, CartItem, Wishlist
 from .models import Product, ProductVariant, Category, ProductImage
@@ -434,6 +436,7 @@ def category_list(request):
     
     return render(request, 'admin/categories/category_list.html', context)
 
+logger = logging.getLogger(__name__)
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -456,22 +459,27 @@ def handle_category_form(request, category_instance=None):
         form = CategoryForm(request.POST, instance=category_instance)
         
         if form.is_valid():
-            category = form.save(commit=False)
-            
-            # Auto-generate slug if empty
-            if not category.slug and category.name:
-                from django.utils.text import slugify
-                category.slug = slugify(category.name)
-            
-            category.save()
-            
-            # Success message
-            action = "updated" if is_edit else "created"
-            messages.success(request, f'Category "{category.name}" has been {action} successfully!')
-            
-            return redirect('products:category_list')
+            try:
+                # Save with validation
+                category = form.save()
+                
+                # Success message
+                action = "updated" if is_edit else "created"
+                messages.success(request, f'Category "{category.name}" has been {action} successfully!')
+                
+                return redirect('products:category_list')
+                
+            except ValidationError as e:
+                # Handle model-level validation errors
+                messages.error(request, str(e))
+            except Exception as e:
+                # Handle other errors
+                logger.error(f"Error saving category: {str(e)}")
+                messages.error(request, f'Error saving category: {str(e)}')
+                
         else:
             messages.error(request, 'Please correct the errors below.')
+            
     else:
         # GET request - initialize form
         if is_edit:
@@ -485,6 +493,11 @@ def handle_category_form(request, category_instance=None):
         'category': category_instance if is_edit else None,
         'title': f'Edit Category - {category_instance.name}' if is_edit else 'Add New Category',
     }
+    
+    # Add statistics for edit mode
+    if is_edit and category_instance:
+        context['total_products'] = category_instance.products.count()
+        context['active_products'] = category_instance.products.filter(is_active=True).count()
     
     return render(request, 'admin/categories/category_form.html', context)
 

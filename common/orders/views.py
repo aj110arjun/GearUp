@@ -272,7 +272,7 @@ def order_list(request):
 @never_cache
 def order_detail(request, order_id):
     """Display order details"""
-    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
     
     # Simple check: Show return button if order is delivered and no return has been requested
     can_return = (
@@ -301,7 +301,7 @@ def order_detail(request, order_id):
 @transaction.atomic
 def cancel_order(request, order_id):
     """Cancel an order"""
-    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
     wallet = get_object_or_404(Wallet, user=request.user)
     transaction = Transaction.objects.filter(wallet=wallet)
 
@@ -490,7 +490,7 @@ def admin_order_list(request):
 
 @staff_member_required(login_url='auth_dashboard:signin')
 def admin_order_detail(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     # Define status transitions
     status_transitions = {
@@ -576,7 +576,7 @@ def create_razorpay_order(request):
 @require_POST
 def admin_order_update_status(request, order_id):
     """Update order status - handles POST requests only"""
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     new_status = request.POST.get('order_status')
     notes = request.POST.get('notes', '').strip()
@@ -675,7 +675,7 @@ def admin_order_update_status(request, order_id):
 @require_POST
 def admin_order_update_payment_status(request, order_id):
     """Update payment status"""
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     new_payment_status = request.POST.get('payment_status')
     
@@ -701,7 +701,7 @@ def admin_order_update_payment_status(request, order_id):
 @require_POST
 def admin_order_cancel(request, order_id):
     """Cancel an order"""
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     if order.order_status == 'cancelled':
         messages.warning(request, 'Order is already cancelled.')
@@ -743,7 +743,7 @@ def order_success(request, order_id=None):
     
     if order_id:
         # Get the specific order if provided
-        order = get_object_or_404(Order, id=order_id, user=request.user)
+        order = get_object_or_404(Order, ordera_id=order_id, user=request.user)
         context['order'] = order
         context['title'] = f'Order #{order.order_number} - Success'
     else:
@@ -772,7 +772,7 @@ def admin_order_export(request):
 @require_http_methods(["GET", "POST"])
 def request_return(request, order_id):
     """User requests a return for a delivered product"""
-    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
     
     # Check if order can be returned
     if not order.can_be_returned:
@@ -837,7 +837,7 @@ def request_return(request, order_id):
 @require_http_methods(["GET", "POST"])
 def admin_approve_return(request, order_id):
     """Admin approves a return request and processes refund to wallet"""
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     # Check if this is a valid return request
     if order.order_status != 'return_requested':
@@ -919,7 +919,7 @@ def admin_approve_return(request, order_id):
 @require_http_methods(["GET", "POST"])
 def admin_reject_return(request, order_id):
     """Admin rejects a return request"""
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     if order.order_status != 'return_requested':
         messages.error(request, 'This order does not have a pending return request.')
@@ -962,7 +962,7 @@ def admin_reject_return(request, order_id):
 @require_POST
 def admin_complete_return(request, order_id):
     """Admin marks return as completed and processes refund"""
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     if order.order_status != 'return_approved':
         messages.error(request, 'This order is not approved for return.')
@@ -1132,7 +1132,7 @@ def admin_rejected_returns(request):
 @staff_member_required(login_url='auth_dashboard:signin')
 def admin_view_return(request, order_id):
     """Admin view for detailed return information"""
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     context = {
         'order': order,
@@ -1146,7 +1146,7 @@ def admin_view_return(request, order_id):
 @never_cache
 def order_detail(request, order_id):
     """Display order details"""
-    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
     
     context = {
         'order': order,
@@ -1160,7 +1160,7 @@ def order_detail(request, order_id):
 @login_required
 def download_invoice(request, order_id):
     """Generate and download PDF invoice using HTML template"""
-    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
     
     # Prepare context data
     context = {
@@ -1212,7 +1212,7 @@ def download_invoice(request, order_id):
 @login_required
 def download_receipt(request, order_id):
     """Generate and download simple receipt"""
-    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
     
     context = {
         'order': order,
@@ -1237,7 +1237,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 @staff_member_required
 def admin_download_invoice(request, order_id):
     """Generate invoice for admin (any order)"""
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, order_id=order_id)
     
     context = {
         'order': order,
