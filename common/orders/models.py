@@ -90,6 +90,10 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
 
+    payment_attempts = models.IntegerField(default=0)
+    last_payment_attempt = models.DateTimeField(null=True, blank=True)
+    payment_failure_reason = models.TextField(blank=True, null=True)
+
     return_requested_at = models.DateTimeField(null=True, blank=True)
     return_reason = models.CharField(max_length=50, choices=RETURN_REASON_CHOICES, null=True, blank=True)
     return_description = models.TextField(null=True, blank=True)
@@ -234,3 +238,9 @@ class Order(models.Model):
             
         }
         return status_classes.get(self.payment_status, 'bg-gray-100 text-gray-800')
+    
+    @property
+    def can_retry_payment(self):
+        """Check if payment can be retried - simplified version"""
+        # Allow retry if payment is failed
+        return self.payment_status == 'failed'
