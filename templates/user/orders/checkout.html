@@ -58,6 +58,7 @@
           <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
           <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
           <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+          <input type="hidden" name="payment_failed" id="payment_failed" value="false">
           
           <!-- Shipping Address -->
           <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -524,8 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Update the initiateRazorpayPayment function
-function initiateRazorpayPayment() {
+  function initiateRazorpayPayment() {
     const orderTotal = parseFloat('{{ final_total }}');
     
     // Show loading
@@ -587,11 +587,32 @@ function initiateRazorpayPayment() {
             const rzp = new Razorpay(options);
             rzp.open();
             
-            // Handle errors
+            // Handle payment failure - UPDATED VERSION
             rzp.on('payment.failed', function(response) {
                 console.error('Payment failed:', response.error);
-                alert('Payment failed. Please try again. Error: ' + 
-                      (response.error.description || response.error.reason || 'Unknown error'));
+                
+                // Mark payment as failed
+                document.getElementById('payment_failed').value = 'true';
+                
+                // Create hidden input for payment failure reason
+                const failureReasonInput = document.createElement('input');
+                failureReasonInput.type = 'hidden';
+                failureReasonInput.name = 'payment_failure_reason';
+                failureReasonInput.value = response.error.description || response.error.reason || 'Payment failed';
+                checkoutForm.appendChild(failureReasonInput);
+                
+                // Show loading and submit form to create order with failed status
+                loadingOverlay.classList.remove('hidden');
+                
+                // Add slight delay to ensure loading is visible
+                setTimeout(() => {
+                    submitOrder();
+                }, 300);
+                
+                // Optional: Show message after a delay
+                setTimeout(() => {
+                    alert('Payment failed. Your order has been created with failed payment status. You can retry payment from your order details.');
+                }, 1500);
             });
             
         } else {
@@ -603,10 +624,9 @@ function initiateRazorpayPayment() {
         console.error('Error:', error);
         alert('Failed to initialize payment. Please try again.');
     });
-}
-
-// Add this function to get CSRF token
-function getCookie(name) {
+  }
+  
+  function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
@@ -619,7 +639,7 @@ function getCookie(name) {
         }
     }
     return cookieValue;
-}
+  }
   
   function submitOrder() {
     // Show loading overlay
