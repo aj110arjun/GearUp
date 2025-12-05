@@ -2,7 +2,7 @@ import os
 import random
 import string
 
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -113,6 +113,7 @@ def process_checkout(request, cart, cart_items, wallet):
     razorpay_payment_id = request.POST.get('razorpay_payment_id')
     razorpay_order_id = request.POST.get('razorpay_order_id')
     razorpay_signature = request.POST.get('razorpay_signature')
+    payment_failed = request.POST.get('payment_failed') == 'true'
     
     if not shipping_address_id:
         messages.error(request, 'Please select a shipping address.')
@@ -135,71 +136,27 @@ def process_checkout(request, cart, cart_items, wallet):
         if wallet.balance < final_total:
             messages.error(request, f'Insufficient wallet balance. You need ₹{final_total} but have only ₹{wallet.balance}.')
             return redirect('orders:checkout')
-        
-        # Deduct amount from wallet
-        try:
-            product_names = ", ".join([item.variant.product.name for item in cart_items])
-            transaction_obj = WalletService.make_payment(
-                wallet,
-                final_total,
-                f"Order payment for {product_names}."
-            )
-        except ValueError as e:
-            messages.error(request, str(e))
-            return redirect('orders:checkout')
     
-    # Handle Razorpay payment verification
-    elif payment_method == 'razorpay':
-        if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
-            messages.error(request, 'Payment verification failed. Please try again.')
-            return redirect('orders:checkout')
-        
-        try:
-            # Initialize Razorpay service
-            razorpay_service = RazorpayService()
-            
-            # Verify payment signature
-            is_valid = razorpay_service.verify_payment(
-                razorpay_payment_id,
-                razorpay_order_id,
-                razorpay_signature
-            )
-            
-            if not is_valid:
-                messages.error(request, 'Payment verification failed. Please try again.')
-                return redirect('orders:checkout')
-            
-            # Optional: Fetch payment details from Razorpay
-            try:
-                payment_details = razorpay_service.fetch_payment(razorpay_payment_id)
-                # You can store payment details in your Order model if needed
-                razorpay_payment_status = payment_details.get('status')
-            except:
-                # If fetching fails, it's okay as we already verified the signature
-                pass
-                
-        except Exception as e:
-            messages.error(request, f'Payment verification failed: {str(e)}')
-            return redirect('orders:checkout')
-    
-    # Handle Cash on Delivery
-    elif payment_method == 'cash_on_delivery':
-        # No payment processing needed for COD
-        pass
-    
-    else:
-        messages.error(request, 'Invalid payment method selected.')
-        return redirect('orders:checkout')
-    
+    # Create orders even if payment failed
     created_orders = []
     
-    # Create individual order for each cart item
     for cart_item in cart_items:
-        # Calculate pricing for this individual product
         subtotal = cart_item.total_price
-        tax_amount_item = subtotal * Decimal('0.1')  # 10% tax
-        shipping_cost_item = Decimal('0.00')  # Free shipping
+        tax_amount_item = subtotal * Decimal('0.1')
+        shipping_cost_item = Decimal('0.00')
         total_amount_item = subtotal + tax_amount_item + shipping_cost_item
+        
+        # Determine payment status
+        if payment_failed:
+            payment_status = 'failed'
+        elif payment_method == 'wallet' and wallet.balance >= final_total:
+            payment_status = 'paid'
+        elif payment_method == 'razorpay' and razorpay_payment_id:
+            payment_status = 'paid'  # Will be updated after verification
+        elif payment_method == 'cash_on_delivery':
+            payment_status = 'pending'
+        else:
+            payment_status = 'pending'
         
         # Create order
         order = Order(
@@ -215,25 +172,102 @@ def process_checkout(request, cart, cart_items, wallet):
             payment_method=payment_method,
             shipping_address=shipping_address,
             order_status='pending',
-            payment_status='paid' if payment_method in ['wallet', 'razorpay'] else 'pending',
-            paid_at=timezone.now() if payment_method in ['wallet', 'razorpay'] else None,
-            # Store Razorpay details if applicable
+            payment_status=payment_status,
+            paid_at=timezone.now() if payment_status == 'paid' else None,
             razorpay_payment_id=razorpay_payment_id if payment_method == 'razorpay' else None,
             razorpay_order_id=razorpay_order_id if payment_method == 'razorpay' else None,
+            payment_attempts=1 if payment_failed else 0,
+            last_payment_attempt=timezone.now() if payment_failed else None,
+            payment_failure_reason="Payment failed during checkout" if payment_failed else None,
         )
         order.save()
-        
         created_orders.append(order)
+    
+    # If payment failed, redirect to payment failed page
+    if payment_failed:
+        if len(created_orders) == 1:
+            return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
+        else:
+            # For multiple orders, redirect to orders list with filter
+            return redirect('orders:order_list')
+    
+    # Handle successful payment verification
+    if payment_method == 'razorpay' and razorpay_payment_id:
+        try:
+            razorpay_service = RazorpayService()
+            is_valid = razorpay_service.verify_payment(
+                razorpay_payment_id,
+                razorpay_order_id,
+                razorpay_signature
+            )
+            
+            if not is_valid:
+                # Update all created orders to failed status
+                for order in created_orders:
+                    order.payment_status = 'failed'
+                    order.payment_attempts += 1
+                    order.last_payment_attempt = timezone.now()
+                    order.payment_failure_reason = "Payment verification failed"
+                    order.save()
+                
+                if len(created_orders) == 1:
+                    return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
+                else:
+                    return redirect('orders:order_list')
+        except Exception as e:
+            # Handle verification error
+            for order in created_orders:
+                order.payment_status = 'failed'
+                order.payment_attempts += 1
+                order.last_payment_attempt = timezone.now()
+                order.payment_failure_reason = f"Payment verification error: {str(e)}"
+                order.save()
+            
+            if len(created_orders) == 1:
+                return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
+            else:
+                return redirect('orders:order_list')
+    
+    # Handle wallet payment
+    if payment_method == 'wallet' and wallet.balance >= final_total:
+        try:
+            product_names = ", ".join([item.variant.product.name for item in cart_items])
+            transaction_obj = WalletService.make_payment(
+                wallet,
+                final_total,
+                f"Order payment for {product_names}."
+            )
+            
+            # Update all orders
+            for order in created_orders:
+                order.payment_status = 'paid'
+                order.paid_at = timezone.now()
+                order.save()
+                
+        except ValueError as e:
+            for order in created_orders:
+                order.payment_status = 'failed'
+                order.payment_attempts += 1
+                order.last_payment_attempt = timezone.now()
+                order.payment_failure_reason = f"Wallet payment failed: {str(e)}"
+                order.save()
+            
+            if len(created_orders) == 1:
+                return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
+            else:
+                return redirect('orders:order_list')
     
     # Deactivate the cart
     cart.delete()
     
-    # If only one order was created, redirect to its success page
+    # Redirect based on number of orders
     if len(created_orders) == 1:
-        messages.success(request, 'Order placed successfully!')
-        return redirect('orders:order_success', order_id=created_orders[0].id)
+        if created_orders[0].payment_status == 'paid':
+            messages.success(request, 'Order placed successfully!')
+            return redirect('orders:order_success', order_id=created_orders[0].id)
+        else:
+            return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
     else:
-        # If multiple orders, redirect to orders list
         messages.success(request, f'Order placed successfully! {len(created_orders)} individual order(s) created.')
         return redirect('orders:order_list')
         
@@ -743,7 +777,7 @@ def order_success(request, order_id=None):
     
     if order_id:
         # Get the specific order if provided
-        order = get_object_or_404(Order, ordera_id=order_id, user=request.user)
+        order = get_object_or_404(Order, order_id=order_id, user=request.user)
         context['order'] = order
         context['title'] = f'Order #{order.order_number} - Success'
     else:
@@ -1255,3 +1289,199 @@ def admin_download_invoice(request, order_id):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     return response
+
+# orders/views.py
+@login_required(login_url='user_auth:signin')
+@never_cache
+def payment_failed(request, order_id):
+    """Display payment failed page with retry options"""
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
+    
+    # Get related orders if this was part of a multi-order checkout
+    related_orders = Order.objects.filter(
+        user=request.user,
+        created_at__gte=order.created_at - timedelta(minutes=5),
+        payment_status='failed'
+    ).exclude(order_id=order.order_id)
+    
+    context = {
+        'order': order,
+        'related_orders': related_orders,
+    }
+    
+    return render(request, 'user/orders/payment_failed.html', context)
+
+
+@login_required(login_url='user_auth:signin')
+@require_POST
+@transaction.atomic
+def retry_payment(request, order_id):
+    """Retry payment for a failed order - simplified version"""
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
+    
+    # Check if payment can be retried (always allow if failed)
+    if order.payment_status != 'failed':
+        messages.error(request, 'Payment cannot be retried at this time.')
+        return redirect('orders:order_detail', order_id=order.order_id)
+    
+    # Update payment attempts
+    order.payment_attempts += 1
+    order.last_payment_attempt = timezone.now()
+    
+    # Handle different payment methods
+    if order.payment_method == 'razorpay':
+        # Create a new Razorpay order for retry
+        try:
+            razorpay_service = RazorpayService()
+            
+            # Generate a unique receipt for retry
+            receipt = f"retry_{order.order_number}_{int(timezone.now().timestamp())}"
+            
+            # Create new Razorpay order
+            razorpay_order = razorpay_service.create_order(
+                amount=float(order.total_amount),
+                receipt=receipt
+            )
+            
+            # Save the new Razorpay order ID
+            order.razorpay_order_id = razorpay_order['id']
+            order.save()
+            
+            return JsonResponse({
+                'success': True,
+                'order_id': razorpay_order['id'],
+                'amount': razorpay_order['amount'],
+                'currency': razorpay_order['currency'],
+                'key_id': settings.RAZORPAY_KEY_ID,
+                'receipt': razorpay_order['receipt'],
+                'user_name': request.user.get_full_name() or request.user.username,
+                'user_email': request.user.email,
+                'user_contact': request.user.phone_number or '',
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
+    elif order.payment_method == 'wallet':
+        # Check wallet balance
+        wallet = Wallet.objects.get(user=request.user)
+        if wallet.balance >= order.total_amount:
+            try:
+                transaction_obj = WalletService.make_payment(
+                    wallet,
+                    order.total_amount,
+                    f"Retry payment for order #{order.order_number}"
+                )
+                order.payment_status = 'paid'
+                order.paid_at = timezone.now()
+                order.save()
+                
+                messages.success(request, f'Payment successful! Order #{order.order_number} has been confirmed.')
+                return redirect('orders:order_success', order_id=order.order_id)
+            except Exception as e:
+                messages.error(request, f'Wallet payment failed: {str(e)}')
+                # Update failure reason
+                order.payment_failure_reason = f"Wallet payment failed: {str(e)}"
+                order.save()
+                return redirect('orders:order_detail', order_id=order.order_id)
+        else:
+            messages.error(request, 'Insufficient wallet balance. Please add funds to your wallet.')
+            order.payment_failure_reason = "Insufficient wallet balance"
+            order.save()
+            return redirect('orders:order_detail', order_id=order.order_id)
+    
+    order.save()
+    return redirect('orders:order_detail', order_id=order.order_id)
+
+@login_required(login_url='user_auth:signin')
+@require_POST
+@transaction.atomic
+def verify_retry_payment(request, order_id):
+    """Verify Razorpay payment after successful retry"""
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
+    
+    # Get Razorpay payment details from POST data
+    razorpay_payment_id = request.POST.get('razorpay_payment_id')
+    razorpay_order_id = request.POST.get('razorpay_order_id')
+    razorpay_signature = request.POST.get('razorpay_signature')
+    
+    if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
+        messages.error(request, 'Invalid payment details.')
+        return redirect('orders:payment_failed', order_id=order.order_id)
+    
+    try:
+        # Verify the payment
+        razorpay_service = RazorpayService()
+        is_valid = razorpay_service.verify_payment(
+            razorpay_payment_id,
+            razorpay_order_id,
+            razorpay_signature
+        )
+        
+        if is_valid:
+            # Payment successful - update order
+            order.payment_status = 'paid'
+            order.paid_at = timezone.now()
+            order.razorpay_payment_id = razorpay_payment_id
+            order.razorpay_order_id = razorpay_order_id
+            order.razorpay_signature = razorpay_signature
+            order.payment_failure_reason = None  # Clear failure reason
+            order.save()
+            
+            messages.success(request, f'Payment successful! Order #{order.order_number} has been confirmed.')
+            return redirect('orders:order_success', order_id=order.order_id)
+        else:
+            # Payment verification failed
+            order.payment_failure_reason = "Payment verification failed"
+            order.save()
+            
+            messages.error(request, 'Payment verification failed. Please try again.')
+            return redirect('orders:payment_failed', order_id=order.order_id)
+            
+    except Exception as e:
+        # Handle verification error
+        order.payment_failure_reason = f"Payment verification error: {str(e)}"
+        order.save()
+        
+        messages.error(request, f'Payment verification error: {str(e)}')
+        return redirect('orders:payment_failed', order_id=order.order_id)
+
+
+@login_required(login_url='user_auth:signin')
+@require_POST
+def retry_razorpay_payment(request, order_id):
+    """Create Razorpay order for retry payment"""
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
+    
+    try:
+        razorpay_service = RazorpayService()
+        
+        # Generate a unique receipt for retry
+        receipt = f"retry_{order.order_number}_{int(timezone.now().timestamp())}"
+        
+        # Create new Razorpay order
+        razorpay_order = razorpay_service.create_order(
+            amount=float(order.total_amount),
+            receipt=receipt
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'order_id': razorpay_order['id'],
+            'amount': razorpay_order['amount'],
+            'currency': razorpay_order['currency'],
+            'key_id': settings.RAZORPAY_KEY_ID,
+            'receipt': razorpay_order['receipt'],
+            'user_name': request.user.get_full_name() or request.user.username,
+            'user_email': request.user.email,
+            'user_contact': request.user.phone_number or '',
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })

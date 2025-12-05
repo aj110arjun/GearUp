@@ -1,0 +1,307 @@
+<!-- templates/user/orders/payment_failed.html -->
+{% extends "user/base.html" %}
+{% load static %}
+
+{% block title %}Payment Failed - GearUp{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-8">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+          <a href="{% url 'user_home:home' %}" class="text-gray-500 hover:text-gray-900 inline-flex items-center text-sm font-medium">
+            <i class="fas fa-home mr-2"></i>
+            Home
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+            <a href="{% url 'orders:order_list' %}" class="text-gray-500 hover:text-gray-900 text-sm font-medium">My Orders</a>
+          </div>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+            <span class="text-gray-800 font-medium text-sm">Payment Failed</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Payment Failed Alert -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-l-4 border-red-500">
+      <div class="flex items-center mb-4">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+          <i class="fas fa-times-circle text-red-500 text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Payment Failed</h1>
+          <p class="text-gray-600">We couldn't process your payment for order #{{ order.order_number }}</p>
+        </div>
+      </div>
+      
+      {% if order.payment_failure_reason %}
+      <div class="mt-4 p-4 bg-red-50 rounded-lg">
+        <p class="text-red-700 text-sm">
+          <i class="fas fa-info-circle mr-2"></i>
+          <strong>Reason:</strong> {{ order.payment_failure_reason }}
+        </p>
+      </div>
+      {% endif %}
+      
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <h3 class="font-medium text-gray-900 mb-2">Order Details</h3>
+          <p class="text-sm text-gray-600">Order #: {{ order.order_number }}</p>
+          <p class="text-sm text-gray-600">Amount: ₹{{ order.total_amount }}</p>
+          <p class="text-sm text-gray-600">Date: {{ order.created_at|date:"d M Y, h:i A" }}</p>
+          <p class="text-sm text-gray-600">Method: {{ order.get_payment_method_display }}</p>
+        </div>
+        
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <h3 class="font-medium text-gray-900 mb-2">Payment Status</h3>
+          <p class="text-sm">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+              <i class="fas fa-times-circle mr-1"></i>
+              Failed
+            </span>
+          </p>
+          <!-- Removed attempts counter -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">What would you like to do?</h2>
+      
+      <div class="space-y-4">
+        <!-- Always show retry button if payment is failed -->
+        {% if order.payment_status == 'failed' and order.payment_method == 'razorpay' %}
+        <button id="retry-payment-btn" 
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+          <i class="fas fa-redo"></i>
+          Retry Payment with Razorpay
+        </button>
+        {% elif order.payment_status == 'failed' and order.payment_method == 'wallet' %}
+        <form method="POST" action="{% url 'orders:retry_payment' order.id %}">
+          {% csrf_token %}
+          <button type="submit" 
+                  class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+            <i class="fas fa-redo"></i>
+            Retry Payment with Wallet
+          </button>
+        </form>
+        {% else %}
+        <button disabled
+                class="w-full bg-gray-300 text-gray-500 font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
+          <i class="fas fa-ban"></i>
+          Retry Payment Unavailable
+        </button>
+        {% endif %}
+        
+        <a href="{% url 'orders:order_detail' order.order_id %}"
+           class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-sm hover:shadow-md text-center">
+          <i class="fas fa-eye mr-2"></i>
+          View Order Details
+        </a>
+        
+        <a href="{% url 'shop:cart' %}"
+           class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 px-4 rounded-lg transition text-center">
+          <i class="fas fa-shopping-cart mr-2"></i>
+          Return to Cart
+        </a>
+      </div>
+      
+      <!-- Support Information -->
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <h3 class="font-medium text-gray-900 mb-2">Need Help?</h3>
+        <p class="text-sm text-gray-600 mb-4">
+          If you're experiencing issues with payment, please contact our support team.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <a href="mailto:support@gearup.com"
+             class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+            <i class="fas fa-envelope mr-2"></i>
+            Email Support
+          </a>
+          <span class="text-gray-300">|</span>
+          <a href="tel:+911234567890"
+             class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+            <i class="fas fa-phone mr-2"></i>
+            Call Support
+          </a>
+          <span class="text-gray-300">|</span>
+          <a href=""
+             class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+            <i class="fas fa-headset mr-2"></i>
+            Contact Us
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Failed Orders (if any) -->
+    {% if related_orders %}
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Other Failed Orders</h2>
+      <div class="space-y-3">
+        {% for related_order in related_orders %}
+        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+          <div>
+            <p class="font-medium text-gray-900">Order #{{ related_order.order_number }}</p>
+            <p class="text-sm text-gray-600">₹{{ related_order.total_amount }}</p>
+          </div>
+          <a href="{% url 'orders:payment_failed' related_order.order_id %}"
+             class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+            View Details
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl p-8 text-center max-w-sm mx-4">
+    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i>
+    </div>
+    <h3 class="text-xl font-semibold text-gray-800 mb-2">Processing Payment</h3>
+    <p class="text-gray-600">Please wait while we process your payment...</p>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const retryBtn = document.getElementById('retry-payment-btn');
+  const loadingOverlay = document.getElementById('loading-overlay');
+  
+  if (retryBtn) {
+    retryBtn.addEventListener('click', function() {
+      initiateRetryPayment();
+    });
+  }
+  
+  function initiateRetryPayment() {
+    // Show loading
+    loadingOverlay.classList.remove('hidden');
+    
+    // Fetch Razorpay order details
+    fetch("{% url 'orders:retry_payment' order.order_id %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      loadingOverlay.classList.add('hidden');
+      
+      if (data.success) {
+        const options = {
+          key: data.key_id,
+          amount: data.amount,
+          currency: data.currency,
+          name: 'GearUp - Retry Payment',
+          description: `Payment for Order #{{ order.order_number }}`,
+          order_id: data.order_id,
+          handler: function(response) {
+            // Payment successful - verify payment
+            verifyPayment(response);
+          },
+          prefill: {
+            name: data.user_name || '',
+            email: data.user_email || '',
+            contact: data.user_contact || ''
+          },
+          theme: {
+            color: '#10b981'
+          },
+          modal: {
+            ondismiss: function() {
+              console.log('Payment modal closed');
+            }
+          }
+        };
+        
+        const rzp = new Razorpay(options);
+        rzp.open();
+        
+        rzp.on('payment.failed', function(response) {
+          console.error('Payment failed:', response.error);
+          // Reload page to show updated failed status
+          window.location.reload();
+        });
+        
+      } else {
+        alert('Failed to initialize payment: ' + data.error);
+      }
+    })
+    .catch(error => {
+      loadingOverlay.classList.add('hidden');
+      console.error('Error:', error);
+      alert('Failed to initialize payment. Please try again.');
+    });
+  }
+  
+  function verifyPayment(paymentResponse) {
+    // Show loading during verification
+    loadingOverlay.classList.remove('hidden');
+    
+    // Create form data for verification
+    const formData = new FormData();
+    formData.append('razorpay_payment_id', paymentResponse.razorpay_payment_id);
+    formData.append('razorpay_order_id', paymentResponse.razorpay_order_id);
+    formData.append('razorpay_signature', paymentResponse.razorpay_signature);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    // Verify payment with server
+    fetch("{% url 'orders:verify_retry_payment' order.order_id %}", {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      loadingOverlay.classList.add('hidden');
+      if (response.ok) {
+        // Redirect to success page
+        window.location.href = "{% url 'orders:order_success' order.order_id %}";
+      } else {
+        // Show error and reload
+        alert('Payment verification failed. Please try again.');
+        window.location.reload();
+      }
+    })
+    .catch(error => {
+      loadingOverlay.classList.add('hidden');
+      console.error('Verification error:', error);
+      alert('Payment verification failed. Please try again.');
+      window.location.reload();
+    });
+  }
+  
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+</script>
+{% endblock %}

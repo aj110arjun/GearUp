@@ -14,8 +14,12 @@ urlpatterns = [
     path('<uuid:order_id>/request-return/', views.request_return, name='request_return'),
     path('<uuid:order_id>/invoice/', views.download_invoice, name='download_invoice'),
     path('<uuid:order_id>/receipt/', views.download_receipt, name='download_receipt'),
-    path('admin/<uuid:order_id>/invoice/', views.admin_download_invoice, name='admin_download_invoice'),
+    path('payment-failed/<uuid:order_id>/', views.payment_failed, name='payment_failed'),
+    path('retry-payment/<uuid:order_id>/', views.retry_payment, name='retry_payment'),
+    path('retry-razorpay-payment/<str:order_id>/', views.retry_razorpay_payment, name='retry_razorpay_payment'),
+    path('verify-retry-payment/<uuid:order_id>/', views.verify_retry_payment, name='verify_retry_payment'),
 
+    path('admin/<uuid:order_id>/invoice/', views.admin_download_invoice, name='admin_download_invoice'),
     path('returns/', views.admin_return_requests, name='admin_return_requests'),
     path('returns/approved/', views.admin_approved_returns, name='admin_approved_returns'),
     path('returns/rejected/', views.admin_rejected_returns, name='admin_rejected_returns'),
