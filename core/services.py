@@ -63,8 +63,6 @@ The GearUp Team
     )
 
 
-# services.py
-
 
 class WalletService:
     @staticmethod

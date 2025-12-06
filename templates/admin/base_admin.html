@@ -18,7 +18,8 @@
   <!-- Cropper.js -->
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.min.css" />
   <script src="https://unpkg.com/cropperjs"></script>
-
+  {% block extra_css %}
+  {% endblock %}
   <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dhpo5iq3m/image/upload/guide_mar3hq.png">
 
   <style>
@@ -115,7 +116,7 @@
         <span class="ml-auto bg-yellow-500 text-yellow-900 text-xs px-2 py-1 rounded-full font-semibold">New</span>
       </a>
       
-      <a href="" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if 'transaction' in request.resolver_match.url_name %}active-link{% endif %}">
+      <a href="{% url 'transactions:transaction_list' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if 'transaction' in request.resolver_match.url_name %}active-link{% endif %}">
         <i class="fas fa-credit-card w-5 text-center"></i>
         <span>Transactions</span>
       </a>
@@ -227,5 +228,7 @@
       });
     });
   </script>
+  {% block extra_js %}
+  {% endblock %}
 </body>
 </html>

@@ -29,4 +29,5 @@ urlpatterns = [
     # path('profile/', include('common.user.user_profile.urls', namespace='profile')),
     path('address/', include('common.user.address.urls', namespace='address')),
     path('wallet/', include('common.wallet.urls', namespace='wallet')),
+    path('transactions/', include('common.admin.transactions.urls', namespace='transactions')),
 ]

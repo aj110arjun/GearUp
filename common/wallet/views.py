@@ -67,6 +67,16 @@ def make_payment(request):
                     form.cleaned_data['amount'],
                     form.cleaned_data['description']
                 )
+                admin_transaction = AdminTransaction.objects.create(
+                    transaction_type='credit',
+                    user=request.user,
+                    amount=form.cleaned_data['amount'],
+                    description=form.cleaned_data['description'],
+                    status='completed',
+                    payment_method='wallet'
+
+
+                )
                 messages.success(request, f'Payment of ₹{form.cleaned_data["amount"]} completed successfully')
                 return redirect('wallet:wallet_dashboard')
             except ValueError as e:
