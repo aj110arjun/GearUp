@@ -1,4 +1,5 @@
 import random
+import uuid
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -124,3 +125,39 @@ class OTP(models.Model):
 
         except cls.DoesNotExist:
             return None, "OTP not found or already used"
+        
+
+class PasswordResetToken(models.Model):
+    """
+    Model for storing password reset tokens
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens'
+    )
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['user', 'is_used']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.created_at}"
+
+    def is_valid(self):
+        """Check if token is still valid"""
+        return not self.is_used and timezone.now() < self.expires_at
+
+    def mark_as_used(self):
+        """Mark token as used"""
+        self.is_used = True
+        self.save()

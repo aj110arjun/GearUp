@@ -52,14 +52,14 @@ def cart_view(request):
 def add_to_cart(request):
     
     data = json.loads(request.body)
-    product_id = data.get('product_id')
     variant_id = data.get('variant_id')
     quantity = int(data.get('quantity', 1))
     
-    # Get product and variant
-    product = get_object_or_404(Product, id=product_id, is_active=True)
-    variant = get_object_or_404(ProductVariant, id=variant_id, product=product, is_active=True)
+    # Get variant
+    variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
+    product = variant.product
     
+    # Check stock
     # Check stock
     if variant.stock_quantity < 1:
         return JsonResponse({
@@ -91,6 +91,10 @@ def add_to_cart(request):
         added = True
         message = 'Product added to cart successfully'
         cart_count = cart.total_items
+        
+        # MUTUAL EXCLUSIVITY: Remove from wishlist if adding to cart
+        wishlist = get_or_create_wishlist(request.user)
+        WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
     
     # Refresh cart to get updated totals
     cart.refresh_from_db()
@@ -138,6 +142,10 @@ def toggle_cart_item(request):
             added = True
             removed = False
             message = 'Product added to cart'
+            
+            # MUTUAL EXCLUSIVITY: Remove from wishlist if adding to cart
+            wishlist = get_or_create_wishlist(request.user)
+            WishlistItem.objects.filter(wishlist=wishlist, product=variant.product).delete()
         
         # Refresh cart to get updated count
         cart.refresh_from_db()
@@ -269,6 +277,11 @@ def toggle_wishlist(request):
             WishlistItem.objects.create(wishlist=wishlist, product=product)
             status = 'added'
             message = 'Product added to wishlist'
+            
+            # MUTUAL EXCLUSIVITY: Remove from cart if adding to wishlist
+            # Find any cart items containing variants of this product
+            cart = get_or_create_cart(request.user)
+            CartItem.objects.filter(cart=cart, variant__product=product).delete()
         
         wishlist.refresh_from_db()
         
@@ -298,6 +311,12 @@ def add_to_wishlist(request, product_id):
             product=product
         )
         
+        if created:
+            # MUTUAL EXCLUSIVITY: Remove from cart if adding to wishlist
+            # Find any cart items containing variants of this product
+            cart = get_or_create_cart(request.user)
+            CartItem.objects.filter(cart=cart, variant__product=product).delete()
+        
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
@@ -315,42 +334,7 @@ def add_to_wishlist(request, product_id):
                 'message': 'Error adding product to wishlist'
             })
         else:
-            messages.error(request, 'Error adding product to wishlist')@require_POST  # Add this decorator
-@login_required
-def add_to_wishlist(request, product_id):
-    """AJAX endpoint to add product to wishlist"""
-    try:
-        product = get_object_or_404(Product, id=product_id, is_active=True)
-        wishlist = get_or_create_wishlist(request.user)
-        
-        # Check if already in wishlist
-        existing_item = WishlistItem.objects.filter(wishlist=wishlist, product=product).first()
-        
-        if existing_item:
-            # Already in wishlist
-            return JsonResponse({
-                'success': False,
-                'message': 'Product already in wishlist'
-            })
-        
-        # Create new wishlist item
-        WishlistItem.objects.create(wishlist=wishlist, product=product)
-        
-        wishlist.refresh_from_db()
-        
-        return JsonResponse({
-            'success': True,
-            'status': 'added',
-            'message': 'Product added to wishlist',
-            'wishlist_count': wishlist.total_items
-        })
-        
-    except Exception as e:
-        print(f"Error in add_to_wishlist: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'message': 'Error adding product to wishlist'
-        })
+            messages.error(request, 'Error adding product to wishlist')
 
 
 @require_POST  # Add this decorator

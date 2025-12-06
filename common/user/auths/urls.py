@@ -23,6 +23,31 @@ urlpatterns = [
 
     # auths/urls.py
     path('logout/', views.user_logout, name='logout'),
+
+    path('password-reset/', 
+         views.CustomPasswordResetView.as_view(), 
+         name='password_reset'),
+    
+    path('password-reset/done/', 
+         views.CustomPasswordResetDoneView.as_view(), 
+         name='password_reset_done'),
+    
+    path('password-reset/confirm/<uuid:token>/', 
+         views.CustomPasswordResetConfirmView.as_view(), 
+         name='password_reset_confirm'),
+    
+    path('password-reset/complete/', 
+         views.CustomPasswordResetCompleteView.as_view(), 
+         name='password_reset_complete'),
+    
+    # API endpoints
+    path('api/password-reset/check/<uuid:token>/', 
+         views.check_reset_token, 
+         name='check_reset_token'),
+    
+    path('password-reset/resend/', 
+         views.resend_reset_email, 
+         name='resend_reset_email'),
     
     # Or use allauth's built-in URLs
     # path('social/', include('allauth.socialaccount.urls')),

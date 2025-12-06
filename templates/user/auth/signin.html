@@ -176,20 +176,10 @@
                             {% endif %}
                         </div>
                         
-                        <!-- Remember Me & Forgot Password -->
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <input id="id_remember_me" 
-                                       name="remember_me" 
-                                       type="checkbox" 
-                                       class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
-                                <label for="id_remember_me" class="ml-2 block text-sm text-gray-700">
-                                    Remember me
-                                </label>
-                            </div>
-                            
+                        <!-- Forgot Password -->
+                        <div class="flex items-center justify-between">                            
                             <div class="text-sm">
-                                <a href="#" class="font-medium text-emerald-600 hover:text-emerald-500">
+                                <a href="{% url 'user_auth:password_reset' %}" class="font-medium text-emerald-600 hover:text-emerald-500">
                                     Forgot your password?
                                 </a>
                             </div>
