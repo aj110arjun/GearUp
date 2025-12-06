@@ -52,7 +52,7 @@
                                  src="{{ user.profile_image.url }}" 
                                  alt="{{ user.get_display_name }}">
                         {% else %}
-                            <div class="h-32 w-32 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-lg">
+                            <div class="h-32 w-32 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-lg">
                                 {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
                             </div>
                         {% endif %}
@@ -301,7 +301,7 @@
             <!-- User Info -->
             <div class="bg-gray-50 rounded-xl p-4 mb-6">
                 <div class="flex items-center mb-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold mr-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold mr-3">
                         {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
                     </div>
                     <div>
@@ -366,7 +366,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="reason" id="reasonInput">
                     <button type="submit" 
-                            class="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-300 font-medium shadow-md hover:shadow-lg flex items-center">
+                            class="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 font-medium shadow-md hover:shadow-lg flex items-center">
                         <i class="fas fa-user-slash mr-2"></i>
                         Confirm Deactivation
                     </button>

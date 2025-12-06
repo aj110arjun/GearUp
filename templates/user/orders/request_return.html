@@ -9,7 +9,7 @@
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
-            <a href="{% url 'orders:order_detail' order.id %}" 
+            <a href="{% url 'orders:order_detail' order.order_id %}" 
                class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -96,7 +96,7 @@
                             <ul class="mt-1 text-sm text-yellow-700 list-disc list-inside space-y-1">
                                 <li>Products can be returned within 30 days of delivery</li>
                                 <li>Product must be in original condition with all tags and packaging</li>
-                                <li>Refunds will be processed within 5-7 business days after approval</li>
+                                <li><strong>Refunds will be processed IMMEDIATELY after approval</strong></li>
                                 <li>Free return pickup will be scheduled after approval</li>
                             </ul>
                         </div>
@@ -105,7 +105,7 @@
                 
                 <!-- Submit Button -->
                 <div class="flex gap-3">
-                    <a href="{% url 'orders:order_detail' order.id %}"
+                    <a href="{% url 'orders:order_detail' order.order_id %}"
                        class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 px-6 py-3 rounded-lg font-semibold text-center transition-colors">
                         Cancel
                     </a>

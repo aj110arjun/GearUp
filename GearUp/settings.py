@@ -141,6 +141,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'GearUp.urls'
 
+SITE_NAME = "GearUp"
+SITE_DOMAIN = "http://localhost:8000"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

@@ -19,7 +19,7 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 
 from common.user.cart_wishlist.models import Cart, CartItem, Wishlist
-from .models import Product, ProductVariant, Category, ProductImage
+from .models import Product, ProductVariant, Category, ProductImage, ProductOffer, CategoryOffer
 from .forms import (
     ProductCreateForm,
     ProductEditForm,
@@ -27,6 +27,8 @@ from .forms import (
     ProductImageFormSet,
     ProductVariantFormSet,
     CategoryForm,
+    ProductOfferForm,
+    CategoryOfferForm,
 )
 
 
@@ -499,7 +501,132 @@ def handle_category_form(request, category_instance=None):
         context['total_products'] = category_instance.products.count()
         context['active_products'] = category_instance.products.filter(is_active=True).count()
     
+    # Add statistics for edit mode
+    if is_edit and category_instance:
+        context['total_products'] = category_instance.products.count()
+        context['active_products'] = category_instance.products.filter(is_active=True).count()
+    
     return render(request, 'admin/categories/category_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def offer_list(request):
+    """List all product and category offers"""
+    product_offers = ProductOffer.objects.select_related('product').all()
+    category_offers = CategoryOffer.objects.select_related('category').all()
+    
+    context = {
+        'product_offers': product_offers,
+        'category_offers': category_offers,
+    }
+    return render(request, 'admin/offers/offer_list.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def product_offer_create(request):
+    if request.method == 'POST':
+        form = ProductOfferForm(request.POST)
+        if form.is_valid():
+            offer = form.save()
+            messages.success(request, f'Offer "{offer.name}" applied to {offer.product.name} successfully!')
+            return redirect('products:offer_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ProductOfferForm()
+    
+    context = {
+        'form': form,
+        'title': 'Add Product Offer'
+    }
+    return render(request, 'admin/offers/offer_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def product_offer_edit(request, offer_id):
+    offer = get_object_or_404(ProductOffer, id=offer_id)
+    if request.method == 'POST':
+        form = ProductOfferForm(request.POST, instance=offer)
+        if form.is_valid():
+            offer = form.save()
+            messages.success(request, f'Offer "{offer.name}" updated successfully!')
+            return redirect('products:offer_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ProductOfferForm(instance=offer)
+    
+    context = {
+        'form': form,
+        'title': f'Edit Offer - {offer.name}',
+        'is_edit': True
+    }
+    return render(request, 'admin/offers/offer_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def product_offer_delete(request, offer_id):
+    offer = get_object_or_404(ProductOffer, id=offer_id)
+    offer.delete()
+    messages.success(request, 'Product offer deleted successfully!')
+    return redirect('products:offer_list')
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def category_offer_create(request):
+    if request.method == 'POST':
+        form = CategoryOfferForm(request.POST)
+        if form.is_valid():
+            offer = form.save()
+            messages.success(request, f'Offer "{offer.name}" applied to {offer.category.name} successfully!')
+            return redirect('products:offer_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CategoryOfferForm()
+    
+    context = {
+        'form': form,
+        'title': 'Add Category Offer'
+    }
+    return render(request, 'admin/offers/offer_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def category_offer_edit(request, offer_id):
+    offer = get_object_or_404(CategoryOffer, id=offer_id)
+    if request.method == 'POST':
+        form = CategoryOfferForm(request.POST, instance=offer)
+        if form.is_valid():
+            offer = form.save()
+            messages.success(request, f'Offer "{offer.name}" updated successfully!')
+            return redirect('products:offer_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CategoryOfferForm(instance=offer)
+    
+    context = {
+        'form': form,
+        'title': f'Edit Offer - {offer.name}',
+        'is_edit': True
+    }
+    return render(request, 'admin/offers/offer_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def category_offer_delete(request, offer_id):
+    offer = get_object_or_404(CategoryOffer, id=offer_id)
+    offer.delete()
+    messages.success(request, 'Category offer deleted successfully!')
+    return redirect('products:offer_list')
 
 @login_required(login_url='user_auth:signin')
 @never_cache

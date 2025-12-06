@@ -12,7 +12,7 @@ from django.forms import inlineformset_factory
 from cloudinary.models import CloudinaryField
 from PIL import Image
 
-from .models import Product, Category, ProductVariant, ProductImage
+from .models import Product, Category, ProductVariant, ProductImage, ProductOffer, CategoryOffer
 
 
 logger = logging.getLogger(__name__)
@@ -507,3 +507,167 @@ class CategoryForm(forms.ModelForm):
                 raise ValidationError('A category with this slug already exists.')
         
         return slug
+
+
+class ProductOfferForm(forms.ModelForm):
+    class Meta:
+        model = ProductOffer
+        fields = ['product', 'name', 'discount_percentage', 'start_date', 'end_date', 'is_active']
+        widgets = {
+            'product': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all'
+            }),
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
+                'placeholder': 'e.g., Summer Sale 2025'
+            }),
+            'discount_percentage': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
+                'placeholder': '10-90',
+                'min': '10',
+                'max': '90'
+            }),
+            'start_date': forms.DateTimeInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
+                'type': 'datetime-local'
+            }),
+            'end_date': forms.DateTimeInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
+                'type': 'datetime-local'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 transition-all cursor-pointer'
+            })
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Explicit empty checks (though Django handles required fields, custom messages are nice)
+        if not cleaned_data.get('name'):
+            self.add_error('name', 'Offer name is required.')
+        
+        if not cleaned_data.get('product'):
+            self.add_error('product', 'Please select a product.')
+            
+        if not cleaned_data.get('discount_percentage'):
+            self.add_error('discount_percentage', 'Discount percentage is required.')
+            
+        if not cleaned_data.get('start_date'):
+            self.add_error('start_date', 'Start date is required.')
+            
+        if not cleaned_data.get('end_date'):
+            self.add_error('end_date', 'End date is required.')
+
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        product = cleaned_data.get('product')
+        is_active = cleaned_data.get('is_active')
+
+        # 1. Date Validation: End Time > Start Time
+        if start_date and end_date and end_date <= start_date:
+            raise ValidationError('End date must be greater than start date.')
+
+        # 2. Prevent overlapping active offers for the same product
+        if product and start_date and end_date and is_active:
+            # Check for overlapping offers
+            overlapping_offers = ProductOffer.objects.filter(
+                product=product,
+                is_active=True,
+                start_date__lt=end_date,
+                end_date__gt=start_date
+            )
+
+            # Exclude current instance if editing
+            if self.instance and self.instance.pk:
+                overlapping_offers = overlapping_offers.exclude(pk=self.instance.pk)
+
+            if overlapping_offers.exists():
+                raise ValidationError(
+                    f'An active offer already exists for {product.name} during this time period. '
+                    'Please adjust the dates or deactivate the other offer.'
+                )
+        
+        return cleaned_data
+
+class CategoryOfferForm(forms.ModelForm):
+    class Meta:
+        model = CategoryOffer
+        fields = ['category', 'name', 'discount_percentage', 'start_date', 'end_date', 'is_active']
+        widgets = {
+            'category': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all'
+            }),
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
+                'placeholder': 'e.g., Winter Collection Clearance'
+            }),
+            'discount_percentage': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
+                'placeholder': '10-90',
+                'min': '10',
+                'max': '90'
+            }),
+            'start_date': forms.DateTimeInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
+                'type': 'datetime-local'
+            }),
+            'end_date': forms.DateTimeInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
+                'type': 'datetime-local'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 transition-all cursor-pointer'
+            })
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Explicit empty checks
+        if not cleaned_data.get('name'):
+            self.add_error('name', 'Offer name is required.')
+        
+        if not cleaned_data.get('category'):
+            self.add_error('category', 'Please select a category.')
+            
+        if not cleaned_data.get('discount_percentage'):
+            self.add_error('discount_percentage', 'Discount percentage is required.')
+            
+        if not cleaned_data.get('start_date'):
+            self.add_error('start_date', 'Start date is required.')
+            
+        if not cleaned_data.get('end_date'):
+            self.add_error('end_date', 'End date is required.')
+
+        start_date = cleaned_data.get('start_date')
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        category = cleaned_data.get('category')
+        is_active = cleaned_data.get('is_active')
+
+        # 1. Date Validation: End Time > Start Time
+        if start_date and end_date and end_date <= start_date:
+            raise ValidationError('End date must be greater than start date.')
+
+        # 2. Prevent overlapping active offers for the same category
+        if category and start_date and end_date and is_active:
+            # Check for overlapping offers
+            overlapping_offers = CategoryOffer.objects.filter(
+                category=category,
+                is_active=True,
+                start_date__lt=end_date,
+                end_date__gt=start_date
+            )
+
+            # Exclude current instance if editing
+            if self.instance and self.instance.pk:
+                overlapping_offers = overlapping_offers.exclude(pk=self.instance.pk)
+
+            if overlapping_offers.exists():
+                raise ValidationError(
+                    f'An active offer already exists for {category.name} during this time period. '
+                    'Please adjust the dates or deactivate the other offer.'
+                )
+        
+        return cleaned_data

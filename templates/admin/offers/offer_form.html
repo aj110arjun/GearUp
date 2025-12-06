@@ -1,0 +1,110 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}{{ title }} - GearUp{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <h2 class="text-xl font-bold text-gray-800">{{ title }}</h2>
+            <a href="{% url 'products:offer_list' %}" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+
+        <form method="POST" class="p-6 space-y-6" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 text-red-600 p-4 rounded-lg text-sm">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                {% if form.product %}
+                <div>
+                    <label for="{{ form.product.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Select Product
+                    </label>
+                    {{ form.product }}
+                    {% if form.product.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.product.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if form.category %}
+                <div>
+                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Select Category
+                    </label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Offer Name
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.discount_percentage.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Percentage (%)
+                    </label>
+                    {{ form.discount_percentage }}
+                    <p class="text-xs text-gray-500 mt-1">Enter a value between 10 and 90</p>
+                    {% if form.discount_percentage.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.discount_percentage.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Start Date & Time
+                        </label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.start_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            End Date & Time
+                        </label>
+                        {{ form.end_date }}
+                        {% if form.end_date.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.end_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-gray-700 select-none cursor-pointer">
+                        Is Active
+                    </label>
+                </div>
+            </div>
+
+            <div class="pt-4 flex gap-3 border-t border-gray-100 mt-6">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors">
+                    Save Offer
+                </button>
+                <a href="{% url 'products:offer_list' %}" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg text-center transition-colors">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

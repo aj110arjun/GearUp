@@ -309,12 +309,14 @@
                     
                     <!-- Pricing -->
                     <div class="flex items-center space-x-3">
-                      <span class="text-2xl font-bold text-gray-800">${{ variant.price }}</span>
-                      {% if variant.compare_price and variant.compare_price > variant.price %}
-                        <span class="text-lg text-gray-400 line-through">${{ variant.compare_price }}</span>
+                      {% if variant.get_discounted_price < variant.price %}
+                        <span class="text-2xl font-bold text-gray-800 discounted-price" data-price="{{ variant.get_discounted_price }}">${{ variant.get_discounted_price|floatformat:2 }}</span>
+                        <span class="text-lg text-gray-400 line-through original-price">${{ variant.price }}</span>
                         <span class="px-2 py-1 bg-red-500 text-white rounded-md text-xs font-bold">
                           {{ variant.discount_percentage }}% OFF
                         </span>
+                      {% else %}
+                        <span class="text-2xl font-bold text-gray-800" data-price="{{ variant.price }}">${{ variant.price }}</span>
                       {% endif %}
                     </div>
                     

@@ -1,3 +1,4 @@
+import uuid
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib import messages
@@ -5,8 +6,24 @@ from django.views.decorators.cache import never_cache
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
-from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm, CustomPasswordChangeForm
-from .models import UserModel, OTP
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.views import (
+    PasswordResetView, PasswordResetDoneView, 
+    PasswordResetConfirmView, PasswordResetCompleteView
+)
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.template.loader import render_to_string
+from django.core.mail import send_mail, BadHeaderError
+from django.http import HttpResponse
+from django.conf import settings
+from django.urls import reverse_lazy
+from django.views.generic import FormView, TemplateView
+from django.db.models import Q
+
+from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm, CustomPasswordChangeForm, CustomPasswordResetForm, CustomSetPasswordForm
+from .models import UserModel, OTP, PasswordResetToken
 from core.services import send_otp_email
 
 
@@ -251,6 +268,250 @@ def change_password(request):
         'form': form,
         'title': 'Change Password'
     })
+
+
+
+
+User = get_user_model()
+
+class CustomPasswordResetView(FormView):
+    """
+    Custom password reset view with email/username input
+    """
+    template_name = 'user/auth/password_reset.html'
+    form_class = CustomPasswordResetForm
+    success_url = reverse_lazy('password_reset_done')
+    email_template_name = 'auth/password_reset_email.html'
+    subject_template_name = 'auth/password_reset_subject.txt'
+    
+    def form_valid(self, form):
+        # Get the email from cleaned data
+        email = form.cleaned_data['email_or_username']
+        
+        # Get user
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # This shouldn't happen due to form validation, but just in case
+            messages.error(self.request, "User not found.")
+            return redirect('password_reset')
+        
+        # Generate reset token
+        token = PasswordResetToken.objects.create(
+            user=user,
+            expires_at=timezone.now() + timezone.timedelta(hours=24),
+            ip_address=self.get_client_ip(),
+            user_agent=self.request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        # Send reset email
+        context = {
+            'user': user,
+            'token': token.token,
+            'protocol': 'https' if self.request.is_secure() else 'http',
+            'domain': self.request.get_host(),
+            'site_name': getattr(settings, 'SITE_NAME', 'Your Site'),
+        }
+        
+        subject = render_to_string(self.subject_template_name, context)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+        
+        message = render_to_string(self.email_template_name, context)
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+                html_message=message
+            )
+            
+            # Log the reset request
+            self.log_reset_request(user)
+            
+            messages.success(self.request, 
+                "Password reset instructions have been sent to your email."
+            )
+            
+        except BadHeaderError:
+            return HttpResponse('Invalid header found.')
+        except Exception as e:
+            messages.error(self.request, 
+                f"Failed to send reset email. Please try again later. Error: {str(e)}"
+            )
+            return redirect('password_reset')
+        
+        return super().form_valid(form)
+    
+    def get_client_ip(self):
+        """Get client IP address"""
+        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = self.request.META.get('REMOTE_ADDR')
+        return ip
+    
+    def log_reset_request(self, user):
+        """Log password reset request (optional)"""
+        # You can implement logging here
+        pass
+
+
+class CustomPasswordResetDoneView(TemplateView):
+    """Password reset done view"""
+    template_name = 'auth/password_reset_done.html'
+
+
+class CustomPasswordResetConfirmView(FormView):
+    """
+    Custom password reset confirm view with token validation
+    """
+    template_name = 'auth/password_reset_confirm.html'
+    form_class = CustomSetPasswordForm
+    success_url = reverse_lazy('password_reset_complete')
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Get token from URL
+        self.token = kwargs.get('token')
+        
+        # Validate token
+        try:
+            self.reset_token = PasswordResetToken.objects.get(token=self.token)
+            
+            if not self.reset_token.is_valid():
+                messages.error(request, "This reset link has expired or has already been used.")
+                return redirect('password_reset')
+                
+        except PasswordResetToken.DoesNotExist:
+            messages.error(request, "Invalid reset link. Please request a new one.")
+            return redirect('password_reset')
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.reset_token.user
+        return kwargs
+    
+    def form_valid(self, form):
+        # Save new password
+        user = self.reset_token.user
+        form.save()
+        
+        # Mark token as used
+        self.reset_token.mark_as_used()
+        
+        # Log the password change
+        self.log_password_change(user)
+        
+        messages.success(self.request, 
+            "Your password has been reset successfully. You can now log in with your new password."
+        )
+        
+        return super().form_valid(form)
+    
+    def log_password_change(self, user):
+        """Log password change (optional)"""
+        # You can implement logging here
+        pass
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['validlink'] = True
+        context['user'] = self.reset_token.user
+        return context
+
+
+class CustomPasswordResetCompleteView(TemplateView):
+    """Password reset complete view"""
+    template_name = 'auth/password_reset_complete.html'
+
+
+def check_reset_token(request, token):
+    """
+    API endpoint to check if reset token is valid
+    """
+    try:
+        reset_token = PasswordResetToken.objects.get(token=token)
+        
+        if reset_token.is_valid():
+            return JsonResponse({
+                'valid': True,
+                'email': reset_token.user.email,
+                'username': reset_token.user.username
+            })
+        else:
+            return JsonResponse({
+                'valid': False,
+                'message': 'Token expired or already used'
+            })
+            
+    except PasswordResetToken.DoesNotExist:
+        return JsonResponse({
+            'valid': False,
+            'message': 'Invalid token'
+        })
+
+
+def resend_reset_email(request):
+    """
+    View to resend reset email
+    """
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        
+        try:
+            user = User.objects.get(email=email)
+            
+            # Invalidate old tokens
+            PasswordResetToken.objects.filter(
+                user=user,
+                is_used=False
+            ).update(is_used=True)
+            
+            # Create new token
+            token = PasswordResetToken.objects.create(
+                user=user,
+                expires_at=timezone.now() + timezone.timedelta(hours=24),
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            # Send email
+            context = {
+                'user': user,
+                'token': token.token,
+                'protocol': 'https' if request.is_secure() else 'http',
+                'domain': request.get_host(),
+                'site_name': getattr(settings, 'SITE_NAME', 'Your Site'),
+            }
+            
+            message = render_to_string('auth/password_reset_email.html', context)
+            subject = f"Password Reset for {context['site_name']}"
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+                html_message=message
+            )
+            
+            messages.success(request, 
+                "Password reset instructions have been resent to your email."
+            )
+            
+        except User.DoesNotExist:
+            messages.error(request, "No user found with this email.")
+        
+        return redirect('password_reset')
+    
+    return redirect('password_reset')
 
 
 
