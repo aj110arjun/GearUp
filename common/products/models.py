@@ -6,6 +6,9 @@ from django.urls import reverse
 from cloudinary.models import CloudinaryField
 from django.core.exceptions import ValidationError
 
+from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 class Category(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -139,18 +142,18 @@ class Product(models.Model):
 
     @property
     def min_price(self):
-        """Get minimum price from variants"""
+        """Get minimum price from variants (considering offers)"""
         variants = self.variants.filter(is_active=True)
         if variants.exists():
-            return min(variant.price for variant in variants)
+            return min(variant.get_discounted_price() for variant in variants)
         return 0
 
     @property
     def max_price(self):
-        """Get maximum price from variants"""
+        """Get maximum price from variants (considering offers)"""
         variants = self.variants.filter(is_active=True)
         if variants.exists():
-            return max(variant.price for variant in variants)
+            return max(variant.get_discounted_price() for variant in variants)
         return 0
     
     def get_in_stock_variants(self):
@@ -216,12 +219,48 @@ class ProductVariant(models.Model):
             parts.append(self.color)
         return ' - '.join(parts)
 
+    def get_best_offer(self):
+        """
+        Calculate the best available offer for this variant.
+        Checks both Product and Category offers and returns the highest discount.
+        """
+        now = timezone.now()
+        
+        # Check Product Offers
+        product_offer = self.product.offers.filter(
+            is_active=True,
+            start_date__lte=now,
+            end_date__gte=now
+        ).order_by('-discount_percentage').first()
+        
+        product_discount = product_offer.discount_percentage if product_offer else 0
+        
+        # Check Category Offers
+        category_offer = self.product.category.offers.filter(
+            is_active=True,
+            start_date__lte=now,
+            end_date__gte=now
+        ).order_by('-discount_percentage').first()
+        
+        category_discount = category_offer.discount_percentage if category_offer else 0
+        
+        # Return best discount
+        return max(product_discount, category_discount)
+
+    def get_discounted_price(self):
+        """
+        Calculate price after applying the best offer.
+        """
+        discount_percentage = self.get_best_offer()
+        if discount_percentage > 0:
+            discount_amount = (self.price * discount_percentage) / 100
+            return self.price - discount_amount
+        return self.price
+
     @property
     def discount_percentage(self):
-        """Calculate discount percentage"""
-        if self.compare_price and self.compare_price > self.price:
-            return int(((self.compare_price - self.price) / self.compare_price) * 100)
-        return 0
+        """Return the current active discount percentage"""
+        return self.get_best_offer()
 
     # ADD THESE METHODS FOR TEMPLATE COMPATIBILITY
     def get_display_name(self):
@@ -232,12 +271,6 @@ class ProductVariant(models.Model):
         if self.size:
             parts.append(self.size)
         return ' - '.join(parts) if parts else "Standard"
-
-    def get_discounted_price(self):
-        """Get discounted price if available"""
-        if self.compare_price and self.compare_price > self.price:
-            return self.compare_price
-        return self.price
 
     def get_discount(self):
         """Get discount percentage for template"""
@@ -270,3 +303,55 @@ class ProductImage(models.Model):
                 is_primary=True
             ).exclude(pk=self.pk).update(is_primary=False)
         super().save(*args, **kwargs)
+
+
+class ProductOffer(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='offers')
+    name = models.CharField(max_length=100)
+    discount_percentage = models.PositiveIntegerField(
+        validators=[MinValueValidator(10), MaxValueValidator(90)],
+        help_text="Discount percentage (10-90)"
+    )
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.discount_percentage}% off {self.product.name}"
+
+    @property
+    def is_valid(self):
+        now = timezone.now()
+        return self.is_active and self.start_date <= now <= self.end_date
+
+
+class CategoryOffer(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='offers')
+    name = models.CharField(max_length=100)
+    discount_percentage = models.PositiveIntegerField(
+        validators=[MinValueValidator(10), MaxValueValidator(90)],
+        help_text="Discount percentage (10-90)"
+    )
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.discount_percentage}% off {self.category.name}"
+
+    @property
+    def is_valid(self):
+        now = timezone.now()
+        return self.is_active and self.start_date <= now <= self.end_date

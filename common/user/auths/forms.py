@@ -6,8 +6,12 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserChangeForm, PasswordChangeForm
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 
 from .models import UserModel
+
 
 
 class UserCreationForm(BaseUserCreationForm):
@@ -181,4 +185,98 @@ class CustomPasswordChangeForm(PasswordChangeForm):
         old_password = self.cleaned_data.get("old_password")
         if not self.user.check_password(old_password):
             raise forms.ValidationError("Your current password was entered incorrectly.")
+        return old_password
+    
+
+
+# forms.py
+
+
+User = get_user_model()
+
+class CustomPasswordResetForm(PasswordResetForm):
+    """
+    Custom password reset form with email/username field
+    """
+    email_or_username = forms.CharField(
+        label=_("Email or Username"),
+        max_length=254,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('Enter your email address or username'),
+            'autocomplete': 'email'
+        })
+    )
+    
+    def clean_email_or_username(self):
+        data = self.cleaned_data['email_or_username']
+        
+        # Check if input is email
+        if '@' in data:
+            # Try to find by email
+            try:
+                user = User.objects.get(email=data)
+                return user.email
+            except User.DoesNotExist:
+                raise ValidationError(_("No account found with this email address."))
+        else:
+            # Try to find by username
+            try:
+                user = User.objects.get(username=data)
+                return user.email
+            except User.DoesNotExist:
+                raise ValidationError(_("No account found with this username."))
+    
+    def save(self, **kwargs):
+        # Override to use the cleaned email
+        self.cleaned_data['email'] = self.cleaned_data['email_or_username']
+        return super().save(**kwargs)
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    """
+    Custom set password form with better styling
+    """
+    new_password1 = forms.CharField(
+        label=_("New password"),
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('Enter new password'),
+            'autocomplete': 'new-password'
+        }),
+        strip=False,
+        help_text=_("Your password must contain at least 8 characters."),
+    )
+    
+    new_password2 = forms.CharField(
+        label=_("Confirm new password"),
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('Confirm new password'),
+            'autocomplete': 'new-password'
+        }),
+    )
+
+
+class PasswordChangeForm(CustomSetPasswordForm):
+    """
+    Form for changing password while logged in
+    """
+    old_password = forms.CharField(
+        label=_("Old password"),
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('Enter old password'),
+            'autocomplete': 'current-password'
+        }),
+    )
+    
+    def clean_old_password(self):
+        old_password = self.cleaned_data["old_password"]
+        if not self.user.check_password(old_password):
+            raise ValidationError(
+                _("Your old password was entered incorrectly. Please enter it again.")
+            )
         return old_password

@@ -21,13 +21,13 @@
                 </h1>
                 <p class="mt-1 text-sm text-gray-500">Manage all payment transactions and order payments</p>
             </div>
-
         </div>
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
             <!-- Total Transactions -->
-            <div class="bg-white rounded-lg shadow-sm border-l-4 border-blue-500 p-6 hover:shadow-md transition-all duration-200">
+            <div
+                class="bg-white rounded-lg shadow-sm border-l-4 border-blue-500 p-6 hover:shadow-md transition-all duration-200">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Transactions</dt>
@@ -40,14 +40,15 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Total Credits -->
-            <div class="bg-white rounded-lg shadow-sm border-l-4 border-green-500 p-6 hover:shadow-md transition-all duration-200">
+            <div
+                class="bg-white rounded-lg shadow-sm border-l-4 border-green-500 p-6 hover:shadow-md transition-all duration-200">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Credits</dt>
                         <dd class="mt-2">
-                            <span class="text-2xl font-bold text-green-600">₹{{ total_credits|default:0|intcomma }}</span>
+                            <span class="text-2xl font-bold text-green-600">₹{{ total_credits|default:0|intcomma}}</span>
                         </dd>
                     </div>
                     <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -55,9 +56,10 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Total Debits -->
-            <div class="bg-white rounded-lg shadow-sm border-l-4 border-red-500 p-6 hover:shadow-md transition-all duration-200">
+            <div
+                class="bg-white rounded-lg shadow-sm border-l-4 border-red-500 p-6 hover:shadow-md transition-all duration-200">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Debits</dt>
@@ -70,9 +72,10 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Pending Transactions -->
-            <div class="bg-white rounded-lg shadow-sm border-l-4 border-yellow-500 p-6 hover:shadow-md transition-all duration-200">
+            <div
+                class="bg-white rounded-lg shadow-sm border-l-4 border-yellow-500 p-6 hover:shadow-md transition-all duration-200">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 uppercase tracking-wider">Pending</dt>
@@ -98,82 +101,96 @@
                             <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-1">
                                 <i class="bi bi-credit-card mr-1"></i>Payment Method
                             </label>
-                            <select name="payment_method" id="payment_method" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <select name="payment_method" id="payment_method"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                 <option value="">All Methods</option>
-                                <option value="cod" {% if request.GET.payment_method == 'cod' %}selected{% endif %}>Cash On Delivery</option>
-                                <option value="wallet" {% if request.GET.payment_method == 'wallet' %}selected{% endif %}>Wallet</option>
-                                <option value="razorpay" {% if request.GET.payment_method == 'razorpay' %}selected{% endif %}>Razorpay</option>
+                                {% for value, label in payment_method_choices %}
+                                <option value="{{ value }}" {% if filter_payment_method == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
                             </select>
                         </div>
-                        
+
                         <!-- Payment Status -->
                         <div class="sm:col-span-1">
                             <label for="payment_status" class="block text-sm font-medium text-gray-700 mb-1">
                                 <i class="bi bi-check-circle mr-1"></i>Status
                             </label>
-                            <select name="payment_status" id="payment_status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <select name="payment_status" id="payment_status"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                 <option value="">All Status</option>
-                                <option value="pending" {% if request.GET.payment_status == 'pending' %}selected{% endif %}>Pending</option>
-                                <option value="completed" {% if request.GET.payment_status == 'completed' %}selected{% endif %}>Completed</option>
-                                <option value="failed" {% if request.GET.payment_status == 'failed' %}selected{% endif %}>Failed</option>
+                                {% for value, label in payment_status_choices %}
+                                <option value="{{ value }}" {% if filter_payment_status == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
                             </select>
                         </div>
-                        
+
                         <!-- Payment Type -->
                         <div class="sm:col-span-1">
                             <label for="payment_type" class="block text-sm font-medium text-gray-700 mb-1">
                                 <i class="bi bi-arrow-left-right mr-1"></i>Type
                             </label>
-                            <select name="payment_type" id="payment_type" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <select name="payment_type" id="payment_type"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                 <option value="">All Types</option>
-                                <option value="credit" {% if request.GET.payment_type == 'credit' %}selected{% endif %}>Credit</option>
-                                <option value="debit" {% if request.GET.payment_type == 'debit' %}selected{% endif %}>Debit</option>
+                                {% for value, label in payment_type_choices %}
+                                <option value="{{ value }}" {% if filter_payment_type == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
                             </select>
                         </div>
-                        
+
                         <!-- Start Date -->
                         <div class="sm:col-span-1">
                             <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">
                                 <i class="bi bi-calendar mr-1"></i>Start Date
                             </label>
-                            <input type="date" name="start_date" id="start_date" value="{{ request.GET.start_date }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <input type="date" name="start_date" id="start_date"
+                                value="{{ filter_start_date|default:'' }}"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                         </div>
-                        
+
                         <!-- End Date -->
                         <div class="sm:col-span-1">
                             <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">
                                 <i class="bi bi-calendar-check mr-1"></i>End Date
                             </label>
-                            <input type="date" name="end_date" id="end_date" value="{{ request.GET.end_date }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <input type="date" name="end_date" id="end_date" value="{{ filter_end_date|default:'' }}"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                         </div>
                     </div>
-                    
+
                     <!-- Search Bar -->
                     <div class="mt-6">
                         <label for="search" class="block text-sm font-medium text-gray-700 mb-1">
                             <i class="bi bi-search mr-1"></i>Search Transactions
                         </label>
                         <div class="flex rounded-md shadow-sm">
-                            <input type="text" 
-                                   name="search" 
-                                   id="search"
-                                   class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                   placeholder="Search by transaction ID, order ID, user, or description..."
-                                   value="{{ request.GET.search }}">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-r-md">
+                            <input type="text" name="search" id="search"
+                                class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                placeholder="Search by transaction ID, order ID, user, or description..."
+                                value="{{ search_query|default:'' }}">
+                            <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-r-md">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Filter Buttons -->
                     <div class="mt-6 flex items-center gap-3">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
                             <i class="bi bi-funnel mr-2"></i>
                             Apply Filters
                         </button>
                         {% if request.GET %}
-                        <a href="{% url 'transactions:transaction_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <a href="{% url 'transactions:transaction_list' %}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                             <i class="bi bi-x-circle mr-2"></i>
                             Clear Filters
                         </a>
@@ -193,25 +210,32 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Transaction Details
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Order & User
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Payment Info
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Amount
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Status
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Date
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -225,76 +249,82 @@
                                     <span class="font-mono text-xs text-gray-900 font-medium">
                                         <i class="bi bi-hash"></i>{{ transaction.transaction_id|slice:":13" }}...
                                     </span>
-                                    {% if transaction.description %}
-                                    <span class="text-xs text-gray-500 mt-1 line-clamp-2">
-                                        {{ transaction.description|truncatechars:60 }}
-                                    </span>
-                                    {% endif %}
                                 </div>
                             </td>
-                            
+
                             <!-- Order & User -->
                             <td class="px-6 py-4">
                                 <div class="flex flex-col gap-1">
                                     <div class="flex items-center text-sm">
                                         <i class="bi bi-cart3 mr-1 text-blue-600"></i>
-                                        <a href="{% url 'orders:order_detail' transaction.order.order_id %}" class="text-blue-600 hover:text-blue-800 font-medium">
-                                            Order #{{ transaction.order.id }}
+                                        {% if transaction.order %}
+                                        <a href="{% url 'orders:order_detail' transaction.order.order_id %}"
+                                            class="text-blue-600 hover:text-blue-800 font-medium">
+                                            Order #{{ transaction.order.order_number }}
                                         </a>
+                                        {% else %}
+                                        <span class="text-gray-400 text-sm">No order linked</span>
+                                        {% endif %}
                                     </div>
                                     {% if transaction.user %}
                                     <div class="flex items-center">
-                                        <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+                                        <div
+                                            class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center mr-2">
                                             <i class="bi bi-person text-xs"></i>
                                         </div>
-                                        <span class="text-xs text-gray-700">{{ transaction.user.username }}</span>
+                                        <span class="text-xs text-gray-700">{{ transaction.user.email }}</span>
                                     </div>
                                     {% endif %}
                                 </div>
                             </td>
-                            
+
                             <!-- Payment Info -->
                             <td class="px-6 py-4">
                                 <div class="flex flex-col gap-1">
                                     <!-- Payment Method Badge -->
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit
-                                        {% if transaction.payment_method == 'cod' %}bg-orange-100 text-orange-800
-                                        {% elif transaction.payment_method == 'wallet' %}bg-purple-100 text-purple-800
-                                        {% elif transaction.payment_method == 'razorpay' %}bg-blue-100 text-blue-800
-                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                        <i class="bi {% if transaction.payment_method == 'cod' %}bi-cash{% elif transaction.payment_method == 'wallet' %}bi-wallet2{% else %}bi-credit-card{% endif %} mr-1"></i>
+                                            {% if transaction.payment_method == 'cod' %}bg-orange-100 text-orange-800
+                                            {% elif transaction.payment_method == 'wallet' %}bg-purple-100 text-purple-800
+                                            {% elif transaction.payment_method == 'razorpay' %}bg-blue-100 text-blue-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        <i
+                                            class="bi {% if transaction.payment_method == 'cod' %}bi-cash{% elif transaction.payment_method == 'wallet' %}bi-wallet2{% else %}bi-credit-card{% endif %} mr-1"></i>
                                         {{ transaction.get_payment_method_display }}
                                     </span>
                                     <!-- Payment Type -->
-                                    <span class="text-xs font-medium {% if transaction.payment_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
-                                        <i class="bi {% if transaction.payment_type == 'credit' %}bi-arrow-down{% else %}bi-arrow-up{% endif %}-circle mr-1"></i>
+                                    <span
+                                        class="text-xs font-medium {% if transaction.payment_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                                        <i
+                                            class="bi {% if transaction.payment_type == 'credit' %}bi-arrow-down{% else %}bi-arrow-up{% endif %}-circle mr-1"></i>
                                         {{ transaction.get_payment_type_display }}
                                     </span>
                                 </div>
                             </td>
-                            
+
                             <!-- Amount -->
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex flex-col">
-                                    <span class="text-sm font-bold {% if transaction.payment_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
-                                        {% if transaction.payment_type == 'credit' %}+{% else %}-{% endif %}₹{{ transaction.amount|intcomma }}
+                                    <span
+                                        class="text-sm font-bold {% if transaction.payment_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                                        {% if transaction.payment_type == 'credit' %}+{% else %}-{% endif %}₹{{transaction.amount|intcomma }}
                                     </span>
                                     <span class="text-xs text-gray-500">{{ transaction.currency }}</span>
                                 </div>
                             </td>
-                            
+
                             <!-- Status -->
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                    {% if transaction.payment_status == 'completed' %}bg-green-100 text-green-800
-                                    {% elif transaction.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
-                                    {% elif transaction.payment_status == 'failed' %}bg-red-100 text-red-800
-                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    <i class="bi {% if transaction.payment_status == 'completed' %}bi-check-circle{% elif transaction.payment_status == 'pending' %}bi-clock{% else %}bi-x-circle{% endif %} mr-1"></i>
+                                        {% if transaction.payment_status == 'completed' %}bg-green-100 text-green-800
+                                        {% elif transaction.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
+                                        {% elif transaction.payment_status == 'failed' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    <i
+                                        class="bi {% if transaction.payment_status == 'completed' %}bi-check-circle{% elif transaction.payment_status == 'pending' %}bi-clock{% else %}bi-x-circle{% endif %} mr-1"></i>
                                     {{ transaction.get_payment_status_display }}
                                 </span>
                             </td>
-                            
+
                             <!-- Date -->
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex flex-col">
@@ -302,12 +332,12 @@
                                     <span class="text-xs text-gray-500">{{ transaction.created_at|time:"H:i" }}</span>
                                 </div>
                             </td>
-                            
+
                             <!-- Actions -->
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <a href="{% url 'transactions:transaction_detail' transaction.transaction_id %}" 
-                                   class="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
-                                   title="View Details">
+                                <a href="{% url 'transactions:transaction_detail' transaction.transaction_id %}"
+                                    class="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
+                                    title="View Details">
                                     <i class="bi bi-eye mr-1"></i>
                                     View
                                 </a>
@@ -323,64 +353,65 @@
             <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                 <div class="flex-1 flex justify-between sm:hidden">
                     {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Previous
                     </a>
                     {% endif %}
-                    
+
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                       class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Next
                     </a>
                     {% endif %}
                 </div>
-                
+
                 <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                     <div>
                         <p class="text-sm text-gray-700">
-                            Showing <span class="font-medium">{{ page_obj.start_index }}</span> to 
-                            <span class="font-medium">{{ page_obj.end_index }}</span> of 
+                            Showing <span class="font-medium">{{ page_obj.start_index }}</span> to
+                            <span class="font-medium">{{ page_obj.end_index }}</span> of
                             <span class="font-medium">{{ page_obj.paginator.count }}</span> results
                         </p>
                     </div>
                     <div>
                         <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                             {% if page_obj.has_previous %}
-                            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                 <i class="bi bi-chevron-bar-left"></i>
                             </a>
-                            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                               class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                 <i class="bi bi-chevron-left"></i>
                             </a>
                             {% endif %}
-                            
+
                             {% for num in page_obj.paginator.page_range %}
-                                {% if page_obj.number == num %}
-                                <span class="relative z-10 inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
-                                    {{ num }}
-                                </span>
-                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                    {{ num }}
+                            {% if page_obj.number == num %}
+                            <span
+                                class="relative z-10 inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                                {{ num }}
+                            </span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <a
+                                href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                {{ num }}
                                 </a>
                                 {% endif %}
-                            {% endfor %}
-                            
-                            {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                               class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                            <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <i class="bi bi-chevron-bar-right"></i>
-                            </a>
-                            {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                    class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <i class="bi bi-chevron-bar-right"></i>
+                                </a>
+                                {% endif %}
                         </nav>
                     </div>
                 </div>
@@ -407,7 +438,7 @@
 
 <script>
     // Auto-focus search
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('search');
         if (searchInput && !searchInput.value) {
             searchInput.focus();

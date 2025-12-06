@@ -101,7 +101,9 @@ class Order(models.Model):
     return_approved_at = models.DateTimeField(null=True, blank=True)
     return_rejected_at = models.DateTimeField(null=True, blank=True)
     return_rejection_reason = models.TextField(null=True, blank=True)
+    return_rejection_reason = models.TextField(null=True, blank=True)
     returned_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
     
     razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)
@@ -203,15 +205,15 @@ class Order(models.Model):
     
     @property
     def is_return_requested(self):
-        return self.order_status == 'return_requested'
+        return self.return_requested_at is not None
 
     @property
     def is_return_approved(self):
-        return self.order_status == 'returned'
+        return self.return_approved_at is not None
 
     @property
     def is_return_rejected(self):
-        return self.order_status == 'delivered'
+        return self.return_rejected_at is not None
 
     def get_status_display_class(self):
         status_classes = {

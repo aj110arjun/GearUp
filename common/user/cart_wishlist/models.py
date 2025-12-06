@@ -31,7 +31,8 @@ class Cart(models.Model):
 
     @property
     def total_discount(self):
-        return 0  # Since we don't have compare_price, discount is always 0
+        # Calculate total discount
+        return sum(item.total_discount for item in self.items.all())
 
     @property
     def final_total(self):
@@ -61,7 +62,7 @@ class CartItem(models.Model):
 
     @property
     def unit_price(self):
-        return self.variant.price
+        return self.variant.get_discounted_price()
 
     @property
     def total_price(self):
@@ -69,7 +70,7 @@ class CartItem(models.Model):
 
     @property
     def total_discount(self):
-        return 0  # No discount since no compare_price
+        return (self.variant.price * self.quantity) - self.total_price
 
     @property
     def is_available(self):

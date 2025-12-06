@@ -182,7 +182,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
-                                <a href="{% url 'orders:admin_view_return' order.id %}" 
+                                <a href="{% url 'orders:admin_view_return' order.order_id %}" 
                                    class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
                                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
@@ -190,14 +190,14 @@
                                     </svg>
                                     View
                                 </a>
-                                <a href="{% url 'orders:admin_approve_return' order.id %}" 
+                                <a href="{% url 'orders:admin_approve_return' order.order_id %}" 
                                    class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
                                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
                                     Approve
                                 </a>
-                                <a href="{% url 'orders:admin_reject_return' order.id %}" 
+                                <a href="{% url 'orders:admin_reject_return' order.order_id %}" 
                                    class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">
                                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
@@ -277,7 +277,7 @@
                             <div class="text-sm font-medium text-gray-900">₹{{ order.total_amount }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <a href="{% url 'orders:admin_view_return' order.id %}" 
+                            <a href="{% url 'orders:admin_view_return' order.order_id %}" 
                                class="text-blue-600 hover:text-blue-900 text-sm font-medium">
                                 View Details
                             </a>

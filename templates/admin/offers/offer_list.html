@@ -1,0 +1,133 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Offer Management - GearUp{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Offer Management</h2>
+            <p class="text-gray-500">Manage discounts for products and categories</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'products:product_offer_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                <i class="fas fa-plus"></i> Add Product Offer
+            </a>
+            <a href="{% url 'products:category_offer_create' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                <i class="fas fa-tags"></i> Add Category Offer
+            </a>
+        </div>
+    </div>
+
+    <!-- Offers Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Product Offers -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 flex justify-between items-center">
+                <span>Product Offers</span>
+                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{{ product_offers|length }} Active</span>
+            </h3>
+            
+            {% if product_offers %}
+                <div class="space-y-4">
+                    {% for offer in product_offers %}
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow relative overflow-hidden">
+                        {% if offer.is_valid %}
+                            <div class="absolute top-0 right-0 bg-green-500 w-2 h-full"></div>
+                        {% else %}
+                            <div class="absolute top-0 right-0 bg-red-500 w-2 h-full"></div>
+                        {% endif %}
+                        
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-gray-800">{{ offer.name }}</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Product: <span class="font-medium text-blue-600">{{ offer.product.name }}</span>
+                                </p>
+                                <div class="mt-2 flex items-center gap-4 text-sm text-gray-500">
+                                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded-md font-bold">
+                                        {{ offer.discount_percentage }}% OFF
+                                    </span>
+                                    <span>
+                                        <i class="far fa-calendar-alt mr-1"></i>
+                                        {{ offer.end_date|date:"M d, Y" }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2 ml-4">
+                                <a href="{% url 'products:product_offer_edit' offer.id %}" class="text-gray-400 hover:text-blue-600 transition-colors">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'products:product_offer_delete' offer.id %}" class="text-gray-400 hover:text-red-600 transition-colors" onclick="return confirm('Are you sure you want to delete this offer?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <i class="fas fa-shopping-basket text-gray-400 text-3xl mb-2"></i>
+                    <p class="text-gray-500">No product offers active</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Category Offers -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 flex justify-between items-center">
+                <span>Category Offers</span>
+                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">{{ category_offers|length }} Active</span>
+            </h3>
+            
+            {% if category_offers %}
+                <div class="space-y-4">
+                    {% for offer in category_offers %}
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow relative overflow-hidden">
+                        {% if offer.is_valid %}
+                            <div class="absolute top-0 right-0 bg-green-500 w-2 h-full"></div>
+                        {% else %}
+                            <div class="absolute top-0 right-0 bg-red-500 w-2 h-full"></div>
+                        {% endif %}
+                        
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-gray-800">{{ offer.name }}</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Category: <span class="font-medium text-indigo-600">{{ offer.category.name }}</span>
+                                </p>
+                                <div class="mt-2 flex items-center gap-4 text-sm text-gray-500">
+                                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded-md font-bold">
+                                        {{ offer.discount_percentage }}% OFF
+                                    </span>
+                                    <span>
+                                        <i class="far fa-calendar-alt mr-1"></i>
+                                        {{ offer.end_date|date:"M d, Y" }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2 ml-4">
+                                <a href="{% url 'products:category_offer_edit' offer.id %}" class="text-gray-400 hover:text-blue-600 transition-colors">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'products:category_offer_delete' offer.id %}" class="text-gray-400 hover:text-red-600 transition-colors" onclick="return confirm('Are you sure you want to delete this offer?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <i class="fas fa-tags text-gray-400 text-3xl mb-2"></i>
+                    <p class="text-gray-500">No category offers active</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

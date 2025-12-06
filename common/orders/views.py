@@ -165,7 +165,7 @@ def process_checkout(request, cart, cart_items, wallet):
             product=cart_item.variant.product,
             variant=cart_item.variant,
             quantity=cart_item.quantity,
-            unit_price=cart_item.variant.price,
+            unit_price=cart_item.unit_price,  # Use discounted price
             subtotal=subtotal,
             tax_amount=tax_amount_item,
             shipping_cost=shipping_cost_item,
@@ -215,6 +215,18 @@ def process_checkout(request, cart, cart_items, wallet):
                     return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
                 else:
                     return redirect('orders:order_list')
+            
+            # Create AdminTransaction for successful Razorpay payment
+            for order in created_orders:
+                AdminTransaction.objects.create(
+                    order=order,
+                    user=request.user,
+                    description=f'{request.user.email} paid via Razorpay for order {order.order_number}',
+                    amount=Decimal(order.total_amount),
+                    payment_method='razorpay',
+                    payment_status='completed',
+                    payment_type='credit'
+                )
         except Exception as e:
             # Handle verification error
             for order in created_orders:
@@ -271,7 +283,7 @@ def process_checkout(request, cart, cart_items, wallet):
     
     # Redirect based on number of orders
     if len(created_orders) == 1:
-        if created_orders[0].payment_status == 'paid':
+        if created_orders[0].payment_status in ['paid', 'pending']:
             messages.success(request, 'Order placed successfully!')
             return redirect('orders:order_success', order_id=created_orders[0].order_id)
         else:
@@ -311,33 +323,7 @@ def order_list(request):
     }
     return render(request, 'user/orders/order_list.html', context)
 
-@login_required(login_url='user_auth:signin')
-@never_cache
-def order_detail(request, order_id):
-    """Display order details"""
-    order = get_object_or_404(Order, order_id=order_id, user=request.user)
-    
-    # Simple check: Show return button if order is delivered and no return has been requested
-    can_return = (
-        order.order_status == 'delivered' and
-        not order.return_requested_at and
-        not order.return_approved_at and
-        not order.return_rejected_at
-    )
-    
-    # Check return status based on existing fields
-    is_return_requested = bool(order.return_requested_at)
-    is_return_approved = bool(order.return_approved_at)
-    is_return_rejected = bool(order.return_rejected_at)
-    
-    context = {
-        'order': order,
-        'can_return': can_return,
-        'is_return_requested': is_return_requested,
-        'is_return_approved': is_return_approved,
-        'is_return_rejected': is_return_rejected,
-    }
-    return render(request, 'user/orders/order_detail.html', context)
+
 
 @login_required(login_url='user_auth:signin')
 @never_cache
@@ -376,6 +362,17 @@ def cancel_order(request, order_id):
                 description=f"Refund for cancelled order #{order.order_number}"
             )
             
+            # Create Admin Transaction for refund
+            AdminTransaction.objects.create(
+                order=order,
+                user=order.user,
+                description=f'Refund for cancelled order #{order.order_number}',
+                amount=Decimal(refund_amount),
+                payment_method='wallet',
+                payment_status='completed',
+                payment_type='debit'
+            )
+            
             # Update order status and payment status
             order.payment_status = 'refunded'
             
@@ -390,7 +387,19 @@ def cancel_order(request, order_id):
             messages.error(request, f'Error processing refund: {str(e)}')
             return redirect('orders:admin_view_return', order_id=order_id)
 
-    order.payment_status = 'refunded' if order.payment_status == 'paid' else 'failed'
+    # Ensure order is marked cancelled
+    order.order_status = 'cancelled'
+    if not order.cancelled_at:
+        order.cancelled_at = timezone.now()
+
+    # Update payment status logic
+    if order.payment_status == 'refunded':
+        pass  # Already handled and refunded
+    elif order.payment_method == 'cash_on_delivery':
+        order.payment_status = 'pending'
+    else:
+        order.payment_status = 'failed'
+
     order.save()
     
     messages.success(request, 'Order cancelled successfully.')
@@ -655,7 +664,26 @@ def admin_order_update_status(request, order_id):
     # Update timestamps based on status
     if new_status == 'delivered':
         order.delivered_at = timezone.now()  # SET DELIVERED_AT HERE
-        messages.success(request, f'Order #{order.order_number} marked as delivered.')
+        
+        # Auto-update payment status to 'paid' if it's not already
+        if order.payment_status != 'paid':
+            old_payment_status = order.payment_status
+            order.payment_status = 'paid'
+            order.paid_at = timezone.now()
+            
+            # Create AdminTransaction for payment confirmation
+            AdminTransaction.objects.create(
+                order=order,
+                user=order.user,
+                description=f'Payment auto-confirmed on delivery',
+                amount=Decimal(order.total_amount),
+                payment_method=order.payment_method,
+                payment_status='completed',
+                payment_type='credit'
+            )
+            messages.success(request, f'Order #{order.order_number} marked as delivered and payment status updated to paid.')
+        else:
+            messages.success(request, f'Order #{order.order_number} marked as delivered.')
     elif new_status == 'cancelled':
         order.cancelled_at = timezone.now()
     elif new_status == 'returned':
@@ -672,8 +700,17 @@ def admin_order_update_status(request, order_id):
             transaction = WalletService.make_refund(
                 wallet=wallet,
                 amount=refund_amount,
-                description=f"Refund for cancelled order #{order.order_number}",
-                reference_id=str(order.id)
+                description=f"Refund for cancelled order #{order.order_number}"
+            )
+            
+            AdminTransaction.objects.create(
+                order=order,
+                user=order.user,
+                description=f'Refund for cancelled order #{order.order_number}',
+                amount=Decimal(refund_amount),
+                payment_method='wallet',
+                payment_status='completed',
+                payment_type='debit'
             )
             
             # Update order payment status to refunded
@@ -689,6 +726,16 @@ def admin_order_update_status(request, order_id):
             )
             order.payment_status = 'refunded'
             messages.success(request, f'Order #{order.order_number} cancelled and ₹{order.total_amount} refunded to newly created wallet.')
+
+            AdminTransaction.objects.create(
+                order=order,
+                user=order.user,
+                description=f'Refund for cancelled order #{order.order_number}',
+                amount=Decimal(order.total_amount),
+                payment_method='wallet',
+                payment_status='completed',
+                payment_type='debit'
+            )
             
         except Exception as e:
             messages.error(request, f'Order cancelled but refund failed: {str(e)}')
@@ -734,6 +781,53 @@ def admin_order_update_payment_status(request, order_id):
         order.paid_at = timezone.now()
     
     order.save()
+    
+    # Create AdminTransaction if status changed to paid
+    if new_payment_status == 'paid' and old_payment_status != 'paid':
+        AdminTransaction.objects.create(
+            order=order,
+            user=order.user,
+            description=f'Payment confirmed manually by {request.user.email} (Admin)',
+            amount=Decimal(order.total_amount),
+            payment_method=order.payment_method,
+            payment_status='completed',
+            payment_type='credit'
+        )
+        
+    # Handle refund if status changed to refunded
+    elif new_payment_status == 'refunded' and old_payment_status != 'refunded':
+        try:
+            with transaction.atomic():
+                # Get or create wallet
+                wallet, created = Wallet.objects.get_or_create(user=order.user)
+                
+                refund_amount = order.total_amount
+                
+                # Process refund
+                WalletService.make_refund(
+                    wallet=wallet,
+                    amount=refund_amount,
+                    description=f"Manual refund by admin for order #{order.order_number}"
+                )
+                
+                # Create AdminTransaction
+                AdminTransaction.objects.create(
+                    order=order,
+                    user=order.user,
+                    description=f'Refund processed manually by {request.user.email} (Admin)',
+                    amount=Decimal(refund_amount),
+                    payment_method='wallet',
+                    payment_status='completed',
+                    payment_type='debit'
+                )
+                messages.success(request, f'Refund of ₹{refund_amount} processed to user wallet.')
+                
+        except Exception as e:
+            # Revert status change if refund fails
+            order.payment_status = old_payment_status
+            order.save()
+            messages.error(request, f'Failed to process refund: {str(e)}')
+            return redirect('orders:admin_order_detail', order_id=order_id)
     
     messages.success(request, f'Payment status updated from {old_payment_status} to {new_payment_status}.')
     
@@ -896,51 +990,40 @@ def admin_approve_return(request, order_id):
                 # Calculate refund amount
                 refund_amount = order.total_amount
                 
-                # Process refund to wallet
-                try:
-                    # Use WalletService to process refund
-                    transaction_obj = WalletService.make_refund(
+                # Check if already refunded to avoid double refund
+                if order.payment_status != 'refunded':
+                    # Process refund immediately
+                    transaction_record = WalletService.make_refund(
                         wallet=wallet,
                         amount=refund_amount,
-                        description=f"Refund for returned order #{order.order_number}"
+                        description=f"Refund for return order #{order.order_number}"
                     )
                     
-                    # Update order status and payment status
-                    order.order_status = 'return_approved'
-                    order.return_approved_at = timezone.now()
+                    # Log AdminTransaction
+                    AdminTransaction.objects.create(
+                        order=order,
+                        user=order.user,
+                        description=f'Refund processed upon return approval by {request.user.email} (Admin)',
+                        amount=Decimal(refund_amount),
+                        payment_method='wallet',
+                        payment_status='completed',
+                        payment_type='debit'
+                    )
+                    
+                    # Update order payment status
                     order.payment_status = 'refunded'
-                    
-                    messages.success(request, f'Return approved for order #{order.order_number}. ₹{refund_amount} has been refunded to customer wallet.')
-                    
-                except ValueError as e:
-                    # Handle refund errors
-                    messages.error(request, f'Refund failed: {str(e)}')
-                    return redirect('orders:admin_view_return', order_id=order_id)
-                except Exception as e:
-                    # Handle other errors
-                    messages.error(request, f'Error processing refund: {str(e)}')
-                    return redirect('orders:admin_view_return', order_id=order_id)
                 
-                # Save order after successful refund
+                # Update order status
+                order.order_status = 'return_approved'
+                order.return_approved_at = timezone.now()
+                
+                # Save order
                 order.save()
                 
-                # Send notification to user about approved return
-                # send_return_approved_email(order.user.email, order)
-                
-                # Create return instructions for customer
-                return_instructions = {
-                    'pickup_address': order.shipping_address,
-                    'contact_person': f"{order.user.get_full_name() or order.user.username}",
-                    'contact_phone': order.shipping_address.phone_number if order.shipping_address else '',
-                    'instructions': 'Please pack the product in its original packaging with all accessories.',
-                    'pickup_schedule': 'Within 3-5 business days',
-                    'refund_amount': f"₹{refund_amount}",
-                    'refund_status': 'Processed to wallet',
-                    'transaction_id': transaction_obj.reference if hasattr(transaction_obj, 'reference') else transaction_obj.id
-                }
+                messages.success(request, f'Return approved for order #{order.order_number}. Refunds of ₹{refund_amount} processed to wallet.')
                 
                 # Log the approval
-                print(f"Return approved for order #{order.order_number}. Refund: ₹{refund_amount}, Transaction: {transaction_obj.id}")
+                print(f"Return approved and refunded for order #{order.order_number}.")
                 
                 return redirect('orders:admin_view_return', order_id=order_id)
                 
@@ -1013,39 +1096,38 @@ def admin_complete_return(request, order_id):
     
     try:
         with transaction.atomic():
+            # Fallback: Check if refund is pending (e.g. legacy orders or failed refunds)
+            if order.payment_status != 'refunded':
+                 # Get or create user's wallet
+                wallet, created = Wallet.objects.get_or_create(user=order.user)
+                
+                # Process refund
+                WalletService.make_refund(
+                    wallet=wallet,
+                    amount=order.total_amount,
+                    description=f"Refund for return order #{order.order_number}"
+                )
+                
+                # Log AdminTransaction
+                AdminTransaction.objects.create(
+                    order=order,
+                    user=order.user,
+                    description=f'Refund processed upon return completion by {request.user.email} (Admin)',
+                    amount=Decimal(order.total_amount),
+                    payment_method='wallet',
+                    payment_status='completed',
+                    payment_type='debit'
+                )
+                
+                order.payment_status = 'refunded'
+                messages.success(request, f'Refund of ₹{order.total_amount} processed to wallet.')
+
             # Update order status
             order.order_status = 'returned'
             order.returned_at = timezone.now()
-            
-            # Process refund if payment was made
-            if order.payment_status in ['paid', 'refund_pending']:
-                try:
-                    # Get user's wallet
-                    wallet, created = Wallet.objects.get_or_create(user=order.user)
-                    
-                    # Refund amount to wallet
-                    refund_amount = order.total_amount
-                    
-                    # Create wallet transaction
-                    transaction_obj = WalletService.make_refund(
-                        wallet=wallet,
-                        amount=refund_amount,
-                        description=f"Refund for returned order #{order.order_number}",
-                        reference_id=str(order.id)
-                    )
-                    
-                    # Update wallet balance
-                    wallet.balance += refund_amount
-                    wallet.save()
-                    
-                    order.payment_status = 'refunded'
-                    messages.success(request, f'Return completed and ₹{refund_amount} refunded to customer wallet.')
-                    
-                except Exception as e:
-                    order.payment_status = 'refund_pending'
-                    messages.warning(request, f'Return completed but refund failed: {str(e)}')
-            
             order.save()
+            
+            messages.success(request, f'Return marked as completed for order #{order.order_number}.')
             
             # Restock product variant
             if order.variant:
@@ -1388,6 +1470,16 @@ def retry_payment(request, order_id):
                 order.paid_at = timezone.now()
                 order.save()
                 
+                AdminTransaction.objects.create(
+                    order=order,
+                    user=order.user,
+                    description=f'Retry payment via Wallet for order #{order.order_number}',
+                    amount=Decimal(order.total_amount),
+                    payment_method='wallet',
+                    payment_status='completed',
+                    payment_type='credit'
+                )
+                
                 messages.success(request, f'Payment successful! Order #{order.order_number} has been confirmed.')
                 return redirect('orders:order_success', order_id=order.order_id)
             except Exception as e:
@@ -1439,6 +1531,16 @@ def verify_retry_payment(request, order_id):
             order.razorpay_signature = razorpay_signature
             order.payment_failure_reason = None  # Clear failure reason
             order.save()
+            
+            AdminTransaction.objects.create(
+                order=order,
+                user=order.user,
+                description=f'Retry payment via Razorpay for order #{order.order_number}',
+                amount=Decimal(order.total_amount),
+                payment_method='razorpay',
+                payment_status='completed',
+                payment_type='credit'
+            )
             
             messages.success(request, f'Payment successful! Order #{order.order_number} has been confirmed.')
             return redirect('orders:order_success', order_id=order.order_id)
