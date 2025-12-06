@@ -37,88 +37,9 @@
                 <h4 class="text-2xl font-bold text-gray-900 mb-1">Order Management</h4>
                 <p class="text-gray-600">Manage and track customer orders</p>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="{% url 'auth_dashboard:dashboard' %}" 
-                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg transition duration-200 flex items-center gap-2">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Dashboard</span>
-                </a>
-                <button onclick="showExportModal()"
-                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg transition duration-200 flex items-center gap-2">
-                    <i class="fas fa-download"></i>
-                    <span>Export</span>
-                </button>
-            </div>
         </div>
 
-        <!-- Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition duration-200">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h6 class="text-gray-600 text-sm mb-2">Total Orders</h6>
-                        <h3 class="text-3xl font-bold text-gray-900">{{ total_orders }}</h3>
-                    </div>
-                    <div class="bg-blue-100 p-4 rounded-full">
-                        <i class="fas fa-shopping-bag text-blue-600 text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition duration-200">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h6 class="text-gray-600 text-sm mb-2">Total Revenue</h6>
-                        <h3 class="text-3xl font-bold text-gray-900">₹{{ total_revenue|floatformat:2 }}</h3>
-                    </div>
-                    <div class="bg-green-100 p-4 rounded-full">
-                        <i class="fas fa-rupee-sign text-green-600 text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition duration-200">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h6 class="text-gray-600 text-sm mb-2">Avg Order Value</h6>
-                        <h3 class="text-3xl font-bold text-gray-900">₹{{ average_order_value|floatformat:2 }}</h3>
-                    </div>
-                    <div class="bg-purple-100 p-4 rounded-full">
-                        <i class="fas fa-chart-bar text-purple-600 text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition duration-200">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h6 class="text-gray-600 text-sm mb-2">Pending Orders</h6>
-                        <h3 class="text-3xl font-bold text-gray-900">{{ status_stats.pending|default:0 }}</h3>
-                    </div>
-                    <div class="bg-yellow-100 p-4 rounded-full">
-                        <i class="fas fa-clock text-yellow-600 text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Status Summary -->
-        <div class="grid grid-cols-2 md:grid-cols-7 gap-2 mb-8">
-            {% for status, display in ORDER_STATUS_CHOICES %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 text-center">
-                <div class="text-lg font-bold text-gray-900">
-                    {% for item in status_counts %}
-                        {% if item.order_status == status %}
-                            {{ item.count }}
-                        {% endif %}
-                    {% empty %}
-                        0
-                    {% endfor %}
-                </div>
-                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">{{ display }}</div>
-            </div>
-            {% endfor %}
-        </div>
+        
 
         <!-- Filters and Search -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
@@ -281,7 +202,7 @@
                         <tr class="hover:bg-blue-50 hover:bg-opacity-30 transition duration-150">
                             <td class="px-6 py-4">
                                 <div class="text-sm font-bold text-gray-900">
-                                    <a href="{% url 'orders:admin_order_detail' order.id %}" 
+                                    <a href="{% url 'orders:admin_order_detail' order.order_id %}" 
                                        class="hover:text-blue-600 hover:underline">
                                         {{ order.order_number }}
                                     </a>
@@ -358,7 +279,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
-                                    <a href="{% url 'orders:admin_order_detail' order.id %}" 
+                                    <a href="{% url 'orders:admin_order_detail' order.order_id %}" 
                                        class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                                        title="View Details">
                                         <i class="fas fa-eye"></i>

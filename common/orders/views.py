@@ -27,6 +27,7 @@ from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 
 from common.user.address.models import Address
+from common.admin.transactions.models import AdminTransaction
 from .models import Order
 from .forms import OrderStatusForm, ReturnRequestForm
 from common.user.cart_wishlist.models import Cart, CartItem
@@ -237,7 +238,15 @@ def process_checkout(request, cart, cart_items, wallet):
                 final_total,
                 f"Order payment for {product_names}."
             )
-            
+            transaction = AdminTransaction.objects.create(
+                order=order,
+                user=request.user,
+                description=f'{request.user.email} place an order on {order.order_number}',
+                amount=Decimal(order.total_amount),
+                payment_method='wallet',
+                payment_status='completed',
+                payment_type='credit'
+                )
             # Update all orders
             for order in created_orders:
                 order.payment_status = 'paid'
@@ -264,7 +273,7 @@ def process_checkout(request, cart, cart_items, wallet):
     if len(created_orders) == 1:
         if created_orders[0].payment_status == 'paid':
             messages.success(request, 'Order placed successfully!')
-            return redirect('orders:order_success', order_id=created_orders[0].id)
+            return redirect('orders:order_success', order_id=created_orders[0].order_id)
         else:
             return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
     else:
@@ -484,11 +493,11 @@ def admin_order_list(request):
     average_order_value = total_revenue / total_orders if total_orders > 0 else 0
     
     # Count by status
-    status_counts = orders.values('order_status').annotate(count=Count('id'))
+    status_counts = orders.values('order_status').annotate(count=Count('order_id'))
     status_stats = {item['order_status']: item['count'] for item in status_counts}
     
     # Payment status counts
-    payment_counts = orders.values('payment_status').annotate(count=Count('id'))
+    payment_counts = orders.values('payment_status').annotate(count=Count('order_id'))
     payment_stats = {item['payment_status']: item['count'] for item in payment_counts}
     
     # Pagination
