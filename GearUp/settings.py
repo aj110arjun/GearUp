@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     'common.user.home',
     'common.products',
     'common.admin.auth_dashboard',
+    'common.admin.transactions',
     'common.user.cart_wishlist',
     'common.orders',
     'common.user.address',
