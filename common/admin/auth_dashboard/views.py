@@ -225,3 +225,196 @@ def admin_user_deactivate(request, user_id):
     
     return redirect('auth_dashboard:admin_user_list')
 
+
+# ============================================
+# COUPON MANAGEMENT VIEWS
+# ============================================
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_list(request):
+    """List all coupons with search and filters"""
+    from common.orders.models import Coupon
+    
+    coupons = Coupon.objects.all().order_by('-created_at')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        coupons = coupons.filter(
+            Q(code__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'active':
+        coupons = coupons.filter(is_active=True)
+    elif status_filter == 'inactive':
+        coupons = coupons.filter(is_active=False)
+    elif status_filter == 'expired':
+        coupons = coupons.filter(valid_until__lt=timezone.now())
+    elif status_filter == 'upcoming':
+        coupons = coupons.filter(valid_from__gt=timezone.now())
+    
+    # Pagination
+    paginator = Paginator(coupons, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Statistics
+    total_coupons = Coupon.objects.count()
+    active_coupons = Coupon.objects.filter(is_active=True).count()
+    expired_coupons = Coupon.objects.filter(valid_until__lt=timezone.now()).count()
+    
+    context = {
+        'page_obj': page_obj,
+        'coupons': page_obj,
+        'total_coupons': total_coupons,
+        'active_coupons': active_coupons,
+        'expired_coupons': expired_coupons,
+        'search_query': search_query,
+        'status_filter': status_filter,
+    }
+    
+    return render(request, 'admin/coupons/coupon_list.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_create(request):
+    """Create a new coupon"""
+    from common.orders.models import Coupon
+    
+    if request.method == 'POST':
+        try:
+            coupon = Coupon(
+                code=request.POST.get('code').strip().upper(),
+                description=request.POST.get('description', '').strip(),
+                discount_percentage=request.POST.get('discount_percentage'),
+                max_uses=request.POST.get('max_uses', 0),
+                max_uses_per_user=request.POST.get('max_uses_per_user', 1),
+                minimum_order_amount=request.POST.get('minimum_order_amount', 0),
+                max_discount_amount=request.POST.get('max_discount_amount') or None,
+                valid_from=request.POST.get('valid_from'),
+                valid_until=request.POST.get('valid_until'),
+                is_active=request.POST.get('is_active') == 'on',
+                created_by=request.user
+            )
+            coupon.save()
+            
+            messages.success(request, f'Coupon "{coupon.code}" created successfully!')
+            return redirect('auth_dashboard:coupon_list')
+            
+        except Exception as e:
+            messages.error(request, f'Error creating coupon: {str(e)}')
+    
+    context = {
+        'title': 'Create New Coupon',
+        'now': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+    }
+    
+    return render(request, 'admin/coupons/coupon_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_edit(request, coupon_id):
+    """Edit an existing coupon"""
+    from common.orders.models import Coupon
+    
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    
+    if request.method == 'POST':
+        try:
+            coupon.code = request.POST.get('code').strip().upper()
+            coupon.description = request.POST.get('description', '').strip()
+            coupon.discount_percentage = request.POST.get('discount_percentage')
+            coupon.max_uses = request.POST.get('max_uses', 0)
+            coupon.max_uses_per_user = request.POST.get('max_uses_per_user', 1)
+            coupon.minimum_order_amount = request.POST.get('minimum_order_amount', 0)
+            coupon.max_discount_amount = request.POST.get('max_discount_amount') or None
+            coupon.valid_from = request.POST.get('valid_from')
+            coupon.valid_until = request.POST.get('valid_until')
+            coupon.is_active = request.POST.get('is_active') == 'on'
+            coupon.save()
+            
+            messages.success(request, f'Coupon "{coupon.code}" updated successfully!')
+            return redirect('auth_dashboard:coupon_list')
+            
+        except Exception as e:
+            messages.error(request, f'Error updating coupon: {str(e)}')
+    
+    context = {
+        'title': 'Edit Coupon',
+        'coupon': coupon,
+        'now': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+    }
+    
+    return render(request, 'admin/coupons/coupon_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_delete(request, coupon_id):
+    """Delete a coupon"""
+    from common.orders.models import Coupon
+    
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    
+    if request.method == 'POST':
+        code = coupon.code
+        coupon.delete()
+        messages.success(request, f'Coupon "{code}" deleted successfully!')
+        return redirect('auth_dashboard:coupon_list')
+    
+    context = {
+        'coupon': coupon,
+    }
+    
+    return render(request, 'admin/coupons/coupon_confirm_delete.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_toggle_active(request, coupon_id):
+    """Toggle coupon active status"""
+    from common.orders.models import Coupon
+    
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    
+    if request.method == 'POST':
+        coupon.is_active = not coupon.is_active
+        coupon.save()
+        
+        status = "activated" if coupon.is_active else "deactivated"
+        messages.success(request, f'Coupon "{coupon.code}" {status} successfully!')
+    
+    return redirect('auth_dashboard:coupon_list')
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_usage_list(request):
+    """List all coupon usages"""
+    from common.orders.models import CouponUsage
+    
+    usages = CouponUsage.objects.all().select_related('coupon', 'user', 'order').order_by('-used_at')
+    
+    # Filter by coupon
+    coupon_filter = request.GET.get('coupon', '')
+    if coupon_filter:
+        usages = usages.filter(coupon__code__icontains=coupon_filter)
+    
+    # Pagination
+    paginator = Paginator(usages, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'usages': page_obj,
+        'coupon_filter': coupon_filter,
+    }
+    
+    return render(request, 'admin/coupons/coupon_usage_list.html', context)

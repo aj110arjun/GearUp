@@ -22,9 +22,9 @@ from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
 from django.db.models import Q
 
-from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm, CustomPasswordChangeForm, CustomPasswordResetForm, CustomSetPasswordForm
+from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm, CustomPasswordChangeForm, CustomPasswordResetForm, CustomSetPasswordForm, ForgotPasswordForm, ResetPasswordForm
 from .models import UserModel, OTP, PasswordResetToken
-from core.services import send_otp_email
+from core.services import send_otp_email, send_password_reset_otp_email
 
 
 @never_cache
@@ -514,4 +514,144 @@ def resend_reset_email(request):
     return redirect('password_reset')
 
 
+
+
+# ============================================
+# OTP-Based Password Reset Flow
+# ============================================
+
+@never_cache
+def forgot_password(request):
+    """Step 1: Request password reset OTP"""
+    if request.user.is_authenticated:
+        return redirect('user_home:home')
+    
+    if request.method == 'POST':
+        form = ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            
+            # Generate and send OTP
+            otp = OTP.create_otp(email)
+            send_password_reset_otp_email(email, otp.otp_code)
+            
+            # Store email in session
+            request.session['reset_email'] = email
+            request.session['reset_otp_sent'] = True
+            
+            messages.success(request, "Verification code sent to your email!")
+            return redirect('user_auth:verify_reset_otp')
+    else:
+        form = ForgotPasswordForm()
+    
+    return render(request, 'user/auth/forgot_password.html', {'form': form})
+
+
+@never_cache
+def verify_reset_otp(request):
+    """Step 2: Verify OTP for password reset"""
+    if request.user.is_authenticated:
+        return redirect('user_home:home')
+    
+    if 'reset_email' not in request.session or 'reset_otp_sent' not in request.session:
+        messages.error(request, "Please request a password reset first.")
+        return redirect('user_auth:forgot_password')
+    
+    email = request.session['reset_email']
+    
+    # Get the latest OTP for this email
+    try:
+        otp = OTP.objects.filter(email=email, is_verified=False).latest('created_at')
+    except OTP.DoesNotExist:
+        messages.error(request, "OTP expired. Please request a new one.")
+        return redirect('user_auth:forgot_password')
+    
+    if request.method == 'POST':
+        form = OTPVerificationForm(request.POST)
+        
+        if form.is_valid():
+            otp_code = form.cleaned_data['otp_code']
+            
+            # Verify OTP
+            verified_otp, message = OTP.verify_otp(email, otp_code)
+            
+            if verified_otp:
+                # Store verification status in session
+                request.session['reset_otp_verified'] = True
+                messages.success(request, "OTP verified! Now set your new password.")
+                return redirect('user_auth:reset_password')
+            else:
+                form.add_error('otp_code', message)
+    else:
+        form = OTPVerificationForm()
+    
+    # Calculate remaining time
+    remaining_time = max(0, (otp.expires_at - timezone.now()).total_seconds())
+    minutes = int(remaining_time // 60)
+    seconds = int(remaining_time % 60)
+    
+    context = {
+        'form': form,
+        'email': email,
+        'remaining_time': int(remaining_time),
+        'timer_display': f"{minutes:02d}:{seconds:02d}",
+        'is_expired': otp.is_expired(),
+    }
+    return render(request, 'user/auth/verify_reset_otp.html', context)
+
+
+@never_cache
+def resend_reset_otp(request):
+    """Resend OTP for password reset"""
+    if 'reset_email' not in request.session:
+        return redirect('user_auth:forgot_password')
+    
+    email = request.session['reset_email']
+    
+    # Generate new OTP
+    otp = OTP.create_otp(email)
+    send_password_reset_otp_email(email, otp.otp_code)
+    
+    messages.success(request, "New verification code sent!")
+    return redirect('user_auth:verify_reset_otp')
+
+
+@never_cache
+def reset_password(request):
+    """Step 3: Set new password after OTP verification"""
+    if request.user.is_authenticated:
+        return redirect('user_home:home')
+    
+    if 'reset_email' not in request.session or 'reset_otp_verified' not in request.session:
+        messages.error(request, "Please verify OTP first.")
+        return redirect('user_auth:forgot_password')
+    
+    email = request.session['reset_email']
+    
+    if request.method == 'POST':
+        form = ResetPasswordForm(request.POST)
+        
+        if form.is_valid():
+            password = form.cleaned_data['password1']
+            
+            # Get user and update password
+            try:
+                user = UserModel.objects.get(email=email)
+                user.set_password(password)
+                user.save()
+                
+                # Clean up session
+                del request.session['reset_email']
+                del request.session['reset_otp_sent']
+                del request.session['reset_otp_verified']
+                
+                messages.success(request, "Password reset successful! You can now sign in with your new password.")
+                return redirect('user_auth:signin')
+            except UserModel.DoesNotExist:
+                messages.error(request, "User not found.")
+                return redirect('user_auth:forgot_password')
+    else:
+        form = ResetPasswordForm()
+    
+    return render(request, 'user/auth/reset_password.html', {'form': form})
 

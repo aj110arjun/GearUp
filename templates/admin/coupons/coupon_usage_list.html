@@ -1,0 +1,188 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Coupon Usage History - Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                <i class="fas fa-history text-purple-600"></i>
+                Coupon Usage History
+            </h2>
+            <p class="text-gray-600 mt-2">Track all coupon applications and discounts</p>
+        </div>
+        <a href="{% url 'auth_dashboard:coupon_list' %}" 
+           class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i>
+            Back to Coupons
+        </a>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="bg-white rounded-xl shadow-lg mb-8">
+        <div class="border-b border-gray-200 px-6 py-4">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-filter text-blue-600"></i>
+                Filter Usage Records
+            </h3>
+        </div>
+        <div class="p-6">
+            <form method="get" class="flex flex-wrap gap-4">
+                <input type="text" 
+                       name="coupon" 
+                       class="flex-1 min-w-[250px] px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                       placeholder="Filter by coupon code..." 
+                       value="{{ coupon_filter }}">
+                
+                <button type="submit" 
+                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2">
+                    <i class="fas fa-filter"></i>
+                    Filter
+                </button>
+                
+                <a href="{% url 'auth_dashboard:coupon_usage_list' %}" 
+                   class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2">
+                    <i class="fas fa-redo"></i>
+                    Reset
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Usage Table -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-purple-50 to-indigo-50">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-list text-purple-600"></i>
+                All Usage Records
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Coupon Code
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            User
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Order
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Discount Amount
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Used At
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for usage in usages %}
+                    <tr class="hover:bg-purple-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-tag text-purple-600"></i>
+                                <span class="font-bold text-purple-600 font-mono text-lg">{{ usage.coupon.code }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-user text-blue-600"></i>
+                                <span class="text-gray-800">{{ usage.user.email }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if usage.order %}
+                                <a href="#" class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-2">
+                                    <i class="fas fa-shopping-bag"></i>
+                                    #{{ usage.order.order_number }}
+                                </a>
+                            {% else %}
+                                <span class="text-gray-400 italic">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-100 to-green-100 px-4 py-2 rounded-full">
+                                <i class="fas fa-rupee-sign text-emerald-600"></i>
+                                <span class="font-bold text-emerald-700 text-lg">₹{{ usage.discount_amount }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2 text-gray-600">
+                                <i class="fas fa-clock text-gray-400"></i>
+                                <span>{{ usage.used_at|date:"M d, Y" }}</span>
+                                <span class="text-gray-400">•</span>
+                                <span class="text-sm">{{ usage.used_at|date:"H:i" }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center justify-center text-gray-400">
+                                <i class="fas fa-inbox text-6xl mb-4"></i>
+                                <p class="text-lg font-semibold">No usage records found</p>
+                                <p class="text-sm mt-2">Coupon usage history will appear here</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            <nav class="flex justify-center">
+                <ul class="flex items-center gap-2">
+                    {% if page_obj.has_previous %}
+                    <li>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if coupon_filter %}&coupon={{ coupon_filter }}{% endif %}" 
+                           class="px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-semibold">
+                            <i class="fas fa-chevron-left mr-1"></i> Previous
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    <li>
+                        <a href="?page={{ num }}{% if coupon_filter %}&coupon={{ coupon_filter }}{% endif %}" 
+                           class="px-4 py-2 {% if page_obj.number == num %}bg-purple-600 text-white{% else %}bg-white border-2 border-gray-300 hover:bg-gray-50{% endif %} rounded-lg transition-colors font-semibold">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li>
+                        <a href="?page={{ page_obj.next_page_number }}{% if coupon_filter %}&coupon={{ coupon_filter }}{% endif %}" 
+                           class="px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-semibold">
+                            Next <i class="fas fa-chevron-right ml-1"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Summary Stats (if you want to add) -->
+    <div class="mt-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-medium uppercase tracking-wide">Total Usage Records</p>
+                <p class="text-4xl font-bold mt-2">{{ page_obj.paginator.count }}</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                <i class="fas fa-chart-line text-4xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -280,3 +280,69 @@ class PasswordChangeForm(CustomSetPasswordForm):
                 _("Your old password was entered incorrectly. Please enter it again.")
             )
         return old_password
+
+
+class ForgotPasswordForm(forms.Form):
+    """Form for requesting password reset OTP"""
+    email = forms.EmailField(
+        required=True,
+        label="Email Address",
+        widget=forms.EmailInput(attrs={
+            'autocomplete': 'email',
+            'placeholder': 'Enter your registered email'
+        })
+    )
+    
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if not UserModel.objects.filter(email=email).exists():
+            raise ValidationError("No account found with this email address.")
+        return email
+
+
+class ResetPasswordForm(forms.Form):
+    """Form for setting new password after OTP verification"""
+    password1 = forms.CharField(
+        label="New Password",
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Enter new password'
+        })
+    )
+    password2 = forms.CharField(
+        label="Confirm Password",
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Confirm new password'
+        })
+    )
+    
+    def clean_password1(self):
+        password1 = self.cleaned_data.get('password1')
+        
+        if password1:
+            # Minimum length check
+            if len(password1) < 8:
+                raise ValidationError("Password must contain at least 8 characters.")
+            
+            # Numeric check
+            if password1.isdigit():
+                raise ValidationError("Your password can't be entirely numeric.")
+            
+            # Common passwords check
+            common_passwords = [
+                'password', '12345678', 'qwerty', 'admin', 'welcome',
+                'password1', '123456789', 'abc123', 'letmein', 'monkey'
+            ]
+            if password1.lower() in common_passwords:
+                raise ValidationError("Your password can't be a commonly used password.")
+        
+        return password1
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+        
+        if password1 and password2 and password1 != password2:
+            raise ValidationError("The two password fields didn't match.")
+        
+        return cleaned_data

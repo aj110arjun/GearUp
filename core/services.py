@@ -63,6 +63,48 @@ The GearUp Team
     )
 
 
+def send_password_reset_otp_email(email, otp_code):
+    """Send password reset OTP email using HTML template"""
+    from django.template.loader import render_to_string
+    from django.core.mail import EmailMultiAlternatives
+    
+    subject = 'GearUp - Password Reset Verification Code'
+    
+    # Plain text version
+    text_message = f'''
+GearUp - Password Reset Request
+
+Hello!
+
+We received a request to reset the password for your GearUp account.
+
+Your verification code is: {otp_code}
+
+This code will expire in 2 minutes.
+
+If you didn't request this password reset, please ignore this email.
+
+Stay prepared,
+The GearUp Team
+'''
+    
+    # HTML version from template
+    html_message = render_to_string('user/auth/password_reset_otp_email.html', {
+        'otp_code': otp_code
+    })
+    
+    # Create email with both plain text and HTML
+    email_msg = EmailMultiAlternatives(
+        subject,
+        text_message,
+        settings.DEFAULT_FROM_EMAIL,
+        [email]
+    )
+    email_msg.attach_alternative(html_message, "text/html")
+    email_msg.send(fail_silently=False)
+
+
+
 
 class WalletService:
     @staticmethod

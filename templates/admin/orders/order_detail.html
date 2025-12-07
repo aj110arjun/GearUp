@@ -413,16 +413,51 @@
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Update Payment Status</label>
-                                <select name="payment_status" 
-                                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-                                    {% for value, label in PAYMENT_STATUS_CHOICES %}
-                                    <option value="{{ value }}" {% if order.payment_status == value %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
+                                
+                                {% if order.payment_status == 'refunded' %}
+                                    <!-- If refunded, disable the form -->
+                                    <select name="payment_status" 
+                                            disabled
+                                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed text-sm">
+                                        <option selected>Refunded (Cannot be changed)</option>
+                                    </select>
+                                    <p class="text-xs text-red-600 mt-1">
+                                        <i class="fas fa-lock mr-1"></i>
+                                        Payment status is locked after refund
+                                    </p>
+                                {% else %}
+                                    <select name="payment_status" 
+                                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                        {% for value, label in PAYMENT_STATUS_CHOICES %}
+                                            {% if order.payment_status == 'paid' %}
+                                                <!-- If paid, only allow paid and refunded -->
+                                                {% if value == 'paid' or value == 'refunded' %}
+                                                    <option value="{{ value }}" {% if order.payment_status == value %}selected{% endif %}>{{ label }}</option>
+                                                {% endif %}
+                                            {% else %}
+                                                <!-- If not paid, allow all except refunded -->
+                                                {% if value != 'refunded' %}
+                                                    <option value="{{ value }}" {% if order.payment_status == value %}selected{% endif %}>{{ label }}</option>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    {% if order.payment_status == 'paid' %}
+                                        <p class="text-xs text-blue-600 mt-1">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Once paid, can only be changed to refunded
+                                        </p>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                             <button type="submit" 
-                                    class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                                Update Payment
+                                    {% if order.payment_status == 'refunded' %}disabled{% endif %}
+                                    class="w-full px-4 py-2 {% if order.payment_status == 'refunded' %}bg-gray-400 cursor-not-allowed{% else %}bg-blue-600 hover:bg-blue-700{% endif %} text-white rounded-lg transition-colors text-sm">
+                                {% if order.payment_status == 'refunded' %}
+                                    <i class="fas fa-lock mr-1"></i> Locked
+                                {% else %}
+                                    Update Payment
+                                {% endif %}
                             </button>
                         </form>
                         

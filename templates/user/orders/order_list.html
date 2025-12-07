@@ -4,6 +4,25 @@
 {% load humanize %}
 
 {% block title %}My Orders - GearUp{% endblock %}
+{% block breadcrumbs %}
+    <div class="breadcrumb">
+        <div class="container mx-auto px-4 lg:px-6">
+            <nav aria-label="Breadcrumb">
+                <ol class="flex items-center text-sm text-gray-600">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'user_home:home' %}"><i class="fas fa-home mr-1"></i>Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'user_auth:profile' %}">My Account</a>
+                    </li>
+                    <li class="breadcrumb-item text-emerald-600 font-medium" aria-current="page">
+                        My Orders
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+{% endblock breadcrumbs %}
 
 {% block content %}
 <div class="bg-gray-50 min-h-screen py-8">
@@ -248,11 +267,12 @@
                             {% endif %}
 
                             <!-- Track Order Button -->
-                            {% if order.order_status in 'shipped,processing' %}
-                            <button class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                            {% if order.order_status not in 'cancelled,returned,delivered' %}
+                            <a href="{% url 'orders:track_order' order.order_id %}"
+                               class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
                                 <i class="fas fa-shipping-fast mr-2"></i>
                                 Track Order
-                            </button>
+                            </a>
                             {% endif %}
                         </div>
                     </div>

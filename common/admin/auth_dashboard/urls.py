@@ -13,5 +13,12 @@ urlpatterns = [
     path('users/<int:user_id>/toggle-active/', views.admin_user_toggle_active, name='admin_user_toggle_active'),
     path('users/<int:user_id>/activate/', views.admin_user_activate, name='admin_user_activate'),
     path('users/<int:user_id>/deactivate/', views.admin_user_deactivate, name='admin_user_deactivate'),
-]
     
+    # Coupon Management URLs
+    path('coupons/', views.coupon_list, name='coupon_list'),
+    path('coupons/create/', views.coupon_create, name='coupon_create'),
+    path('coupons/<int:coupon_id>/edit/', views.coupon_edit, name='coupon_edit'),
+    path('coupons/<int:coupon_id>/delete/', views.coupon_delete, name='coupon_delete'),
+    path('coupons/<int:coupon_id>/toggle-active/', views.coupon_toggle_active, name='coupon_toggle_active'),
+    path('coupons/usage/', views.coupon_usage_list, name='coupon_usage_list'),
+]

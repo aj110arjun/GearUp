@@ -128,9 +128,38 @@ def process_checkout(request, cart, cart_items, wallet):
     
     # Calculate total amount
     cart_total = sum(item.total_price for item in cart_items)
-    tax_amount = cart_total * Decimal('0.1')
+    
+    # Get coupon details if applied
+    coupon_code = request.POST.get('coupon_code', '').strip()
+    coupon_discount = Decimal(request.POST.get('coupon_discount', '0'))
+    coupon_obj = None
+    
+    if coupon_code and coupon_discount > 0:
+        try:
+            from .models import Coupon
+            coupon_obj = Coupon.objects.get(code=coupon_code.upper())
+            # Verify coupon is still valid
+            is_valid, message = coupon_obj.is_valid()
+            if not is_valid:
+                messages.warning(request, f'Coupon {coupon_code} is no longer valid: {message}')
+                coupon_code = ''
+                coupon_discount = Decimal('0')
+                coupon_obj = None
+        except Coupon.DoesNotExist:
+            messages.warning(request, f'Coupon {coupon_code} not found')
+            coupon_code = ''
+            coupon_discount = Decimal('0')
+            coupon_obj = None
+    
+    # Apply coupon discount to cart total
+    cart_total_after_coupon = cart_total - coupon_discount
+    if cart_total_after_coupon < 0:
+        cart_total_after_coupon = Decimal('0')
+    
+    # Calculate tax on discounted amount
+    tax_amount = cart_total_after_coupon * Decimal('0.1')
     shipping_cost = Decimal('0.00')
-    final_total = cart_total + tax_amount + shipping_cost
+    final_total = cart_total_after_coupon + tax_amount + shipping_cost
     
     # Handle wallet payment
     if payment_method == 'wallet':
@@ -141,12 +170,27 @@ def process_checkout(request, cart, cart_items, wallet):
     # Create orders even if payment failed
     created_orders = []
     
+    # Calculate discount per item proportionally
+    total_items_price = sum(item.total_price for item in cart_items)
+    
     for cart_item in cart_items:
         subtotal = cart_item.total_price
-        tax_amount_item = subtotal * Decimal('0.1')
-        shipping_cost_item = Decimal('0.00')
-        total_amount_item = subtotal + tax_amount_item + shipping_cost_item
         
+        # Apply proportional coupon discount to this item
+        item_coupon_discount = Decimal('0')
+        if coupon_discount > 0 and total_items_price > 0:
+            item_coupon_discount = (subtotal / total_items_price) * coupon_discount
+        
+        # Calculate item total after coupon
+        subtotal_after_coupon = subtotal - item_coupon_discount
+        if subtotal_after_coupon < 0:
+            subtotal_after_coupon = Decimal('0')
+        
+        tax_amount_item = subtotal_after_coupon * Decimal('0.1')
+        shipping_cost_item = Decimal('0.00')
+        total_amount_item = subtotal_after_coupon + tax_amount_item + shipping_cost_item
+        
+
         # Determine payment status
         if payment_failed:
             payment_status = 'failed'
@@ -180,10 +224,27 @@ def process_checkout(request, cart, cart_items, wallet):
             payment_attempts=1 if payment_failed else 0,
             last_payment_attempt=timezone.now() if payment_failed else None,
             payment_failure_reason="Payment failed during checkout" if payment_failed else None,
+            # Coupon fields
+            coupon_code=coupon_code if coupon_code else None,
+            coupon_discount=item_coupon_discount if coupon_code else Decimal('0'),
         )
         order.save()
         created_orders.append(order)
     
+    # Record coupon usage if coupon was applied
+    if coupon_obj and created_orders:
+        from .models import CouponUsage
+        # Record one usage entry for the entire cart checkout
+        CouponUsage.objects.create(
+            coupon=coupon_obj,
+            user=request.user,
+            order=created_orders[0],  # Link to first order
+            discount_amount=coupon_discount
+        )
+        # Increment coupon usage count
+        coupon_obj.increment_usage()
+    
+
     # If payment failed, redirect to payment failed page
     if payment_failed:
         if len(created_orders) == 1:
@@ -583,6 +644,8 @@ def admin_order_detail(request, order_id):
 def create_razorpay_order(request):
     """Create Razorpay order for frontend"""
     try:
+        import json
+        
         # Get cart total
         cart = Cart.objects.filter(user=request.user, is_active=True).first()
         if not cart or not cart.items.exists():
@@ -593,10 +656,25 @@ def create_razorpay_order(request):
         
         cart_items = cart.items.select_related('variant__product').all()
         cart_total = sum(item.total_price for item in cart_items)
-        tax_amount = cart_total * Decimal('0.1')
-        shipping_cost = Decimal('0.00')
-        final_total = cart_total + tax_amount + shipping_cost
         
+        # Get coupon discount from request body
+        try:
+            data = json.loads(request.body)
+            coupon_discount = Decimal(str(data.get('coupon_discount', 0)))
+        except:
+            coupon_discount = Decimal('0')
+        
+        # Apply coupon discount
+        cart_total_after_coupon = cart_total - coupon_discount
+        if cart_total_after_coupon < 0:
+            cart_total_after_coupon = Decimal('0')
+        
+        # Calculate tax on discounted amount
+        tax_amount = cart_total_after_coupon * Decimal('0.1')
+        shipping_cost = Decimal('0.00')
+        final_total = cart_total_after_coupon + tax_amount + shipping_cost
+        
+
         # Create Razorpay order
         razorpay_service = RazorpayService()
         
@@ -1283,6 +1361,81 @@ def order_detail(request, order_id):
     return render(request, 'user/orders/order_details.html', context)
 
 @login_required
+def track_order(request, order_id):
+    """Track order status with timeline"""
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
+    
+    # Define order status flow
+    status_flow = [
+        {
+            'status': 'pending',
+            'label': 'Order Placed',
+            'icon': 'fa-shopping-cart',
+            'description': 'Your order has been placed successfully',
+            'date': order.created_at if order.order_status in ['pending', 'confirmed', 'processing', 'shipped', 'delivered'] else None,
+        },
+        {
+            'status': 'confirmed',
+            'label': 'Order Confirmed',
+            'icon': 'fa-check-circle',
+            'description': 'Your order has been confirmed and is being prepared',
+            'date': order.created_at if order.order_status in ['confirmed', 'processing', 'shipped', 'delivered'] else None,
+        },
+        {
+            'status': 'processing',
+            'label': 'Processing',
+            'icon': 'fa-cog',
+            'description': 'Your order is being processed and packed',
+            'date': order.created_at if order.order_status in ['processing', 'shipped', 'delivered'] else None,
+        },
+        {
+            'status': 'shipped',
+            'label': 'Shipped',
+            'icon': 'fa-shipping-fast',
+            'description': 'Your order has been shipped and is on the way',
+            'date': order.created_at if order.order_status in ['shipped', 'delivered'] else None,
+        },
+        {
+            'status': 'delivered',
+            'label': 'Delivered',
+            'icon': 'fa-box-open',
+            'description': 'Your order has been delivered successfully',
+            'date': order.delivered_at if order.order_status == 'delivered' else None,
+        },
+    ]
+    
+    # Mark completed statuses
+    status_order = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
+    try:
+        current_index = status_order.index(order.order_status)
+        for i, status_item in enumerate(status_flow):
+            status_item['completed'] = i <= current_index
+            status_item['current'] = i == current_index
+    except ValueError:
+        # Handle cancelled or returned orders
+        for status_item in status_flow:
+            status_item['completed'] = False
+            status_item['current'] = False
+    
+    # Calculate estimated delivery
+    estimated_delivery = None
+    if order.order_status in ['confirmed', 'processing', 'shipped']:
+        from datetime import timedelta
+        estimated_delivery = order.created_at + timedelta(days=7)
+    
+    context = {
+        'order': order,
+        'status_flow': status_flow,
+        'estimated_delivery': estimated_delivery,
+        'is_cancelled': order.order_status == 'cancelled',
+        'is_returned': order.order_status == 'returned',
+    }
+    
+    return render(request, 'user/orders/track_order.html', context)
+
+
+
+@login_required
 def download_invoice(request, order_id):
     """Generate and download PDF invoice using HTML template"""
     order = get_object_or_404(Order, order_id=order_id, user=request.user)
@@ -1596,3 +1749,275 @@ def retry_razorpay_payment(request, order_id):
             'success': False,
             'error': str(e)
         })
+
+
+# ============================================
+# COUPON MANAGEMENT VIEWS
+# ============================================
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_list(request):
+    """List all coupons with search and filters"""
+    from .models import Coupon
+    
+    coupons = Coupon.objects.all().order_by('-created_at')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        coupons = coupons.filter(
+            Q(code__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'active':
+        coupons = coupons.filter(is_active=True)
+    elif status_filter == 'inactive':
+        coupons = coupons.filter(is_active=False)
+    elif status_filter == 'expired':
+        coupons = coupons.filter(valid_until__lt=timezone.now())
+    elif status_filter == 'upcoming':
+        coupons = coupons.filter(valid_from__gt=timezone.now())
+    
+    # Pagination
+    paginator = Paginator(coupons, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Statistics
+    total_coupons = Coupon.objects.count()
+    active_coupons = Coupon.objects.filter(is_active=True).count()
+    expired_coupons = Coupon.objects.filter(valid_until__lt=timezone.now()).count()
+    
+    context = {
+        'page_obj': page_obj,
+        'coupons': page_obj,
+        'total_coupons': total_coupons,
+        'active_coupons': active_coupons,
+        'expired_coupons': expired_coupons,
+        'search_query': search_query,
+        'status_filter': status_filter,
+    }
+    
+    return render(request, 'admin/coupons/coupon_list.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_create(request):
+    """Create a new coupon"""
+    from .models import Coupon
+    
+    if request.method == 'POST':
+        try:
+            coupon = Coupon(
+                code=request.POST.get('code').strip().upper(),
+                description=request.POST.get('description', '').strip(),
+                discount_percentage=request.POST.get('discount_percentage'),
+                max_uses=request.POST.get('max_uses', 0),
+                max_uses_per_user=request.POST.get('max_uses_per_user', 1),
+                minimum_order_amount=request.POST.get('minimum_order_amount', 0),
+                max_discount_amount=request.POST.get('max_discount_amount') or None,
+                valid_from=request.POST.get('valid_from'),
+                valid_until=request.POST.get('valid_until'),
+                is_active=request.POST.get('is_active') == 'on',
+                created_by=request.user
+            )
+            coupon.save()
+            
+            messages.success(request, f'Coupon "{coupon.code}" created successfully!')
+            return redirect('orders:coupon_list')
+            
+        except Exception as e:
+            messages.error(request, f'Error creating coupon: {str(e)}')
+    
+    context = {
+        'title': 'Create New Coupon',
+        'now': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+    }
+    
+    return render(request, 'admin/coupons/coupon_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_edit(request, coupon_id):
+    """Edit an existing coupon"""
+    from .models import Coupon
+    
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    
+    if request.method == 'POST':
+        try:
+            coupon.code = request.POST.get('code').strip().upper()
+            coupon.description = request.POST.get('description', '').strip()
+            coupon.discount_percentage = request.POST.get('discount_percentage')
+            coupon.max_uses = request.POST.get('max_uses', 0)
+            coupon.max_uses_per_user = request.POST.get('max_uses_per_user', 1)
+            coupon.minimum_order_amount = request.POST.get('minimum_order_amount', 0)
+            coupon.max_discount_amount = request.POST.get('max_discount_amount') or None
+            coupon.valid_from = request.POST.get('valid_from')
+            coupon.valid_until = request.POST.get('valid_until')
+            coupon.is_active = request.POST.get('is_active') == 'on'
+            coupon.save()
+            
+            messages.success(request, f'Coupon "{coupon.code}" updated successfully!')
+            return redirect('orders:coupon_list')
+            
+        except Exception as e:
+            messages.error(request, f'Error updating coupon: {str(e)}')
+    
+    context = {
+        'title': 'Edit Coupon',
+        'coupon': coupon,
+        'now': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+    }
+    
+    return render(request, 'admin/coupons/coupon_form.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_delete(request, coupon_id):
+    """Delete a coupon"""
+    from .models import Coupon
+    
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    
+    if request.method == 'POST':
+        code = coupon.code
+        coupon.delete()
+        messages.success(request, f'Coupon "{code}" deleted successfully!')
+        return redirect('orders:coupon_list')
+    
+    context = {
+        'coupon': coupon,
+    }
+    
+    return render(request, 'admin/coupons/coupon_confirm_delete.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_toggle_active(request, coupon_id):
+    """Toggle coupon active status"""
+    from .models import Coupon
+    
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    
+    if request.method == 'POST':
+        coupon.is_active = not coupon.is_active
+        coupon.save()
+        
+        status = "activated" if coupon.is_active else "deactivated"
+        messages.success(request, f'Coupon "{coupon.code}" {status} successfully!')
+    
+    return redirect('orders:coupon_list')
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def coupon_usage_list(request):
+    """List all coupon usages"""
+    from .models import CouponUsage
+    
+    usages = CouponUsage.objects.all().select_related('coupon', 'user', 'order').order_by('-used_at')
+    
+    # Filter by coupon
+    coupon_filter = request.GET.get('coupon', '')
+    if coupon_filter:
+        usages = usages.filter(coupon__code__icontains=coupon_filter)
+    
+    # Pagination
+    paginator = Paginator(usages, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'usages': page_obj,
+        'coupon_filter': coupon_filter,
+    }
+    
+    return render(request, 'admin/coupons/coupon_usage_list.html', context)
+
+
+# ============================================
+# COUPON VALIDATION API (For Checkout)
+# ============================================
+
+@login_required(login_url='user_auth:signin')
+@require_POST
+def validate_coupon(request):
+    """
+    Validate and apply coupon code for checkout
+    """
+    try:
+        import json
+        from .models import Coupon
+        from decimal import Decimal
+        
+        data = json.loads(request.body)
+        coupon_code = data.get('coupon_code', '').strip().upper()
+        order_amount = Decimal(str(data.get('order_amount', 0)))
+        
+        if not coupon_code:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please enter a coupon code'
+            })
+        
+        # Get coupon
+        try:
+            coupon = Coupon.objects.get(code=coupon_code)
+        except Coupon.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid coupon code'
+            })
+        
+        # Check if coupon is valid
+        is_valid, message = coupon.is_valid()
+        if not is_valid:
+            return JsonResponse({
+                'success': False,
+                'message': message
+            })
+        
+        # Check if user can use this coupon
+        can_use, message = coupon.can_be_used_by_user(request.user)
+        if not can_use:
+            return JsonResponse({
+                'success': False,
+                'message': message
+            })
+        
+        # Check minimum order amount
+        if order_amount < coupon.minimum_order_amount:
+            return JsonResponse({
+                'success': False,
+                'message': f'Minimum order amount of ₹{coupon.minimum_order_amount} required'
+            })
+        
+        # Calculate discount
+        discount_amount = coupon.calculate_discount(order_amount)
+        new_total = order_amount - discount_amount
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Coupon "{coupon.code}" applied successfully!',
+            'coupon_code': coupon.code,
+            'discount_percentage': float(coupon.discount_percentage),
+            'discount_amount': float(discount_amount),
+            'original_amount': float(order_amount),
+            'new_total': float(new_total)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
