@@ -2,6 +2,22 @@
 {% load static %}
 
 {% block title %}My Wallet - GearUp{% endblock %}
+{% block breadcrumbs %}
+        <div class="breadcrumb">
+            <div class="container mx-auto px-4 lg:px-6">
+                <nav aria-label="Breadcrumb">
+                    <ol class="flex items-center text-sm text-gray-600">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'user_home:home' %}"><i class="fas fa-home mr-1"></i>Home</a>
+                </li>
+                <li class="breadcrumb-item text-emerald-600 font-medium" aria-current="page">
+                    <a href="{% url 'wallet:wallet_dashboard' %}">Wallet</a>
+                </li>
+            </ol>
+        </nav>
+    </div>
+</div>
+{% endblock breadcrumbs %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">

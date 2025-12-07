@@ -83,7 +83,13 @@ class Order(models.Model):
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # Coupon/Discount
+    coupon_code = models.CharField(max_length=50, blank=True, null=True)
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
     
     # Status
     order_status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
@@ -246,3 +252,187 @@ class Order(models.Model):
         """Check if payment can be retried - simplified version"""
         # Allow retry if payment is failed
         return self.payment_status == 'failed'
+
+
+class Coupon(models.Model):
+    """
+    Coupon model for discount codes
+    """
+    code = models.CharField(
+        max_length=50, 
+        unique=True, 
+        help_text="Unique coupon code (e.g., SAVE20, WELCOME10)"
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Description of the coupon offer"
+    )
+    
+    # Discount details
+    discount_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        help_text="Discount percentage (e.g., 10.00 for 10% off)"
+    )
+    
+    # Usage limits
+    max_uses = models.PositiveIntegerField(
+        default=0,
+        help_text="Maximum number of times this coupon can be used (0 = unlimited)"
+    )
+    used_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of times this coupon has been used"
+    )
+    max_uses_per_user = models.PositiveIntegerField(
+        default=1,
+        help_text="Maximum uses per user (0 = unlimited)"
+    )
+    
+    # Minimum order requirements
+    minimum_order_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text="Minimum order amount required to use this coupon"
+    )
+    
+    # Maximum discount cap
+    max_discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Maximum discount amount (optional cap)"
+    )
+    
+    # Validity period
+    valid_from = models.DateTimeField(
+        help_text="Coupon valid from this date/time"
+    )
+    valid_until = models.DateTimeField(
+        help_text="Coupon valid until this date/time"
+    )
+    
+    # Status
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this coupon is currently active"
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_coupons'
+    )
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Coupon'
+        verbose_name_plural = 'Coupons'
+    
+    def __str__(self):
+        return f"{self.code} - {self.discount_percentage}% off"
+    
+    def save(self, *args, **kwargs):
+        # Convert code to uppercase for consistency
+        self.code = self.code.upper()
+        super().save(*args, **kwargs)
+    
+    def is_valid(self):
+        """Check if coupon is currently valid"""
+        now = timezone.now()
+        
+        # Check if active
+        if not self.is_active:
+            return False, "This coupon is not active"
+        
+        # Check validity period
+        if now < self.valid_from:
+            return False, "This coupon is not yet valid"
+        
+        if now > self.valid_until:
+            return False, "This coupon has expired"
+        
+        # Check usage limit
+        if self.max_uses > 0 and self.used_count >= self.max_uses:
+            return False, "This coupon has reached its usage limit"
+        
+        return True, "Coupon is valid"
+    
+    def can_be_used_by_user(self, user):
+        """Check if user can use this coupon"""
+        if self.max_uses_per_user == 0:
+            return True, "Can use coupon"
+        
+        # Count how many times user has used this coupon
+        user_usage_count = CouponUsage.objects.filter(
+            coupon=self,
+            user=user
+        ).count()
+        
+        if user_usage_count >= self.max_uses_per_user:
+            return False, f"You have already used this coupon {self.max_uses_per_user} time(s)"
+        
+        return True, "Can use coupon"
+    
+    def calculate_discount(self, order_amount):
+        """Calculate discount amount for given order amount"""
+        if order_amount < self.minimum_order_amount:
+            return Decimal('0.00')
+        
+        # Calculate percentage discount
+        discount = (order_amount * self.discount_percentage) / Decimal('100')
+        
+        # Apply max discount cap if set
+        if self.max_discount_amount and discount > self.max_discount_amount:
+            discount = self.max_discount_amount
+        
+        return discount.quantize(Decimal('0.01'))
+    
+    def increment_usage(self):
+        """Increment the usage count"""
+        self.used_count += 1
+        self.save(update_fields=['used_count'])
+
+
+class CouponUsage(models.Model):
+    """
+    Track coupon usage by users
+    """
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.CASCADE,
+        related_name='usages'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='coupon_usages'
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='coupon_usage',
+        null=True,
+        blank=True
+    )
+    discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Actual discount amount applied"
+    )
+    used_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-used_at']
+        verbose_name = 'Coupon Usage'
+        verbose_name_plural = 'Coupon Usages'
+    
+    def __str__(self):
+        return f"{self.user.email} used {self.coupon.code} - ₹{self.discount_amount} off"

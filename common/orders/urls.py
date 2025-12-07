@@ -8,6 +8,7 @@ urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('', views.order_list, name='order_list'),
     path('details/<uuid:order_id>/', views.order_detail, name='order_detail'),
+    path('<uuid:order_id>/track/', views.track_order, name='track_order'),
     path('<uuid:order_id>/cancel/', views.cancel_order, name='cancel_order'),
     path('success/', views.order_success, name='order_success'),  # Add this line
     path('success/<uuid:order_id>/', views.order_success, name='order_success'), 
@@ -36,5 +37,16 @@ urlpatterns = [
     path('create-razorpay-order/', views.create_razorpay_order, name='create_razorpay_order'),
     path('order/<uuid:order_id>/approve-return/', views.admin_approve_return, name='admin_approve_return'),
     path('order/<uuid:order_id>/reject-return/', views.admin_reject_return, name='admin_reject_return'),
-    path('order/<uuid:order_id>/complete-return/', views.admin_complete_return, name='admin_complete_return'),    
+    path('order/<uuid:order_id>/complete-return/', views.admin_complete_return, name='admin_complete_return'),
+    
+    # Coupon Management URLs
+    path('coupons/', views.coupon_list, name='coupon_list'),
+    path('coupons/create/', views.coupon_create, name='coupon_create'),
+    path('coupons/<int:coupon_id>/edit/', views.coupon_edit, name='coupon_edit'),
+    path('coupons/<int:coupon_id>/delete/', views.coupon_delete, name='coupon_delete'),
+    path('coupons/<int:coupon_id>/toggle-active/', views.coupon_toggle_active, name='coupon_toggle_active'),
+    path('coupons/usage/', views.coupon_usage_list, name='coupon_usage_list'),
+    
+    # Coupon Validation API
+    path('validate-coupon/', views.validate_coupon, name='validate_coupon'),
 ]
