@@ -98,6 +98,24 @@
                     <h2 class="text-3xl font-bold text-gray-900 mb-2 text-center">Welcome Back</h2>
                     <p class="text-gray-600 mb-8 text-center">Sign in to your GearUp account</p>
 
+                    <!-- Display Django Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="mb-4 p-4 {% if message.tags == 'error' %}bg-red-50 border-red-200{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200{% elif message.tags == 'info' %}bg-blue-50 border-blue-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-md">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle text-red-400{% elif message.tags == 'warning' %}fa-exclamation-triangle text-yellow-400{% elif message.tags == 'info' %}fa-info-circle text-blue-400{% else %}fa-check-circle text-green-400{% endif %} mt-0.5"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium {% if message.tags == 'error' %}text-red-800{% elif message.tags == 'warning' %}text-yellow-800{% elif message.tags == 'info' %}text-blue-800{% else %}text-green-800{% endif %}">
+                                        {{ message }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
                     <!-- Display non-field errors -->
                     {% if form.non_field_errors %}
                     <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
@@ -179,7 +197,7 @@
                         <!-- Forgot Password -->
                         <div class="flex items-center justify-between">                            
                             <div class="text-sm">
-                                <a href="{% url 'user_auth:password_reset' %}" class="font-medium text-emerald-600 hover:text-emerald-500">
+                                <a href="{% url 'user_auth:forgot_password' %}" class="font-medium text-emerald-600 hover:text-emerald-500">
                                     Forgot your password?
                                 </a>
                             </div>
@@ -258,15 +276,17 @@
 
         // Auto-remove success messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
-            const successMessages = document.querySelector('.bg-green-50');
-            if (successMessages) {
-                setTimeout(function() {
-                    successMessages.style.transition = 'opacity 0.5s ease';
-                    successMessages.style.opacity = '0';
+            const successMessages = document.querySelectorAll('.bg-green-50');
+            if (successMessages.length > 0) {
+                successMessages.forEach(function(message) {
                     setTimeout(function() {
-                        successMessages.remove();
-                    }, 500);
-                }, 5000);
+                        message.style.transition = 'opacity 0.5s ease';
+                        message.style.opacity = '0';
+                        setTimeout(function() {
+                            message.remove();
+                        }, 500);
+                    }, 5000);
+                });
             }
         });
     </script>

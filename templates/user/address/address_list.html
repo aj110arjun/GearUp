@@ -2,31 +2,28 @@
 {% load static %}
 
 {% block title %}My Addresses - GearUp{% endblock %}
-
+{% block breadcrumbs %}
+        <div class="breadcrumb">
+            <div class="container mx-auto px-4 lg:px-6">
+                <nav aria-label="Breadcrumb">
+                    <ol class="flex items-center text-sm text-gray-600">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'user_home:home' %}"><i class="fas fa-home mr-1"></i>Home</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'user_auth:profile' %}">My Profile</a>
+                        </li>
+                        <li class="breadcrumb-item text-emerald-600 font-medium" aria-current="page">
+                            <a href="{% url 'address:address_list' %}">My Addresses</a>
+                        </li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+{% endblock breadcrumbs %}
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4">
-        <!-- Breadcrumbs -->
-        <nav class="mb-6" aria-label="Breadcrumb">
-            <ol class="flex items-center space-x-2 text-sm text-gray-600">
-                <li>
-                    <a href="{% url 'user_home:home' %}" class="hover:text-blue-600 transition-colors">
-                        <i class="fas fa-home mr-1"></i>
-                        Home
-                    </a>
-                </li>
-                <li class="flex items-center">
-                    <i class="fas fa-chevron-right text-gray-400 text-xs mx-2"></i>
-                    <a href="{% url 'user_auth:profile' %}" class="hover:text-blue-600 transition-colors">
-                        Profile
-                    </a>
-                </li>
-                <li class="flex items-center">
-                    <i class="fas fa-chevron-right text-gray-400 text-xs mx-2"></i>
-                    <span class="text-gray-800 font-medium">My Addresses</span>
-                </li>
-            </ol>
-        </nav>
 
         <!-- Header -->
         <div class="flex justify-between items-center mb-8">
@@ -215,12 +212,6 @@
 </div>
 
 <style>
-/* Breadcrumb Styles */
-.breadcrumb-item:not(:last-child)::after {
-    content: '/';
-    margin: 0 8px;
-    color: #9CA3AF;
-}
 
 /* Skeleton Loading Animation */
 @keyframes pulse {

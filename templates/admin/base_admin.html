@@ -121,7 +121,7 @@
         <span>Transactions</span>
       </a>
       
-      <a href="" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if 'coupon' in request.resolver_match.url_name %}active-link{% endif %}">
+      <a href="{% url 'orders:coupon_list' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if 'coupon' in request.resolver_match.url_name %}active-link{% endif %}">
         <i class="fas fa-ticket-alt w-5 text-center"></i>
         <span>Coupons</span>
       </a>
