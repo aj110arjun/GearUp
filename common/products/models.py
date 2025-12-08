@@ -427,13 +427,14 @@ class ProductReview(models.Model):
         return full_stars + empty_stars
 
 
-class ReviewImage(models.Model):
-    review = models.ForeignKey(ProductReview, on_delete=models.CASCADE, related_name='images')
-    image = CloudinaryField('review_images/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"Image for {self.review}"
+# ReviewImage model commented out — not needed for review functionality
+# class ReviewImage(models.Model):
+#     review = models.ForeignKey(ProductReview, on_delete=models.CASCADE, related_name='images')
+#     image = CloudinaryField('review_images/')
+#     uploaded_at = models.DateTimeField(auto_now_add=True)
+#     
+#     def __str__(self):
+#         return f"Image for {self.review}"
 
 
 class ReviewVote(models.Model):
