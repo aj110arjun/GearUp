@@ -90,6 +90,19 @@ def product_listing(request):
     
     return render(request, 'admin/products/product_list.html', context)
 
+# from django.shortcuts import get_object_or_404, render
+# from django.contrib.admin.views.decorators import staff_member_required
+# from django.views.decorators.cache import never_cache
+# from django.db.models import Sum, Avg, Count, Q
+# from ..models import Product, ProductImage, ProductVariant, Review, ReviewVote, Wishlist
+
+from django.shortcuts import get_object_or_404, render
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.cache import never_cache
+from django.db.models import Sum, Avg, Count, Min, Max
+from django.http import Http404
+from common.products.models import Product, ProductImage, ProductVariant
+
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_detail(request, product_slug):
@@ -106,6 +119,25 @@ def product_detail(request, product_slug):
     out_of_stock_variants = variants.filter(stock_quantity=0).count()
     low_stock_variants = variants.filter(stock_quantity__lte=10, stock_quantity__gt=0).count()
     
+    # Price range
+    price_range = variants.aggregate(
+        min_price=Min('price'),
+        max_price=Max('price')
+    )
+    
+    # Calculate percentages for each rating (1-5)
+    # This is to avoid using custom filters in template
+    rating_counts = {}
+    rating_percentages = {}
+    
+    # Initialize with zeros
+    for i in range(1, 6):
+        rating_counts[str(i)] = 0
+        rating_percentages[str(i)] = 0
+    
+    # Get total reviews for percentages calculation
+    total_reviews = 0  # You'll need to get this from your Review model if you have one
+    
     context = {
         'product': product,
         'images': images,
@@ -114,9 +146,25 @@ def product_detail(request, product_slug):
         'active_variants': active_variants,
         'out_of_stock_variants': out_of_stock_variants,
         'low_stock_variants': low_stock_variants,
+        'min_price': price_range['min_price'] or 0,
+        'max_price': price_range['max_price'] or 0,
+        
+        # Pre-calculated rating data to avoid custom filters
+        'rating_5_count': rating_counts.get('5', 0),
+        'rating_4_count': rating_counts.get('4', 0),
+        'rating_3_count': rating_counts.get('3', 0),
+        'rating_2_count': rating_counts.get('2', 0),
+        'rating_1_count': rating_counts.get('1', 0),
+        
+        'rating_5_percent': rating_percentages.get('5', 0),
+        'rating_4_percent': rating_percentages.get('4', 0),
+        'rating_3_percent': rating_percentages.get('3', 0),
+        'rating_2_percent': rating_percentages.get('2', 0),
+        'rating_1_percent': rating_percentages.get('1', 0),
     }
     
     return render(request, 'admin/products/product_detail.html', context)
+
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
