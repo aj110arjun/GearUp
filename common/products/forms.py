@@ -12,7 +12,7 @@ from django.forms import inlineformset_factory
 from cloudinary.models import CloudinaryField
 from PIL import Image
 
-from .models import Product, Category, ProductVariant, ProductImage, ProductOffer, CategoryOffer
+from .models import Product, Category, ProductVariant, ProductImage, ProductOffer, CategoryOffer, ProductReview
 
 
 logger = logging.getLogger(__name__)
@@ -671,3 +671,30 @@ class CategoryOfferForm(forms.ModelForm):
                 )
         
         return cleaned_data
+
+
+class ProductReviewForm(forms.ModelForm):
+    """Form for product reviews - without image upload"""
+    
+    class Meta:
+        model = ProductReview
+        fields = ['rating', 'title', 'comment']
+        widgets = {
+            'rating': forms.RadioSelect(choices=ProductReview.RATING_CHOICES),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter a title for your review',
+                'maxlength': '200'
+            }),
+            'comment': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Share your experience with this product...',
+                'maxlength': '1000'
+            }),
+        }
+        labels = {
+            'rating': 'Your Rating',
+            'title': 'Review Title',
+            'comment': 'Your Review',
+        }

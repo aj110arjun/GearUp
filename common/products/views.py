@@ -1,25 +1,24 @@
 import json
-import os
-import io 
 import logging
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from django.db.models import Q, Count, Sum, Min, Max
+from django.db.models import Q, Count, Sum, Min, Max, Avg
 from django.db import transaction
 from django.utils.text import slugify
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.urls import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from PIL import Image
+from django.views.decorators.http import require_POST, require_GET
+from django.core.exceptions import ValidationError
+from django.conf import settings
 
 from common.user.cart_wishlist.models import Cart, CartItem, Wishlist
-from .models import Product, ProductVariant, Category, ProductImage, ProductOffer, CategoryOffer
+from .models import Product, ProductVariant, Category, ProductImage, ProductOffer, CategoryOffer, ProductReview, ReviewVote
 from .forms import (
     ProductCreateForm,
     ProductEditForm,
@@ -29,8 +28,10 @@ from .forms import (
     CategoryForm,
     ProductOfferForm,
     CategoryOfferForm,
+    ProductReviewForm,
 )
 
+logger = logging.getLogger(__name__)
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -41,7 +42,7 @@ def product_listing(request):
     search_query = request.GET.get('search', '')
     
     # Get products
-    products = Product.objects.all().prefetch_related('variants')
+    products = Product.objects.all().prefetch_related('variants', 'category')
     
     # Apply filters
     if category_filter:
@@ -117,7 +118,6 @@ def product_detail(request, product_slug):
     
     return render(request, 'admin/products/product_detail.html', context)
 
-
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_create(request):
@@ -186,7 +186,6 @@ def product_create(request):
                 request, 
                 'Please correct the errors below.'
             )
-            print("Form errors:", form.errors)
     else:
         # GET request - show empty form
         form = ProductCreateForm()
@@ -203,7 +202,6 @@ def product_create(request):
     
     return render(request, 'admin/products/product_create.html', context)
 
-
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_edit(request, product_slug):
@@ -211,24 +209,9 @@ def product_edit(request, product_slug):
     product = get_object_or_404(Product, slug=product_slug)
     
     if request.method == 'POST':
-        print("POST request received")
-        print("FILES in request:", dict(request.FILES))
-        print("POST data keys:", request.POST.keys())
-        
         form = ProductEditForm(request.POST, request.FILES, instance=product)
         variant_formset = ProductVariantFormSet(request.POST, instance=product)
         image_formset = ProductImageFormSet(request.POST, request.FILES, instance=product)
-        
-        # Debug: Check all forms
-        print(f"Form valid: {form.is_valid()}")
-        print(f"Variant formset valid: {variant_formset.is_valid()}")
-        print(f"Image formset valid: {image_formset.is_valid()}")
-        
-        # Check each image form individually
-        for i, image_form in enumerate(image_formset):
-            print(f"Image form {i} valid: {image_form.is_valid()}")
-            if not image_form.is_valid():
-                print(f"Image form {i} errors: {image_form.errors}")
         
         if form.is_valid() and variant_formset.is_valid() and image_formset.is_valid():
             try:
@@ -250,44 +233,6 @@ def product_edit(request, product_slug):
                     images = image_formset.save(commit=False)
                     for i, image in enumerate(images):
                         image.product = product
-                        
-                        # Check if this image form has a file
-                        image_form = image_formset.forms[i]
-                        if 'image' in image_form.cleaned_data and image_form.cleaned_data['image']:
-                            # Check if it's a new file upload (has name attribute) or CloudinaryResource
-                            img_data = image_form.cleaned_data['image']
-                            if hasattr(img_data, 'name'):
-                                print(f"Image {i}: Saving new image file: {img_data.name}")
-                            else:
-                                print(f"Image {i}: Cloudinary resource - {type(img_data)}")
-                        
-                        # Validate image dimensions before saving (only for new file uploads)
-                        if image.image and hasattr(image.image, 'file'):
-                            try:
-                                # Open image to check dimensions
-                                # Seek to beginning if it's a file object
-                                if hasattr(image.image, 'seek'):
-                                    image.image.seek(0)
-                                
-                                img = Image.open(image.image)
-                                width, height = img.size
-                                print(f"Image {i}: Dimensions: {width}x{height}")
-                                
-                                # Ensure minimum dimensions
-                                if width < 300 or height < 300:
-                                    messages.warning(
-                                        request, 
-                                        f'Image {i+1} is small ({width}x{height}). Recommended minimum is 300x300 pixels.'
-                                    )
-                                
-                                # Reset file pointer
-                                if hasattr(image.image, 'seek'):
-                                    image.image.seek(0)
-                            except Exception as e:
-                                print(f"Error checking image dimensions: {e}")
-                        elif image.image:
-                            print(f"Image {i}: Cloudinary image - skipping dimension check")
-                        
                         image.save()
                     
                     # Delete marked images
@@ -324,32 +269,9 @@ def product_edit(request, product_slug):
                     request, 
                     f'An error occurred while updating the product: {str(e)}'
                 )
-                print(f"Error: {str(e)}")
-                import traceback
-                traceback.print_exc()
+                logger.error(f"Error updating product: {str(e)}")
         else:
-            # Collect all errors
-            all_errors = []
-            
-            if not form.is_valid():
-                all_errors.append(f"Product form errors: {form.errors}")
-            
-            if not variant_formset.is_valid():
-                all_errors.append(f"Variant formset errors: {variant_formset.errors}")
-            
-            if not image_formset.is_valid():
-                all_errors.append(f"Image formset errors: {image_formset.errors}")
-            
-            error_message = "Please correct the errors below."
-            if all_errors:
-                error_message += " " + " ".join(all_errors)
-            
-            messages.error(request, error_message)
-            
-            # Debug form errors
-            print("Form errors:", form.errors)
-            print("Variant formset errors:", variant_formset.errors)
-            print("Image formset errors:", image_formset.errors)
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = ProductEditForm(instance=product)
         variant_formset = ProductVariantFormSet(instance=product)
@@ -368,10 +290,6 @@ def product_edit(request, product_slug):
     }
     
     return render(request, 'admin/products/product_edit.html', context)
-
-
-
-
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -438,8 +356,6 @@ def category_list(request):
     
     return render(request, 'admin/categories/category_list.html', context)
 
-logger = logging.getLogger(__name__)
-
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def category_create(request):
@@ -452,9 +368,7 @@ def category_edit(request, category_slug):
     return handle_category_form(request, category)
 
 def handle_category_form(request, category_instance=None):
-    """
-    Handle both create and edit operations in one function
-    """
+    """Handle both create and edit operations in one function"""
     is_edit = category_instance is not None
     
     if request.method == 'POST':
@@ -501,13 +415,7 @@ def handle_category_form(request, category_instance=None):
         context['total_products'] = category_instance.products.count()
         context['active_products'] = category_instance.products.filter(is_active=True).count()
     
-    # Add statistics for edit mode
-    if is_edit and category_instance:
-        context['total_products'] = category_instance.products.count()
-        context['active_products'] = category_instance.products.filter(is_active=True).count()
-    
     return render(request, 'admin/categories/category_form.html', context)
-
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -521,7 +429,6 @@ def offer_list(request):
         'category_offers': category_offers,
     }
     return render(request, 'admin/offers/offer_list.html', context)
-
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -542,7 +449,6 @@ def product_offer_create(request):
         'title': 'Add Product Offer'
     }
     return render(request, 'admin/offers/offer_form.html', context)
-
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -566,7 +472,6 @@ def product_offer_edit(request, offer_id):
     }
     return render(request, 'admin/offers/offer_form.html', context)
 
-
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_offer_delete(request, offer_id):
@@ -574,7 +479,6 @@ def product_offer_delete(request, offer_id):
     offer.delete()
     messages.success(request, 'Product offer deleted successfully!')
     return redirect('products:offer_list')
-
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -595,7 +499,6 @@ def category_offer_create(request):
         'title': 'Add Category Offer'
     }
     return render(request, 'admin/offers/offer_form.html', context)
-
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -619,7 +522,6 @@ def category_offer_edit(request, offer_id):
     }
     return render(request, 'admin/offers/offer_form.html', context)
 
-
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def category_offer_delete(request, offer_id):
@@ -633,9 +535,9 @@ def category_offer_delete(request, offer_id):
 def product_list_user(request):
     """User-side product listing with filtering and sorting"""
     # Get all active products with variants
-    products = Product.objects.filter(is_active=True).prefetch_related('variants', 'category')
+    products = Product.objects.filter(is_active=True).prefetch_related('variants', 'category', 'images')
     
-    # Get filter parameters (match template parameter names)
+    # Get filter parameters
     category_id = request.GET.get('category')
     search_query = request.GET.get('q')
     sort_by = request.GET.get('sort', '')
@@ -658,7 +560,7 @@ def product_list_user(request):
     # Remove duplicates
     products = products.distinct()
     
-    # Apply sorting (use different annotation names to avoid property conflict)
+    # Apply sorting
     if sort_by == 'price_asc':
         products = products.annotate(
             product_min_price=Min('variants__price')
@@ -671,6 +573,12 @@ def product_list_user(request):
         products = products.order_by('name')
     elif sort_by == 'name2':  # Z-A
         products = products.order_by('-name')
+    elif sort_by == 'newest':
+        products = products.order_by('-created_at')
+    elif sort_by == 'rating':
+        products = products.annotate(
+            avg_rating=Avg('reviews__rating')
+        ).order_by('-avg_rating')
     else:
         # Default ordering
         products = products.order_by('-created_at')
@@ -701,12 +609,11 @@ def product_list_user(request):
         
         # Get wishlist product IDs
         try:
-            from wishlist.models import Wishlist  # Adjust import based on your app structure
             wishlist_product_ids = Wishlist.objects.filter(
                 user=request.user
             ).values_list('product_id', flat=True)
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"Error getting wishlist: {e}")
     
     # Prepare filters for template display
     filters = {
@@ -726,25 +633,24 @@ def product_list_user(request):
     
     return render(request, 'user/products/product_list.html', context)
 
-
 @login_required(login_url='user_auth:signin')
 @never_cache
 def product_detail_user(request, product_slug):
     """User-side product detail page"""
-    # Prefetch the known relations; ProductImage uses related_name 'images'
+    # Prefetch the known relations
     product = get_object_or_404(
-        Product.objects.prefetch_related('variants', 'images', 'category'),
+        Product.objects.prefetch_related('variants', 'images', 'category', 'reviews', 'reviews__user'),
         slug=product_slug,
         is_active=True
     )
 
-    # Use the related `images` queryset directly and pass it in context
+    # Get images
     images_qs = product.images.all()
 
     # Get active variants
     variants = product.variants.filter(is_active=True)
 
-    # Get cart variant IDs for current user to check which variants are in cart
+    # Get cart variant IDs for current user
     cart_variant_ids = []
     if request.user.is_authenticated:
         try:
@@ -757,18 +663,47 @@ def product_detail_user(request, product_slug):
     for variant in variants:
         variant.in_cart = variant.id in cart_variant_ids
 
-    # Get related products
+    # Get approved reviews with related data
+    reviews = product.reviews.filter(is_approved=True).select_related('user')
+    
+    # Get review statistics
+    review_stats = {
+        'average_rating': product.get_average_rating(),
+        'total_reviews': product.get_total_reviews(),
+        'rating_distribution': product.get_rating_distribution(),
+        'review_percentages': product.get_review_percentage(),
+    }
+    
+    # Check if user has already reviewed this product
+    user_review = None
+    if request.user.is_authenticated:
+        user_review = product.reviews.filter(user=request.user).first()
+    
+    # Review form for authenticated users who haven't reviewed
+    review_form = None
+    if request.user.is_authenticated and not user_review:
+        review_form = ProductReviewForm()
+    
+    # Get user's review votes
+    user_votes = {}
+    if request.user.is_authenticated:
+        user_votes = ReviewVote.objects.filter(
+            user=request.user,
+            review__in=reviews
+        ).values('review_id', 'helpful')
+        user_votes = {vote['review_id']: vote['helpful'] for vote in user_votes}
+
+    # Get related products (same category)
     related_products = Product.objects.filter(
         category=product.category,
         is_active=True
     ).exclude(id=product.id).prefetch_related('variants', 'images')[:4]
 
+    # Get wishlist status
     if request.user.is_authenticated:
-        wishlist = Wishlist.objects.filter(user=request.user).first()
-        if wishlist:
-            wishlist_product_ids = list(wishlist.items.values_list('product_id', flat=True))
-        else:
-            wishlist_product_ids = []
+        wishlist_product_ids = list(Wishlist.objects.filter(
+            user=request.user
+        ).values_list('id', flat=True))
     else:
         wishlist_product_ids = []
 
@@ -776,12 +711,192 @@ def product_detail_user(request, product_slug):
         'product': product,
         'images': images_qs,
         'variants': variants,
+        'reviews': reviews,
+        'review_stats': review_stats,
+        'user_review': user_review,
+        'review_form': review_form,
+        'user_votes': user_votes,
         'related_products': related_products,
         'wishlist_product_ids': wishlist_product_ids,
     }
 
     return render(request, 'user/products/product_details.html', context)
 
+@require_POST
+@login_required
+def submit_review(request, product_slug):
+    """Handle review submission without images"""
+    product = get_object_or_404(Product, slug=product_slug, is_active=True)
+    
+    # Check if user already reviewed
+    if ProductReview.objects.filter(product=product, user=request.user).exists():
+        messages.warning(request, 'You have already reviewed this product.')
+        return redirect('products:product_detail_user', product_slug=product_slug)
+    
+    form = ProductReviewForm(request.POST)
+    
+    if form.is_valid():
+        try:
+            with transaction.atomic():
+                # Create review
+                review = form.save(commit=False)
+                review.product = product
+                review.user = request.user
+                
+                # Check if user purchased this product (implement your own logic)
+                # review.verified_purchase = has_user_purchased(request.user, product)
+                
+                review.save()
+                
+                messages.success(request, 'Thank you for your review! It will be visible after approval.')
+                return redirect('products:product_detail_user', product_slug=product_slug)
+                
+        except Exception as e:
+            logger.error(f"Error saving review: {e}")
+            messages.error(request, 'An error occurred while saving your review.')
+    else:
+        messages.error(request, 'Please correct the errors in your review.')
+    
+    return redirect('products:product_detail_user', product_slug=product_slug)
+
+@require_POST
+@login_required
+def vote_review(request, review_id):
+    """AJAX view for voting on reviews"""
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+    
+    try:
+        review = get_object_or_404(ProductReview, id=review_id)
+        vote_type = request.POST.get('vote_type')  # 'helpful' or 'not_helpful'
+        
+        if vote_type not in ['helpful', 'not_helpful']:
+            return JsonResponse({'success': False, 'error': 'Invalid vote type'}, status=400)
+        
+        # Check if user already voted
+        existing_vote = ReviewVote.objects.filter(review=review, user=request.user).first()
+        
+        with transaction.atomic():
+            if existing_vote:
+                # Remove vote if clicking same type again
+                if (existing_vote.helpful and vote_type == 'helpful') or \
+                   (not existing_vote.helpful and vote_type == 'not_helpful'):
+                    existing_vote.delete()
+                    # Decrement count
+                    if vote_type == 'helpful':
+                        review.helpful_votes -= 1
+                    else:
+                        review.not_helpful_votes -= 1
+                    action = 'removed'
+                else:
+                    # Change vote
+                    existing_vote.helpful = vote_type == 'helpful'
+                    existing_vote.save()
+                    # Update counts
+                    if vote_type == 'helpful':
+                        review.helpful_votes += 1
+                        review.not_helpful_votes = max(0, review.not_helpful_votes - 1)
+                    else:
+                        review.not_helpful_votes += 1
+                        review.helpful_votes = max(0, review.helpful_votes - 1)
+                    action = 'changed'
+            else:
+                # Add new vote
+                ReviewVote.objects.create(
+                    review=review,
+                    user=request.user,
+                    helpful=vote_type == 'helpful'
+                )
+                if vote_type == 'helpful':
+                    review.helpful_votes += 1
+                else:
+                    review.not_helpful_votes += 1
+                action = 'added'
+            
+            review.save()
+        
+        return JsonResponse({
+            'success': True,
+            'action': action,
+            'helpful_votes': review.helpful_votes,
+            'not_helpful_votes': review.not_helpful_votes,
+            'user_helpful_vote': vote_type == 'helpful' if action != 'removed' else None
+        })
+        
+    except Exception as e:
+        logger.error(f"Error voting on review: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@require_GET
+def get_review(request, review_id):
+    """Get review data for editing"""
+    from .models import ProductReview
+    review = get_object_or_404(ProductReview, id=review_id, user=request.user)
+    
+    # Check if review belongs to user
+    if review.user != request.user:
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+    
+    data = {
+        'success': True,
+        'review': {
+            'id': review.id,
+            'rating': review.rating,
+            'title': review.title,
+            'comment': review.comment,
+        }
+    }
+    return JsonResponse(data)
+
+@login_required
+@require_POST
+def update_review(request, review_id):
+    """Update an existing review"""
+    from .models import ProductReview
+    from .forms import ProductReviewForm
+    
+    review = get_object_or_404(ProductReview, id=review_id)
+    
+    # Check if review belongs to user
+    if review.user != request.user:
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+    
+    # Get product for form validation
+    product = review.product
+    
+    form = ProductReviewForm(request.POST, instance=review)
+    
+    if form.is_valid():
+        review = form.save(commit=False)
+        review.product = product
+        review.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Review updated successfully'
+        })
+    
+    return JsonResponse({
+        'success': False,
+        'errors': form.errors
+    })
+
+@require_POST
+@login_required
+def delete_review(request, review_id):
+    """Delete user's own review"""
+    review = get_object_or_404(ProductReview, id=review_id, user=request.user)
+    
+    try:
+        product_slug = review.product.slug
+        review.delete()
+        messages.success(request, 'Your review has been deleted.')
+    except Exception as e:
+        logger.error(f"Error deleting review: {e}")
+        messages.error(request, 'Error deleting review.')
+    
+    return redirect('products:product_detail_user', product_slug=product_slug)
 
 @require_POST
 @login_required
@@ -796,11 +911,11 @@ def toggle_wishlist(request):
         product = Product.objects.get(id=product_id)
         wishlist, created = Wishlist.objects.get_or_create(user=request.user)
         
-        if wishlist.has_product(product):
-            wishlist.remove_product(product)
+        if wishlist.items.filter(product=product).exists():
+            wishlist.items.filter(product=product).delete()
             return JsonResponse({'status': 'removed'})
         else:
-            wishlist.add_product(product)
+            wishlist.items.create(product=product)
             return JsonResponse({'status': 'added'})
             
     except Product.DoesNotExist:
@@ -808,6 +923,7 @@ def toggle_wishlist(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
+        logger.error(f"Error toggling wishlist: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @require_POST
@@ -864,6 +980,7 @@ def add_to_cart(request):
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
     except Exception as e:
+        logger.error(f"Error adding to cart: {e}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
@@ -879,3 +996,79 @@ def ajax_cart_count(request):
             'count': cart_count
         })
     return JsonResponse({'error': 'Invalid request'})
+
+@require_GET
+def ajax_reviews(request, product_slug):
+    """AJAX endpoint to load more reviews"""
+    product = get_object_or_404(Product, slug=product_slug, is_active=True)
+    
+    # Get filter parameters
+    sort_by = request.GET.get('sort', 'recent')
+    verified_only = request.GET.get('verified', 'false') == 'true'
+    rating_filter = request.GET.get('rating', '')
+    page = int(request.GET.get('page', 1))
+    per_page = 5
+    
+    # Get reviews
+    reviews = product.reviews.filter(is_approved=True).select_related('user')
+    
+    # Apply filters
+    if verified_only:
+        reviews = reviews.filter(verified_purchase=True)
+    
+    if rating_filter and rating_filter.isdigit():
+        rating = int(rating_filter)
+        reviews = reviews.filter(rating=rating)
+    
+    # Apply sorting
+    if sort_by == 'helpful':
+        reviews = reviews.order_by('-helpful_votes', '-created_at')
+    elif sort_by == 'highest':
+        reviews = reviews.order_by('-rating', '-created_at')
+    elif sort_by == 'lowest':
+        reviews = reviews.order_by('rating', '-created_at')
+    else:  # recent
+        reviews = reviews.order_by('-created_at')
+    
+    # Paginate
+    paginator = Paginator(reviews, per_page)
+    
+    try:
+        reviews_page = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        reviews_page = paginator.page(1)
+    
+    # Get user votes if authenticated
+    user_votes = {}
+    if request.user.is_authenticated:
+        user_votes = ReviewVote.objects.filter(
+            user=request.user,
+            review__in=reviews_page.object_list
+        ).values('review_id', 'helpful')
+        user_votes = {vote['review_id']: vote['helpful'] for vote in user_votes}
+    
+    # Prepare review data for JSON response
+    review_data = []
+    for review in reviews_page:
+        review_data.append({
+            'id': review.id,
+            'user_name': review.user.username,
+            'user_initial': review.user.username[0].upper() if review.user.username else 'U',
+            'rating': review.rating,
+            'title': review.title,
+            'comment': review.comment,
+            'created_at': review.created_at.strftime('%b %d, %Y'),
+            'verified_purchase': review.verified_purchase,
+            'helpful_votes': review.helpful_votes,
+            'not_helpful_votes': review.not_helpful_votes,
+            'user_vote': user_votes.get(review.id),
+            'is_owner': review.user == request.user,
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'reviews': review_data,
+        'has_next': reviews_page.has_next(),
+        'current_page': page,
+        'total_pages': paginator.num_pages,
+    })

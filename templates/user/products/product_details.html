@@ -1,5 +1,6 @@
 {% extends "user/base.html" %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ product.name }} - GearUp{% endblock %}
 {% block breadcrumbs %}
@@ -23,6 +24,7 @@
 {% endblock breadcrumbs %}
 {% block content %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://upload-widget.cloudinary.com/global/all.js" rel="preload" as="script">
 
 <style>
   @keyframes fadeIn {
@@ -107,12 +109,166 @@
   .notification.warning { background: #f59e0b; }
   .notification.info { background: #3b82f6; }
 
+  /* Review specific styles */
+  .star-rating i {
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .star-rating i:hover {
+    transform: scale(1.2);
+  }
+  
+  .progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #e5e7eb;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+  
   @media (max-width: 1023px) {
     #zoom-result {
       display: none !important;
     }
   }
+
+  /* Edit modal specific styles */
+  .edit-review-btn:hover {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+  }
+
+  /* Messages Styles */
+  .messages-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    width: 100%;
+  }
+  
+  .message {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border-left: 5px solid;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  .message.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  
+  .message.success {
+    border-left-color: #10b981;
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  }
+  
+  .message.error {
+    border-left-color: #ef4444;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  }
+  
+  .message.warning {
+    border-left-color: #f59e0b;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  }
+  
+  .message.info {
+    border-left-color: #3b82f6;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  }
+  
+  .message-content {
+    flex: 1;
+  }
+  
+  .message-icon {
+    font-size: 20px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  
+  .message.success .message-icon {
+    color: #10b981;
+  }
+  
+  .message.error .message-icon {
+    color: #ef4444;
+  }
+  
+  .message.warning .message-icon {
+    color: #f59e0b;
+  }
+  
+  .message.info .message-icon {
+    color: #3b82f6;
+  }
+  
+  .message-text {
+    font-weight: 500;
+    color: #1f2937;
+    line-height: 1.5;
+  }
+  
+  .message-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    margin-left: 12px;
+    transition: color 0.2s;
+  }
+  
+  .message-close:hover {
+    color: #374151;
+  }
 </style>
+
+<!-- Messages Container -->
+<div class="messages-container">
+  {% if messages %}
+    {% for message in messages %}
+    <div class="message {% if message.tags %}{{ message.tags }}{% endif %}" id="message-{{ forloop.counter }}">
+      <div class="message-content">
+        <div class="flex items-center">
+          <div class="message-icon">
+            {% if message.tags == 'success' %}
+              <i class="fas fa-check-circle"></i>
+            {% elif message.tags == 'error' %}
+              <i class="fas fa-exclamation-circle"></i>
+            {% elif message.tags == 'warning' %}
+              <i class="fas fa-exclamation-triangle"></i>
+            {% else %}
+              <i class="fas fa-info-circle"></i>
+            {% endif %}
+          </div>
+          <div class="message-text">{{ message }}</div>
+        </div>
+      </div>
+      <button class="message-close" onclick="closeMessage('message-{{ forloop.counter }}')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    {% endfor %}
+  {% endif %}
+</div>
 
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
   <div class="max-w-7xl mx-auto">
@@ -409,6 +565,261 @@
           </div>
         </div>
       </div>
+
+      <!-- ======================== -->
+      <!-- REVIEWS AND RATINGS SECTION -->
+      <!-- ======================== -->
+      <div class="mt-16 bg-white rounded-3xl shadow-2xl p-8 fade-in">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
+          <div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+              <i class="fas fa-star text-yellow-500 mr-3"></i>
+              Customer Reviews
+            </h2>
+            <div class="flex items-center space-x-3">
+              <!-- Average Rating -->
+              <div class="flex items-center">
+                <span class="text-5xl font-bold text-gray-900">{{ review_stats.average_rating|floatformat:1 }}</span>
+                <div class="ml-3">
+                  <div class="flex items-center">
+                    {% for i in "12345"|make_list %}
+                      {% if forloop.counter <= review_stats.average_rating %}
+                        <i class="fas fa-star text-yellow-500 text-xl"></i>
+                      {% elif forloop.counter|add:"-0.5" <= review_stats.average_rating %}
+                        <i class="fas fa-star-half-alt text-yellow-500 text-xl"></i>
+                      {% else %}
+                        <i class="far fa-star text-yellow-500 text-xl"></i>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  <p class="text-sm text-gray-600 mt-1">{{ review_stats.total_reviews }} review{{ review_stats.total_reviews|pluralize }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Write Review Button -->
+          {% if user.is_authenticated and not user_review %}
+            <button type="button" 
+                    onclick="openReviewModal()"
+                    class="mt-4 lg:mt-0 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg flex items-center">
+              <i class="fas fa-pen mr-2"></i>
+              Write a Review
+            </button>
+          {% elif not user.is_authenticated %}
+            <a href="{% url 'user_auth:signin' %}?next={{ request.path }}"
+               class="mt-4 lg:mt-0 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg flex items-center">
+              <i class="fas fa-sign-in-alt mr-2"></i>
+              Login to Review
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- Rating Distribution -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+          <!-- Rating Bars -->
+          <div class="lg:col-span-2 space-y-3">
+            {% for stars in "54321" %}
+              {% with rating_star=stars|add:"0"|slice:":1" %}
+                <div class="flex items-center">
+                  <span class="w-20 text-gray-700 font-medium">{{ rating_star }} star{{ rating_star|pluralize }}</span>
+                  <div class="flex-1 mx-4 bg-gray-200 rounded-full h-3">
+                    <div class="bg-yellow-500 rounded-full h-3" 
+                         style="width: {{ review_stats.review_percentages|get_item:rating_star|add:"0"|floatformat:0 }}%"></div>
+                  </div>
+                  <span class="w-12 text-right text-gray-600 text-sm">
+                    {{ review_stats.rating_distribution|get_item:rating_star|default:0 }}
+                  </span>
+                </div>
+              {% endwith %}
+            {% endfor %}
+          </div>
+          
+          <!-- Review Summary -->
+          <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6">
+            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+              <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+              Review Summary
+            </h4>
+            <ul class="space-y-2">
+              <li class="flex justify-between">
+                <span class="text-gray-600">Excellent (5★)</span>
+                <span class="font-medium">{{ review_stats.rating_distribution.5|default:0 }}</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="text-gray-600">Very Good (4★)</span>
+                <span class="font-medium">{{ review_stats.rating_distribution.4|default:0 }}</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="text-gray-600">Good (3★)</span>
+                <span class="font-medium">{{ review_stats.rating_distribution.3|default:0 }}</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="text-gray-600">Fair (2★)</span>
+                <span class="font-medium">{{ review_stats.rating_distribution.2|default:0 }}</span>
+              </li>
+              <li class="flex justify-between">
+                <span class="text-gray-600">Poor (1★)</span>
+                <span class="font-medium">{{ review_stats.rating_distribution.1|default:0 }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Sort and Filter -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 p-4 bg-gray-50 rounded-xl">
+          <h3 class="text-lg font-semibold text-gray-800 mb-2 sm:mb-0">
+            {{ reviews.count }} Customer Review{{ reviews.count|pluralize }}
+          </h3>
+          <div class="flex items-center space-x-4">
+            <select id="sort-reviews" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+              <option value="recent">Most Recent</option>
+              <option value="helpful">Most Helpful</option>
+              <option value="highest">Highest Rated</option>
+              <option value="lowest">Lowest Rated</option>
+            </select>
+            <button type="button" id="filter-verified" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 bg-white">
+              <i class="fas fa-check-circle text-green-600 mr-2"></i>
+              Verified Only
+            </button>
+          </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div id="reviews-container">
+          {% if reviews %}
+            {% for review in reviews %}
+            <div class="border-b border-gray-200 py-8 review-item" data-rating="{{ review.rating }}" data-helpful="{{ review.helpful_votes }}" data-date="{{ review.created_at|date:'c' }}">
+              <div class="flex flex-col lg:flex-row">
+                <!-- User Info -->
+                <div class="lg:w-1/4 mb-4 lg:mb-0">
+                  <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                      {{ review.user.username|first|upper }}
+                    </div>
+                    <div>
+                      <p class="font-semibold text-gray-800">{{ review.user.first_name }}</p>
+                      <div class="flex items-center mt-1">
+                        <div class="flex">
+                          {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= review.rating %}
+                              <i class="fas fa-star text-yellow-500 text-sm"></i>
+                            {% else %}
+                              <i class="far fa-star text-yellow-500 text-sm"></i>
+                            {% endif %}
+                          {% endfor %}
+                        </div>
+                        <span class="text-sm text-gray-500 ml-2">{{ review.created_at|date:"M d, Y" }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Verified Badge -->
+                  {% if review.verified_purchase %}
+                  <div class="mt-3 inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Verified Purchase
+                  </div>
+                  {% endif %}
+                  
+                  <!-- Review Stats -->
+                  <div class="mt-4 space-y-1 text-sm text-gray-600">
+                    <div class="flex items-center">
+                      <i class="fas fa-thumbs-up text-blue-500 mr-2"></i>
+                      <span>{{ review.helpful_votes }} found this helpful</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Review Content -->
+                <div class="lg:w-3/4">
+                  <h4 class="text-xl font-semibold text-gray-800 mb-2">{{ review.title }}</h4>
+                  <p class="text-gray-700 leading-relaxed mb-4">{{ review.comment }}</p>
+                  
+                  <!-- Actions -->
+                  <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                    <button type="button" 
+                            onclick="voteReview('{{ review.id }}', 'helpful')"
+                            class="vote-btn-helpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 {% if user_votes|get_item:review.id == True %}bg-blue-100 border-blue-300{% endif %}">
+                      <i class="fas fa-thumbs-up mr-2 {% if user_votes|get_item:review.id == True %}text-blue-600{% else %}text-gray-600{% endif %}"></i>
+                      <span>Helpful</span>
+                      <span class="ml-2 text-gray-600 helpful-count">{{ review.helpful_votes }}</span>
+                    </button>
+                    
+                    <button type="button" 
+                            onclick="voteReview('{{ review.id }}', 'not_helpful')"
+                            class="vote-btn-nothelpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-red-50 {% if user_votes|get_item:review.id == False %}bg-red-100 border-red-300{% endif %}">
+                      <i class="fas fa-thumbs-down mr-2 {% if user_votes|get_item:review.id == False %}text-red-600{% else %}text-gray-600{% endif %}"></i>
+                      <span>Not Helpful</span>
+                      <span class="ml-2 text-gray-600 nothelpful-count">{{ review.not_helpful_votes }}</span>
+                    </button>
+                    {% else %}
+                    <a href="{% url 'user_auth:signin' %}?next={{ request.path }}"
+                       class="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                      <i class="fas fa-thumbs-up mr-2 text-gray-600"></i>
+                      <span>Login to vote</span>
+                    </a>
+                    {% endif %}
+                    
+                    {% if user == review.user %}
+                    <!-- Edit Review Button -->
+                    <button type="button" 
+                            onclick="openEditReviewModal('{{ review.id }}')"
+                            class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg edit-review-btn"
+                            data-review-id="{{ review.id }}">
+                      <i class="fas fa-edit mr-1"></i>
+                      Edit Review
+                    </button>
+
+                    <!-- Delete Review Button -->
+                    <button type="button" 
+                            onclick="deleteReview('{{ review.id }}')"
+                            class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+                      <i class="fas fa-trash mr-1"></i>
+                      Delete Review
+                    </button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-12">
+              <i class="fas fa-comment-slash text-6xl text-gray-300 mb-4"></i>
+              <h3 class="text-xl font-semibold text-gray-700 mb-2">No reviews yet</h3>
+              <p class="text-gray-600">Be the first to share your thoughts about this product!</p>
+              {% if user.is_authenticated %}
+              <button type="button" 
+                      onclick="openReviewModal()"
+                      class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Write First Review
+              </button>
+              {% else %}
+              <a href="{% url 'user_auth:signin' %}?next={{ request.path }}"
+                 class="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Login to Review
+              </a>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Load More Button -->
+        {% if reviews.count > 5 %}
+        <div class="text-center mt-8">
+          <button type="button" id="load-more-reviews" 
+                  class="px-6 py-3 border-2 border-blue-600 text-blue-600 font-semibold rounded-xl hover:bg-blue-50">
+            Load More Reviews
+          </button>
+        </div>
+        {% endif %}
+      </div>
+      <!-- ======================== -->
+      <!-- END REVIEWS SECTION -->
+      <!-- ======================== -->
+
     </div>
   </div>
 
@@ -416,6 +827,176 @@
   <div id="zoom-result"></div>
 </div>
 
+<!-- Review Modal -->
+<div id="review-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold text-gray-800">Write a Review</h3>
+        <button type="button" 
+                onclick="closeReviewModal()"
+                class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <!-- Review Form -->
+      <form method="post" action="{% url 'products:submit_review' product.slug %}" id="review-form">
+        {% csrf_token %}
+        <input type="hidden" name="submit_review" value="true">
+        
+        <!-- Rating -->
+        <div class="mb-6">
+          <label class="block text-gray-700 font-medium mb-3">Your Rating *</label>
+          <div class="flex space-x-1 star-rating" id="star-rating-input">
+            {% for i in "12345" %}
+            <button type="button" 
+                    class="text-4xl text-gray-300 hover:text-yellow-500 focus:outline-none"
+                    data-value="{{ i }}">
+              <i class="far fa-star"></i>
+            </button>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="rating" id="rating-value" required>
+          <div class="mt-2 text-sm text-gray-600" id="rating-label">Select a rating</div>
+        </div>
+
+        <!-- Title -->
+        <div class="mb-6">
+          <label for="review-title" class="block text-gray-700 font-medium mb-2">
+            Review Title *
+          </label>
+          <input type="text" 
+                 name="title" 
+                 id="review-title"
+                 maxlength="200"
+                 required
+                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                 placeholder="Summarize your experience">
+        </div>
+
+        <!-- Comment -->
+        <div class="mb-6">
+          <label for="review-comment" class="block text-gray-700 font-medium mb-2">
+            Your Review *
+          </label>
+          <textarea name="comment" 
+                    id="review-comment"
+                    rows="5"
+                    maxlength="1000"
+                    required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Share your experience with this product..."></textarea>
+          <div class="mt-1 text-sm text-gray-600 text-right">
+            <span id="char-count">0</span>/1000 characters
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end space-x-4">
+          <button type="button" 
+                  onclick="closeReviewModal()"
+                  class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50">
+            Cancel
+          </button>
+          <button type="submit" 
+                  class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700">
+            <i class="fas fa-paper-plane mr-2"></i>
+            Submit Review
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Review Modal -->
+<div id="edit-review-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold text-gray-800">Edit Your Review</h3>
+        <button type="button" 
+                onclick="closeEditReviewModal()"
+                class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <!-- Edit Review Form -->
+      <form method="post" action="" id="edit-review-form">
+        {% csrf_token %}
+        <input type="hidden" name="edit_review" value="true">
+        <input type="hidden" name="review_id" id="edit-review-id">
+        
+        <!-- Rating -->
+        <div class="mb-6">
+          <label class="block text-gray-700 font-medium mb-3">Your Rating *</label>
+          <div class="flex space-x-1 star-rating" id="edit-star-rating-input">
+            {% for i in "12345" %}
+            <button type="button" 
+                    class="text-4xl text-gray-300 hover:text-yellow-500 focus:outline-none edit-rating-star"
+                    data-value="{{ i }}">
+              <i class="far fa-star"></i>
+            </button>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="rating" id="edit-rating-value" required>
+          <div class="mt-2 text-sm text-gray-600" id="edit-rating-label">Select a rating</div>
+        </div>
+
+        <!-- Title -->
+        <div class="mb-6">
+          <label for="edit-review-title" class="block text-gray-700 font-medium mb-2">
+            Review Title *
+          </label>
+          <input type="text" 
+                 name="title" 
+                 id="edit-review-title"
+                 maxlength="200"
+                 required
+                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                 placeholder="Summarize your experience">
+        </div>
+
+        <!-- Comment -->
+        <div class="mb-6">
+          <label for="edit-review-comment" class="block text-gray-700 font-medium mb-2">
+            Your Review *
+          </label>
+          <textarea name="comment" 
+                    id="edit-review-comment"
+                    rows="5"
+                    maxlength="1000"
+                    required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Share your experience with this product..."></textarea>
+          <div class="mt-1 text-sm text-gray-600 text-right">
+            <span id="edit-char-count">0</span>/1000 characters
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end space-x-4">
+          <button type="button" 
+                  onclick="closeEditReviewModal()"
+                  class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50">
+            Cancel
+          </button>
+          <button type="submit" 
+                  class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700">
+            <i class="fas fa-save mr-2"></i>
+            Update Review
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 <script>
 // Utility Functions
 function getCookie(name) {
@@ -434,9 +1015,6 @@ function getCookie(name) {
 }
 
 function showNotification(message, type = 'info') {
-  // Remove existing notifications
-  document.querySelectorAll('.notification').forEach(notif => notif.remove());
-  
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
   notification.innerHTML = `
@@ -458,26 +1036,202 @@ function showNotification(message, type = 'info') {
   }, 4000);
 }
 
+function showMessage(message, type = 'info') {
+  const messageId = 'message-' + Date.now();
+  const messagesContainer = document.querySelector('.messages-container');
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${type}`;
+  messageDiv.id = messageId;
+  
+  let icon = 'info-circle';
+  if (type === 'success') icon = 'check-circle';
+  if (type === 'error') icon = 'exclamation-circle';
+  if (type === 'warning') icon = 'exclamation-triangle';
+  
+  messageDiv.innerHTML = `
+    <div class="message-content">
+      <div class="flex items-center">
+        <div class="message-icon">
+          <i class="fas fa-${icon}"></i>
+        </div>
+        <div class="message-text">${message}</div>
+      </div>
+    </div>
+    <button class="message-close" onclick="closeMessage('${messageId}')">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+  
+  messagesContainer.appendChild(messageDiv);
+  
+  // Animate in
+  setTimeout(() => {
+    messageDiv.classList.add('show');
+  }, 100);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    closeMessage(messageId);
+  }, 5000);
+}
+
+function closeMessage(messageId) {
+  const message = document.getElementById(messageId);
+  if (message) {
+    message.classList.remove('show');
+    setTimeout(() => {
+      if (message.parentNode) {
+        message.parentNode.removeChild(message);
+      }
+    }, 400);
+  }
+}
+
 function updateCartCount(count) {
   const cartCount = document.getElementById('cart-count');
   if (cartCount) {
     cartCount.textContent = count;
-    // Add animation
     cartCount.classList.add('scale-125');
     setTimeout(() => cartCount.classList.remove('scale-125'), 300);
   }
 }
 
+// Edit Review Functions
+let currentEditingReviewId = null;
+
+function openEditReviewModal(reviewId) {
+  currentEditingReviewId = reviewId;
+  
+  // Fetch review data via AJAX
+  fetch(`{% url 'products:get_review' 0 %}`.replace('0', reviewId), {
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Populate form fields
+      document.getElementById('edit-review-id').value = reviewId;
+      
+      // Set rating
+      const rating = data.review.rating;
+      document.getElementById('edit-rating-value').value = rating;
+      
+      // Update stars display
+      const stars = document.querySelectorAll('#edit-star-rating-input .edit-rating-star');
+      stars.forEach(star => {
+        const starValue = parseInt(star.getAttribute('data-value'));
+        const icon = star.querySelector('i');
+        if (starValue <= rating) {
+          icon.classList.replace('far', 'fas');
+          icon.classList.add('text-yellow-500');
+        } else {
+          icon.classList.replace('fas', 'far');
+          icon.classList.remove('text-yellow-500');
+        }
+      });
+      
+      // Update rating label
+      const ratingLabels = {
+        1: 'Poor - I hate it',
+        2: 'Fair - I don\'t like it',
+        3: 'Good - It\'s okay',
+        4: 'Very Good - I like it',
+        5: 'Excellent - I love it'
+      };
+      document.getElementById('edit-rating-label').textContent = ratingLabels[rating];
+      document.getElementById('edit-rating-label').className = 'mt-2 text-sm font-medium text-yellow-600';
+      
+      // Set title and comment
+      document.getElementById('edit-review-title').value = data.review.title;
+      document.getElementById('edit-review-comment').value = data.review.comment;
+      document.getElementById('edit-char-count').textContent = data.review.comment.length;
+      
+      // Set form action
+      document.getElementById('edit-review-form').action = 
+        `{% url 'products:update_review' 0 %}`.replace('0', reviewId);
+      
+      // Show modal
+      document.getElementById('edit-review-modal').classList.remove('hidden');
+    } else {
+      showNotification('Error loading review', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showNotification('Error loading review', 'error');
+  });
+}
+
+function closeEditReviewModal() {
+  document.getElementById('edit-review-modal').classList.add('hidden');
+  currentEditingReviewId = null;
+  resetEditReviewForm();
+}
+
+function resetEditReviewForm() {
+  // Reset star rating
+  const stars = document.querySelectorAll('#edit-star-rating-input .edit-rating-star');
+  stars.forEach(star => {
+    const icon = star.querySelector('i');
+    icon.classList.replace('fas', 'far');
+    icon.classList.remove('text-yellow-500');
+  });
+  document.getElementById('edit-rating-value').value = '';
+  document.getElementById('edit-rating-label').textContent = 'Select a rating';
+  document.getElementById('edit-rating-label').className = 'mt-2 text-sm text-gray-600';
+  
+  // Reset form fields
+  document.getElementById('edit-review-title').value = '';
+  document.getElementById('edit-review-comment').value = '';
+  document.getElementById('edit-char-count').textContent = '0';
+}
+
+// Handle edit form submission
+document.getElementById('edit-review-form')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  
+  fetch(this.action, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken')
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showMessage('Review updated successfully', 'success');
+      closeEditReviewModal();
+      // Reload page to show updated review
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      let errorMsg = 'Error updating review';
+      if (data.errors) {
+        errorMsg = Object.values(data.errors).flat().join(', ');
+      }
+      showMessage(errorMsg, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showMessage('Error updating review', 'error');
+  });
+});
+
 // Cart Functions
 function addToCart(variantId) {
   const button = document.querySelector(`button[onclick="addToCart('${variantId}')"]`);
   
-  // Show loading state
   const originalHTML = button.innerHTML;
   button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Adding...</span>';
   button.disabled = true;
   
-  fetch('/shop/cart/add/', {
+  fetch('{% url "shop:add_to_cart" %}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -492,22 +1246,17 @@ function addToCart(variantId) {
   .then(data => {
     if (data.success) {
       updateCartCount(data.cart_count);
-      showNotification(data.message, 'success');
-      
-      // Reload the page to show updated cart state
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
+      showMessage(data.message, 'success');
+      setTimeout(() => window.location.reload(), 1000);
     } else {
-      showNotification(data.message, 'error');
+      showMessage(data.message || 'Error adding to cart', 'error');
       button.innerHTML = originalHTML;
       button.disabled = false;
     }
   })
   .catch(error => {
     console.error('Error:', error);
-    showNotification('Error adding to cart', 'error');
+    showMessage('Error adding to cart', 'error');
     button.innerHTML = originalHTML;
     button.disabled = false;
   });
@@ -518,7 +1267,7 @@ function toggleWishlist(productId) {
   const button = document.querySelector(`.wishlist-btn[data-product-id="${productId}"]`);
   const icon = button.querySelector('i');
   
-  // Toggle visual state immediately for better UX
+  // Toggle visual state
   if (icon.classList.contains('far')) {
     icon.classList.replace('far', 'fas');
     icon.classList.add('text-red-500');
@@ -529,19 +1278,21 @@ function toggleWishlist(productId) {
     button.classList.remove('border-red-300', 'bg-red-50');
   }
   
-  fetch(`/shop/wishlist/add/${productId}/`, {
+  fetch('{% url "products:toggle_wishlist" %}', {
     method: 'POST',
     headers: {
+      'Content-Type': 'application/json',
       'X-CSRFToken': getCookie('csrftoken'),
       'X-Requested-With': 'XMLHttpRequest'
-    }
+    },
+    body: JSON.stringify({ product_id: productId })
   })
   .then(response => response.json())
   .then(data => {
-    if (data.success) {
-      updateWishlistCount(data.wishlist_count);
-      showNotification(data.message, 'success');
-    } else {
+    if (data.status === 'added' || data.status === 'removed') {
+      showMessage(`Product ${data.status} to wishlist`, 'success');
+    } else if (data.error) {
+      showMessage(data.error, 'error');
       // Revert visual state on error
       if (icon.classList.contains('fas')) {
         icon.classList.replace('fas', 'far');
@@ -552,12 +1303,11 @@ function toggleWishlist(productId) {
         icon.classList.add('text-red-500');
         button.classList.add('border-red-300', 'bg-red-50');
       }
-      showNotification(data.message, 'error');
     }
   })
   .catch(error => {
     console.error('Error:', error);
-    showNotification('Error updating wishlist', 'error');
+    showMessage('Error updating wishlist', 'error');
     // Revert visual state on error
     if (icon.classList.contains('fas')) {
       icon.classList.replace('fas', 'far');
@@ -571,14 +1321,116 @@ function toggleWishlist(productId) {
   });
 }
 
-function updateWishlistCount(count) {
-  const wishlistCount = document.getElementById('wishlist-count');
-  if (wishlistCount) {
-    wishlistCount.textContent = count;
-    // Add animation
-    wishlistCount.classList.add('scale-125');
-    setTimeout(() => wishlistCount.classList.remove('scale-125'), 300);
+// Review Functions
+function voteReview(reviewId, voteType) {
+  const url = `{% url 'products:vote_review' 0 %}`.replace('0', reviewId);
+  
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({ vote_type: voteType })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const helpfulBtn = document.querySelector(`button[onclick="voteReview('${reviewId}', 'helpful')"]`);
+      const notHelpfulBtn = document.querySelector(`button[onclick="voteReview('${reviewId}', 'not_helpful')"]`);
+      
+      if (helpfulBtn && notHelpfulBtn) {
+        const helpfulCount = helpfulBtn.querySelector('.helpful-count');
+        const notHelpfulCount = notHelpfulBtn.querySelector('.nothelpful-count');
+        
+        helpfulCount.textContent = data.helpful_votes;
+        notHelpfulCount.textContent = data.not_helpful_votes;
+        
+        // Update button styles
+        if (data.action === 'removed') {
+          if (voteType === 'helpful') {
+            helpfulBtn.classList.remove('bg-blue-100', 'border-blue-300');
+            helpfulBtn.querySelector('i').classList.replace('text-blue-600', 'text-gray-600');
+          } else {
+            notHelpfulBtn.classList.remove('bg-red-100', 'border-red-300');
+            notHelpfulBtn.querySelector('i').classList.replace('text-red-600', 'text-gray-600');
+          }
+        } else {
+          if (voteType === 'helpful') {
+            helpfulBtn.classList.add('bg-blue-100', 'border-blue-300');
+            helpfulBtn.querySelector('i').classList.replace('text-gray-600', 'text-blue-600');
+            notHelpfulBtn.classList.remove('bg-red-100', 'border-red-300');
+            notHelpfulBtn.querySelector('i').classList.replace('text-red-600', 'text-gray-600');
+          } else {
+            notHelpfulBtn.classList.add('bg-red-100', 'border-red-300');
+            notHelpfulBtn.querySelector('i').classList.replace('text-gray-600', 'text-red-600');
+            helpfulBtn.classList.remove('bg-blue-100', 'border-blue-300');
+            helpfulBtn.querySelector('i').classList.replace('text-blue-600', 'text-gray-600');
+          }
+        }
+      }
+      showMessage('Vote ' + data.action, 'success');
+    } else {
+      showMessage(data.error || 'Error voting', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showMessage('Error voting on review', 'error');
+  });
+}
+
+function deleteReview(reviewId) {
+  if (confirm('Are you sure you want to delete your review?')) {
+    const url = `{% url 'products:delete_review' 0 %}`.replace('0', reviewId);
+    
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        showMessage('Error deleting review', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showMessage('Error deleting review', 'error');
+    });
   }
+}
+
+// Review Modal Functions
+function openReviewModal() {
+  document.getElementById('review-modal').classList.remove('hidden');
+}
+
+function closeReviewModal() {
+  document.getElementById('review-modal').classList.add('hidden');
+  resetReviewForm();
+}
+
+function resetReviewForm() {
+  // Reset star rating
+  const stars = document.querySelectorAll('#star-rating-input button');
+  stars.forEach(star => {
+    const icon = star.querySelector('i');
+    icon.classList.replace('fas', 'far');
+    icon.classList.remove('text-yellow-500');
+  });
+  document.getElementById('rating-value').value = '';
+  document.getElementById('rating-label').textContent = 'Select a rating';
+  document.getElementById('rating-label').className = 'mt-2 text-sm text-gray-600';
+  
+  // Reset form fields
+  document.getElementById('review-title').value = '';
+  document.getElementById('review-comment').value = '';
+  document.getElementById('char-count').textContent = '0';
 }
 
 // Image Gallery and Zoom Setup
@@ -588,6 +1440,21 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('skeleton-content').classList.add('hidden');
     document.getElementById('real-content').classList.remove('hidden');
   }, 800);
+
+  // Show Django messages
+  setTimeout(() => {
+    const messages = document.querySelectorAll('.message');
+    messages.forEach((message, index) => {
+      setTimeout(() => {
+        message.classList.add('show');
+      }, index * 200);
+      
+      // Auto remove messages after 5 seconds
+      setTimeout(() => {
+        closeMessage(message.id);
+      }, 5000 + (index * 200));
+    });
+  }, 1000);
 
   const mainImg = document.getElementById("main-product-image");
   const thumbs = document.querySelectorAll(".thumb-img");
@@ -627,7 +1494,6 @@ document.addEventListener("DOMContentLoaded", function() {
       zoomLens.classList.remove('hidden');
       zoomResult.style.display = 'block';
       
-      // Position zoom result fixed on the page
       zoomResult.style.position = 'fixed';
       zoomResult.style.left = '60%';
       zoomResult.style.top = '50%';
@@ -667,6 +1533,292 @@ document.addEventListener("DOMContentLoaded", function() {
       const bgPosY = -(y * ZOOM_LEVEL - zoomResult.offsetHeight / 2);
       
       zoomResult.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
+    });
+  }
+
+  // Review form functionality
+  // Star rating
+  const starRating = document.getElementById('star-rating-input');
+  if (starRating) {
+    const stars = starRating.querySelectorAll('button');
+    const ratingValue = document.getElementById('rating-value');
+    const ratingLabel = document.getElementById('rating-label');
+    
+    const ratingLabels = {
+      1: 'Poor - I hate it',
+      2: 'Fair - I don\'t like it',
+      3: 'Good - It\'s okay',
+      4: 'Very Good - I like it',
+      5: 'Excellent - I love it'
+    };
+    
+    stars.forEach(star => {
+      star.addEventListener('click', function() {
+        const value = parseInt(this.getAttribute('data-value'));
+        ratingValue.value = value;
+        
+        // Update stars display
+        stars.forEach(s => {
+          const sValue = parseInt(s.getAttribute('data-value'));
+          const icon = s.querySelector('i');
+          if (sValue <= value) {
+            icon.classList.replace('far', 'fas');
+            icon.classList.add('text-yellow-500');
+          } else {
+            icon.classList.replace('fas', 'far');
+            icon.classList.remove('text-yellow-500');
+          }
+        });
+        
+        // Update label
+        ratingLabel.textContent = ratingLabels[value];
+        ratingLabel.className = 'mt-2 text-sm font-medium text-yellow-600';
+      });
+    });
+  }
+  
+  // Character counter for review text
+  const commentField = document.getElementById('review-comment');
+  const charCount = document.getElementById('char-count');
+  
+  if (commentField && charCount) {
+    commentField.addEventListener('input', function() {
+      charCount.textContent = this.value.length;
+    });
+  }
+
+  // Edit review modal star rating
+  const editStarRating = document.getElementById('edit-star-rating-input');
+  if (editStarRating) {
+    const editStars = editStarRating.querySelectorAll('.edit-rating-star');
+    const editRatingValue = document.getElementById('edit-rating-value');
+    const editRatingLabel = document.getElementById('edit-rating-label');
+    
+    const editRatingLabels = {
+      1: 'Poor - I hate it',
+      2: 'Fair - I don\'t like it',
+      3: 'Good - It\'s okay',
+      4: 'Very Good - I like it',
+      5: 'Excellent - I love it'
+    };
+    
+    editStars.forEach(star => {
+      star.addEventListener('click', function() {
+        const value = parseInt(this.getAttribute('data-value'));
+        editRatingValue.value = value;
+        
+        // Update stars display
+        editStars.forEach(s => {
+          const sValue = parseInt(s.getAttribute('data-value'));
+          const icon = s.querySelector('i');
+          if (sValue <= value) {
+            icon.classList.replace('far', 'fas');
+            icon.classList.add('text-yellow-500');
+          } else {
+            icon.classList.replace('fas', 'far');
+            icon.classList.remove('text-yellow-500');
+          }
+        });
+        
+        // Update label
+        editRatingLabel.textContent = editRatingLabels[value];
+        editRatingLabel.className = 'mt-2 text-sm font-medium text-yellow-600';
+      });
+    });
+  }
+
+  // Character counter for edit review text
+  const editCommentField = document.getElementById('edit-review-comment');
+  const editCharCount = document.getElementById('edit-char-count');
+
+  if (editCommentField && editCharCount) {
+    editCommentField.addEventListener('input', function() {
+      editCharCount.textContent = this.value.length;
+    });
+  }
+  
+  // Review sorting and filtering
+  const sortSelect = document.getElementById('sort-reviews');
+  const filterVerified = document.getElementById('filter-verified');
+  const loadMoreBtn = document.getElementById('load-more-reviews');
+  let currentPage = 1;
+  let isLoading = false;
+  let currentSort = 'recent';
+  let verifiedOnly = false;
+  
+  if (sortSelect) {
+    sortSelect.addEventListener('change', function() {
+      currentSort = this.value;
+      currentPage = 1;
+      loadReviews();
+    });
+  }
+  
+  if (filterVerified) {
+    let verifiedFilterActive = false;
+    filterVerified.addEventListener('click', function() {
+      verifiedFilterActive = !verifiedFilterActive;
+      verifiedOnly = verifiedFilterActive;
+      this.classList.toggle('bg-green-50', verifiedFilterActive);
+      this.classList.toggle('border-green-300', verifiedFilterActive);
+      currentPage = 1;
+      loadReviews();
+    });
+  }
+  
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', function() {
+      if (!isLoading) {
+        currentPage++;
+        loadReviews(true);
+      }
+    });
+  }
+  
+  function loadReviews(append = false) {
+    if (isLoading) return;
+    
+    isLoading = true;
+    if (loadMoreBtn && !append) {
+      loadMoreBtn.disabled = true;
+      loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+    }
+    
+    const url = `{% url 'products:ajax_reviews' product.slug %}?page=${currentPage}&sort=${currentSort}&verified=${verifiedOnly}`;
+    
+    fetch(url, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        if (!append) {
+          // Clear existing reviews
+          document.getElementById('reviews-container').innerHTML = '';
+        }
+        
+        // Render new reviews
+        renderReviews(data.reviews);
+        
+        // Update load more button
+        if (loadMoreBtn) {
+          if (data.has_next) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.innerHTML = 'Load More Reviews';
+            loadMoreBtn.style.display = 'block';
+          } else {
+            loadMoreBtn.style.display = 'none';
+          }
+        }
+      }
+      isLoading = false;
+    })
+    .catch(error => {
+      console.error('Error loading reviews:', error);
+      isLoading = false;
+      if (loadMoreBtn) {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.innerHTML = 'Load More Reviews';
+      }
+    });
+  }
+  
+  function renderReviews(reviews) {
+    const container = document.getElementById('reviews-container');
+    
+    reviews.forEach(review => {
+      const reviewElement = document.createElement('div');
+      reviewElement.className = 'border-b border-gray-200 py-8 review-item';
+      reviewElement.setAttribute('data-rating', review.rating);
+      reviewElement.setAttribute('data-helpful', review.helpful_votes);
+      reviewElement.setAttribute('data-date', review.created_at);
+      
+      // Build stars HTML
+      let starsHtml = '';
+      for (let i = 1; i <= 5; i++) {
+        if (i <= review.rating) {
+          starsHtml += '<i class="fas fa-star text-yellow-500 text-sm"></i>';
+        } else {
+          starsHtml += '<i class="far fa-star text-yellow-500 text-sm"></i>';
+        }
+      }
+      
+      reviewElement.innerHTML = `
+        <div class="flex flex-col lg:flex-row">
+          <div class="lg:w-1/4 mb-4 lg:mb-0">
+            <div class="flex items-center">
+              <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                ${review.user_initial}
+              </div>
+              <div>
+                <p class="font-semibold text-gray-800">${review.user_name}</p>
+                <div class="flex items-center mt-1">
+                  <div class="flex">${starsHtml}</div>
+                  <span class="text-sm text-gray-500 ml-2">${review.created_at}</span>
+                </div>
+              </div>
+            </div>
+            ${review.verified_purchase ? `
+            <div class="mt-3 inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+              <i class="fas fa-check-circle mr-1"></i>
+              Verified Purchase
+            </div>` : ''}
+            <div class="mt-4 space-y-1 text-sm text-gray-600">
+              <div class="flex items-center">
+                <i class="fas fa-thumbs-up text-blue-500 mr-2"></i>
+                <span>${review.helpful_votes} found this helpful</span>
+              </div>
+            </div>
+          </div>
+          <div class="lg:w-3/4">
+            <h4 class="text-xl font-semibold text-gray-800 mb-2">${review.title}</h4>
+            <p class="text-gray-700 leading-relaxed mb-4">${review.comment}</p>
+            <div class="flex items-center space-x-4">
+              ${review.user_vote !== undefined ? `
+              <button type="button" 
+                      onclick="voteReview('${review.id}', 'helpful')"
+                      class="vote-btn-helpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 ${review.user_vote === true ? 'bg-blue-100 border-blue-300' : ''}">
+                <i class="fas fa-thumbs-up mr-2 ${review.user_vote === true ? 'text-blue-600' : 'text-gray-600'}"></i>
+                <span>Helpful</span>
+                <span class="ml-2 text-gray-600 helpful-count">${review.helpful_votes}</span>
+              </button>
+              <button type="button" 
+                      onclick="voteReview('${review.id}', 'not_helpful')"
+                      class="vote-btn-nothelpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-red-50 ${review.user_vote === false ? 'bg-red-100 border-red-300' : ''}">
+                <i class="fas fa-thumbs-down mr-2 ${review.user_vote === false ? 'text-red-600' : 'text-gray-600'}"></i>
+                <span>Not Helpful</span>
+                <span class="ml-2 text-gray-600 nothelpful-count">${review.not_helpful_votes}</span>
+              </button>
+              ` : `
+              <a href="{% url 'user_auth:signin' %}?next={{ request.path }}"
+                 class="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-thumbs-up mr-2 text-gray-600"></i>
+                <span>Login to vote</span>
+              </a>
+              `}
+              ${review.is_owner ? `
+              <button type="button" 
+                      onclick="openEditReviewModal('${review.id}')"
+                      class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg edit-review-btn"
+                      data-review-id="${review.id}">
+                <i class="fas fa-edit mr-1"></i>
+                Edit Review
+              </button>
+              <button type="button" 
+                      onclick="deleteReview('${review.id}')"
+                      class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+                <i class="fas fa-trash mr-1"></i>
+                Delete Review
+              </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(reviewElement);
     });
   }
 });

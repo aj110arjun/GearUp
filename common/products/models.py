@@ -5,6 +5,7 @@ from django.utils.text import slugify
 from django.urls import reverse
 from cloudinary.models import CloudinaryField
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -183,6 +184,35 @@ class Product(models.Model):
         """Get the best offer/discount for the product"""
         # If you have an Offer model, implement this
         return None  # Placeholder - implement based on your offer system
+    
+    def get_average_rating(self):
+        """Calculate average rating"""
+        reviews = self.reviews.filter(is_approved=True)
+        if reviews.exists():
+            avg = reviews.aggregate(models.Avg('rating'))['rating__avg']
+            return round(avg, 1)
+        return 0
+    
+    def get_rating_distribution(self):
+        """Get rating distribution counts"""
+        reviews = self.reviews.filter(is_approved=True)
+        distribution = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
+        for rating in reviews.values_list('rating', flat=True):
+            distribution[rating] = distribution.get(rating, 0) + 1
+        return distribution
+    
+    def get_total_reviews(self):
+        """Get total approved reviews count"""
+        return self.reviews.filter(is_approved=True).count()
+    
+    def get_review_percentage(self):
+        """Get percentage of reviews by rating"""
+        total = self.get_total_reviews()
+        if total == 0:
+            return {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
+        
+        distribution = self.get_rating_distribution()
+        return {k: round((v / total) * 100, 1) for k, v in distribution.items()}
 
 
 class ProductVariant(models.Model):
@@ -355,3 +385,62 @@ class CategoryOffer(models.Model):
     def is_valid(self):
         now = timezone.now()
         return self.is_active and self.start_date <= now <= self.end_date
+
+
+class ProductReview(models.Model):
+    RATING_CHOICES = [
+        (1, '1 Star - Poor'),
+        (2, '2 Stars - Fair'),
+        (3, '3 Stars - Good'),
+        (4, '4 Stars - Very Good'),
+        (5, '5 Stars - Excellent'),
+    ]
+    
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='product_reviews')
+    rating = models.IntegerField(
+        choices=RATING_CHOICES,
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    title = models.CharField(max_length=200)
+    comment = models.TextField()
+    verified_purchase = models.BooleanField(default=False)
+    helpful_votes = models.PositiveIntegerField(default=0)
+    not_helpful_votes = models.PositiveIntegerField(default=0)
+    is_approved = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['product', 'user']  # One review per user per product
+        verbose_name = 'Product Review'
+        verbose_name_plural = 'Product Reviews'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name} - {self.rating} stars"
+    
+    def get_rating_stars(self):
+        """Return HTML for star rating"""
+        full_stars = '★' * self.rating
+        empty_stars = '☆' * (5 - self.rating)
+        return full_stars + empty_stars
+
+
+class ReviewImage(models.Model):
+    review = models.ForeignKey(ProductReview, on_delete=models.CASCADE, related_name='images')
+    image = CloudinaryField('review_images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Image for {self.review}"
+
+
+class ReviewVote(models.Model):
+    review = models.ForeignKey(ProductReview, on_delete=models.CASCADE, related_name='votes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    helpful = models.BooleanField()  # True = helpful, False = not helpful
+    voted_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['review', 'user']
