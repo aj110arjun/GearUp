@@ -84,10 +84,6 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Delivered</p>
-                        {% comment %} 
-                        First method: Using Django template filters
-                        You need to pass a context variable from the view for this to work
-                        {% endcomment %}
                         <p class="text-2xl font-bold text-gray-900">{{ delivered_count }}</p>
                     </div>
                 </div>
@@ -99,10 +95,6 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">In Progress</p>
-                        {% comment %}
-                        Second method: Using custom template tag (recommended)
-                        Or calculate in the view and pass as context
-                        {% endcomment %}
                         <p class="text-2xl font-bold text-gray-900">{{ in_progress_count }}</p>
                     </div>
                 </div>
@@ -242,12 +234,14 @@
 
                         <!-- Order Actions -->
                         <div class="flex flex-col space-y-3 lg:w-48">
+                            <!-- View Details Button -->
                             <a href="{% url 'orders:order_detail' order.order_id %}" 
                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors text-center flex items-center justify-center">
                                 <i class="fas fa-eye mr-2"></i>
                                 View Details
                             </a>
                             
+                            <!-- Cancel Order Button -->
                             {% if order.can_be_cancelled %}
                             <form method="POST" action="{% url 'orders:cancel_order' order.order_id %}" class="inline">
                                 {% csrf_token %}
@@ -266,13 +260,34 @@
                             </button>
                             {% endif %}
 
-                            <!-- Track Order Button -->
-                            {% if order.order_status not in 'cancelled,returned,delivered' %}
+                            <!-- Track Order Button - ALWAYS SHOW (Except for cancelled orders) -->
+                            {% if order.order_status != 'cancelled' %}
                             <a href="{% url 'orders:track_order' order.order_id %}"
                                class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
-                                <i class="fas fa-shipping-fast mr-2"></i>
-                                Track Order
+                                {% if order.order_status == 'delivered' %}
+                                    <i class="fas fa-history mr-2"></i>
+                                    View Delivery
+                                {% elif order.order_status == 'shipped' %}
+                                    <i class="fas fa-shipping-fast mr-2"></i>
+                                    Track Order
+                                {% elif order.order_status == 'processing' %}
+                                    <i class="fas fa-cog mr-2"></i>
+                                    Track Order
+                                {% elif order.order_status == 'returned' %}
+                                    <i class="fas fa-undo mr-2"></i>
+                                    View Return
+                                {% else %}
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    Track Order
+                                {% endif %}
                             </a>
+                            {% else %}
+                            <!-- For cancelled orders, show disabled button -->
+                            <button disabled
+                                    class="w-full bg-gray-300 text-gray-500 px-4 py-3 rounded-lg font-medium cursor-not-allowed flex items-center justify-center">
+                                <i class="fas fa-ban mr-2"></i>
+                                Order Cancelled
+                            </button>
                             {% endif %}
                         </div>
                     </div>
@@ -341,6 +356,33 @@
     transform: translateY(-2px);
     transition: transform 0.2s ease;
 }
+
+/* Button hover effects */
+.bg-blue-600:hover, .bg-red-600:hover, .bg-green-600:hover, .bg-emerald-600:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Track button specific styling */
+.bg-green-600 {
+    background-color: #10B981;
+}
+
+.bg-green-600:hover {
+    background-color: #059669;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .lg\:w-48 {
+        width: 100%;
+    }
+    
+    .flex-col.lg\:flex-row {
+        gap: 1rem;
+    }
+}
 </style>
 
 <script>
@@ -349,6 +391,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const orderCards = document.querySelectorAll('.bg-white.rounded-lg');
     orderCards.forEach(card => {
         card.classList.add('hover-lift');
+    });
+
+    // Add click animation to buttons
+    const buttons = document.querySelectorAll('.bg-blue-600, .bg-red-600, .bg-green-600, .bg-emerald-600');
+    buttons.forEach(button => {
+        button.addEventListener('mousedown', function() {
+            this.style.transform = 'translateY(0)';
+        });
+        button.addEventListener('mouseup', function() {
+            this.style.transform = 'translateY(-1px)';
+        });
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Order status color coding
+    const statusBadges = document.querySelectorAll('.inline-flex.items-center.px-3.py-1.rounded-full');
+    statusBadges.forEach(badge => {
+        const statusText = badge.textContent.trim().toLowerCase();
+        
+        // Add specific icons based on status
+        const icon = badge.querySelector('i');
+        if (icon) {
+            if (statusText.includes('delivered')) {
+                badge.style.backgroundColor = '#D1FAE5';
+                badge.style.color = '#065F46';
+            } else if (statusText.includes('shipped') || statusText.includes('processing')) {
+                badge.style.backgroundColor = '#DBEAFE';
+                badge.style.color = '#1E40AF';
+            } else if (statusText.includes('pending') || statusText.includes('confirmed')) {
+                badge.style.backgroundColor = '#FEF3C7';
+                badge.style.color = '#92400E';
+            } else if (statusText.includes('cancelled')) {
+                badge.style.backgroundColor = '#FEE2E2';
+                badge.style.color = '#991B1B';
+            } else if (statusText.includes('returned')) {
+                badge.style.backgroundColor = '#F3F4F6';
+                badge.style.color = '#374151';
+            }
+        }
     });
 });
 </script>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: letter;
+            margin: 1in;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .summary-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-box h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 8px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .summary-value {
+            color: #2c3e50;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            background: #2c3e50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 3px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 11px;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+            text-align: left;
+            padding: 8px;
+            font-weight: bold;
+        }
+        
+        td {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .total-row {
+            background: #2ecc71 !important;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+            font-size: 10px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sales Report</h1>
+        <div class="subtitle">
+            Period: {{ data.period.start_date|date:"F d, Y" }} - {{ data.period.end_date|date:"F d, Y" }}
+        </div>
+        <div style="font-size: 11px; color: #95a5a6;">
+            Generated on: {{ report_date|date:"F d, Y H:i" }}
+        </div>
+    </div>
+    
+    <div class="summary-box">
+        <h3>Executive Summary</h3>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <span class="summary-label">Total Orders:</span>
+                <span class="summary-value">{{ data.summary.total_orders }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Total Revenue:</span>
+                <span class="summary-value">Rs.{{ data.summary.total_revenue|floatformat:2 }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Avg. Order Value:</span>
+                <span class="summary-value">Rs.{{ data.summary.avg_order_value|floatformat:2 }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Completed Orders:</span>
+                <span class="summary-value">{{ data.summary.orders_completed }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Pending Orders:</span>
+                <span class="summary-value">{{ data.summary.orders_pending }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Total Customers:</span>
+                <span class="summary-value">{{ data.summary.total_customers }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Report Period:</span>
+                <span class="summary-value">{{ data.period.days }} days</span>
+            </div>
+        </div>
+    </div>
+    
+    {% if data.product_sales %}
+    <div class="section">
+        <div class="section-title">Top Products by Revenue</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Brand</th>
+                    <th>Category</th>
+                    <th class="text-right">Quantity</th>
+                    <th class="text-right">Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in data.product_sales %}
+                <tr>
+                    <td>{{ product.product__name|default:"Unknown"|truncatechars:30 }}</td>
+                    <td>{{ product.product__brand|default:"Unknown" }}</td>
+                    <td>{{ product.product__category__name|default:"Uncategorized" }}</td>
+                    <td class="text-right">{{ product.quantity_sold }}</td>
+                    <td class="text-right">Rs.{{ product.total_revenue|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% if data.category_sales %}
+    <div class="section">
+        <div class="section-title">Sales by Category</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th class="text-right">Quantity</th>
+                    <th class="text-right">Revenue</th>
+                    <th class="text-right">Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in data.category_sales %}
+                <tr>
+                    <td>{{ category.product__category__name|default:"Uncategorized" }}</td>
+                    <td class="text-right">{{ category.quantity_sold }}</td>
+                    <td class="text-right">Rs.{{ category.total_revenue|floatformat:2 }}</td>
+                    <td class="text-right">
+                        {% if data.summary.total_revenue > 0 %}
+                            {{ category.total_revenue|div:data.summary.total_revenue|mul:100|floatformat:1 }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% if data.payment_breakdown %}
+    <div class="section">
+        <div class="section-title">Payment Method Analysis</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Payment Method</th>
+                    <th class="text-right">Orders</th>
+                    <th class="text-right">Revenue</th>
+                    <th class="text-right">Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in data.payment_breakdown %}
+                <tr>
+                    <td>{{ payment_methods|get_item:payment.payment_method|default:payment.payment_method }}</td>
+                    <td class="text-right">{{ payment.order_count }}</td>
+                    <td class="text-right">Rs.{{ payment.total_revenue|floatformat:2 }}</td>
+                    <td class="text-right">
+                        {% if data.summary.total_revenue > 0 %}
+                            {{ payment.total_revenue|div:data.summary.total_revenue|mul:100|floatformat:1 }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% if data.orders and report_type == 'detailed' %}
+    <div class="page-break"></div>
+    <div class="section">
+        <div class="section-title">Order Details</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in data.orders %}
+                <tr>
+                    <td>{{ order.order_number }}</td>
+                    <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                    <td>
+                        {% if order.user__first_name or order.user__last_name %}
+                            {{ order.user__first_name }} {{ order.user__last_name }}
+                        {% else %}
+                            {{ order.user__email|truncatechars:15 }}
+                        {% endif %}
+                    </td>
+                    <td>{{ order.product__name|truncatechars:20 }}</td>
+                    <td class="text-right">{{ order.quantity }}</td>
+                    <td class="text-right">Rs.{{ order.total_amount|floatformat:2 }}</td>
+                    <td>{{ order.order_status|title }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row">
+                    <td colspan="5" class="text-right"><strong>Total:</strong></td>
+                    <td class="text-right"><strong>Rs.{{ data.summary.total_revenue|floatformat:2 }}</strong></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% if data.status_breakdown %}
+    <div class="section">
+        <div class="section-title">Order Status Distribution</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th class="text-right">Orders</th>
+                    <th class="text-right">Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for status in data.status_breakdown %}
+                <tr>
+                    <td>{{ order_statuses|get_item:status.order_status|default:status.order_status }}</td>
+                    <td class="text-right">{{ status.order_count }}</td>
+                    <td class="text-right">
+                        {% if data.summary.total_orders > 0 %}
+                            {{ status.order_count|div:data.summary.total_orders|mul:100|floatformat:1 }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p>Report generated by E-commerce Dashboard | Confidential Business Document</p>
+        <p>Page 1 of 1</p>
+    </div>
+</body>
+</html>

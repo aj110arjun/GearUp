@@ -21,4 +21,12 @@ urlpatterns = [
     path('coupons/<int:coupon_id>/delete/', views.coupon_delete, name='coupon_delete'),
     path('coupons/<int:coupon_id>/toggle-active/', views.coupon_toggle_active, name='coupon_toggle_active'),
     path('coupons/usage/', views.coupon_usage_list, name='coupon_usage_list'),
+    path('download-report/', views.download_sales_report, name='download_report'),
+    
+    # Quick download shortcuts
+    path('download-report/excel/', views.download_sales_report, 
+         {'format': 'excel'}, name='download_excel'),
+    
+    path('download-report/csv/', views.download_sales_report, 
+         {'format': 'csv'}, name='download_csv'),
 ]
