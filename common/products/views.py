@@ -905,6 +905,10 @@ def delete_review(request, review_id):
         logger.error(f"Error deleting review: {e}")
         messages.error(request, 'Error deleting review.')
     
+    # If this was an AJAX request, return JSON so frontend can update without redirect
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': 'Review deleted.', 'review_id': review_id})
+
     return redirect('products:product_detail_user', product_slug=product_slug)
 
 @require_POST
