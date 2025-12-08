@@ -576,7 +576,7 @@
                   <div class="mt-4 space-y-1 text-sm text-gray-600">
                     <div class="flex items-center">
                       <i class="fas fa-thumbs-up text-blue-500 mr-2"></i>
-                      <span>{{ review.helpful_votes }} found this helpful</span>
+                      <span class="review-stats-helpful" data-review-id="{{ review.id }}">{{ review.helpful_votes }} found this helpful</span>
                     </div>
                   </div>
                 </div>
@@ -589,18 +589,19 @@
                   <!-- Actions -->
                   <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                    <!-- Fixed: Using loop to check user votes instead of get_item filter -->
-                    {% with user_vote=False %}
-                      {% for vote in user_votes_list %}
-                        {% if vote.review_id == review.id %}
-                          {% with user_vote=vote.vote_type %}
+                    {% with user_vote=user_votes|default:"" %}
+                      {% for review_id, vote_value in user_votes.items %}
+                        {% if review_id == review.id %}
+                          {% with user_vote=vote_value %}
                           {% endwith %}
                         {% endif %}
                       {% endfor %}
                       
                       <button type="button" 
                               onclick="voteReview('{{ review.id }}', 'helpful')"
-                              class="vote-btn-helpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 {% if user_vote == True %}bg-blue-100 border-blue-300{% endif %}">
+                              class="vote-btn-helpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 transition-all {% if user_vote == True %}bg-blue-100 border-blue-300{% endif %}"
+                              data-review-id="{{ review.id }}"
+                              data-vote-type="helpful">
                         <i class="fas fa-thumbs-up mr-2 {% if user_vote == True %}text-blue-600{% else %}text-gray-600{% endif %}"></i>
                         <span>Helpful</span>
                         <span class="ml-2 text-gray-600 helpful-count">{{ review.helpful_votes }}</span>
@@ -608,7 +609,9 @@
                       
                       <button type="button" 
                               onclick="voteReview('{{ review.id }}', 'not_helpful')"
-                              class="vote-btn-nothelpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-red-50 {% if user_vote == False %}bg-red-100 border-red-300{% endif %}">
+                              class="vote-btn-nothelpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-red-50 transition-all {% if user_vote == False %}bg-red-100 border-red-300{% endif %}"
+                              data-review-id="{{ review.id }}"
+                              data-vote-type="not_helpful">
                         <i class="fas fa-thumbs-down mr-2 {% if user_vote == False %}text-red-600{% else %}text-gray-600{% endif %}"></i>
                         <span>Not Helpful</span>
                         <span class="ml-2 text-gray-600 nothelpful-count">{{ review.not_helpful_votes }}</span>
@@ -1197,40 +1200,62 @@ function voteReview(reviewId, voteType) {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      const helpfulBtn = document.querySelector(`button[onclick="voteReview('${reviewId}', 'helpful')"]`);
-      const notHelpfulBtn = document.querySelector(`button[onclick="voteReview('${reviewId}', 'not_helpful')"]`);
+      // Find the buttons using data attributes
+      const helpfulBtn = document.querySelector(`button[data-review-id="${reviewId}"][data-vote-type="helpful"]`);
+      const notHelpfulBtn = document.querySelector(`button[data-review-id="${reviewId}"][data-vote-type="not_helpful"]`);
       
       if (helpfulBtn && notHelpfulBtn) {
         const helpfulCount = helpfulBtn.querySelector('.helpful-count');
         const notHelpfulCount = notHelpfulBtn.querySelector('.nothelpful-count');
+        const helpfulIcon = helpfulBtn.querySelector('i');
+        const notHelpfulIcon = notHelpfulBtn.querySelector('i');
         
+        // Update counts in buttons
         helpfulCount.textContent = data.helpful_votes;
         notHelpfulCount.textContent = data.not_helpful_votes;
         
-        // Update button styles
+        // Update counts in review stats section
+        const statsSpan = document.querySelector(`.review-stats-helpful[data-review-id="${reviewId}"]`);
+        if (statsSpan) {
+          statsSpan.textContent = data.helpful_votes + ' found this helpful';
+        }
+        
+        // Update button styles based on action
         if (data.action === 'removed') {
+          // Vote was removed
           if (voteType === 'helpful') {
             helpfulBtn.classList.remove('bg-blue-100', 'border-blue-300');
-            helpfulBtn.querySelector('i').classList.replace('text-blue-600', 'text-gray-600');
+            helpfulIcon.classList.remove('text-blue-600');
+            helpfulIcon.classList.add('text-gray-600');
           } else {
             notHelpfulBtn.classList.remove('bg-red-100', 'border-red-300');
-            notHelpfulBtn.querySelector('i').classList.replace('text-red-600', 'text-gray-600');
+            notHelpfulIcon.classList.remove('text-red-600');
+            notHelpfulIcon.classList.add('text-gray-600');
           }
-        } else {
+        } else if (data.action === 'added' || data.action === 'changed') {
+          // Vote was added or changed
           if (voteType === 'helpful') {
+            // Highlight helpful, remove highlight from not helpful
             helpfulBtn.classList.add('bg-blue-100', 'border-blue-300');
-            helpfulBtn.querySelector('i').classList.replace('text-gray-600', 'text-blue-600');
+            helpfulIcon.classList.remove('text-gray-600');
+            helpfulIcon.classList.add('text-blue-600');
+            
             notHelpfulBtn.classList.remove('bg-red-100', 'border-red-300');
-            notHelpfulBtn.querySelector('i').classList.replace('text-red-600', 'text-gray-600');
+            notHelpfulIcon.classList.remove('text-red-600');
+            notHelpfulIcon.classList.add('text-gray-600');
           } else {
+            // Highlight not helpful, remove highlight from helpful
             notHelpfulBtn.classList.add('bg-red-100', 'border-red-300');
-            notHelpfulBtn.querySelector('i').classList.replace('text-gray-600', 'text-red-600');
+            notHelpfulIcon.classList.remove('text-gray-600');
+            notHelpfulIcon.classList.add('text-red-600');
+            
             helpfulBtn.classList.remove('bg-blue-100', 'border-blue-300');
-            helpfulBtn.querySelector('i').classList.replace('text-blue-600', 'text-gray-600');
+            helpfulIcon.classList.remove('text-blue-600');
+            helpfulIcon.classList.add('text-gray-600');
           }
         }
       }
-      showMessage('Vote ' + data.action, 'success');
+      showMessage('Vote ' + (data.action === 'removed' ? 'removed' : 'recorded'), 'success');
     } else {
       showMessage(data.error || 'Error voting', 'error');
     }
