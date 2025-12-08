@@ -6,12 +6,18 @@ from django.contrib.auth import logout
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Sum, Count, F, FloatField, ExpressionWrapper
 from django.conf import settings
-from common.user.auths.models import UserModel
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from datetime import timedelta
+from django.db.models.functions import TruncDate, TruncMonth, TruncYear
+
+from datetime import timedelta, datetime
+
+from common.user.auths.models import UserModel
+from common.orders.models import Order
+from common.products.models import Product, Category
+from common.admin.auth_dashboard.sales_report import generate_report_response
 
 from .forms import AdminSigninForm
 
@@ -57,9 +63,265 @@ def admin_signout(request):
     messages.success(request, "Successfully signed out.")
     return redirect('admin_auth:signin')
 
+
+
+
 @staff_member_required(login_url='auth_dashboard:signin')
 def dashboard(request):
-    return render(request, 'admin/dashboard.html')
+    # Get filter parameter
+    selected_filter = request.GET.get('filter', 'daily')
+    
+    # Calculate date range based on filter
+    end_date = timezone.now()
+    if selected_filter == 'daily':
+        start_date = end_date - timedelta(days=30)
+        trunc_func = TruncDate('created_at')
+    elif selected_filter == 'monthly':
+        start_date = end_date - timedelta(days=365)
+        trunc_func = TruncMonth('created_at')
+    else:  # yearly
+        start_date = end_date - timedelta(days=365*5)
+        trunc_func = TruncYear('created_at')
+    
+    # 1. Order Statistics
+    total_orders = Order.objects.count()
+    total_sales = Order.objects.filter(order_status='delivered').aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0
+    
+    # Calculate completed and pending orders
+    completed_orders = Order.objects.filter(order_status='delivered').count()
+    pending_orders = Order.objects.filter(order_status__in=['pending', 'confirmed', 'processing', 'shipped']).count()
+    
+    # 2. Sales Chart Data
+    orders = Order.objects.filter(
+        created_at__range=[start_date, end_date],
+        order_status='delivered'
+    ).annotate(
+        date_truncated=trunc_func
+    ).values('date_truncated').annotate(
+        sales=Sum('total_amount'),
+        orders_count=Count('order_id')
+    ).order_by('date_truncated')
+    
+    # Format chart data
+    daily_sales = []
+    sales_data = []
+    date_labels = []
+    
+    for order in orders:
+        if selected_filter == 'daily':
+            date_str = order['date_truncated'].strftime('%b %d')
+        elif selected_filter == 'monthly':
+            date_str = order['date_truncated'].strftime('%b %Y')
+        else:  # yearly
+            date_str = order['date_truncated'].strftime('%Y')
+        
+        date_labels.append(date_str)
+        sales_amount = float(order['sales'] or 0)
+        sales_data.append(sales_amount)
+        daily_sales.append({
+            'date': date_str,
+            'sales': sales_amount,
+            'orders': order['orders_count']
+        })
+    
+    # 3. Top Products (last 30 days)
+    last_30_days = timezone.now() - timedelta(days=30)
+    
+    # Since you have product directly in Order model
+    top_products = Order.objects.filter(
+        created_at__gte=last_30_days,
+        order_status='delivered'
+    ).values(
+        'product__name',  # Changed from variant__product__name
+        'product__brand'  # Changed from variant__product__brand
+    ).annotate(
+        quantity_sold=Sum('quantity'),
+        total_revenue=Sum(F('unit_price') * F('quantity'))
+    ).order_by('-quantity_sold')[:10]
+    
+    # 4. Top Categories (using product__category)
+    top_categories = Order.objects.filter(
+        created_at__gte=last_30_days,
+        order_status='delivered'
+    ).values(
+        'product__category__name'  # Changed from variant__product__category__name
+    ).annotate(
+        quantity_sold=Sum('quantity'),
+        total_revenue=Sum(F('unit_price') * F('quantity'))
+    ).order_by('-quantity_sold')[:10]
+    
+    # 5. Top Brands
+    top_brands = Order.objects.filter(
+        created_at__gte=last_30_days,
+        order_status='delivered'
+    ).values(
+        'product__brand'  # Changed from variant__product__brand
+    ).annotate(
+        quantity_sold=Sum('quantity'),
+        total_revenue=Sum(F('unit_price') * F('quantity'))
+    ).order_by('-quantity_sold')[:10]
+    
+    # 6. Recent Orders with product information
+    recent_orders = Order.objects.select_related(
+        'user', 
+        'product',
+        'product__category',
+        'variant'
+    ).order_by('-created_at')[:10]
+    
+    # 7. Order Status Distribution
+    status_distribution = Order.objects.values('order_status').annotate(
+        count=Count('order_id')
+    ).order_by('order_status')
+    
+    # Calculate percentages
+    total_count = sum(item['count'] for item in status_distribution)
+    for item in status_distribution:
+        item['percentage'] = round((item['count'] / total_count * 100), 1) if total_count > 0 else 0
+    
+    # 8. Payment Method Distribution
+    payment_method_distribution = Order.objects.values('payment_method').annotate(
+        count=Count('order_id')
+    ).order_by('payment_method')
+    
+    # 9. Additional metrics
+    # Average Order Value
+    avg_order_value = Order.objects.filter(
+        order_status='delivered',
+        created_at__gte=last_30_days
+    ).aggregate(
+        avg_value=ExpressionWrapper(
+            Sum('total_amount') / Count('order_id'),
+            output_field=FloatField()
+        )
+    )['avg_value'] or 0
+    
+    # New customers (last 30 days) - users who made their first order
+    from django.db.models import Min
+    first_time_customers = Order.objects.filter(
+        created_at__gte=last_30_days
+    ).values('user').annotate(
+        first_order_date=Min('created_at')
+    ).filter(
+        created_at__date=F('first_order_date')
+    ).count()
+    
+    # 10. Return Statistics
+    return_statistics = {
+        'total_return_requests': Order.objects.filter(
+            return_requested_at__isnull=False
+        ).count(),
+        'approved_returns': Order.objects.filter(
+            return_approved_at__isnull=False
+        ).count(),
+        'rejected_returns': Order.objects.filter(
+            return_rejected_at__isnull=False
+        ).count(),
+        'completed_returns': Order.objects.filter(
+            returned_at__isnull=False
+        ).count(),
+    }
+    
+    # 11. Top Selling Variants (if you have variant information)
+    top_variants = Order.objects.filter(
+        created_at__gte=last_30_days,
+        order_status='delivered',
+        variant__isnull=False  # Only include orders with variants
+    ).values(
+        'product__name',
+        'variant__size',
+        'variant__color'
+    ).annotate(
+        quantity_sold=Sum('quantity'),
+        total_revenue=Sum(F('unit_price') * F('quantity'))
+    ).order_by('-quantity_sold')[:10]
+    
+    # Calculate period total
+    period_total = sum(item['sales'] for item in daily_sales) if daily_sales else 0
+    
+    # Calculate average daily sales
+    avg_daily_sales = period_total / len(daily_sales) if daily_sales else 0
+    
+    # Find peak day sales
+    peak_day_sales = max((item['sales'] for item in daily_sales), default=0) if daily_sales else 0
+    
+    # 12. Revenue by Payment Status
+    revenue_by_payment_status = Order.objects.values('payment_status').annotate(
+        total_revenue=Sum('total_amount'),
+        order_count=Count('order_id')
+    ).order_by('payment_status')
+
+    today = timezone.now().date()
+    thirty_days_ago = today - timedelta(days=30)
+    
+    context = {
+        'total_orders': total_orders,
+        'total_sales': total_sales,
+        'completed_orders': completed_orders,
+        'pending_orders': pending_orders,
+        'daily_sales': daily_sales,
+        'sales_data': sales_data,
+        'date_labels': date_labels,
+        'top_products': top_products,
+        'top_categories': top_categories,
+        'top_brands': top_brands,
+        'recent_orders': recent_orders,
+        'selected_filter': selected_filter,
+        'avg_order_value': round(avg_order_value, 2),
+        'new_customers': first_time_customers,
+        'period_total': period_total,
+        'avg_daily_sales': round(avg_daily_sales, 2),
+        'peak_day_sales': peak_day_sales,
+        'days_active': len(daily_sales) if daily_sales else 0,
+        'status_distribution': status_distribution,
+        'payment_method_distribution': payment_method_distribution,
+        'return_statistics': return_statistics,
+        'top_variants': top_variants,
+        'revenue_by_payment_status': revenue_by_payment_status,
+        'today': today,
+        'thirty_days_ago': thirty_days_ago,
+    }
+    
+    return render(request, 'admin/dashboard.html', context)
+
+@staff_member_required(login_url='auth_dashboard:signin')
+def download_sales_report(request):
+    """Handle sales report download"""
+    
+    # Get parameters
+    report_format = request.GET.get('format', 'pdf')  # Default to PDF
+    report_type = request.GET.get('type', 'detailed')
+    
+    # Date range
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            start_date = timezone.make_aware(start_date)
+        except:
+            start_date = timezone.now() - timedelta(days=30)
+    else:
+        start_date = timezone.now() - timedelta(days=30)
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            end_date = timezone.make_aware(end_date)
+        except:
+            end_date = timezone.now()
+    else:
+        end_date = timezone.now()
+    
+    # Ensure end_date is at end of day
+    end_date = end_date.replace(hour=23, minute=59, second=59)
+    
+    # Generate and return report
+    return generate_report_response(report_format, start_date, end_date, report_type)
+
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
