@@ -30,7 +30,7 @@ def admin_signin(request):
     # Redirect regular users to user dashboard
     if request.user.is_authenticated and not request.user.is_staff:
         messages.warning(request, "You don't have admin privileges.")
-        return redirect('home')
+        return redirect('user_home:home')
 
     if request.method == 'POST':
         form = AdminSigninForm(request.POST)
