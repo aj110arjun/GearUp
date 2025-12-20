@@ -31,3 +31,8 @@ urlpatterns = [
     path('wallet/', include('common.wallet.urls', namespace='wallet')),
     path('transactions/', include('common.admin.transactions.urls', namespace='transactions')),
 ]
+
+handler404 = 'common.user.home.views.custom_404_view'
+
+
+

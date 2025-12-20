@@ -44,3 +44,10 @@ def home(request):
         'random': random.randint(1, 99),  # Add random number for ratings
     }
     return render(request, 'user/index.html', context)
+
+
+def custom_404_view(request, exception):
+    """
+    Custom 404 error handler
+    """
+    return render(request, '404.html', status=404)
