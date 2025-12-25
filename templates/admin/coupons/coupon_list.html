@@ -21,6 +21,32 @@
         </a>
     </div>
 
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-6 space-y-3">
+        {% for message in messages %}
+        <div class="rounded-lg p-4 flex items-start gap-3 shadow-md {% if message.tags == 'success' %}bg-green-50 border-2 border-green-200{% elif message.tags == 'error' %}bg-red-50 border-2 border-red-200{% elif message.tags == 'warning' %}bg-yellow-50 border-2 border-yellow-200{% else %}bg-blue-50 border-2 border-blue-200{% endif %}">
+            <div class="flex-shrink-0">
+                {% if message.tags == 'success' %}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {% elif message.tags == 'error' %}
+                <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
+                {% elif message.tags == 'warning' %}
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i>
+                {% else %}
+                <i class="fas fa-info-circle text-blue-600 text-xl"></i>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <p class="font-medium {% if message.tags == 'success' %}text-green-800{% elif message.tags == 'error' %}text-red-800{% elif message.tags == 'warning' %}text-yellow-800{% else %}text-blue-800{% endif %}">
+                    {{ message }}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <!-- Total Coupons -->

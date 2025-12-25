@@ -84,6 +84,7 @@ def signin(request):
             
             
             # Redirect to next page or home
+            messages.success(request, f'Successfully signed in as {user.get_full_name() or user.username}')
             next_page = request.GET.get('next', 'user_home:home')
             return redirect(next_page)
     else:

@@ -35,8 +35,13 @@ class Cart(models.Model):
         return sum(item.total_discount for item in self.items.all())
 
     @property
+    def shipping_cost(self):
+        # ₹20 per item in the cart
+        return self.items.count() * 20
+
+    @property
     def final_total(self):
-        return self.subtotal  # Same as subtotal since no discount
+        return self.subtotal + self.shipping_cost
 
 class CartItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

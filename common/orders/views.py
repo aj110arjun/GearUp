@@ -81,7 +81,7 @@ def checkout(request):
     # Calculate cart totals
     cart_total = sum(item.total_price for item in cart_items)
     tax_amount = cart_total * Decimal('0.1')  # 10% tax
-    shipping_cost = Decimal('0.00')  # Free shipping
+    shipping_cost = Decimal(str(cart_items.count() * 20))  # 20 RS per order
     final_total = cart_total + tax_amount + shipping_cost
     
     context = {
@@ -158,7 +158,7 @@ def process_checkout(request, cart, cart_items, wallet):
     
     # Calculate tax on discounted amount
     tax_amount = cart_total_after_coupon * Decimal('0.1')
-    shipping_cost = Decimal('0.00')
+    shipping_cost = Decimal(str(cart_items.count() * 20))
     final_total = cart_total_after_coupon + tax_amount + shipping_cost
     
     # Handle wallet payment
@@ -187,7 +187,7 @@ def process_checkout(request, cart, cart_items, wallet):
             subtotal_after_coupon = Decimal('0')
         
         tax_amount_item = subtotal_after_coupon * Decimal('0.1')
-        shipping_cost_item = Decimal('0.00')
+        shipping_cost_item = Decimal('20.00')
         total_amount_item = subtotal_after_coupon + tax_amount_item + shipping_cost_item
         
 
@@ -229,7 +229,16 @@ def process_checkout(request, cart, cart_items, wallet):
             coupon_discount=item_coupon_discount if coupon_code else Decimal('0'),
         )
         order.save()
+        
+        # Decrement stock quantity
+        if order.variant:
+            order.variant.stock_quantity -= order.quantity
+            order.variant.save()
+            
         created_orders.append(order)
+
+    # Deactivate the cart
+    cart.delete()
     
     # Record coupon usage if coupon was applied
     if coupon_obj and created_orders:
@@ -339,8 +348,6 @@ def process_checkout(request, cart, cart_items, wallet):
             else:
                 return redirect('orders:order_list')
     
-    # Deactivate the cart
-    cart.delete()
     
     # Redirect based on number of orders
     if len(created_orders) == 1:
@@ -462,6 +469,11 @@ def cancel_order(request, order_id):
         order.payment_status = 'failed'
 
     order.save()
+    
+    # Increment stock quantity back
+    if order.variant:
+        order.variant.stock_quantity += order.quantity
+        order.variant.save()
     
     messages.success(request, 'Order cancelled successfully.')
     return redirect('orders:order_list')
@@ -671,7 +683,7 @@ def create_razorpay_order(request):
         
         # Calculate tax on discounted amount
         tax_amount = cart_total_after_coupon * Decimal('0.1')
-        shipping_cost = Decimal('0.00')
+        shipping_cost = Decimal(str(cart_items.count() * 20))
         final_total = cart_total_after_coupon + tax_amount + shipping_cost
         
 
@@ -817,10 +829,14 @@ def admin_order_update_status(request, order_id):
             
         except Exception as e:
             messages.error(request, f'Order cancelled but refund failed: {str(e)}')
-            # Still mark as cancelled but payment status remains paid
             order.payment_status = 'paid'
     
     order.save()
+    
+    # Increment stock quantity back if cancelled
+    if new_status == 'cancelled' and order.variant:
+        order.variant.stock_quantity += order.quantity
+        order.variant.save()
     
     # Create order status history (optional but recommended)
     try:
@@ -938,6 +954,11 @@ def admin_order_cancel(request, order_id):
         order.payment_status = 'refunded'
     
     order.save()
+    
+    # Increment stock quantity back
+    if order.variant:
+        order.variant.stock_quantity += order.quantity
+        order.variant.save()
     
     # Here you could:
     # 1. Create cancellation record
