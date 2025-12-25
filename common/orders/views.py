@@ -84,6 +84,9 @@ def checkout(request):
     shipping_cost = Decimal(str(cart_items.count() * 20))  # 20 RS per order
     final_total = cart_total + tax_amount + shipping_cost
     
+    # Check if COD is available (blocked for orders >= 1000)
+    cod_available = final_total < Decimal('1000')
+    
     context = {
         'cart': cart,
         'cart_items': cart_items,
@@ -96,6 +99,7 @@ def checkout(request):
         'cart_item_count': cart_items.count(),
         'user': request.user,
         'wallet_balance': wallet.balance,
+        'cod_available': cod_available,
     }
     return render(request, 'user/orders/checkout.html', context)
         

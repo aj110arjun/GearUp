@@ -2,15 +2,23 @@
 {% load static %}
 {% block title %} Shopping Cart {% endblock %}
 {% block breadcrumbs %}
-    <div class="breadcrumb">
-        <div class="container mx-auto px-4 lg:px-6">
-            <nav aria-label="Breadcrumb">
-                <ol class="flex items-center text-sm text-gray-600">
-                    <li class="breadcrumb-item">
-                        <a href="{% url 'user_home:home' %}"><i class="fas fa-home mr-1"></i>Home</a>
+<div class="breadcrumb py-3 bg-gray-50 border-b border-gray-100">
+    <div class="container mx-auto px-4 lg:px-6">
+        <nav aria-label="Breadcrumb" class="flex">
+            <ol class="flex items-center space-x-2 md:space-x-3">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'user_home:home' %}" class="inline-flex items-center text-gray-600 hover:text-emerald-600 transition-colors duration-200">
+                        <i class="fas fa-home mr-1.5 text-sm"></i>
+                        <span class="text-sm font-medium">Home</span>
+                    </a>
                 </li>
-                <li class="breadcrumb-item text-emerald-600 font-medium" aria-current="page">
-                    Shopping Cart
+                <li class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li class="breadcrumb-item" aria-current="page">
+                    <span class="text-sm font-semibold text-emerald-600">Shopping Cart</span>
                 </li>
             </ol>
         </nav>
