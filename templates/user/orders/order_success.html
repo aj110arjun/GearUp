@@ -93,13 +93,20 @@
                                 <span class="text-gray-600">Subtotal</span>
                                 <span class="font-medium">₹{{ order.subtotal|intcomma }}</span>
                             </div>
+
+                            {% if order.coupon_discount > 0 %}
+                            <div class="flex justify-between text-emerald-600">
+                                <span>Coupon Discount ({% if order.coupon_code %}{{ order.coupon_code }}{% else %}Applied{% endif %})</span>
+                                <span class="font-medium">- ₹{{ order.coupon_discount|intcomma }}</span>
+                            </div>
+                            {% endif %}
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Tax (10%)</span>
                                 <span class="font-medium">₹{{ order.tax_amount|intcomma }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Shipping</span>
-                                <span class="font-medium text-green-600">FREE</span>
+                                <span class="font-medium">₹{{ order.shipping_cost|intcomma }}</span>
                             </div>
                             <div class="border-t border-gray-200 pt-3 mt-3">
                                 <div class="flex justify-between">
@@ -150,6 +157,14 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- Redirection Timer -->
+        <div class="mb-6 text-center">
+            <p class="text-gray-600 bg-blue-50 py-3 px-6 rounded-full inline-block border border-blue-100">
+                <i class="fas fa-clock mr-2 text-blue-500 animate-pulse"></i>
+                You will be redirected to your orders in <span id="countdown" class="font-bold text-blue-600 text-lg">5</span> seconds...
+            </p>
+        </div>
 
         <!-- Action Buttons -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -208,10 +223,21 @@
 </div>
 
 <script>
-// Auto-redirect to orders page after 30 seconds
-setTimeout(function() {
-    window.location.href = "{% url 'orders:order_list' %}";
-}, 30000);
+// Auto-redirect to orders page after 5 seconds with countdown
+let secondsLeft = 5;
+const countdownElement = document.getElementById('countdown');
+
+const timer = setInterval(function() {
+    secondsLeft--;
+    if (countdownElement) {
+        countdownElement.textContent = secondsLeft;
+    }
+    
+    if (secondsLeft <= 0) {
+        clearInterval(timer);
+        window.location.href = "{% url 'orders:order_list' %}";
+    }
+}, 1000);
 
 // Add confetti effect (optional)
 document.addEventListener('DOMContentLoaded', function() {
