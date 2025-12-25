@@ -322,9 +322,16 @@
                             <span class="text-gray-600">Tax (10%)</span>
                             <span class="text-gray-900">₹{{ order.tax_amount }}</span>
                         </div>
+                        
+                        {% if order.coupon_discount > 0 %}
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                            <span class="text-emerald-600 font-medium">Coupon Discount ({% if order.coupon_code %}{{ order.coupon_code }}{% else %}Applied{% endif %})</span>
+                            <span class="text-emerald-600 font-semibold">- ₹{{ order.coupon_discount }}</span>
+                        </div>
+                        {% endif %}
                         <div class="flex justify-between items-center py-3 border-b border-gray-100">
                             <span class="text-gray-600">Shipping</span>
-                            <span class="font-medium text-emerald-600">FREE</span>
+                            <span class="font-medium">₹{{ order.shipping_cost }}</span>
                         </div>
                         
                         <!-- Show Total Amount -->

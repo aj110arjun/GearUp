@@ -212,7 +212,7 @@
                 <div class="mt-2 text-sm text-gray-500 space-y-1">
                   <p class="flex items-center"><i class="fas fa-info-circle text-blue-500 mr-2"></i> Please keep exact change ready</p>
                   <p class="flex items-center"><i class="fas fa-clock text-blue-500 mr-2"></i> Delivery executive will collect payment</p>
-                  <p class="flex items-center"><i class="fas fa-truck text-blue-500 mr-2"></i> Free shipping on all orders</p>
+                  <p class="flex items-center"><i class="fas fa-truck text-blue-500 mr-2"></i> ₹20 delivery charge per item</p>
                 </div>
               </div>
             </div>
@@ -330,8 +330,8 @@
             </div>
             
             <div class="flex justify-between text-gray-600">
-              <span>Shipping</span>
-              <span class="text-green-600">FREE</span>
+              <span>Shipping (₹20 per item)</span>
+              <span>₹{{ shipping_cost|floatformat:2 }}</span>
             </div>
             
             <div class="flex justify-between text-gray-600">
@@ -392,7 +392,7 @@
               </div>
               <div class="flex items-center">
                 <i class="fas fa-truck text-blue-500 mr-1.5"></i>
-                Free Shipping
+                Fast Shipping
               </div>
               <div class="flex items-center">
                 <i class="fas fa-undo-alt text-purple-500 mr-1.5"></i>
@@ -713,6 +713,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let appliedCoupon = null;
   let originalTotal = parseFloat('{{ final_total }}');
   let originalSubtotal = parseFloat('{{ cart_total }}');
+  let shippingCost = parseFloat('{{ shipping_cost|default:0 }}');
   
   // Apply Coupon Button
   document.getElementById('apply-coupon-btn').addEventListener('click', function() {
@@ -807,7 +808,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tax-amount').textContent = '₹' + newTax.toFixed(2);
     
     // Calculate new total
-    const newTotal = newSubtotal + newTax;
+    const newTotal = newSubtotal + newTax + shippingCost;
     document.getElementById('final-total').textContent = '₹' + newTotal.toFixed(2);
   }
   
