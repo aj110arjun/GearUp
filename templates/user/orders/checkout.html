@@ -3,23 +3,38 @@
 {% load static %}
 {% block title %} Checkout - GearUp {% endblock %}
 {% block breadcrumbs %}
-    <div class="breadcrumb">
-        <div class="container mx-auto px-4 lg:px-6">
-            <nav aria-label="Breadcrumb">
-                <ol class="flex items-center text-sm text-gray-600">
-                    <li class="breadcrumb-item">
-                        <a href="{% url 'user_home:home' %}"><i class="fas fa-home mr-1"></i>Home</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="{% url 'shop:cart' %}"> Shopping Cart</a>
-                    </li>
-                    <li class="breadcrumb-item text-emerald-600 font-medium" aria-current="page">
-                        Checkout
-                    </li>
-                </ol>
-            </nav>
-        </div>
+<div class="breadcrumb py-3 bg-gray-50 border-b border-gray-100">
+    <div class="container mx-auto px-4 lg:px-6">
+        <nav aria-label="Breadcrumb" class="flex">
+            <ol class="flex items-center space-x-2 md:space-x-3">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'user_home:home' %}" class="inline-flex items-center text-gray-600 hover:text-emerald-600 transition-colors duration-200">
+                        <i class="fas fa-home mr-1.5 text-sm"></i>
+                        <span class="text-sm font-medium">Home</span>
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'shop:cart' %}" class="inline-flex items-center text-gray-600 hover:text-emerald-600 transition-colors duration-200">
+                        <span class="text-sm font-medium">Shopping Cart</span>
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li class="breadcrumb-item" aria-current="page">
+                    <span class="text-sm font-semibold text-emerald-600">Checkout</span>
+                </li>
+            </ol>
+        </nav>
     </div>
+</div>
 {% endblock breadcrumbs %}
 {% block content %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -120,13 +135,22 @@
             
             <div class="space-y-3">
               <!-- Cash on Delivery -->
-              <label class="flex items-start p-4 border-2 border-blue-500 rounded-lg cursor-pointer bg-blue-50 payment-option" data-method="cash_on_delivery">
-                <input type="radio" name="payment_method_ui" value="cash_on_delivery" class="mt-1 text-blue-600 payment-radio" checked>
-                <div class="ml-3 flex items-center space-x-3">
-                  <i class="fas fa-money-bill-wave text-green-500 text-xl"></i>
-                  <div>
-                    <span class="text-gray-700 font-medium">Cash on Delivery</span>
-                    <p class="text-sm text-gray-500 mt-1">Pay when you receive your order</p>
+              <label class="flex items-start p-4 border-2 {% if cod_available %}border-blue-500 bg-blue-50{% else %}border-gray-300 bg-gray-100{% endif %} rounded-lg {% if cod_available %}cursor-pointer{% else %}cursor-not-allowed opacity-60{% endif %} payment-option" data-method="cash_on_delivery">
+                <input type="radio" name="payment_method_ui" value="cash_on_delivery" class="mt-1 text-blue-600 payment-radio" {% if cod_available %}checked{% else %}disabled{% endif %}>
+                <div class="ml-3 flex-1">
+                  <div class="flex items-center space-x-3">
+                    <i class="fas fa-money-bill-wave {% if cod_available %}text-green-500{% else %}text-gray-400{% endif %} text-xl"></i>
+                    <div class="flex-1">
+                      <span class="{% if cod_available %}text-gray-700{% else %}text-gray-500{% endif %} font-medium">Cash on Delivery</span>
+                      {% if cod_available %}
+                      <p class="text-sm text-gray-500 mt-1">Pay when you receive your order</p>
+                      {% else %}
+                      <p class="text-sm text-red-600 mt-1">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        Not available for orders ₹1000 or above
+                      </p>
+                      {% endif %}
+                    </div>
                   </div>
                 </div>
               </label>
@@ -493,12 +517,26 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Initialize first payment method as selected
-  const firstPayment = document.querySelector('.payment-radio:checked');
+  const codAvailable = {{ cod_available|lower }};
+  let firstPayment = document.querySelector('.payment-radio:checked');
+  
+  // If COD is not available and it's currently selected, select Razorpay instead
+  if (!codAvailable && firstPayment && firstPayment.value === 'cash_on_delivery') {
+    firstPayment.checked = false;
+    const razorpayRadio = document.querySelector('.payment-radio[value="razorpay"]');
+    if (razorpayRadio) {
+      razorpayRadio.checked = true;
+      firstPayment = razorpayRadio;
+      selectedPaymentMethod.value = 'razorpay';
+    }
+  }
+  
   if (firstPayment) {
     const selectedOption = firstPayment.closest('.payment-option');
     selectedOption.style.borderColor = '#3b82f6';
     selectedOption.style.backgroundColor = '#dbeafe';
     updatePaymentDetails(firstPayment.value);
+    updatePlaceOrderButton(firstPayment.value);
   }
   
   // Place order button click
