@@ -346,3 +346,32 @@ class ResetPasswordForm(forms.Form):
             raise ValidationError("The two password fields didn't match.")
         
         return cleaned_data
+
+
+class EmailChangeForm(forms.Form):
+    """Form to initiate email change"""
+    new_email = forms.EmailField(
+        required=True,
+        label="New Email Address",
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'Enter your new email address',
+            'class': 'form-control'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_new_email(self):
+        new_email = self.cleaned_data['new_email']
+        if self.user and self.user.email == new_email:
+            raise ValidationError("New email must be different from your current email.")
+        if UserModel.objects.filter(email=new_email).exists():
+            raise ValidationError("This email is already registered with another account.")
+        return new_email
+
+
+class EmailChangeOTPForm(OTPVerificationForm):
+    """Form to verify OTP for email change"""
+    pass

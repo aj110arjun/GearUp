@@ -653,8 +653,11 @@ def category_offer_delete(request, offer_id):
 @never_cache
 def product_list_user(request):
     """User-side product listing with filtering and sorting"""
-    # Get all active products with variants
-    products = Product.objects.filter(is_active=True).prefetch_related('variants', 'category', 'images')
+    # Get all active products with variants, annotated with review stats
+    products = Product.objects.filter(is_active=True).annotate(
+        avg_rating_sort=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
+        review_count_sort=Count('reviews', filter=Q(reviews__is_approved=True))
+    ).prefetch_related('variants', 'category', 'images')
     
     # Get filter parameters
     category_id = request.GET.get('category')
@@ -694,10 +697,12 @@ def product_list_user(request):
         products = products.order_by('-name')
     elif sort_by == 'newest':
         products = products.order_by('-created_at')
-    elif sort_by == 'rating':
-        products = products.annotate(
-            avg_rating=Avg('reviews__rating')
-        ).order_by('-avg_rating')
+    elif sort_by == 'rating_desc':
+        products = products.order_by('-avg_rating_sort', '-created_at')
+    elif sort_by == 'rating_asc':
+        products = products.order_by('avg_rating_sort', '-created_at')
+    elif sort_by == 'reviews_desc':
+        products = products.order_by('-review_count_sort', '-created_at')
     else:
         # Default ordering
         products = products.order_by('-created_at')

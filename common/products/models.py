@@ -169,15 +169,22 @@ class Product(models.Model):
     # ADD THESE PROPERTIES FOR TEMPLATE COMPATIBILITY
     @property
     def avg_rating(self):
-        """Calculate average rating for the product"""
-        # If you have a Review model, implement this
-        return 4.5  # Placeholder - implement based on your review system
+        """Calculate average rating for the product, prioritizing annotated values"""
+        if hasattr(self, 'avg_rating_sort'):
+            return round(self.avg_rating_sort, 1) if self.avg_rating_sort else 0
+        return self.get_average_rating()
 
     @property
     def rating_count(self):
-        """Get number of ratings"""
-        # If you have a Review model, implement this
-        return 10  # Placeholder
+        """Get number of ratings, prioritizing annotated values"""
+        if hasattr(self, 'review_count_sort'):
+            return self.review_count_sort
+        return self.get_total_reviews()
+
+    @property
+    def review_count(self):
+        """Alias for rating_count for template compatibility"""
+        return self.rating_count
 
     @property
     def best_offer(self):

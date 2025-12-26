@@ -11,13 +11,17 @@ urlpatterns = [
     path('cart/update/<uuid:item_id>/', views.update_cart_item, name='update_cart_item'),
     path('cart/remove/<uuid:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('cart/clear/', views.clear_cart, name='clear_cart'),
+    path('cart/move-all-to-wishlist/', views.move_all_to_wishlist, name='move_all_to_wishlist'),
+    path('cart/data/', views.get_cart_data, name='get_cart_data'),
     
     # Wishlist URLs
     path('wishlist/', views.wishlist_view, name='wishlist'),
     path('wishlist/add/<uuid:product_id>/', views.add_to_wishlist, name='add_to_wishlist'),
     path('wishlist/remove/<uuid:item_id>/', views.remove_from_wishlist, name='remove_from_wishlist'),
     path('wishlist/move-to-cart/<uuid:item_id>/', views.move_to_cart, name='move_to_cart'),
-    path('wishlist/toggle/', views.toggle_wishlist, name='toggle_wishlist'),  # NEW
+    path('wishlist/toggle/', views.toggle_wishlist, name='toggle_wishlist'),
+    path('wishlist/clear/', views.clear_wishlist, name='clear_wishlist'),
+    path('wishlist/move-all-to-cart/', views.move_all_to_cart, name='move_all_to_cart'),
     
     # AJAX URLs
     path('ajax/cart-count/', views.ajax_cart_count, name='ajax_cart_count'),

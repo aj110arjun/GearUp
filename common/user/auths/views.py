@@ -22,9 +22,9 @@ from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
 from django.db.models import Q
 
-from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm, CustomPasswordChangeForm, CustomPasswordResetForm, CustomSetPasswordForm, ForgotPasswordForm, ResetPasswordForm
+from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm, CustomPasswordChangeForm, CustomPasswordResetForm, CustomSetPasswordForm, ForgotPasswordForm, ResetPasswordForm, EmailChangeForm, EmailChangeOTPForm
 from .models import UserModel, OTP, PasswordResetToken
-from core.services import send_otp_email, send_password_reset_otp_email
+from core.services import send_otp_email, send_password_reset_otp_email, send_email_change_otp_email
 
 
 @never_cache
@@ -364,14 +364,14 @@ class CustomPasswordResetView(FormView):
 
 class CustomPasswordResetDoneView(TemplateView):
     """Password reset done view"""
-    template_name = 'auth/password_reset_done.html'
+    template_name = 'user/auth/password_reset_done.html'
 
 
 class CustomPasswordResetConfirmView(FormView):
     """
     Custom password reset confirm view with token validation
     """
-    template_name = 'auth/password_reset_confirm.html'
+    template_name = 'user/auth/password_reset_confirm.html'
     form_class = CustomSetPasswordForm
     success_url = reverse_lazy('password_reset_complete')
     
@@ -429,7 +429,7 @@ class CustomPasswordResetConfirmView(FormView):
 
 class CustomPasswordResetCompleteView(TemplateView):
     """Password reset complete view"""
-    template_name = 'auth/password_reset_complete.html'
+    template_name = 'user/auth/password_reset_complete.html'
 
 
 def check_reset_token(request, token):
@@ -656,3 +656,113 @@ def reset_password(request):
     
     return render(request, 'user/auth/reset_password.html', {'form': form})
 
+
+# ============================================
+# Email Change Flow
+# ============================================
+
+@login_required
+@never_cache
+def initiate_email_change(request):
+    """Step 1: User enters new email address"""
+    # Block social (Google) users from changing email
+    if request.user.socialaccount_set.exists():
+        messages.error(request, "Google accounts cannot change their email address here.")
+        return redirect('user_auth:profile')
+
+    if request.method == 'POST':
+        form = EmailChangeForm(request.POST, user=request.user)
+        if form.is_valid():
+            new_email = form.cleaned_data['new_email']
+            
+            # Generate and send OTP to NEW email
+            otp = OTP.create_otp(new_email)
+            send_email_change_otp_email(new_email, otp.otp_code)
+            
+            # Store new email in session
+            request.session['new_email_request'] = new_email
+            request.session['email_change_otp_sent'] = True
+            
+            messages.success(request, f"A verification code has been sent to {new_email}")
+            return redirect('user_auth:verify_email_change')
+    else:
+        form = EmailChangeForm(user=request.user)
+    
+    return render(request, 'user/auth/initiate_email_change.html', {'form': form})
+
+
+@login_required
+@never_cache
+def verify_email_change(request):
+    """Step 2: Verify OTP sent to new email"""
+    if 'new_email_request' not in request.session or 'email_change_otp_sent' not in request.session:
+        messages.error(request, "Please initiate an email change request first.")
+        return redirect('user_auth:initiate_email_change')
+    
+    new_email = request.session['new_email_request']
+    
+    # Get the latest OTP for this email
+    try:
+        otp = OTP.objects.filter(email=new_email, is_verified=False).latest('created_at')
+    except OTP.DoesNotExist:
+        messages.error(request, "OTP expired. Please request a new one.")
+        return redirect('user_auth:initiate_email_change')
+    
+    if request.method == 'POST':
+        form = EmailChangeOTPForm(request.POST)
+        if form.is_valid():
+            otp_code = form.cleaned_data['otp_code']
+            
+            # Verify OTP
+            verified_otp, message = OTP.verify_otp(new_email, otp_code)
+            
+            if verified_otp:
+                # Update user email and username
+                user = request.user
+                user.email = new_email
+                user.username = new_email  # Project uses email as username
+                user.save()
+                
+                # Success notification
+                messages.success(request, f"Your email has been successfully updated to {new_email}")
+                
+                # Cleanup session
+                del request.session['new_email_request']
+                del request.session['email_change_otp_sent']
+                
+                return redirect('user_auth:profile')
+            else:
+                form.add_error('otp_code', message)
+    else:
+        form = EmailChangeOTPForm()
+        
+    # Calculate remaining time
+    remaining_time = max(0, (otp.expires_at - timezone.now()).total_seconds())
+    minutes = int(remaining_time // 60)
+    seconds = int(remaining_time % 60)
+    
+    context = {
+        'form': form,
+        'email': new_email,
+        'remaining_time': int(remaining_time),
+        'timer_display': f"{minutes:02d}:{seconds:02d}",
+        'is_expired': otp.is_expired(),
+    }
+    return render(request, 'user/auth/verify_email_change_otp.html', context)
+
+
+@login_required
+@never_cache
+def resend_email_change_otp(request):
+    """Resend OTP for email change"""
+    if 'new_email_request' not in request.session:
+        return redirect('user_auth:initiate_email_change')
+    
+    new_email = request.session['new_email_request']
+    
+    # Generate new OTP
+    otp = OTP.create_otp(new_email)
+    send_email_change_otp_email(new_email, otp.otp_code)
+    
+    messages.success(request, "New verification code sent!")
+    return redirect('user_auth:verify_email_change')
