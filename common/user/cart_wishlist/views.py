@@ -4,8 +4,10 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q, Avg, Count
 from .models import Cart, CartItem, Wishlist, WishlistItem
 from common.products.models import Product, ProductVariant
+from django.db import transaction
 import json
 
 # Helper functions
@@ -37,78 +39,135 @@ def get_or_create_wishlist(user):
 
 # Cart Views
 @login_required
+@transaction.atomic
 def cart_view(request):
+    """View to display shopping cart and automatically move out-of-stock items to wishlist"""
     cart = get_or_create_cart(request.user)
+    
+    # Check for out-of-stock items and move them to wishlist
+    out_of_stock_moved = 0
     cart_items = cart.items.select_related('variant__product').all()
     
+    for item in cart_items:
+        if item.variant.stock_quantity < 1:
+            product = item.variant.product
+            wishlist = get_or_create_wishlist(request.user)
+            
+            # Add to wishlist (get_or_create ensures no duplicates)
+            WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
+            
+            # Remove all variants of this product from cart
+            CartItem.objects.filter(cart=cart, variant__product=product).delete()
+            out_of_stock_moved += 1
+            
+    if out_of_stock_moved > 0:
+        messages.info(request, f'{out_of_stock_moved} item(s) were moved to your wishlist as they were out of stock.')
+        # Refresh cart items query after deletions
+        cart_items = cart.items.select_related('variant__product').all()
+        cart.refresh_from_db()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.GET.get('ajax') == 'true':
+        # Return JSON for AJAX requests
+        return JsonResponse({
+            'success': True,
+            'cart_count': cart.total_items,
+            'subtotal': float(cart.subtotal),
+            'total_discount': float(cart.total_discount),
+            'shipping_cost': float(cart.shipping_cost),
+            'final_total': float(cart.final_total),
+            'items_count': cart_items.count()
+        })
+
     context = {
         'cart': cart,
         'cart_items': cart_items,
     }
     return render(request, 'user/cart/cart_view.html', context)
 
-@require_POST
 @login_required
-def add_to_cart(request):
-    
-    data = json.loads(request.body)
-    variant_id = data.get('variant_id')
-    quantity = int(data.get('quantity', 1))
-    
-    # Get variant
-    variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
-    product = variant.product
-    
-    # Check stock
-    # Check stock
-    if variant.stock_quantity < 1:
-        return JsonResponse({
-            'success': False,
-            'message': 'Product is out of stock'
-        })
-    
-    # Get or create cart
+def get_cart_data(request):
+    """API endpoint to get current cart data"""
     cart = get_or_create_cart(request.user)
-    
-    # Check if item already exists in cart
-    existing_item = CartItem.objects.filter(cart=cart, variant=variant).first()
-    removed = False
-    added = False
-    
-    if existing_item:
-        # If item exists, remove it (toggle functionality)
-        existing_item.delete()
-        removed = True
-        message = 'Product removed from cart'
-        cart_count = cart.total_items
-    else:
-        # Add new item to cart
-        CartItem.objects.create(
-            cart=cart,
-            variant=variant,
-            quantity=min(quantity, variant.stock_quantity)
-        )
-        added = True
-        message = 'Product added to cart successfully'
-        cart_count = cart.total_items
-        
-        # MUTUAL EXCLUSIVITY: Remove from wishlist if adding to cart
-        wishlist = get_or_create_wishlist(request.user)
-        WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
-    
-    # Refresh cart to get updated totals
-    cart.refresh_from_db()
+    cart_items = cart.items.all()
     
     return JsonResponse({
         'success': True,
-        'added': added,
-        'removed': removed,
-        'message': message,
-        'cart_count': cart_count
+        'cart_count': cart.total_items,
+        'subtotal': float(cart.subtotal),
+        'total_discount': float(cart.total_discount),
+        'shipping_cost': float(cart.shipping_cost),
+        'final_total': float(cart.final_total),
+        'items_count': cart_items.count()
     })
+
+@require_POST
+@login_required
+@transaction.atomic
+def add_to_cart(request):
+    try:
+        data = json.loads(request.body)
+        variant_id = data.get('variant_id')
+        quantity = int(data.get('quantity', 1))
+        
+        # Get variant
+        variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
+        product = variant.product
+        
+        # Check stock
+        if variant.stock_quantity < 1:
+            return JsonResponse({
+                'success': False,
+                'message': 'Product is out of stock'
+            })
+        
+        # Get or create cart
+        cart = get_or_create_cart(request.user)
+        
+        # Check if item already exists in cart
+        existing_item = CartItem.objects.filter(cart=cart, variant=variant).first()
+        removed = False
+        added = False
+        
+        if existing_item:
+            # If item exists, remove it (toggle functionality)
+            existing_item.delete()
+            removed = True
+            message = 'Product removed from cart'
+        else:
+            # Add new item to cart
+            CartItem.objects.create(
+                cart=cart,
+                variant=variant,
+                quantity=min(quantity, variant.stock_quantity)
+            )
+            added = True
+            message = 'Product added to cart successfully'
+            
+            # MUTUAL EXCLUSIVITY: Remove from wishlist if adding to cart
+            wishlist = get_or_create_wishlist(request.user)
+            WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
+        
+        # Refresh cart to get updated totals
+        cart.refresh_from_db()
+        wishlist = get_or_create_wishlist(request.user)
+        
+        return JsonResponse({
+            'success': True,
+            'added': added,
+            'removed': removed,
+            'message': message,
+            'cart_count': cart.total_items,
+            'wishlist_count': wishlist.total_items
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error processing request: {str(e)}'
+        })
     
 @require_POST
 @login_required
+@transaction.atomic
 def toggle_cart_item(request):
     """Toggle cart item - add if not exists, remove if exists"""
     try:
@@ -125,12 +184,13 @@ def toggle_cart_item(request):
         
         cart = get_or_create_cart(request.user)
         existing_item = CartItem.objects.filter(cart=cart, variant=variant).first()
+        removed = False
+        added = False
         
         if existing_item:
             # Remove from cart
             existing_item.delete()
             removed = True
-            added = False
             message = 'Product removed from cart'
         else:
             # Add to cart
@@ -140,22 +200,23 @@ def toggle_cart_item(request):
                 quantity=1
             )
             added = True
-            removed = False
             message = 'Product added to cart'
             
             # MUTUAL EXCLUSIVITY: Remove from wishlist if adding to cart
             wishlist = get_or_create_wishlist(request.user)
             WishlistItem.objects.filter(wishlist=wishlist, product=variant.product).delete()
         
-        # Refresh cart to get updated count
+        # Refresh and get totals
         cart.refresh_from_db()
+        wishlist = get_or_create_wishlist(request.user)
         
         return JsonResponse({
             'success': True,
             'added': added,
             'removed': removed,
             'message': message,
-            'cart_count': cart.total_items
+            'cart_count': cart.total_items,
+            'wishlist_count': wishlist.total_items
         })
         
     except Exception as e:
@@ -167,6 +228,7 @@ def toggle_cart_item(request):
 
 @require_POST
 @login_required
+@transaction.atomic
 def update_cart_item(request, item_id):
     try:
         data = json.loads(request.body)
@@ -190,12 +252,19 @@ def update_cart_item(request, item_id):
             cart_item.quantity = quantity
             cart_item.save()
             message = 'Cart updated successfully'
+            
+            # MUTUAL EXCLUSIVITY: Remove from wishlist if in cart
+            wishlist = get_or_create_wishlist(request.user)
+            WishlistItem.objects.filter(wishlist=wishlist, product=cart_item.variant.product).delete()
         
         cart = get_or_create_cart(request.user)
+        wishlist = get_or_create_wishlist(request.user)
+        
         return JsonResponse({
             'success': True,
             'message': message,
             'cart_count': cart.total_items,
+            'wishlist_count': wishlist.total_items,
             'subtotal': cart.subtotal,
             'total_discount': cart.total_discount,
             'final_total': cart.final_total,
@@ -242,11 +311,108 @@ def clear_cart(request):
     messages.success(request, 'Cart cleared successfully')
     return redirect('shop:cart')
 
+@require_POST
+@login_required
+@transaction.atomic
+def move_to_wishlist(request, item_id):
+    """AJAX endpoint to move cart item to wishlist"""
+    try:
+        cart_item = get_object_or_404(
+            CartItem, 
+            id=item_id, 
+            cart__user=request.user
+        )
+        product = cart_item.variant.product
+        wishlist = get_or_create_wishlist(request.user)
+        
+        # Add to wishlist
+        WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
+        
+        # Remove all variants of this product from cart to ensure mutual exclusivity
+        CartItem.objects.filter(cart__user=request.user, variant__product=product).delete()
+        
+        cart = get_or_create_cart(request.user)
+        cart.refresh_from_db()
+        wishlist.refresh_from_db()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Product moved to wishlist successfully',
+            'cart_count': cart.total_items,
+            'wishlist_count': wishlist.total_items,
+            'subtotal': float(cart.subtotal),
+            'total_discount': float(cart.total_discount),
+            'final_total': float(cart.final_total)
+        })
+        
+    except Exception as e:
+        print(f"Error in move_to_wishlist: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Error moving product to wishlist'
+        })
+
+@require_POST
+@login_required
+@transaction.atomic
+def move_all_to_wishlist(request):
+    """AJAX endpoint to move all cart items to wishlist"""
+    try:
+        cart = get_or_create_cart(request.user)
+        cart_items = cart.items.all()
+        
+        if not cart_items:
+            return JsonResponse({
+                'success': False,
+                'message': 'Cart is empty'
+            })
+            
+        wishlist = get_or_create_wishlist(request.user)
+        
+        # Move all unique products to wishlist
+        products_to_move = set()
+        for item in cart_items:
+            products_to_move.add(item.variant.product)
+            
+        for product in products_to_move:
+            WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
+            
+        # Clear the cart
+        cart.items.all().delete()
+        
+        cart.refresh_from_db()
+        wishlist.refresh_from_db()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Moved {len(products_to_move)} products to wishlist',
+            'cart_count': cart.total_items,
+            'wishlist_count': wishlist.total_items,
+            'subtotal': float(cart.subtotal),
+            'total_discount': float(cart.total_discount),
+            'final_total': float(cart.final_total)
+        })
+        
+    except Exception as e:
+        print(f"Error in move_all_to_wishlist: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Error moving all items to wishlist'
+        })
+
 # Wishlist Views
 @login_required
 def wishlist_view(request):
     wishlist = get_or_create_wishlist(request.user)
-    wishlist_items = wishlist.items.select_related('product').all()
+    wishlist_items = wishlist.items.select_related('product').annotate(
+        avg_rating_sort=Avg('product__reviews__rating', filter=Q(product__reviews__is_approved=True)),
+        review_count_sort=Count('product__reviews', filter=Q(product__reviews__is_approved=True))
+    ).all()
+    
+    # Enrich the product objects with the annotated values for the properties to use
+    for item in wishlist_items:
+        item.product.avg_rating_sort = item.avg_rating_sort
+        item.product.review_count_sort = item.review_count_sort
     
     context = {
         'wishlist': wishlist,
@@ -256,6 +422,7 @@ def wishlist_view(request):
 
 @require_POST
 @login_required
+@transaction.atomic
 def toggle_wishlist(request):
     """AJAX endpoint to toggle product in wishlist"""
     try:
@@ -284,12 +451,14 @@ def toggle_wishlist(request):
             CartItem.objects.filter(cart=cart, variant__product=product).delete()
         
         wishlist.refresh_from_db()
+        cart = get_or_create_cart(request.user)
         
         return JsonResponse({
             'success': True,
             'status': status,
             'message': message,
-            'wishlist_count': wishlist.total_items
+            'wishlist_count': wishlist.total_items,
+            'cart_count': cart.total_items
         })
         
     except Exception as e:
@@ -301,6 +470,7 @@ def toggle_wishlist(request):
 
 
 @login_required
+@transaction.atomic
 def add_to_wishlist(request, product_id):
     try:
         product = get_object_or_404(Product, id=product_id, is_active=True)
@@ -317,11 +487,14 @@ def add_to_wishlist(request, product_id):
             cart = get_or_create_cart(request.user)
             CartItem.objects.filter(cart=cart, variant__product=product).delete()
         
+        cart = get_or_create_cart(request.user)
+        
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
                 'message': 'Product added to wishlist',
-                'wishlist_count': wishlist.total_items
+                'wishlist_count': wishlist.total_items,
+                'cart_count': cart.total_items
             })
         else:
             messages.success(request, 'Product added to wishlist')
@@ -335,6 +508,7 @@ def add_to_wishlist(request, product_id):
             })
         else:
             messages.error(request, 'Error adding product to wishlist')
+            return redirect(request.META.get('HTTP_REFERER', 'products:home'))
 
 
 @require_POST  # Add this decorator
@@ -366,8 +540,9 @@ def remove_from_wishlist(request, item_id):
             'message': 'Error removing product from wishlist'
         })
 
-@require_POST  # Add this decorator
+@require_POST
 @login_required
+@transaction.atomic
 def move_to_cart(request, item_id):
     """AJAX endpoint to move wishlist item to cart"""
     try:
@@ -418,6 +593,80 @@ def move_to_cart(request, item_id):
             'message': 'Error moving product to cart'
         })
 
+@require_POST
+@login_required
+@transaction.atomic
+def move_all_to_cart(request):
+    """AJAX endpoint to move all wishlist items to cart"""
+    try:
+        wishlist = get_or_create_wishlist(request.user)
+        wishlist_items = wishlist.items.all()
+        
+        if not wishlist_items:
+            return JsonResponse({
+                'success': False,
+                'message': 'Wishlist is empty'
+            })
+            
+        cart = get_or_create_cart(request.user)
+        moved_count = 0
+        
+        for item in wishlist_items:
+            # Get the first available variant
+            variant = item.product.variants.filter(is_active=True, stock_quantity__gt=0).first()
+            if variant:
+                cart_item, created = CartItem.objects.get_or_create(
+                    cart=cart,
+                    variant=variant,
+                    defaults={'quantity': 1}
+                )
+                if not created:
+                    cart_item.quantity += 1
+                    cart_item.save()
+                
+                # Item is removed from wishlist by signal or explicitly
+                item.delete()
+                moved_count += 1
+        
+        cart.refresh_from_db()
+        wishlist.refresh_from_db()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Moved {moved_count} items to cart',
+            'cart_count': cart.total_items,
+            'wishlist_count': wishlist.total_items
+        })
+        
+    except Exception as e:
+        print(f"Error in move_all_to_cart: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Error moving all items to cart'
+        })
+
+@require_POST
+@login_required
+@transaction.atomic
+def clear_wishlist(request):
+    """AJAX endpoint to clear the entire wishlist"""
+    try:
+        wishlist = get_or_create_wishlist(request.user)
+        wishlist.items.all().delete()
+        wishlist.refresh_from_db()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Wishlist cleared successfully',
+            'wishlist_count': 0
+        })
+        
+    except Exception as e:
+        print(f"Error in clear_wishlist: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Error clearing wishlist'
+        })
 
 # AJAX Views
 @login_required

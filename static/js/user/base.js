@@ -154,3 +154,27 @@ window.showConfirmModal = function(options = {}) {
     };
 };
 console.log('Global Modal System Loaded');
+// Helper functions to update counts in navbar
+window.updateCartCount = function(count) {
+  const cartBadge = document.getElementById('cart-badge');
+  if (cartBadge) {
+    cartBadge.textContent = count;
+    if (count > 0) {
+      cartBadge.classList.remove('hidden');
+    } else {
+      cartBadge.classList.add('hidden');
+    }
+  }
+};
+
+window.updateWishlistCount = function(count) {
+  const wishlistBadge = document.getElementById('wishlist-badge');
+  if (wishlistBadge) {
+    wishlistBadge.textContent = count;
+    if (count > 0) {
+      wishlistBadge.classList.remove('hidden');
+    } else {
+      wishlistBadge.classList.add('hidden');
+    }
+  }
+};

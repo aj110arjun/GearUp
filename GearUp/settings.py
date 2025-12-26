@@ -154,6 +154,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'common.user.cart_wishlist.context_processors.cart_wishlist_counts',
                 # 'common.context_processors.cloudinary_settings',
             ],
         },

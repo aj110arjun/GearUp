@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #f8fafc;
+            padding-bottom: 60px;
+        }
+        .main {
+            background-color: #ffffff;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            border-spacing: 0;
+            color: #334155;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-top: 40px;
+        }
+        .header {
+            background: linear-gradient(135deg, #059669 0%, #064e3b 100%);
+            padding: 48px 32px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.025em;
+        }
+        .header p {
+            color: #d1fae5;
+            font-size: 16px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .content {
+            padding: 40px 32px;
+        }
+        .title-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+        .body-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 24px;
+        }
+        .otp-container {
+            background-color: #f1f5f9;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            margin: 32px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .otp-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+        .otp-code {
+            font-size: 42px;
+            font-weight: 800;
+            color: #059669;
+            letter-spacing: 0.25em;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .expiry-text {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .footer {
+            padding: 32px;
+            text-align: center;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer-logo {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .footer-tagline {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+        .copyright {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .security-notice {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 24px;
+            padding: 0 32px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        @media screen and (max-width: 600px) {
+            .content {
+                padding: 32px 20px;
+            }
+            .header {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <table class="main">
+            <tr>
+                <td class="header">
+                    <div style="font-size: 40px; margin-bottom: 16px;">{{ icon|default:"🛡️" }}</div>
+                    <h1>GearUp Survival Toolkit</h1>
+                    <p>Equip for Adventure. Prepare for Anything.</p>
+                </td>
+            </tr>
+            <tr>
+                <td class="content">
+                    <div class="title-text">{{ title }}</div>
+                    <p class="body-text">{{ intro_text }}</p>
+                    
+                    <div class="otp-container">
+                        <div class="otp-label">Verification Code</div>
+                        <div class="otp-code">{{ otp_code }}</div>
+                        <div class="expiry-text">
+                            <span>⏱️ This code will expire in <strong>{{ expiry_time|default:"2 minutes" }}</strong></span>
+                        </div>
+                    </div>
+
+                    {% if outro_text %}
+                    <p class="body-text">{{ outro_text }}</p>
+                    {% endif %}
+                    
+                    <p class="body-text" style="margin-bottom: 0;">Stay prepared,</p>
+                    <p class="body-text" style="font-weight: 700; color: #059669;">The GearUp Team</p>
+                </td>
+            </tr>
+            <tr>
+                <td class="footer">
+                    <div class="footer-logo">GearUp</div>
+                    <p class="footer-tagline">Your trusted source for survival and outdoor equipment.</p>
+                    <p class="copyright">&copy; 2025 GearUp Survival Toolkit. All rights reserved.</p>
+                </td>
+            </tr>
+        </table>
+        <div class="security-notice">
+            {{ security_notice|default:"If you didn't request this code, you can safely ignore this email. Your account remains secure." }}
+        </div>
+    </div>
+</body>
+</html>

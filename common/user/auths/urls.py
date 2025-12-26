@@ -56,6 +56,11 @@ urlpatterns = [
          views.resend_reset_email, 
          name='resend_reset_email'),
     
+    # Email Change Flow
+    path('email-change/', views.initiate_email_change, name='initiate_email_change'),
+    path('email-change/verify/', views.verify_email_change, name='verify_email_change'),
+    path('email-change/resend-otp/', views.resend_email_change_otp, name='resend_email_change_otp'),
+
     # Or use allauth's built-in URLs
     # path('social/', include('allauth.socialaccount.urls')),
 ]

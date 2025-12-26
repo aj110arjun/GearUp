@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email Change - GearUp Survival Toolkit</title>
+    <script src="https://unpkg.com/tailwindcss@3.4.10/dist/tailwind.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .survival-bg {
+            background: linear-gradient(rgba(6, 95, 70, 0.85), rgba(6, 95, 70, 0.9)), 
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23065f46"/><path d="M0 50 L100 50 M50 0 L50 100" stroke="%23047a57" stroke-width="1"/></svg>');
+            background-size: cover;
+        }
+        .otp-input:focus {
+            border-color: #059669;
+            box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+        }
+        .content-loaded { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex">
+        <!-- Left side - Brand -->
+        <div class="hidden lg:flex lg:flex-1 survival-bg text-white p-12 flex-col justify-between">
+            <div>
+                <a href="{% url 'user_home:home' %}" class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-campground mr-2"></i>
+                    GearUp
+                </a>
+                <h1 class="text-4xl font-bold mt-16 mb-6">Verify Your New Email</h1>
+                <p class="text-lg opacity-90">We've sent a 4-digit verification code to <span class="font-bold underline">{{ email }}</span>. Please enter it below to complete the change.</p>
+            </div>
+            <div class="text-sm opacity-70">
+                &copy; 2025 GearUp Survival Toolkit.
+            </div>
+        </div>
+
+        <!-- Right side - Form -->
+        <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24">
+            <div class="mx-auto w-full max-w-md">
+                <div class="lg:hidden mb-8 text-center">
+                    <a href="{% url 'user_home:home' %}" class="text-2xl font-bold text-emerald-700 flex items-center justify-center">
+                        <i class="fas fa-campground mr-2"></i>
+                        GearUp
+                    </a>
+                </div>
+                
+                <div class="bg-white py-8 px-6 shadow-lg rounded-lg sm:px-10 border border-emerald-100 content-loaded">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="bg-emerald-100 p-3 rounded-full">
+                            <i class="fas fa-user-shield text-emerald-700 text-xl"></i>
+                        </div>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2 text-center">Verify OTP</h2>
+                    <p class="text-gray-600 mb-8 text-center text-sm">Validating your new email address</p>
+
+                    <!-- Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="mb-4 p-4 {% if message.tags == 'error' %}bg-red-50 border-red-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-md">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle text-red-400{% else %}fa-check-circle text-green-400{% endif %}"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm {% if message.tags == 'error' %}text-red-800{% else %}text-green-800{% endif %}">{{ message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" class="space-y-6" novalidate id="otpForm">
+                        {% csrf_token %}
+                        
+                        <div>
+                            <label for="id_otp_code" class="block text-sm font-medium text-gray-700 text-center mb-4">4-Digit Verification Code</label>
+                            <div class="flex justify-center">
+                                <input id="id_otp_code" 
+                                       name="otp_code" 
+                                       type="text" 
+                                       maxlength="4"
+                                       required 
+                                       autofocus
+                                       class="block w-48 text-center text-3xl font-bold tracking-[1rem] px-3 py-3 border {% if form.otp_code.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                                       placeholder="----">
+                            </div>
+                            {% if form.otp_code.errors %}
+                            <div class="mt-2 text-sm text-red-600 text-center">
+                                {% for error in form.otp_code.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" 
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
+                                Verify & Update Email
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-8 text-center">
+                        <p class="text-sm text-gray-500 mb-2">Didn't receive the code?</p>
+                        <div id="resend-timer" class="text-emerald-600 font-semibold mb-2">
+                            Resend available in <span id="timer">{{ timer_display }}</span>
+                        </div>
+                        <a href="{% url 'user_auth:resend_email_change_otp' %}" 
+                           id="resend-link" 
+                           class="text-sm font-medium text-emerald-600 hover:text-emerald-500 hidden">
+                            <i class="fas fa-redo mr-1 text-xs"></i>
+                            Resend Verification Code
+                        </a>
+                    </div>
+
+                    <div class="mt-6 border-t border-gray-100 pt-6 text-center">
+                        <a href="{% url 'user_auth:initiate_email_change' %}" class="text-xs text-gray-400 hover:text-emerald-600">
+                            Wrong email? Change it here
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Timer Logic
+        let secondsRemaining = {{ remaining_time }};
+        const timerElement = document.getElementById('timer');
+        const resendTimerDiv = document.getElementById('resend-timer');
+        const resendLink = document.getElementById('resend-link');
+
+        function updateTimer() {
+            if (secondsRemaining <= 0) {
+                resendTimerDiv.classList.add('hidden');
+                resendLink.classList.remove('hidden');
+                return;
+            }
+
+            const minutes = Math.floor(secondsRemaining / 60);
+            const seconds = secondsRemaining % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            secondsRemaining--;
+            setTimeout(updateTimer, 1000);
+        }
+
+        if (secondsRemaining > 0) {
+            updateTimer();
+        } else {
+            resendTimerDiv.classList.add('hidden');
+            resendLink.classList.remove('hidden');
+        }
+
+        // Auto-focus and auto-submit
+        const otpInput = document.getElementById('id_otp_code');
+        otpInput.addEventListener('input', (e) => {
+            // Remove non-digits
+            e.target.value = e.target.value.replace(/\D/g, '');
+            if (e.target.value.length === 4) {
+                // Optional: auto-submit
+                // document.getElementById('otpForm').submit();
+            }
+        });
+    </script>
+</body>
+</html>

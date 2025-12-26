@@ -1,9 +1,8 @@
 # core/services.py
 import random
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.conf import settings
-
-import uuid
 from django.db import transaction as db_transaction
 from common.wallet.models import Wallet, Transaction
 
@@ -13,28 +12,92 @@ def generate_otp_code():
     return str(random.randint(1000, 9999))
 
 
-def send_otp_email(email, otp_code):
-    """Send OTP email to user"""
-    subject = 'GearUp - Email Verification Code'
-    message = f'''
-Welcome to GearUp Survival Toolkit!
+def _send_standardized_otp(email, otp_code, subject, template_context):
+    """
+    Internal helper to send a standardized HTML OTP email with plain-text fallback.
+    """
+    # Plain text version for fallback
+    text_message = f"""
+{subject}
 
-Your email verification code is: {otp_code}
+{template_context.get('intro_text', 'Hello!')}
 
-This code will expire in 2 minutes.
+Your verification code is: {otp_code}
 
-If you didn't request this code, please ignore this email.
+This code will expire in {template_context.get('expiry_time', '2 minutes')}.
+
+{template_context.get('security_notice', 'If you didn\'t request this code, please ignore this email.')}
 
 Stay prepared,
 The GearUp Team
-'''
-
-    send_mail(
+"""
+    
+    # Merge default context
+    context = {
+        'otp_code': otp_code,
+        'expiry_time': '2 minutes',
+        **template_context
+    }
+    
+    # HTML version from unified template
+    html_message = render_to_string('user/auth/unified_otp_email.html', context)
+    
+    # Create email with both plain text and HTML
+    email_msg = EmailMultiAlternatives(
         subject,
-        message,
+        text_message,
         settings.DEFAULT_FROM_EMAIL,
-        [email],
-        fail_silently=False,
+        [email]
+    )
+    email_msg.attach_alternative(html_message, "text/html")
+    email_msg.send(fail_silently=False)
+
+
+def send_otp_email(email, otp_code):
+    """Send OTP email for User Signup Verification"""
+    _send_standardized_otp(
+        email=email,
+        otp_code=otp_code,
+        subject='GearUp - Account Verification Code',
+        template_context={
+            'icon': '🏕️',
+            'title': 'Verify Your Account',
+            'intro_text': "Welcome to the GearUp community! We're excited to have you on board. To complete your registration and start your adventure, please use the verification code below:",
+            'outro_text': "Once verified, you'll have full access to our premium survival gear, exclusive member deals, and adventure tracking tools.",
+            'security_notice': "If you didn't create an account with GearUp, you can safely ignore this email. No account will be created without this verification."
+        }
+    )
+
+
+def send_password_reset_otp_email(email, otp_code):
+    """Send OTP email for Password Reset"""
+    _send_standardized_otp(
+        email=email,
+        otp_code=otp_code,
+        subject='GearUp - Password Reset Verification Code',
+        template_context={
+            'icon': '🔐',
+            'title': 'Reset Your Password',
+            'intro_text': "We received a request to reset the password for your GearUp account. For your security, please use the following verification code to proceed:",
+            'outro_text': "Stay prepared for your next adventure!",
+            'security_notice': "Security Notice: If you didn't request this password reset, please ignore this email. Your password will remain unchanged."
+        }
+    )
+
+
+def send_email_change_otp_email(email, otp_code):
+    """Send OTP email for Email Change Verification"""
+    _send_standardized_otp(
+        email=email,
+        otp_code=otp_code,
+        subject='GearUp - Email Change Verification Code',
+        template_context={
+            'icon': '📧',
+            'title': 'Confirm Email Change',
+            'intro_text': "Hello adventurer! You've requested to change your GearUp account email to this address. To confirm this change, please use the verification code below:",
+            'outro_text': "Once confirmed, your account notifications and login credentials will be updated to this email address.",
+            'security_notice': "If you did not initiate this request, please ignore this email and ensure your account password is secure."
+        }
     )
 
 
@@ -61,49 +124,6 @@ The GearUp Team
         [email],
         fail_silently=False,
     )
-
-
-def send_password_reset_otp_email(email, otp_code):
-    """Send password reset OTP email using HTML template"""
-    from django.template.loader import render_to_string
-    from django.core.mail import EmailMultiAlternatives
-    
-    subject = 'GearUp - Password Reset Verification Code'
-    
-    # Plain text version
-    text_message = f'''
-GearUp - Password Reset Request
-
-Hello!
-
-We received a request to reset the password for your GearUp account.
-
-Your verification code is: {otp_code}
-
-This code will expire in 2 minutes.
-
-If you didn't request this password reset, please ignore this email.
-
-Stay prepared,
-The GearUp Team
-'''
-    
-    # HTML version from template
-    html_message = render_to_string('user/auth/password_reset_otp_email.html', {
-        'otp_code': otp_code
-    })
-    
-    # Create email with both plain text and HTML
-    email_msg = EmailMultiAlternatives(
-        subject,
-        text_message,
-        settings.DEFAULT_FROM_EMAIL,
-        [email]
-    )
-    email_msg.attach_alternative(html_message, "text/html")
-    email_msg.send(fail_silently=False)
-
-
 
 
 class WalletService:
