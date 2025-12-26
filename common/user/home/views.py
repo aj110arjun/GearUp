@@ -13,35 +13,56 @@ from common.products.views import Product
 @never_cache
 @login_required(login_url='user_auth:signin')
 def home(request):
-    # Get all active products
-    active_products = Product.objects.filter(
+    """
+    Home page view with Featured, Bestseller, and New Arrival sections
+    """
+    # 1. Bestsellers (Take 4)
+    bestseller_qs = Product.objects.filter(
+        is_active=True, 
+        is_bestseller=True
+    ).prefetch_related('variants', 'category')[:4]
+    
+    # 2. Featured (Take 8)
+    featured_qs = Product.objects.filter(
+        is_active=True, 
+        is_featured=True
+    ).prefetch_related('variants', 'category')[:8]
+    
+    # 3. New Arrivals (Take 8 recent)
+    new_arrivals_qs = Product.objects.filter(
         is_active=True
-    ).prefetch_related('variants')
-    
-    # Convert to list and shuffle for random selection
-    product_list = list(active_products)
-    random.shuffle(product_list)
-    
-    # Take first 12 products
-    random_products = product_list[:12]
-    
-    # Prepare product data with pricing information
-    products_data = []
-    for product in random_products:
-        variants = product.variants.filter(is_active=True)
-        if variants.exists():
-            # Get the first variant for display
-            first_variant = variants.first()
-            products_data.append({
-                'product': product,
-                'price': first_variant.price,
-                'in_stock': first_variant.stock_quantity > 0
-            })
-    
+    ).order_by('-created_at').prefetch_related('variants', 'category')[:8]
+
+    # Helper to process products
+    def _prepare_products(qs):
+        data = []
+        for product in qs:
+            variants = product.variants.filter(is_active=True)
+            if variants.exists():
+                first_variant = variants.first()
+                # Calculate prices
+                original_price = first_variant.price
+                discounted_price = first_variant.get_discounted_price()
+                discount_percentage = first_variant.discount_percentage
+                
+                # Check if there is a discount
+                has_discount = discounted_price < original_price
+
+                data.append({
+                    'product': product,
+                    'price': discounted_price, 
+                    'original_price': original_price if has_discount else None,
+                    'discount_percentage': discount_percentage if has_discount else 0,
+                    'in_stock': first_variant.stock_quantity > 0,
+                })
+        return data
+
     context = {
-        'products': products_data,
-        'today': timezone.now().date(),  # Add current date for birthday detection
-        'random': random.randint(1, 99),  # Add random number for ratings
+        'bestsellers': _prepare_products(bestseller_qs),
+        'featured_products': _prepare_products(featured_qs),
+        'new_arrivals': _prepare_products(new_arrivals_qs),
+        'today': timezone.now().date(),
+        'random': random.randint(1, 99),
     }
     return render(request, 'user/index.html', context)
 

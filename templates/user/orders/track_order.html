@@ -346,28 +346,35 @@
 
 <script>
 function cancelOrder(orderId) {
-    if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
-        fetch(`/orders/${orderId}/cancel/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Order cancelled successfully!');
-                window.location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-        });
-    }
+    window.showConfirmModal({
+        title: 'Cancel Order?',
+        message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+        confirmText: 'Yes, Cancel Order',
+        cancelText: 'Keep Order',
+        variant: 'danger',
+        onConfirm: () => {
+            fetch(`/orders/${orderId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Order cancelled successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred. Please try again.', 'error');
+            });
+        }
+    });
 }
 
 // Auto-refresh for live tracking (every 30 seconds)

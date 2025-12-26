@@ -193,16 +193,16 @@ class ProductEditForm(forms.ModelForm):
                 'placeholder': 'Meta description for SEO (optional)'
             }),
             'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': 'sr-only peer'
             }),
             'is_featured': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': 'sr-only peer'
             }),
             'is_bestseller': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': 'sr-only peer'
             }),
             'track_inventory': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+                'class': 'sr-only peer'
             }),
         }
         labels = {
@@ -405,7 +405,6 @@ class ProductImageForm(forms.ModelForm):
             # Reset file pointer after reading
             if hasattr(image, 'seek'):
                 image.seek(0)
-        
         return image
 
 
@@ -414,23 +413,17 @@ ProductVariantFormSet = inlineformset_factory(
     Product,
     ProductVariant,
     form=ProductVariantForm,
-    extra=1,
-    can_delete=True,
-    min_num=0,
-    validate_min=False,
+    extra=0,
+    can_delete=True
 )
 
 ProductImageFormSet = inlineformset_factory(
     Product,
     ProductImage,
     form=ProductImageForm,
-    extra=1,  # Show only 1 empty image form by default
-    can_delete=True,
-    min_num=0,
-    validate_min=False,
-    max_num=10,  # Limit to 10 images
+    extra=1,
+    can_delete=True
 )
-
 
 
 class CategoryForm(forms.ModelForm):
@@ -457,6 +450,11 @@ class CategoryForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make slug optional so model can auto-generate it if empty
+        self.fields['slug'].required = False
+
     def clean_name(self):
         """
         Form-level validation for case-insensitive unique name
@@ -476,36 +474,19 @@ class CategoryForm(forms.ModelForm):
             
             if queryset.exists():
                 # Find the existing name (with its original case)
-                existing_name = queryset.first().name
                 raise ValidationError(
-                    f'A category with name "{existing_name}" already exists. '
-                    f'Names are case-insensitive.'
+                    'Category with this name already exists.'
                 )
         
         return name
 
     def clean_slug(self):
         """
-        Form-level validation for unique slug
+        Return parsed slug. We skip strict uniqueness check here to allow
+        the model to handle auto-incrementing slugs (e.g. name-1) if needed,
+        unless the user specifically entered a duplicate slug (which the model handles too).
         """
         slug = self.cleaned_data.get('slug')
-        name = self.cleaned_data.get('name')
-        
-        # Generate slug from name if slug is empty
-        if not slug and name:
-            slug = slugify(name)
-        
-        # Ensure slug is unique
-        if slug:
-            queryset = Category.objects.filter(slug=slug)
-            
-            # Exclude current instance if editing
-            if self.instance and self.instance.pk:
-                queryset = queryset.exclude(pk=self.instance.pk)
-            
-            if queryset.exists():
-                raise ValidationError('A category with this slug already exists.')
-        
         return slug
 
 
