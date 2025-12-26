@@ -63,20 +63,30 @@
             </li>
             <li>
               <a href="{% url 'products:product_list_user' %}"
-                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/products/list/' %}text-emerald-600 active{% endif %}">
+                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/products/' %}text-emerald-600 active{% endif %}">
                 Shop
               </a>
             </li>
             <li>
               <a href="{% url 'shop:cart' %}"
-                class="nav-link hover:text-emerald-600 transition-colors flex items-center gap-1 {% if request.path == '/cart/list/' %}text-emerald-600 active{% endif %}">
-                <i class="fas fa-shopping-cart"></i>
+                class="nav-link hover:text-emerald-600 transition-colors flex items-center gap-1 {% if '/cart/' in request.path %}text-emerald-600 active{% endif %} relative group">
+                <div class="relative">
+                  <i class="fas fa-shopping-cart"></i>
+                  <span id="cart-badge" class="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full {% if not user.is_authenticated or cart_count == 0 %}hidden{% endif %}">
+                    {{ cart_count|default:0 }}
+                  </span>
+                </div>
               </a>
             </li>
             <li>
               <a href="{% url 'shop:wishlist' %}"
-                class="nav-link hover:text-emerald-600 transition-colors {% if request.path == '/wishlist/list/' %}text-emerald-600 active{% endif %}">
-                <i class="fas fa-heart"></i>
+                class="nav-link hover:text-emerald-600 transition-colors {% if '/wishlist/' in request.path %}text-emerald-600 active{% endif %} relative group">
+                <div class="relative">
+                  <i class="fas fa-heart"></i>
+                  <span id="wishlist-badge" class="absolute -top-3 -right-3 bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full {% if not user.is_authenticated or wishlist_count == 0 %}hidden{% endif %}">
+                    {{ wishlist_count|default:0 }}
+                  </span>
+                </div>
               </a>
             </li>
             <li>

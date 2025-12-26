@@ -182,7 +182,7 @@
             <div class="p-6">
               <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {% for item in wishlist_items %}
-                <div class="group relative">
+                <div class="group relative wishlist-item" data-item-id="{{ item.id }}">
                   <!-- Main Card -->
                   <div class="bg-white rounded-xl card-hover border border-gray-100 overflow-hidden shadow-sm group-hover:shadow-xl relative z-10">
                     
@@ -200,11 +200,16 @@
                         <div class="absolute bottom-4 left-4 right-4 flex gap-2">
                           {% with first_variant=item.product.variants.first %}
                           {% if first_variant and first_variant.stock_quantity > 0 %}
-                          <button onclick="moveToCartAndRefresh('{{ item.id }}')"
-                                  class="flex-1 bg-white text-gray-800 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm transform group-hover:translate-y-0 translate-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-75">
-                            <i class="fas fa-bolt text-emerald-500"></i>
+                          <button onclick="moveToCart('{{ item.id }}')"
+                                  class="flex-1 bg-white text-gray-800 px-4 py-2.5 rounded-lg font-semibold hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-300 flex items-center justify-center gap-2 text-sm transform group-hover:translate-y-0 translate-y-2 opacity-0 group-hover:opacity-100 shadow-lg">
+                            <i class="fas fa-cart-plus text-emerald-500"></i>
                             Quick Add
                           </button>
+                          {% else %}
+                          <div class="flex-1 bg-gray-200/80 backdrop-blur-sm text-gray-500 px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 text-sm transform group-hover:translate-y-0 translate-y-2 opacity-0 group-hover:opacity-100">
+                            <i class="fas fa-ban"></i>
+                            Out of Stock
+                          </div>
                           {% endif %}
                           {% endwith %}
                           
@@ -277,14 +282,27 @@
                       </h3>
 
                       <!-- Rating -->
+                      {% if item.product.avg_rating %}
                       <div class="flex items-center gap-2 mb-4">
-                        <div class="flex">
+                        <div class="flex text-yellow-400">
                           {% for i in "12345"|make_list %}
-                          <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            {% if forloop.counter <= item.product.avg_rating %}
+                              <i class="fas fa-star text-sm"></i>
+                            {% elif forloop.counter|add:"-0.5" <= item.product.avg_rating %}
+                              <i class="fas fa-star-half-alt text-sm"></i>
+                            {% else %}
+                              <i class="far fa-star text-sm text-gray-300"></i>
+                            {% endif %}
                           {% endfor %}
                         </div>
-                        <span class="text-xs text-gray-500">(4.8 • 128 reviews)</span>
+                        <span class="text-xs font-bold text-gray-700">{{ item.product.avg_rating|floatformat:1 }}</span>
+                        <span class="text-xs text-gray-500">({{ item.product.review_count }} review{{ item.product.review_count|pluralize }})</span>
                       </div>
+                      {% else %}
+                      <div class="mb-4">
+                        <span class="text-xs text-gray-400 italic">No reviews yet</span>
+                      </div>
+                      {% endif %}
 
                       <!-- Price -->
                       <div class="mb-5">
@@ -311,15 +329,29 @@
                       </div>
 
                       <!-- Action Buttons -->
-                      <div class="space-y-3">                      
-                        <div class="flex gap-2">
+                        <div class="space-y-3">
+                          {% with first_variant=item.product.variants.first %}
+                          {% if first_variant and first_variant.stock_quantity > 0 %}
+                          <button onclick="moveToCart('{{ item.id }}')"
+                                  class="w-full bg-emerald-500 text-white py-2.5 rounded-lg font-bold hover:bg-emerald-600 transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-lg">
+                            <i class="fas fa-cart-plus"></i>
+                            Add to Cart
+                          </button>
+                          {% else %}
+                          <button disabled
+                                  class="w-full bg-gray-100 text-gray-400 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 text-sm cursor-not-allowed">
+                            <i class="fas fa-hourglass-start"></i>
+                            Out of Stock
+                          </button>
+                          {% endif %}
+                          {% endwith %}
+                          
                           <button onclick="removeFromWishlist('{{ item.id }}')"
-                                  class="flex-1 border-2 border-gray-200 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all duration-200 flex items-center justify-center gap-2 text-sm">
-                            <i class="fas fa-trash"></i>
-                            Remove
+                                  class="w-full border-2 border-gray-100 text-gray-500 py-2 rounded-lg font-medium hover:bg-red-50 hover:border-red-100 hover:text-red-500 transition-all duration-200 flex items-center justify-center gap-2 text-sm">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                            Remove from Wishlist
                           </button>
                         </div>
-                      </div>
 
                       <!-- Added Date -->
                       <div class="mt-4 pt-4 border-t border-gray-100 text-center">
@@ -370,12 +402,12 @@
                 </button>
                 
                 <button onclick="addAllAvailableToCart()"
-                        class="group relative bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2 overflow-hidden">
+                        class="group relative bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center gap-2 overflow-hidden">
                   <span class="relative z-10">
                     <i class="fas fa-cart-arrow-down"></i>
-                    Add All to Cart
+                    Move Available items to Cart
                   </span>
-                  <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </button>
                 
                 <a href="{% url 'shop:cart' %}"
@@ -495,39 +527,6 @@ function getCookie(name) {
   return cookieValue;
 }
 
-// NEW: Move to Cart with Refresh Function
-function moveToCartAndRefresh(itemId) {
-  // Use Django template for the move-to-cart URL
-  fetch(`{% url 'shop:move_to_cart' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId), {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': getCookie('csrftoken'),
-      'X-Requested-With': 'XMLHttpRequest',
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (data.success) {
-      showNotification(data.message, 'success');
-      // Refresh the page after 1 second to update the wishlist
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-    } else {
-      showNotification(data.message, 'error');
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    showNotification('Error moving to cart', 'error');
-  });
-}
 
 // Wishlist Management Functions
 function removeFromWishlist(itemId) {
@@ -589,42 +588,8 @@ function removeFromWishlist(itemId) {
 }
 
 function addToCartFromWishlist(variantId, wishlistItemId) {
-  // Use Django template for the cart URL
-  fetch('{% url "shop:add_to_cart" %}', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': getCookie('csrftoken'),
-      'X-Requested-With': 'XMLHttpRequest'
-    },
-    body: JSON.stringify({
-      variant_id: variantId,
-      quantity: 1
-    })
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (data.success) {
-      // Remove from wishlist after adding to cart
-      removeFromWishlist(wishlistItemId);
-      
-      // Update cart count in navbar
-      updateCartCount(data.cart_count);
-      
-      showNotification('Item added to cart!', 'success');
-    } else {
-      showNotification(data.message, 'error');
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    showNotification('Error adding to cart', 'error');
-  });
+  // Use move_to_cart instead of add_to_cart + remove_from_wishlist for better atomicity
+  moveToCart(wishlistItemId);
 }
 
 function moveToCart(itemId) {
@@ -686,86 +651,71 @@ function clearWishlist() {
     cancelText: 'Keep Items',
     variant: 'danger',
     onConfirm: () => {
-      // Get all wishlist items and remove them one by one
-      const wishlistItems = document.querySelectorAll('.wishlist-item');
-      let removedCount = 0;
-      
-      wishlistItems.forEach(item => {
-        const itemId = item.dataset.itemId;
-        removeFromWishlist(itemId);
-        removedCount++;
+      fetch('{% url "shop:clear_wishlist" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showNotification(data.message, 'success');
+          updateWishlistCount(0);
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showNotification(data.message, 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error clearing wishlist', 'error');
       });
-      
-      setTimeout(() => {
-        showNotification(`Cleared ${removedCount} items from wishlist`, 'success');
-        // Refresh after clearing to show empty state
-        setTimeout(() => location.reload(), 1000);
-      }, 500);
     }
   });
 }
 
-// Add the addAllAvailableToCart function
 function addAllAvailableToCart() {
   const availableItems = document.querySelectorAll('.wishlist-item');
-  const inStockItems = Array.from(availableItems).filter(item => 
-    item.querySelector('.bg-gradient-to-r.from-green-500.to-emerald-500')
-  );
-  
-  if (inStockItems.length === 0) {
-    showNotification('No available items to add to cart', 'info');
+  if (availableItems.length === 0) {
+    showNotification('No items in wishlist', 'info');
     return;
   }
   
   window.showConfirmModal({
     title: 'Add All to Cart?',
-    message: `Add ${inStockItems.length} available items to your cart?`,
-    confirmText: 'Add to Cart',
+    message: `Move all items from your wishlist to your cart?`,
+    confirmText: 'Move All',
     cancelText: 'Cancel',
     variant: 'success',
     onConfirm: () => {
-      let addedCount = 0;
-      let errorCount = 0;
-      
-      inStockItems.forEach(item => {
-        const itemId = item.dataset.itemId;
-        const addButton = item.querySelector('button[onclick*="addToCartFromWishlist"]');
-        if (addButton) {
-            // Extract variance ID and wishlist Item ID from the onclick attribute
-            // onclick="addToCartFromWishlist('variance_id', 'wishlist_item_id')"
-            const onclick = addButton.getAttribute('onclick');
-            const matches = onclick.match(/'([^']+)',\s*'([^']+)'/);
-            if (matches && matches.length >= 3) {
-                const variantId = matches[1];
-                const wishlistItemId = matches[2];
-                addToCartFromWishlist(variantId, wishlistItemId);
-                addedCount++;
-            }
+      fetch('{% url "shop:move_all_to_cart" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json'
         }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showNotification(data.message, 'success');
+          updateCartCount(data.cart_count);
+          updateWishlistCount(data.wishlist_count);
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showNotification(data.message, 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error moving items to cart', 'error');
       });
-      
-      setTimeout(() => {
-          showNotification(`Added ${addedCount} items to cart`, 'success');
-      }, 500);
     }
   });
-      const onclickAttr = addButton.getAttribute('onclick');
-      const match = onclickAttr.match(/'([^']+)'/);
-      if (match) {
-        const variantId = match[1];
-        addToCartFromWishlist(variantId, itemId);
-        addedCount++;
-      } else {
-        errorCount++;
-      }
-    }
-  });
-  
-  if (errorCount > 0) {
-    setTimeout(() => {
-      showNotification(`Added ${addedCount} items, ${errorCount} failed`, 'warning');
-    }, 1000);
-  }
 }
 
 // Helper function to update cart count
@@ -781,56 +731,20 @@ function updateCartCount(count) {
 
 // Helper function to update wishlist count
 function updateWishlistCount(count) {
-  const wishlistCountElements = document.querySelectorAll('.wishlist-count, #wishlist-count');
-  wishlistCountElements.forEach(element => {
-    if (element) {
-      element.textContent = count;
+  const wishlistBadge = document.getElementById('wishlist-badge');
+  if (wishlistBadge) {
+    wishlistBadge.textContent = count;
+    if (count > 0) {
+      wishlistBadge.classList.remove('hidden');
+    } else {
+      wishlistBadge.classList.add('hidden');
     }
-  });
-  
-  // Also update the header count if it exists
-  const headerCount = document.querySelector('.text-lg.font-semibold.text-gray-700');
-  if (headerCount) {
-    headerCount.textContent = `${count} item${count !== 1 ? 's' : ''}`;
   }
-}
 
-// Notification System
-function showNotification(message, type = 'info') {
-  // Remove existing notifications
-  const existingNotifications = document.querySelectorAll('.custom-notification');
-  existingNotifications.forEach(notification => notification.remove());
-  
-  // Create new notification
-  const notification = document.createElement('div');
-  notification.className = `custom-notification fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform ${
-    type === 'success' ? 'bg-green-500 text-white' :
-    type === 'error' ? 'bg-red-500 text-white' :
-    type === 'warning' ? 'bg-yellow-500 text-white' :
-    'bg-blue-500 text-white'
-  }`;
-  notification.textContent = message;
-  notification.style.transform = 'translateY(-20px)';
-  notification.style.opacity = '0';
-  
-  document.body.appendChild(notification);
-  
-  // Animate in
-  setTimeout(() => {
-    notification.style.transform = 'translateY(0)';
-    notification.style.opacity = '1';
-  }, 10);
-  
-  // Auto remove after 3 seconds
-  setTimeout(() => {
-    notification.style.transform = 'translateY(-20px)';
-    notification.style.opacity = '0';
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-      }
-    }, 300);
-  }, 3000);
+  const wishlistHeadingCount = document.querySelector('.text-lg.font-semibold.text-gray-700');
+  if (wishlistHeadingCount) {
+    wishlistHeadingCount.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+  }
 }
 
 // Add CSS for notification

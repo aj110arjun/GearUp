@@ -401,20 +401,40 @@
                   <i class="fas fa-envelope text-emerald-500 mr-2"></i>
                   Email Address
                 </label>
-                <div class="flex items-center space-x-3">
-                  <input type="email" 
-                         id="email-display" 
-                         value="{{ user.email }}"
-                         class="readonly-input flex-1"
-                         readonly
-                         disabled>
-                  <span class="{% if user.email_verified %}bg-emerald-500 text-white{% else %}bg-yellow-500 text-white{% endif %} px-3 py-1 rounded-lg text-sm font-medium">
-                    {% if user.email_verified %}Verified{% else %}Not Verified{% endif %}
-                  </span>
+                <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                  <div class="relative flex-1">
+                    <input type="email" 
+                           id="email-display" 
+                           value="{{ user.email }}"
+                           class="readonly-input w-full pr-24"
+                           readonly
+                           disabled>
+                  <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center">
+                        {% if user.email_verified %}
+                        <span class="text-emerald-500 text-xs font-bold uppercase tracking-wider flex items-center">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Verified
+                        </span>
+                        {% endif %}
+                    </div>
+                  </div>
+                  {% if not user.socialaccount_set.all %}
+                  <a href="{% url 'user_auth:initiate_email_change' %}" 
+                     class="bg-white text-emerald-600 px-6 py-3 rounded-xl font-semibold hover:bg-emerald-50 transition-all duration-300 border-2 border-emerald-200 hover:border-emerald-300 shadow-sm flex items-center justify-center space-x-2">
+                    <i class="fas fa-edit text-sm"></i>
+                    <span>Change Email</span>
+                  </a>
+                  {% endif %}
                 </div>
                 <p class="text-sm text-gray-500 mt-2 flex items-center space-x-1">
-                  <i class="fas fa-info-circle"></i>
-                  <span>Email address cannot be changed for security reasons</span>
+                  <i class="fas fa-shield-alt text-emerald-500"></i>
+                  <span>
+                    {% if user.socialaccount_set.all %}
+                    Email is managed by Google and cannot be changed here.
+                    {% else %}
+                    Secure email updating with OTP verification is now active.
+                    {% endif %}
+                  </span>
                 </p>
               </div>
 
