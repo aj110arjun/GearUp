@@ -40,7 +40,7 @@
     </div>
 
     <!-- Main Navbar -->
-    <nav class="bg-white shadow-md sticky top-0 z-50">
+    <nav class="sticky top-0 z-[999] w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300">
       <div class="container mx-auto px-4 lg:px-6">
         <div class="flex items-center justify-between py-4">
           <!-- Logo -->
@@ -171,6 +171,42 @@
       {% endblock content %}
     </main>
     
+    <!-- Global Confirmation Modal -->
+    <div id="global-confirm-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center px-4" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity opacity-0" id="global-confirm-backdrop"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-white rounded-2xl text-left shadow-2xl transform transition-all scale-95 opacity-0 w-full max-w-md overflow-hidden" id="global-confirm-content">
+            <div class="bg-white px-6 py-8">
+                <div class="flex flex-col items-center text-center">
+                    <!-- Icon -->
+                    <div class="flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-6" id="global-confirm-icon-bg">
+                        <i class="fas fa-exclamation-triangle text-2xl text-red-600" id="global-confirm-icon"></i>
+                    </div>
+                    
+                    <!-- Text -->
+                    <h3 class="text-xl font-bold text-gray-900 mb-2" id="global-confirm-title">Confirm Action</h3>
+                    <p class="text-gray-500 text-base leading-relaxed" id="global-confirm-message">
+                        Are you sure you want to proceed?
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3">
+                <button type="button" id="global-confirm-btn"
+                    class="w-full inline-flex justify-center items-center rounded-xl border border-transparent shadow-sm px-5 py-3 bg-red-600 text-base font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors sm:w-1/2">
+                    Confirm
+                </button>
+                <button type="button" id="global-cancel-btn"
+                    class="w-full inline-flex justify-center items-center rounded-xl border border-gray-200 shadow-sm px-5 py-3 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors sm:w-1/2">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Snackbar Container -->
     <div id="snackbar-container" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
@@ -252,7 +288,7 @@
     </footer>
 
     <!-- Custom JavaScript -->
-    <script src="{% static 'js/user/base.js' %}"></script>
+    <script src="{% static 'js/user/base.js' %}?v=1"></script>
     
     <!-- Django Messages Integration -->
     <script>
@@ -267,6 +303,8 @@
     </script>
     
     {% block extra_js %}
+    {% endblock %}
+    {% block content_extra %}
     {% endblock %}
   </body>
 </html>

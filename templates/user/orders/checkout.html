@@ -3,7 +3,7 @@
 {% load static %}
 {% block title %} Checkout - GearUp {% endblock %}
 {% block breadcrumbs %}
-<div class="breadcrumb py-3 bg-gray-50 border-b border-gray-100">
+<div class="breadcrumb py-3">
     <div class="container mx-auto px-4 lg:px-6">
         <nav aria-label="Breadcrumb" class="flex">
             <ol class="flex items-center space-x-2 md:space-x-3">
@@ -242,46 +242,64 @@
             </div>
           </div>
 
-          <!-- Coupon Code Section -->
+          <!-- Coupon Selection Section -->
           <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
               <i class="fas fa-tag text-emerald-500 mr-3"></i>
-              Apply Coupon Code
+              Select Coupon
             </h2>
             
-            <div class="flex gap-2">
-              <input type="text" 
-                     id="coupon-code-input"
-                     placeholder="Enter coupon code" 
-                     class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent uppercase"
-                     maxlength="50">
-              <button type="button"
-                      id="apply-coupon-btn"
-                      class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 shadow-sm">
-                <i class="fas fa-check"></i>
-                Apply
-              </button>
+            {% if available_coupons %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="coupons-grid">
+              {% for coupon in available_coupons %}
+              <div class="coupon-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-all relative group" 
+                   onclick="selectCoupon('{{ coupon.code }}')">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors uppercase">{{ coupon.code }}</span>
+                      <span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full uppercase">Active</span>
+                    </div>
+                    <p class="text-emerald-600 font-bold text-lg leading-tight">{{ coupon.discount_percentage }}% OFF</p>
+                    <p class="text-gray-500 text-xs mt-1 line-clamp-1 italic">{{ coupon.description }}</p>
+                  </div>
+                  <div class="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i class="fas fa-plus-circle text-xl"></i>
+                  </div>
+                </div>
+                {% if coupon.minimum_order_amount > 0 %}
+                <div class="mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-400">
+                  Min order: ₹{{ coupon.minimum_order_amount }}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
             </div>
-            
-            <!-- Coupon Message -->
-            <div id="coupon-message" class="mt-3 hidden"></div>
+            {% else %}
+            <div class="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              <i class="fas fa-ticket-alt text-gray-300 text-3xl mb-2"></i>
+              <p class="text-gray-500 text-sm italic">No coupons available for your account right now.</p>
+            </div>
+            {% endif %}
             
             <!-- Applied Coupon Display -->
-            <div id="applied-coupon" class="mt-4 hidden">
-              <div class="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
-                    <i class="fas fa-check text-white"></i>
+            <div id="applied-coupon" class="mt-6 hidden">
+              <div class="bg-emerald-600 border-2 border-emerald-500 rounded-xl p-5 flex items-center justify-between text-white shadow-lg shadow-emerald-100">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
+                    <i class="fas fa-check text-xl"></i>
                   </div>
                   <div>
-                    <p class="font-semibold text-emerald-800" id="applied-coupon-code"></p>
-                    <p class="text-sm text-emerald-600" id="applied-coupon-discount"></p>
+                    <p class="text-xs font-bold uppercase tracking-widest opacity-80">Coupon Applied</p>
+                    <p class="font-extrabold text-xl uppercase" id="applied-coupon-code"></p>
+                    <p class="text-sm font-medium opacity-90" id="applied-coupon-discount"></p>
                   </div>
                 </div>
                 <button type="button"
                         id="remove-coupon-btn" 
-                        class="text-red-600 hover:text-red-700 font-medium transition-colors">
-                  <i class="fas fa-times"></i> Remove
+                        class="bg-white/10 hover:bg-white/20 text-white p-3 rounded-xl transition-all border border-white/20 flex flex-col items-center">
+                  <i class="fas fa-times mb-1"></i>
+                  <span class="text-[10px] font-bold uppercase">Remove</span>
                 </button>
               </div>
             </div>
@@ -753,18 +771,14 @@ document.addEventListener('DOMContentLoaded', function() {
   let originalSubtotal = parseFloat('{{ cart_total }}');
   let shippingCost = parseFloat('{{ shipping_cost|default:0 }}');
   
-  // Apply Coupon Button
-  document.getElementById('apply-coupon-btn').addEventListener('click', function() {
-    const couponCode = document.getElementById('coupon-code-input').value.trim();
-    
-    if (!couponCode) {
-      showCouponMessage('Please enter a coupon code', 'error');
-      return;
+  // Select Coupon Function (Globally accessible)
+  window.selectCoupon = function(couponCode) {
+    if (appliedCoupon && appliedCoupon.coupon_code === couponCode) {
+      return; // Already applied
     }
     
     // Show loading
-    this.disabled = true;
-    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Applying...';
+    loadingOverlay.classList.remove('hidden');
     
     fetch('{% url "orders:validate_coupon" %}', {
       method: 'POST',
@@ -779,28 +793,38 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .then(response => response.json())
     .then(data => {
+      loadingOverlay.classList.add('hidden');
       if (data.success) {
         appliedCoupon = data;
         showAppliedCoupon(data);
         updateOrderTotal(data);
-        showCouponMessage(data.message, 'success');
+        
+        // Hide coupons grid
+        const grid = document.getElementById('coupons-grid');
+        if (grid) grid.classList.add('hidden');
+        
+        // Show notification
+        if (window.showNotification) {
+          showNotification(data.message, 'success');
+        }
         
         // Update hidden form fields
         document.getElementById('coupon_code_field').value = data.coupon_code;
         document.getElementById('coupon_discount_field').value = data.discount_amount;
       } else {
-        showCouponMessage(data.message, 'error');
+        if (window.showNotification) {
+          showNotification(data.message, 'error');
+        } else {
+          alert(data.message);
+        }
       }
     })
     .catch(error => {
-      showCouponMessage('Error applying coupon. Please try again.', 'error');
+      loadingOverlay.classList.add('hidden');
       console.error('Coupon error:', error);
-    })
-    .finally(() => {
-      document.getElementById('apply-coupon-btn').disabled = false;
-      document.getElementById('apply-coupon-btn').innerHTML = '<i class="fas fa-check"></i> Apply';
+      alert('Error applying coupon. Please try again.');
     });
-  });
+  };
   
   // Remove Coupon Button
   document.getElementById('remove-coupon-btn').addEventListener('click', function() {
@@ -808,7 +832,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('applied-coupon').classList.add('hidden');
     document.getElementById('coupon-discount-line').classList.add('hidden');
     document.getElementById('final-total').textContent = '₹' + originalTotal.toFixed(2);
-    document.getElementById('coupon-code-input').value = '';
+    
+    // Show coupons grid again
+    const couponsGrid = document.getElementById('coupons-grid');
+    if (couponsGrid) {
+      couponsGrid.classList.remove('hidden');
+    }
     
     // Recalculate tax
     const tax = originalSubtotal * 0.1;
@@ -818,12 +847,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('coupon_code_field').value = '';
     document.getElementById('coupon_discount_field').value = '0';
     
-    showCouponMessage('Coupon removed', 'info');
-    
-    // Hide message after 3 seconds
-    setTimeout(() => {
-      document.getElementById('coupon-message').classList.add('hidden');
-    }, 3000);
+    if (window.showNotification) {
+      showNotification('Coupon removed', 'info');
+    }
   });
   
   function showAppliedCoupon(data) {
@@ -848,33 +874,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Calculate new total
     const newTotal = newSubtotal + newTax + shippingCost;
     document.getElementById('final-total').textContent = '₹' + newTotal.toFixed(2);
-  }
-  
-  function showCouponMessage(message, type) {
-    const messageDiv = document.getElementById('coupon-message');
-    messageDiv.classList.remove('hidden');
-    
-    const colors = {
-      success: 'bg-green-50 border-2 border-green-200 text-green-800',
-      error: 'bg-red-50 border-2 border-red-200 text-red-800',
-      info: 'bg-blue-50 border-2 border-blue-200 text-blue-800'
-    };
-    
-    const icons = {
-      success: 'fa-check-circle',
-      error: 'fa-exclamation-circle',
-      info: 'fa-info-circle'
-    };
-    
-    messageDiv.className = `mt-3 p-3 rounded-lg ${colors[type]}`;
-    messageDiv.innerHTML = `<i class="fas ${icons[type]} mr-2"></i>${message}`;
-    
-    // Auto-hide success messages after 5 seconds
-    if (type === 'success') {
-      setTimeout(() => {
-        messageDiv.classList.add('hidden');
-      }, 5000);
-    }
   }
 
   // Add some visual enhancements

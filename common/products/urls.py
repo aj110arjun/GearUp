@@ -25,7 +25,9 @@ urlpatterns = [
     
     # Slug patterns - these should come LAST
     path('details/<slug:product_slug>/', views.product_detail, name='product_detail'),
-    path('<slug:product_slug>/edit/', views.product_edit, name='product_edit'),
+    path('edit/<slug:slug>/', views.product_edit, name='product_edit'),
+    path('variant/add/<slug:slug>/', views.add_variant_admin, name='add_variant_admin'),
+    path('delete/<slug:slug>/', views.product_delete, name='product_delete'),
     path('<slug:product_slug>/', views.product_detail_user, name='product_detail_user'),
     path('ajax/cart-items/', views.ajax_cart_count, name='ajax_cart_items'),
 

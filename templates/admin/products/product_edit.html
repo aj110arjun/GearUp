@@ -46,7 +46,6 @@
             </svg>
             Back to Product
           </a>
-          <!-- Add Delete Product Button -->
           <button type="button" id="delete-product-btn"
                   class="inline-flex items-center px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg border border-red-700 shadow-sm hover:bg-red-700 transition-all duration-200">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,13 +139,13 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Zoom</label>
-                <input type="range" id="zoom-slider" min="0.1" max="3" step="0.1" value="1" class="w-full">
+                <input type="range" id="zoom-slider" min="0.1" max="3" step="0.1" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
               </div>
               <div class="grid grid-cols-2 gap-3 pt-4">
-                <button id="cancel-crop" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                <button id="cancel-crop" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
                   Cancel
                 </button>
-                <button id="apply-crop" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <button id="apply-crop" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
                   Apply Crop
                 </button>
               </div>
@@ -185,10 +184,10 @@
             </p>
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <button type="button" id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+            <button type="button" id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
               Cancel
             </button>
-            <button type="button" id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+            <button type="button" id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
               Yes, Delete Product
             </button>
           </div>
@@ -285,12 +284,12 @@
                   <h2 class="text-lg font-semibold text-gray-900">Product Variants</h2>
                   <p class="text-sm text-gray-600 mt-1">Manage sizes, colors, and pricing</p>
                 </div>
-                <button type="button" id="add-variant" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
+                <a href="{% url 'products:add_variant_admin' product.slug %}" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
                   Add Variant
-                </button>
+                </a>
               </div>
             </div>
             <div class="p-6">
@@ -357,7 +356,6 @@
           </div>
 
           <!-- Product Images -->
-          <!-- Product Images Section - Updated -->
           <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="border-b border-gray-200 px-6 py-4">
               <div class="flex items-center justify-between">
@@ -425,11 +423,11 @@
                     {% endif %}
                   {% else %}
                     <!-- Message for Primary Image -->
-                    <div class="text-xs text-indigo-600 mb-2">
-                      <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="text-xs text-indigo-600 mb-2 flex items-start">
+                      <svg class="w-4 h-4 flex-shrink-0 mr-1 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      This Image Can't be Deleted. What You Can do is Change The Image
+                      <span>This Image Can't be Deleted. What You Can do is Change The Image</span>
                     </div>
                   {% endif %}
                   
@@ -469,8 +467,8 @@
                     </div>
                     {% else %}
                       {{ image_form.is_primary.as_hidden }}
-                      <div class="text-xs text-indigo-600 mt-1">
-                        <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <div class="text-xs text-indigo-600 mt-1 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
                         This is the primary image
@@ -509,7 +507,7 @@
                 <span class="text-sm font-medium text-gray-700">Active</span>
                 <label class="relative inline-flex items-center cursor-pointer">
                   {{ form.is_active }}
-                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
@@ -517,7 +515,7 @@
                 <span class="text-sm font-medium text-gray-700">Featured</span>
                 <label class="relative inline-flex items-center cursor-pointer">
                   {{ form.is_featured }}
-                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
@@ -525,7 +523,7 @@
                 <span class="text-sm font-medium text-gray-700">Bestseller</span>
                 <label class="relative inline-flex items-center cursor-pointer">
                   {{ form.is_bestseller }}
-                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
@@ -533,7 +531,7 @@
                 <span class="text-sm font-medium text-gray-700">Track Inventory</span>
                 <label class="relative inline-flex items-center cursor-pointer">
                   {{ form.track_inventory }}
-                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-4 peer-focus:ring-indigo-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
@@ -676,7 +674,8 @@ if (addImageBtn && imageForms && totalImageForms) {
     newForm.innerHTML = newForm.innerHTML.replace(/images-\d+/g, `images-${formCount}`);
     
     // Remove primary image styling and badge
-    newForm.classList.remove('border-indigo-300', 'bg-indigo-50');
+    newForm.classList.remove('border-indigo-300', 'bg-indigo-50', 'border-2');
+    newForm.classList.add('border', 'border-gray-200');
     
     // Remove primary image badge if it exists
     const primaryBadge = newForm.querySelector('.absolute.top-2.left-2');
@@ -686,7 +685,7 @@ if (addImageBtn && imageForms && totalImageForms) {
     
     // Remove "This is the primary image" text
     const primaryText = newForm.querySelector('.text-indigo-600');
-    if (primaryText) {
+    if (primaryText && primaryText.textContent.includes("This Image Can't be Deleted")) {
       primaryText.remove();
     }
     
@@ -1004,7 +1003,7 @@ document.addEventListener('change', function(e) {
       // Create a form and submit it
       const deleteForm = document.createElement('form');
       deleteForm.method = 'POST';
-      deleteForm.action = '';
+      deleteForm.action = "{% url 'products:product_delete' slug=product.slug %}";
       
       // Add CSRF token
       const csrfInput = document.createElement('input');
@@ -1022,14 +1021,14 @@ document.addEventListener('change', function(e) {
   // Show notification function
   function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg ${
+    notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 ${
       type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
       type === 'error' ? 'bg-red-50 text-red-800 border border-red-200' :
       'bg-blue-50 text-blue-800 border border-blue-200'
     }`;
     notification.innerHTML = `
       <div class="flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${
             type === 'success' ? 'M5 13l4 4L19 7' :
             type === 'error' ? 'M6 18L18 6M6 6l12 12' :
@@ -1047,7 +1046,9 @@ document.addEventListener('change', function(e) {
       notification.style.opacity = '0';
       notification.style.transform = 'translateX(100%)';
       setTimeout(() => {
-        document.body.removeChild(notification);
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
       }, 300);
     }, 5000);
   }
@@ -1077,81 +1078,102 @@ document.addEventListener('change', function(e) {
 });
 </script>
 
-<style>
+<style type="text/tailwindcss">
+/* Form Controls - Using Tailwind utilities */
 .form-control {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background-color: white;
-  transition: all 0.2s;
-  font-size: 0.875rem;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg bg-white transition-all text-sm;
+  @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
 }
 
 .form-control:disabled,
 .form-control:read-only {
-  background-color: #f9fafb;
-  color: #6b7280;
-  cursor: not-allowed;
+  @apply bg-gray-50 text-gray-600 cursor-not-allowed;
 }
 
 .form-control-sm {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8125rem;
+  @apply px-3 py-2 text-xs;
 }
 
+/* Checkboxes */
 .form-check-input {
-  width: 1rem;
-  height: 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  cursor: pointer;
-}
-
-/* Primary image styling */
-.border-indigo-300 {
-  border-color: #a5b4fc;
-}
-
-.bg-indigo-50 {
-  background-color: #eef2ff;
-}
-
-/* Disabled delete button for primary images */
-.image-form.border-indigo-300 label[for*="DELETE"] {
-  display: none !important;
-}
-
-/* Info message styling */
-.text-indigo-600 {
-  color: #4f46e5;
+  @apply w-4 h-4 border border-gray-300 rounded cursor-pointer;
+  @apply focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0;
 }
 
 .form-check-input:checked {
-  background-color: #4f46e5;
-  border-color: #4f46e5;
+  @apply bg-indigo-600 border-indigo-600;
 }
 
+/* Toggle Switches */
 .peer:checked ~ div {
-  background-color: #4f46e5;
+  @apply bg-indigo-600;
 }
 
-.peer:checked ~ div:after {
-  transform: translateX(100%);
+.peer:checked ~ div::after {
+  @apply translate-x-full;
 }
 
-/* Cropper.js custom styles */
-.cropper-view-box,
-.cropper-face {
-  border-radius: 50%;
+/* File Input */
+input[type="file"] {
+  @apply w-full px-2 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer text-sm;
+  @apply hover:border-indigo-500 transition-colors;
 }
 
+input[type="file"]::file-selector-button {
+  @apply bg-indigo-600 text-white border-0 px-4 py-2 rounded-md cursor-pointer mr-4 text-sm font-medium;
+  @apply hover:bg-indigo-700 transition-colors;
+}
+
+/* Range Slider */
+input[type="range"] {
+  @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer;
+  accent-color: #4f46e5;
+}
+
+/* Primary Image Styling */
+.image-form.border-indigo-300 {
+  @apply border-2 border-indigo-300 bg-indigo-50;
+}
+
+/* Hide delete button for primary images */
+.image-form.border-indigo-300 label[for*="DELETE"] {
+  @apply hidden;
+}
+
+/* Image Preview */
+.image-preview-container img {
+  @apply max-w-full object-contain;
+}
+
+.image-preview-container.hidden {
+  @apply hidden;
+}
+
+/* Delete Button Hover Effects */
+label[for*="DELETE"] {
+  @apply transition-transform duration-200;
+}
+
+label[for*="DELETE"]:hover {
+  @apply scale-105;
+}
+
+/* Form Transitions */
+.variant-form,
+.image-form {
+  @apply transition-all duration-300;
+}
+
+/* Marked for Deletion Overlay */
+.variant-form[style*="opacity: 0.5"]::after,
+.image-form[style*="opacity: 0.5"]::after {
+  content: "Marked for deletion";
+  @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+  @apply bg-red-600 bg-opacity-90 text-white px-4 py-2 rounded-lg;
+  @apply text-sm font-medium z-10 pointer-events-none;
+}
+
+/* Cropper.js Custom Styles */
 .cropper-view-box {
   outline: 2px solid #4f46e5;
   outline-color: rgba(79, 70, 229, 0.75);
@@ -1195,90 +1217,38 @@ document.addEventListener('change', function(e) {
   height: 6px;
 }
 
-/* Image preview styles */
-.image-preview-container img {
-  max-width: 100%;
-  max-height: 300px;
-  object-fit: contain;
-}
-
-.image-preview-container.hidden {
-  display: none;
-}
-
-/* File input styling */
-input[type="file"] {
-  padding: 0.5rem;
-  border: 2px dashed #d1d5db;
-  border-radius: 0.5rem;
-  width: 100%;
-  cursor: pointer;
-}
-
-input[type="file"]:hover {
-  border-color: #4f46e5;
-}
-
-input[type="file"]::file-selector-button {
-  background-color: #4f46e5;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  margin-right: 1rem;
-}
-
-input[type="file"]::file-selector-button:hover {
-  background-color: #4338ca;
-}
-
-/* Delete button styles */
-label[for*="DELETE"] {
-  transition: all 0.2s;
-}
-
-label[for*="DELETE"]:hover {
-  transform: scale(1.05);
-}
-
-/* Form transition effects */
-.variant-form, .image-form {
-  transition: all 0.3s ease;
-}
-
-/* Disabled form styles */
-.variant-form[style*="opacity: 0.5"], 
-.image-form[style*="opacity: 0.5"] {
-  position: relative;
-}
-
-.variant-form[style*="opacity: 0.5"]::after,
-.image-form[style*="opacity: 0.5"]::after {
-  content: "Marked for deletion";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(239, 68, 68, 0.9);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  z-index: 10;
-  pointer-events: none;
-}
-
-/* Animation for new forms */
-@keyframes highlight {
-  0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+/* Animation for New Forms */
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
 }
 
 .highlight-new {
-  animation: highlight 1s ease;
+  animation: highlight-pulse 1s ease-out;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
 }
 </style>
 {% endblock content %}

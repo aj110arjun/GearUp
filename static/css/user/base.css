@@ -46,9 +46,6 @@ body {
 /* Top Banner - Fixed at top */
 .top-banner {
   background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
 
 /* Sticky Header Container */
@@ -123,11 +120,8 @@ body {
 /* Breadcrumb Styles */
 .breadcrumb {
   background: white;
-  padding: 1rem 0;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 112px; /* Height of top banner (~40px) + navbar (~72px) */
-  z-index: 40;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f3f4f6;
   margin-top: 0;
 }
 

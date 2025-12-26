@@ -27,10 +27,10 @@ def admin_signin(request):
     if request.user.is_authenticated and request.user.is_staff:
         return redirect('auth_dashboard:dashboard')
     
-    # Redirect regular users to user dashboard
-    if request.user.is_authenticated and not request.user.is_staff:
-        messages.warning(request, "You don't have admin privileges.")
-        return redirect('user_home:home')
+    # Redirect regular users to user dashboard - REMOVED to allow switching accounts
+    # if request.user.is_authenticated and not request.user.is_staff:
+    #     messages.warning(request, "You don't have admin privileges.")
+    #     return redirect('user_home:home')
 
     if request.method == 'POST':
         form = AdminSigninForm(request.POST)
@@ -61,7 +61,7 @@ def admin_signin(request):
 def admin_signout(request):
     logout(request)
     messages.success(request, "Successfully signed out.")
-    return redirect('admin_auth:signin')
+    return redirect('auth_dashboard:signin')
 
 
 

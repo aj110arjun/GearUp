@@ -4,7 +4,7 @@
 
 {% block title %}Order Details - GearUp{% endblock %}
 {% block breadcrumbs %}
-<div class="breadcrumb py-3 bg-gray-50 border-b border-gray-100">
+<div class="breadcrumb py-3">
     <div class="container mx-auto px-4 lg:px-6">
         <nav aria-label="Breadcrumb" class="flex">
             <ol class="flex items-center space-x-2 md:space-x-3">
@@ -220,17 +220,70 @@
                         </p>
                     </div>
                 </div>
-                <form method="POST" action="{% url 'orders:cancel_order' order.order_id %}" class="md:w-auto w-full">
-                    {% csrf_token %}
-                    <button type="submit" 
-                            onclick="return confirm('Are you sure you want to cancel order #{{ order.order_number }}? This action cannot be undone and refund may take 5-7 business days.')"
-                            class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md">
-                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                        </svg>
-                        Cancel Order
+                
+                <button type="button" 
+                        onclick="document.getElementById('cancel-modal').classList.remove('hidden')"
+                        class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    Cancel Order
+                </button>
+            </div>
+        </div>
+
+        <!-- Cancellation Modal (Updated for robust centering) -->
+        <div id="cancel-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center px-4" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity backdrop-blur-sm" onclick="document.getElementById('cancel-modal').classList.add('hidden')"></div>
+            
+            <!-- Modal Content -->
+            <div class="relative bg-white rounded-2xl text-left shadow-2xl transform transition-all w-full max-w-lg overflow-hidden">
+                <div class="bg-white px-6 py-6">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">Cancel Order #{{ order.order_number }}</h3>
+                            <div class="mt-3">
+                                <p class="text-sm text-gray-500 mb-4">Are you sure you want to cancel this order? This action cannot be undone.</p>
+                                <form method="POST" action="{% url 'orders:cancel_order' order.order_id %}" id="cancel-form">
+                                    {% csrf_token %}
+                                    <div class="mt-4">
+                                        <label for="cancellation_reason" class="block text-sm font-bold text-gray-700 mb-2">Reason for Cancellation <span class="text-red-500">*</span></label>
+                                        <select id="cancellation_reason" name="cancellation_reason" required
+                                            class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-xl p-3 border mb-3 bg-gray-50">
+                                            <option value="">Select a reason</option>
+                                            {% for value, label in CANCELLATION_REASON_CHOICES %}
+                                                <option value="{{ value }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mt-4">
+                                        <label for="cancellation_description" class="block text-sm font-bold text-gray-700 mb-2">Additional Comments (Optional)</label>
+                                        <textarea id="cancellation_description" name="cancellation_description" rows="3"
+                                            class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-xl p-3 border bg-gray-50 resize-none"
+                                            placeholder="Please provide any additional details..."></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row-reverse gap-3">
+                    <button type="submit" form="cancel-form"
+                        class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-5 py-2.5 bg-red-600 text-base font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto sm:text-sm">
+                        Confirm Cancellation
                     </button>
-                </form>
+                    <button type="button" 
+                        onclick="document.getElementById('cancel-modal').classList.add('hidden')"
+                        class="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-5 py-2.5 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm">
+                        Keep Order
+                    </button>
+                </div>
             </div>
         </div>
         {% endif %}
@@ -481,11 +534,16 @@
                                     {% elif order.order_status == 'shipped' %}bg-blue-500
                                     {% elif order.order_status == 'processing' %}bg-yellow-500
                                     {% elif order.order_status == 'confirmed' %}bg-indigo-500
+                                    {% elif order.order_status == 'cancelled' %}bg-red-500
                                     {% else %}bg-gray-500{% endif %} 
                                     flex items-center justify-center ring-4 ring-white shadow">
                                     {% if order.order_status == 'delivered' %}
                                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {% elif order.order_status == 'cancelled' %}
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
                                     </svg>
                                     {% elif order.order_status == 'shipped' %}
                                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -500,6 +558,18 @@
                                 </div>
                                 <div class="ml-8">
                                     <p class="text-base font-semibold text-gray-900">{{ order.get_order_status_display }}</p>
+                                    {% if order.cancelled_at %}
+                                    <p class="text-sm text-gray-500 mt-1">{{ order.cancelled_at|date:"F j, Y g:i A" }}</p>
+                                    {% if order.cancellation_reason %}
+                                    <div class="mt-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+                                        <p class="text-xs font-bold text-red-800 uppercase tracking-wider mb-1">Reason for Cancellation</p>
+                                        <p class="text-sm text-red-700 font-medium">{{ order.get_cancellation_reason_display }}</p>
+                                        {% if order.cancellation_description %}
+                                        <p class="text-xs text-red-600 mt-1 italic">"{{ order.cancellation_description }}"</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% endif %}
                                     {% if order.delivered_at %}
                                     <p class="text-sm text-gray-500 mt-1">{{ order.delivered_at|date:"F j, Y g:i A" }}</p>
                                     {% endif %}

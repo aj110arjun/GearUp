@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %} Shopping Cart {% endblock %}
 {% block breadcrumbs %}
-<div class="breadcrumb py-3 bg-gray-50 border-b border-gray-100">
+<div class="breadcrumb py-3">
     <div class="container mx-auto px-4 lg:px-6">
         <nav aria-label="Breadcrumb" class="flex">
             <ol class="flex items-center space-x-2 md:space-x-3">
@@ -448,42 +448,57 @@ function updateCartItem(itemId, quantity) {
 }
 
 function removeFromCart(itemId) {
-  if (!confirm('Are you sure you want to remove this item from your cart?')) {
-    return;
-  }
-  
-  fetch(`/shop/cart/remove/${itemId}/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': getCookie('csrftoken')
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      // Remove item from DOM
-      document.querySelector(`.cart-item[data-item-id="${itemId}"]`).remove();
-      
-      // Update cart count
-      updateCartCount(data.cart_count);
-      
-      // Update order summary
-      updateOrderSummary(data);
-      
-      // Check if cart is empty
-      if (data.cart_count === 0) {
-        location.reload(); // Reload to show empty state
+  window.showConfirmModal({
+      title: 'Remove Item?',
+      message: 'Are you sure you want to remove this item from your cart?',
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      variant: 'danger',
+      onConfirm: () => {
+        fetch(`/shop/cart/remove/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove element with animation
+                const itemElement = document.getElementById(`cart-item-${itemId}`);
+                if (itemElement) {
+                    itemElement.style.opacity = '0';
+                    itemElement.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        itemElement.remove();
+                        
+                        // Check if cart is empty
+                        const cartItemsContainer = document.getElementById('cart-items-container');
+                        if (!cartItemsContainer || cartItemsContainer.children.length === 0) {
+                            location.reload();
+                        }
+                    }, 300);
+                }
+                
+                showNotification(data.message, 'success');
+                updateOrderSummary(data);
+                
+                // Update badge
+                const cartBadge = document.getElementById('cart-badge');
+                if (cartBadge) {
+                    cartBadge.textContent = data.cart_count;
+                    if (data.cart_count === 0) cartBadge.classList.add('hidden');
+                }
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error removing item', 'error');
+        });
       }
-      
-      showNotification(data.message, 'success');
-    } else {
-      showNotification(data.message, 'error');
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    showNotification('Error removing item', 'error');
   });
 }
 

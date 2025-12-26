@@ -1,0 +1,72 @@
+<div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group border border-gray-100">
+  <!-- Product Image -->
+  <div class="relative overflow-hidden bg-gray-50">
+    <img src="{{ product_data.product.image.url }}" 
+         class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500" 
+         alt="{{ product_data.product.name }}"
+         onerror="this.src='https://res.cloudinary.com/dhpo5iq3m/image/upload/jic4cjtfmvgh0zubu8gt.png'">
+    
+    <!-- Custom Badge -->
+    {% if badge %}
+    <div class="absolute top-3 left-3 z-10">
+      <span class="{{ badge_color|default:'bg-indigo-600' }} text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+        {{ badge }}
+      </span>
+    </div>
+    {% endif %}
+
+    <!-- Quick View Badge -->
+    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+      <a href="{% url 'products:product_detail_user' product_data.product.slug %}"
+         class="bg-white text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors transform translate-y-4 group-hover:translate-y-0 duration-300">
+        Quick View
+      </a>
+    </div>
+    
+    <!-- Stock Status -->
+    <div class="absolute top-3 right-3">
+      {% if product_data.in_stock %}
+      <span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+        IN STOCK
+      </span>
+      {% else %}
+      <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+        OUT OF STOCK
+      </span>
+      {% endif %}
+    </div>
+  </div>
+  
+  <!-- Product Info -->
+  <div class="p-4">
+    <h3 class="font-semibold text-gray-800 line-clamp-2 group-hover:text-emerald-600 transition-colors h-12 overflow-hidden" title="{{ product_data.product.name }}">
+      {{ product_data.product.name|title }}
+    </h3>
+    
+    <!-- Category -->
+    <p class="text-xs text-gray-500 mb-2">{{ product_data.product.category.name }}</p>
+    
+    <!-- Rating (Randomized for demo or real) -->
+    <div class="flex items-center gap-1 mb-2">
+      <div class="flex text-yellow-400 text-sm">
+        <i class="fas fa-star"></i>
+        <i class="fas fa-star"></i>
+        <i class="fas fa-star"></i>
+        <i class="fas fa-star"></i>
+        <i class="fas fa-star-half-alt"></i>
+      </div>
+      <span class="text-xs text-text-gray-500">(4.8)</span>
+    </div>
+    
+    <!-- Price -->
+    <div class="flex items-center gap-2 mt-2">
+      <span class="text-xl font-bold text-emerald-600">₹{{ product_data.price }}</span>
+      {% if product_data.original_price %}
+      <span class="text-sm text-gray-400 line-through">₹{{ product_data.original_price }}</span>
+      <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-semibold">
+        {{ product_data.discount_percentage }}% OFF
+      </span>
+      {% endif %}
+    </div>
+  </div>
+</div>

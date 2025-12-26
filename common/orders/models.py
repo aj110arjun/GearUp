@@ -46,6 +46,17 @@ class Order(models.Model):
         ('late_delivery', 'Late Delivery'),
         ('other', 'Other'),
     ]
+    CANCELLATION_REASON_CHOICES = [
+        ('mind_changed', 'Changed My Mind'),
+        ('wrong_product', 'Ordered Wrong Product'),
+        ('price_issue', 'Found Better Price Elsewhere'),
+        ('shipping_delay', 'Delivery Taking Too Long'),
+        ('payment_issue', 'Payment Problem'),
+        ('duplicate_order', 'Duplicate Order'),
+        ('coupon_issue', 'Forgot to Apply Coupon'),
+        ('other', 'Other (Please Specify)'),
+    ]
+
     order_id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -107,9 +118,10 @@ class Order(models.Model):
     return_approved_at = models.DateTimeField(null=True, blank=True)
     return_rejected_at = models.DateTimeField(null=True, blank=True)
     return_rejection_reason = models.TextField(null=True, blank=True)
-    return_rejection_reason = models.TextField(null=True, blank=True)
     returned_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.CharField(max_length=50, choices=CANCELLATION_REASON_CHOICES, null=True, blank=True)
+    cancellation_description = models.TextField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
     
     razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)
