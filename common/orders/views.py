@@ -28,7 +28,7 @@ from weasyprint.text.fonts import FontConfiguration
 
 from common.user.address.models import Address
 from common.admin.transactions.models import AdminTransaction
-from .models import Order
+from .models import Order, Coupon
 from .forms import OrderStatusForm, ReturnRequestForm
 from common.user.cart_wishlist.models import Cart, CartItem
 from common.wallet.models import Wallet, Transaction
@@ -100,6 +100,13 @@ def checkout(request):
         'user': request.user,
         'wallet_balance': wallet.balance,
         'cod_available': cod_available,
+        'available_coupons': [
+            coupon for coupon in Coupon.objects.filter(
+                is_active=True, 
+                valid_from__lte=timezone.now(),
+                valid_until__gte=timezone.now()
+            ) if coupon.is_valid()[0] and coupon.can_be_used_by_user(request.user)[0]
+        ]
     }
     return render(request, 'user/orders/checkout.html', context)
         
@@ -140,7 +147,6 @@ def process_checkout(request, cart, cart_items, wallet):
     
     if coupon_code and coupon_discount > 0:
         try:
-            from .models import Coupon
             coupon_obj = Coupon.objects.get(code=coupon_code.upper())
             # Verify coupon is still valid
             is_valid, message = coupon_obj.is_valid()
@@ -391,7 +397,8 @@ def order_list(request):
         'orders': orders,
         'delivered_count': delivered_count,
         'in_progress_count': in_progress_count,
-        'active_tab': 'orders'
+        'active_tab': 'orders',
+        'CANCELLATION_REASON_CHOICES': Order.CANCELLATION_REASON_CHOICES
     }
     return render(request, 'user/orders/order_list.html', context)
 
@@ -463,6 +470,14 @@ def cancel_order(request, order_id):
     order.order_status = 'cancelled'
     if not order.cancelled_at:
         order.cancelled_at = timezone.now()
+        
+    # Save cancellation reason
+    cancellation_reason = request.POST.get('cancellation_reason')
+    cancellation_description = request.POST.get('cancellation_description', '').strip()
+    if cancellation_reason:
+        order.cancellation_reason = cancellation_reason
+    if cancellation_description:
+        order.cancellation_description = cancellation_description
 
     # Update payment status logic
     if order.payment_status == 'refunded':
@@ -612,6 +627,7 @@ def admin_order_list(request):
         'ORDER_STATUS_CHOICES': Order.ORDER_STATUS_CHOICES,
         'PAYMENT_STATUS_CHOICES': Order.PAYMENT_STATUS_CHOICES,
         'PAYMENT_METHOD_CHOICES': Order.PAYMENT_METHOD_CHOICES,
+        'CANCELLATION_REASON_CHOICES': Order.CANCELLATION_REASON_CHOICES,
     }
     
     return render(request, 'admin/orders/order_list.html', context)
@@ -650,6 +666,7 @@ def admin_order_detail(request, order_id):
         'completed_statuses': completed_statuses,
         'ORDER_STATUS_CHOICES': Order.ORDER_STATUS_CHOICES,
         'PAYMENT_STATUS_CHOICES': Order.PAYMENT_STATUS_CHOICES,
+        'CANCELLATION_REASON_CHOICES': Order.CANCELLATION_REASON_CHOICES,
         'title': f'Order #{order.order_number}',
     }
     
@@ -947,11 +964,16 @@ def admin_order_cancel(request, order_id):
         return redirect('orders:admin_order_detail', order_id=order_id)
     
     reason = request.POST.get('cancellation_reason', '').strip()
+    description = request.POST.get('cancellation_description', '').strip()
     
     # Update order status
     old_status = order.order_status
     order.order_status = 'cancelled'
     order.cancelled_at = timezone.now()
+    if reason:
+        order.cancellation_reason = reason
+    if description:
+        order.cancellation_description = description
     
     # Update payment status if paid
     if order.payment_status == 'paid':
@@ -1382,6 +1404,7 @@ def order_detail(request, order_id):
         'is_return_requested': order.is_return_requested,
         'is_return_approved': order.is_return_approved,
         'is_return_rejected': order.is_return_rejected,
+        'CANCELLATION_REASON_CHOICES': Order.CANCELLATION_REASON_CHOICES
     }
     return render(request, 'user/orders/order_details.html', context)
 

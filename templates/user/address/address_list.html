@@ -3,7 +3,7 @@
 
 {% block title %}My Addresses - GearUp{% endblock %}
 {% block breadcrumbs %}
-<div class="breadcrumb py-3 bg-gray-50 border-b border-gray-100">
+<div class="breadcrumb py-3">
     <div class="container mx-auto px-4 lg:px-6">
         <nav aria-label="Breadcrumb" class="flex">
             <ol class="flex items-center space-x-2 md:space-x-3">
@@ -181,277 +181,48 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-95">
-        <!-- Modal Header -->
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold text-gray-800">Delete Address</h3>
-                    <p class="text-gray-600 text-sm mt-1">This action cannot be undone</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Modal Body -->
-        <div class="p-6">
-            <p class="text-gray-700 mb-2">Are you sure you want to delete this address?</p>
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <p class="font-medium text-red-800" id="addressToDeleteName"></p>
-                <p class="text-red-600 text-sm mt-1" id="addressToDeleteLocation"></p>
-            </div>
-            <p class="text-gray-500 text-sm">This address will be removed from your address book permanently.</p>
-        </div>
-        
-        <!-- Modal Footer -->
-        <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
-            <button type="button" 
-                    onclick="closeDeleteModal()"
-                    class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-                Cancel
-            </button>
-            <form id="deleteAddressForm" method="POST" class="inline">
-                {% csrf_token %}
-                <button type="submit" 
-                        class="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium flex items-center space-x-2">
-                    <i class="fas fa-trash"></i>
-                    <span>Delete Address</span>
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<style>
-
-/* Skeleton Loading Animation */
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-.animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Modal Animation */
-#deleteModal {
-    backdrop-filter: blur(4px);
-    transition: all 0.3s ease;
-}
-
-#deleteModal:not(.hidden) {
-    display: flex;
-    animation: fadeIn 0.3s ease;
-}
-
-#deleteModal .bg-white {
-    animation: slideUp 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { 
-        opacity: 0;
-        transform: translateY(20px) scale(0.95);
-    }
-    to { 
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* Content Fade In */
-#addressesContent {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Smooth transitions */
-.transition-all {
-    transition: all 0.3s ease;
-}
-</style>
-
+{% block extra_js %}
 <script>
-let currentAddressId = null;
-let isLoading = false;
-
-// Show skeleton loading
-function showSkeleton() {
-    document.getElementById('skeletonLoading').classList.remove('hidden');
-    document.getElementById('addressesContent').classList.add('hidden');
-    isLoading = true;
-}
-
-// Hide skeleton loading
-function hideSkeleton() {
-    document.getElementById('skeletonLoading').classList.add('hidden');
-    document.getElementById('addressesContent').classList.remove('hidden');
-    isLoading = false;
-}
-
-// Simulate loading (you can remove this in production)
-document.addEventListener('DOMContentLoaded', function() {
-    // Show skeleton for a brief moment to demonstrate
-    if (document.querySelectorAll('#addressesContent .bg-white').length === 0) {
-        showSkeleton();
-        setTimeout(() => {
-            hideSkeleton();
-        }, 1000);
-    }
-});
-
-// Enhanced delete modal functions
-function openDeleteModal(addressId, fullName, location) {
-    if (isLoading) return;
-    
-    currentAddressId = addressId;
-    
-    // Set the address details in the modal
-    document.getElementById('addressToDeleteName').textContent = fullName;
-    document.getElementById('addressToDeleteLocation').textContent = location;
-    
-    // Set the form action
-    document.getElementById('deleteAddressForm').action = `/address/${addressId}/delete/`;
-    
-    // Show modal with animation
-    const modal = document.getElementById('deleteModal');
-    modal.classList.remove('hidden');
-    
-    // Trigger reflow for animation
-    void modal.offsetWidth;
-    
-    // Add backdrop and content animations
-    setTimeout(() => {
-        modal.classList.add('flex');
-    }, 10);
-}
-
-function closeDeleteModal() {
-    const modal = document.getElementById('deleteModal');
-    
-    // Add fade out animation
-    modal.style.opacity = '0';
-    modal.style.transform = 'scale(0.95)';
-    
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        modal.style.opacity = '';
-        modal.style.transform = '';
-    }, 300);
-    
-    currentAddressId = null;
-}
-
-// Enhanced form submission with loading
-document.getElementById('deleteAddressForm')?.addEventListener('submit', function(e) {
-    const submitButton = this.querySelector('button[type="submit"]');
-    const originalText = submitButton.innerHTML;
-    
-    // Show loading state
-    submitButton.disabled = true;
-    submitButton.innerHTML = `
-        <i class="fas fa-spinner fa-spin"></i>
-        <span>Deleting...</span>
-    `;
-    
-    // Optional: Add a small delay to show loading state
-    setTimeout(() => {
-        // Form will submit normally after this
-    }, 500);
-});
-
-// Close modal when clicking outside
-document.getElementById('deleteModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeDeleteModal();
-    }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeDeleteModal();
-    }
-});
-
-// Enhanced hover effects
-document.addEventListener('DOMContentLoaded', function() {
-    const deleteButtons = document.querySelectorAll('button[onclick*="openDeleteModal"]');
-    const addressCards = document.querySelectorAll('#addressesContent .bg-white');
-    
-    deleteButtons.forEach(button => {
-        button.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-1px)';
-        });
-        button.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
-    });
-    
-    addressCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px)';
-        });
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
-    });
-});
-
-// AJAX functionality for future enhancements
-function setDefaultAddress(addressId) {
-    if (isLoading) return;
-    
-    showSkeleton();
-    
-    // You can implement AJAX here for smoother experience
-    fetch(`/address/${addressId}/set-default/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Reload the page to show updated state
-            window.location.reload();
-        } else {
-            hideSkeleton();
-            alert('Failed to set default address');
+    function openDeleteModal(addressId, name, location) {
+        if (!window.showConfirmModal) {
+             // Fallback
+            if (confirm(`Are you sure you want to delete the address for "${name}"?`)) {
+                 const form = document.createElement('form');
+                 form.method = 'POST';
+                 form.action = "{% url 'address:address_delete' 0 %}".replace('0', addressId);
+                 const csrfInput = document.createElement('input');
+                 csrfInput.type = 'hidden';
+                 csrfInput.name = 'csrfmiddlewaretoken';
+                 csrfInput.value = '{{ csrf_token }}';
+                 form.appendChild(csrfInput);
+                 document.body.appendChild(form);
+                 form.submit();
+            }
+            return;
         }
-    })
-    .catch(error => {
-        hideSkeleton();
-        console.error('Error:', error);
-        alert('An error occurred');
-    });
-}
+
+        window.showConfirmModal({
+            title: 'Delete Address?',
+            message: `Are you sure you want to delete the address for "${name}" in "${location}"? This action cannot be undone.`,
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            variant: 'danger',
+            onConfirm: () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{% url 'address:address_delete' 0 %}".replace('0', addressId);
+                form.style.display = 'none';
+
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = '{{ csrf_token }}';
+                form.appendChild(csrfInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
 </script>
-{% endblock %}
+{% endblock extra_js %}

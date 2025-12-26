@@ -2,7 +2,7 @@ import json
 import logging
 
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.cache import never_cache
 from django.db.models import Q, Count, Sum, Min, Max, Avg
 from django.db import transaction
@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST, require_GET
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
-from common.user.cart_wishlist.models import Cart, CartItem, Wishlist
+from common.user.cart_wishlist.models import Cart, CartItem, Wishlist, WishlistItem
 from .models import Product, ProductVariant, Category, ProductImage, ProductOffer, CategoryOffer, ProductReview, ReviewVote
 from .forms import (
     ProductCreateForm,
@@ -35,33 +35,37 @@ logger = logging.getLogger(__name__)
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
 def product_listing(request):
-    # Filters
-    category_filter = request.GET.get('category', '')
-    status_filter = request.GET.get('status', '')
-    search_query = request.GET.get('search', '')
+    """
+    Admin product listing with full filtering, sorting, and pagination
+    """
+    # Get parameters
+    search_query = request.GET.get('q', '')
+    category_id = request.GET.get('category', '')
+    stock_status = request.GET.get('in_stock', '')
+    active_status = request.GET.get('is_active', '')
+    sort_by = request.GET.get('sort', '')
     
-    # Get products
+    # Base QuerySet
     products = Product.objects.all().prefetch_related('variants', 'category')
     
-    # Apply filters
-    if category_filter:
-        products = products.filter(category__slug=category_filter)
+    # 1. Dashboard Stats (Calculated on full queryset before filtering)
+    total_products = Product.objects.count()
+    active_products = Product.objects.filter(is_active=True).count()
     
-    if status_filter:
-        if status_filter == 'active':
-            products = products.filter(is_active=True)
-        elif status_filter == 'inactive':
-            products = products.filter(is_active=False)
-        elif status_filter == 'featured':
-            products = products.filter(is_featured=True)
-        elif status_filter == 'bestseller':
-            products = products.filter(is_bestseller=True)
-        elif status_filter == 'out_of_stock':
-            products = products.filter(variants__stock_quantity=0).distinct()
-        elif status_filter == 'low_stock':
-            products = products.filter(variants__stock_quantity__lte=10, variants__stock_quantity__gt=0).distinct()
+    # Complex stats requiring variant aggregation
+    # Products with at least one variant out of stock (stock_quantity = 0)
+    out_of_stock_products = Product.objects.filter(variants__stock_quantity=0).distinct().count()
     
+    # Products with low stock (<= 10) but not out of stock
+    low_stock_products = Product.objects.filter(
+        variants__stock_quantity__lte=10, 
+        variants__stock_quantity__gt=0
+    ).distinct().count()
+    
+    # 2. Filtering
     if search_query:
         products = products.filter(
             Q(name__icontains=search_query) |
@@ -69,26 +73,116 @@ def product_listing(request):
             Q(brand__icontains=search_query) |
             Q(description__icontains=search_query)
         )
-    
-    # Get categories for filter dropdown
-    categories = Category.objects.filter(is_active=True)
-    
-    # Add variant counts and total stock to each product
-    for product in products:
-        product.variant_count = product.variants.count()
+
+    if category_id:
+        products = products.filter(category__id=category_id)
+
+    if stock_status:
+        if stock_status == 'true': # In Stock
+            products = products.filter(variants__stock_quantity__gt=0).distinct()
+        elif stock_status == 'false': # Out of Stock
+            products = products.filter(variants__stock_quantity=0).distinct()
+        elif stock_status == 'low': # Low Stock
+            products = products.filter(variants__stock_quantity__lte=10, variants__stock_quantity__gt=0).distinct()
+
+    if active_status:
+        if active_status == 'true':
+            products = products.filter(is_active=True)
+        elif active_status == 'false':
+            products = products.filter(is_active=False)
+
+    # 3. Sorting
+    if sort_by == 'name':
+        products = products.order_by('name')
+    elif sort_by == 'price_asc':
+        products = products.annotate(sorting_price=Min('variants__price')).order_by('sorting_price')
+    elif sort_by == 'price_desc':
+        products = products.annotate(sorting_price=Min('variants__price')).order_by('-sorting_price')
+    elif sort_by == 'stock_asc':
+        products = products.annotate(sorting_stock=Sum('variants__stock_quantity')).order_by('sorting_stock')
+    elif sort_by == 'stock_desc':
+        products = products.annotate(sorting_stock=Sum('variants__stock_quantity')).order_by('-sorting_stock')
+    elif sort_by == 'newest':
+        products = products.order_by('-created_at')
+    else:
+        # Default sort
+        products = products.order_by('-created_at')
+
+    # 4. Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(products, 10) # 10 items per page as requested
+
+    try:
+        products_page = paginator.page(page)
+    except PageNotAnInteger:
+        products_page = paginator.page(1)
+    except EmptyPage:
+        products_page = paginator.page(paginator.num_pages)
+
+    # 5. Enrich objects for template display (Total stock calculation)
+    for product in products_page:
         product.total_stock = product.variants.aggregate(total=Sum('stock_quantity'))['total'] or 0
-        product.active_variants = product.variants.filter(is_active=True).count()
-    
+
+    # 6. Context
     context = {
-        'products': products,
-        'categories': categories,
-        'category_filter': category_filter,
-        'status_filter': status_filter,
-        'search_query': search_query,
-        'total_products': products.count(),
+        'products': products_page,
+        'categories': Category.objects.filter(is_active=True),
+        'total_products': total_products,
+        'active_products': active_products,
+        'out_of_stock_products': out_of_stock_products,
+        'low_stock_products': low_stock_products,
+        # Preserve filters for template inputs
+        'filters': {
+            'search': search_query,
+            'category': category_id,
+            'in_stock': stock_status,
+            'is_active': active_status,
+            'sort': sort_by,
+        },
+        'applied_filters': [] # Optional: List of readable active filters for badges
     }
     
+    # Helper to create list of applied filters
+    if category_id:
+        try:
+            cat = Category.objects.get(id=category_id)
+            context['applied_filters'].append(f"Category: {cat.name}")
+        except: pass
+    if stock_status:
+        map_stock = {'true': 'In Stock', 'false': 'Out of Stock', 'low': 'Low Stock'}
+        context['applied_filters'].append(map_stock.get(stock_status, 'Stock Filter'))
+    if active_status:
+        context['applied_filters'].append('Active' if active_status == 'true' else 'Inactive')
+    if search_query:
+        context['applied_filters'].append(f"Search: {search_query}")
+
     return render(request, 'admin/products/product_list.html', context)
+
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def product_delete(request, slug):
+    """Delete a product"""
+    product = get_object_or_404(Product, slug=slug)
+    
+    if request.method == 'POST':
+        try:
+            product_name = product.name
+            product.delete()
+            messages.success(request, f'Product "{product_name}" has been deleted successfully!')
+            return redirect('products:product_list')
+        except Exception as e:
+            messages.error(request, f'An error occurred while deleting the product: {str(e)}')
+            logger.error(f"Error deleting product: {str(e)}")
+            return redirect('products:product_detail', product_slug=slug)
+    
+    # If not POST, show confirmation page
+    context = {
+        'product': product,
+        'title': f'Delete Product - {product.name}',
+    }
+    return render(request, 'admin/products/product_delete_confirm.html', context)
+
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -204,9 +298,9 @@ def product_create(request):
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
-def product_edit(request, product_slug):
+def product_edit(request, slug):
     """Full product editing with variants and images"""
-    product = get_object_or_404(Product, slug=product_slug)
+    product = get_object_or_404(Product, slug=slug)
     
     if request.method == 'POST':
         form = ProductEditForm(request.POST, request.FILES, instance=product)
@@ -290,6 +384,31 @@ def product_edit(request, product_slug):
     }
     
     return render(request, 'admin/products/product_edit.html', context)
+    
+@user_passes_test(lambda u: u.is_superuser)
+@never_cache
+def add_variant_admin(request, slug):
+    """
+    Separate view to add a variant to a product.
+    """
+    product = get_object_or_404(Product, slug=slug)
+    
+    if request.method == 'POST':
+        form = ProductVariantForm(request.POST)
+        if form.is_valid():
+            variant = form.save(commit=False)
+            variant.product = product
+            variant.save()
+            messages.success(request, f'Variant {variant} added successfully.')
+            return redirect('products:product_edit', slug=product.slug)
+    else:
+        form = ProductVariantForm()
+    
+    context = {
+        'product': product,
+        'form': form,
+    }
+    return render(request, 'admin/products/variant_add.html', context)
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
@@ -609,8 +728,8 @@ def product_list_user(request):
         
         # Get wishlist product IDs
         try:
-            wishlist_product_ids = Wishlist.objects.filter(
-                user=request.user
+            wishlist_product_ids = WishlistItem.objects.filter(
+                wishlist__user=request.user
             ).values_list('product_id', flat=True)
         except Exception as e:
             logger.error(f"Error getting wishlist: {e}")
@@ -701,9 +820,9 @@ def product_detail_user(request, product_slug):
 
     # Get wishlist status
     if request.user.is_authenticated:
-        wishlist_product_ids = list(Wishlist.objects.filter(
-            user=request.user
-        ).values_list('id', flat=True))
+        wishlist_product_ids = list(WishlistItem.objects.filter(
+            wishlist__user=request.user
+        ).values_list('product_id', flat=True))
     else:
         wishlist_product_ids = []
 

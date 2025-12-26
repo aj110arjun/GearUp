@@ -248,15 +248,21 @@
         } else {
             // Confirm payment
             const amount = parseFloat(amountInput.value);
-            const confirmed = confirm(`Confirm payment of ₹${amount.toFixed(2)}?\n\nDescription: ${descriptionInput.value.trim()}`);
             
-            if (!confirmed) {
-                e.preventDefault();
-            } else {
-                // Show loading state
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-                submitBtn.disabled = true;
-            }
+            window.showConfirmModal({
+                title: 'Confirm Payment',
+                message: `Are you sure you want to pay ₹${amount.toFixed(2)}?\n\nDescription: ${descriptionInput.value.trim()}`,
+                confirmText: 'Make Payment',
+                cancelText: 'Cancel',
+                variant: 'success',
+                onConfirm: () => {
+                    // Show loading state
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                    submitBtn.disabled = true;
+                    // Submit form directly
+                    document.getElementById('paymentForm').submit();
+                }
+            });
         }
     });
 

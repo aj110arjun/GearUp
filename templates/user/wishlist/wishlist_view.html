@@ -4,7 +4,7 @@
 {% block title %}My Wishlist - GearUp{% endblock %}
 
 {% block breadcrumbs %}
-<div class="breadcrumb py-3 bg-gray-50 border-b border-gray-100">
+<div class="breadcrumb py-3">
     <div class="container mx-auto px-4 lg:px-6">
         <nav aria-label="Breadcrumb" class="flex">
             <ol class="flex items-center space-x-2 md:space-x-3">
@@ -531,55 +531,60 @@ function moveToCartAndRefresh(itemId) {
 
 // Wishlist Management Functions
 function removeFromWishlist(itemId) {
-  if (!confirm('Are you sure you want to remove this item from your wishlist?')) {
-    return;
-  }
-  
-  fetch(`{% url 'shop:remove_from_wishlist' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId), {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': getCookie('csrftoken'),
-      'X-Requested-With': 'XMLHttpRequest',
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (data.success) {
-      // Remove item from DOM with animation
-      const itemElement = document.querySelector(`.wishlist-item[data-item-id="${itemId}"]`);
-      if (itemElement) {
-        itemElement.style.transition = 'all 0.3s ease';
-        itemElement.style.opacity = '0';
-        itemElement.style.transform = 'scale(0.8)';
-        
-        setTimeout(() => {
-          itemElement.remove();
-          
-          // Update wishlist count in the header
-          updateWishlistCount(data.wishlist_count);
-          
-          // Check if wishlist is empty
-          const remainingItems = document.querySelectorAll('.wishlist-item');
-          if (remainingItems.length === 0) {
-            setTimeout(() => location.reload(), 500);
+  window.showConfirmModal({
+    title: 'Remove from Wishlist?',
+    message: 'Are you sure you want to remove this item from your wishlist?',
+    confirmText: 'Remove',
+    cancelText: 'Cancel',
+    variant: 'danger',
+    onConfirm: () => {
+      fetch(`{% url 'shop:remove_from_wishlist' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId), {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Remove item from DOM with animation
+          const itemElement = document.querySelector(`.wishlist-item[data-item-id="${itemId}"]`);
+          if (itemElement) {
+            itemElement.style.transition = 'all 0.3s ease';
+            itemElement.style.opacity = '0';
+            itemElement.style.transform = 'scale(0.8)';
+            
+            setTimeout(() => {
+              itemElement.remove();
+              
+              // Update wishlist count in the header
+              updateWishlistCount(data.wishlist_count);
+              
+              // Check if wishlist is empty
+              const remainingItems = document.querySelectorAll('.wishlist-item');
+              if (remainingItems.length === 0) {
+                setTimeout(() => location.reload(), 500);
+              }
+            }, 300);
           }
-        }, 300);
-      }
-      
-      showNotification(data.message, 'success');
-    } else {
-      showNotification(data.message, 'error');
+          
+          showNotification(data.message, 'success');
+        } else {
+          showNotification(data.message, 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error removing item from wishlist', 'error');
+      });
     }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    showNotification('Error removing item from wishlist', 'error');
   });
 }
 
@@ -674,25 +679,30 @@ function moveToCart(itemId) {
 }
 
 function clearWishlist() {
-  if (!confirm('Are you sure you want to clear your entire wishlist?')) {
-    return;
-  }
-  
-  // Get all wishlist items and remove them one by one
-  const wishlistItems = document.querySelectorAll('.wishlist-item');
-  let removedCount = 0;
-  
-  wishlistItems.forEach(item => {
-    const itemId = item.dataset.itemId;
-    removeFromWishlist(itemId);
-    removedCount++;
+  window.showConfirmModal({
+    title: 'Clear Wishlist?',
+    message: 'Are you sure you want to clear your entire wishlist? This action cannot be undone.',
+    confirmText: 'Clear All',
+    cancelText: 'Keep Items',
+    variant: 'danger',
+    onConfirm: () => {
+      // Get all wishlist items and remove them one by one
+      const wishlistItems = document.querySelectorAll('.wishlist-item');
+      let removedCount = 0;
+      
+      wishlistItems.forEach(item => {
+        const itemId = item.dataset.itemId;
+        removeFromWishlist(itemId);
+        removedCount++;
+      });
+      
+      setTimeout(() => {
+        showNotification(`Cleared ${removedCount} items from wishlist`, 'success');
+        // Refresh after clearing to show empty state
+        setTimeout(() => location.reload(), 1000);
+      }, 500);
+    }
   });
-  
-  setTimeout(() => {
-    showNotification(`Cleared ${removedCount} items from wishlist`, 'success');
-    // Refresh after clearing to show empty state
-    setTimeout(() => location.reload(), 1000);
-  }, 500);
 }
 
 // Add the addAllAvailableToCart function
@@ -707,17 +717,38 @@ function addAllAvailableToCart() {
     return;
   }
   
-  if (!confirm(`Add ${inStockItems.length} available items to cart?`)) {
-    return;
-  }
-  
-  let addedCount = 0;
-  let errorCount = 0;
-  
-  inStockItems.forEach(item => {
-    const itemId = item.dataset.itemId;
-    const addButton = item.querySelector('button[onclick*="addToCartFromWishlist"]');
-    if (addButton) {
+  window.showConfirmModal({
+    title: 'Add All to Cart?',
+    message: `Add ${inStockItems.length} available items to your cart?`,
+    confirmText: 'Add to Cart',
+    cancelText: 'Cancel',
+    variant: 'success',
+    onConfirm: () => {
+      let addedCount = 0;
+      let errorCount = 0;
+      
+      inStockItems.forEach(item => {
+        const itemId = item.dataset.itemId;
+        const addButton = item.querySelector('button[onclick*="addToCartFromWishlist"]');
+        if (addButton) {
+            // Extract variance ID and wishlist Item ID from the onclick attribute
+            // onclick="addToCartFromWishlist('variance_id', 'wishlist_item_id')"
+            const onclick = addButton.getAttribute('onclick');
+            const matches = onclick.match(/'([^']+)',\s*'([^']+)'/);
+            if (matches && matches.length >= 3) {
+                const variantId = matches[1];
+                const wishlistItemId = matches[2];
+                addToCartFromWishlist(variantId, wishlistItemId);
+                addedCount++;
+            }
+        }
+      });
+      
+      setTimeout(() => {
+          showNotification(`Added ${addedCount} items to cart`, 'success');
+      }, 500);
+    }
+  });
       const onclickAttr = addButton.getAttribute('onclick');
       const match = onclickAttr.match(/'([^']+)'/);
       if (match) {
