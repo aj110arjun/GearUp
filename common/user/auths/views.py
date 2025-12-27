@@ -71,7 +71,8 @@ def signup(request):
 
 @never_cache
 def signin(request):
-    if request.user.is_authenticated:
+    # Only redirect if already authenticated AS USER
+    if request.user.is_authenticated and request.session.get('auth_portal') == 'user':
         return redirect(get_login_redirect_url(request.user))
 
     if request.method == 'POST':
@@ -82,8 +83,10 @@ def signin(request):
             
             # Handle "Remember me" functionality
             if not form.cleaned_data.get('remember_me'):
-                # Set session to expire when browser closes
                 request.session.set_expiry(0)
+            
+            # Tag the session for isolation
+            request.session['auth_portal'] = 'user'
             
             
             # Redirect to next page or home/dashboard
@@ -197,6 +200,7 @@ def resend_otp(request):
 # auths/views.py - Update the profile views
 
 @login_required
+@never_cache
 def profile_view(request):
     """Display user profile"""
     # Create form instance with current user data
@@ -208,6 +212,7 @@ def profile_view(request):
     })
 
 @login_required
+@never_cache
 def profile_edit(request):
     """Edit user profile"""
     if request.method == 'POST':
@@ -237,6 +242,7 @@ def profile_edit(request):
     })
 
 @login_required
+@never_cache
 def profile_image_upload(request):
     """Handle profile image upload separately"""
     if request.method == 'POST' and request.FILES.get('profile_image'):
@@ -248,11 +254,13 @@ def profile_image_upload(request):
     return redirect('user_auth:profile_edit')  # Fixed redirect
 
 @login_required
+@never_cache
 def user_logout(request):
     logout(request)
-    return redirect('user_home:home')
+    return redirect('user_auth:signin')
 
 @login_required
+@never_cache
 def change_password(request):
     """Change password when user knows current password"""
     if request.method == 'POST':
