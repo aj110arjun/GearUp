@@ -142,7 +142,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'GearUp.urls'
 
 SITE_NAME = "GearUp"
-SITE_DOMAIN = "http://localhost:8000"
+SITE_DOMAIN = config('SITE_DOMAIN')
 
 TEMPLATES = [
     {
@@ -231,7 +231,7 @@ AUTH_USER_MODEL = 'auths.UserModel'
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
