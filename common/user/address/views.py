@@ -2,11 +2,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views.decorators.cache import never_cache
 from django.http import JsonResponse
 from .models import Address
 from .forms import AddressForm
 
-login_required
+@login_required
+@never_cache
 def address_list(request):
     """Display user's addresses"""
     addresses = Address.objects.filter(user=request.user, is_active=True)
@@ -22,6 +24,7 @@ def address_list(request):
     return render(request, 'user/address/address_list.html', context)
 
 @login_required
+@never_cache
 def address_create(request):
     """Create new address"""
     # Get next URL from request (checkout page)
@@ -56,6 +59,7 @@ def address_create(request):
     return render(request, 'user/address/address_form.html', context)
 
 @login_required
+@never_cache
 def address_edit(request, pk):
     """Edit existing address"""
     address = get_object_or_404(Address, pk=pk, user=request.user)
@@ -86,6 +90,7 @@ def address_edit(request, pk):
     return render(request, 'user/address/address_form.html', context)
 
 @login_required
+@never_cache
 def address_delete(request, pk):
     """Delete address (soft delete)"""
     address = get_object_or_404(Address, pk=pk, user=request.user)
@@ -123,6 +128,7 @@ def address_delete(request, pk):
     return render(request, 'user/address/address_confirm_delete.html', context)
 
 @login_required
+@never_cache
 def set_default_address(request, pk):
     """Set address as default"""
     address = get_object_or_404(Address, pk=pk, user=request.user)
@@ -142,6 +148,7 @@ def set_default_address(request, pk):
 
 
 @login_required
+@never_cache
 def get_address_json(request, pk):
     """Get address data as JSON (for AJAX requests)"""
     address = get_object_or_404(Address, pk=pk, user=request.user)

@@ -24,14 +24,14 @@ from core.services import get_login_redirect_url
 
 @never_cache
 def admin_signin(request):
-    # Redirect if already authenticated
-    if request.user.is_authenticated:
+    # Only redirect if already authenticated AS ADMIN
+    if request.user.is_authenticated and request.session.get('auth_portal') == 'admin':
         return redirect(get_login_redirect_url(request.user))
     
-    # Redirect regular users to user dashboard - REMOVED to allow switching accounts
-    # if request.user.is_authenticated and not request.user.is_staff:
-    #     messages.warning(request, "You don't have admin privileges.")
-    #     return redirect('user_home:home')
+    # Redirect regular users to user dashboard
+    if request.user.is_authenticated and not request.user.is_staff:
+        messages.warning(request, "You don't have admin privileges.")
+        return redirect('user_home:home')
 
     if request.method == 'POST':
         form = AdminSigninForm(request.POST)
@@ -41,11 +41,14 @@ def admin_signin(request):
             
             # Handle "Remember me" functionality
             if not form.cleaned_data.get('remember_me'):
-                request.session.set_expiry(0)  # Session expires when browser closes
+                request.session.set_expiry(0)
+                
+            # Tag the session for isolation
+            request.session['auth_portal'] = 'admin'
             
             messages.success(request, f"Welcome back, {user.username}!")
             
-            # Redirect to next page or admin dashboard/home
+            # Redirect to next page
             next_page = request.GET.get('next')
             return redirect(get_login_redirect_url(user, next_page))
     else:
@@ -68,6 +71,7 @@ def admin_signout(request):
 
 
 @staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
 def dashboard(request):
     # Get filter parameter
     selected_filter = request.GET.get('filter', 'daily')
@@ -288,6 +292,7 @@ def dashboard(request):
     return render(request, 'admin/dashboard.html', context)
 
 @staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
 def download_sales_report(request):
     """Handle sales report download"""
     
