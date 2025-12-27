@@ -73,6 +73,13 @@ else:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False
     SECURE_HSTS_PRELOAD = False
 
+# Session Security
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+# Use a custom session engine if needed, but standard is fine
+
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
@@ -137,6 +144,7 @@ INSTALLED_APPS = [
     'cloudinary',
     'cloudinary_storage',
     'weasyprint',
+    'core',
     
     'common.user.auths',
     'common.user.home',
@@ -158,6 +166,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'core.middleware.PortalIsolationMiddleware',  # Role isolation
 ]
 
 ROOT_URLCONF = 'GearUp.urls'

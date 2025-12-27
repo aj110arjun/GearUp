@@ -1,7 +1,11 @@
 from django.shortcuts import render, get_object_or_404
 from .models import AdminTransaction
 from django.db.models import Sum, Q
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.cache import never_cache
 
+@staff_member_required
+@never_cache
 def transaction_list(request):
     # Base queryset for statistics (global stats)
     all_transactions = AdminTransaction.objects.all()
@@ -67,6 +71,8 @@ def transaction_list(request):
     }
     return render(request, 'admin/transactions/transaction_list.html', context)
 
+@staff_member_required
+@never_cache
 def transaction_detail(request, transaction_id):
     transaction = get_object_or_404(AdminTransaction, transaction_id=transaction_id)
     context = {
