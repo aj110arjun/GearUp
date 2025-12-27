@@ -192,3 +192,15 @@ class WalletService:
     @staticmethod
     def get_transaction_history(wallet, limit=10):
         return wallet.transactions.all()[:limit]
+
+
+def get_login_redirect_url(user, next_page=None):
+    """
+    Determine where a user should be redirected after login based on their role.
+    """
+    if next_page and next_page.strip():
+        return next_page
+    
+    if user.is_staff or user.is_superuser:
+        return 'auth_dashboard:dashboard'
+    return 'user_home:home'

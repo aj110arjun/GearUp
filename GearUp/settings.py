@@ -52,6 +52,26 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 SITE_ID = 1
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+else:
+    print("DEBUG mode is ON - Security Redirections Disabled")
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+    # Force HSTS off in case it was set
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
 
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
@@ -75,9 +95,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-LOGIN_REDIRECT_URL = '/'  # After successful login
-LOGOUT_REDIRECT_URL = 'user_auth:signin'  # After logout
+LOGIN_REDIRECT_URL = '/'  # Default fallback
+LOGOUT_REDIRECT_URL = 'user_auth:signin'
 ACCOUNT_LOGOUT_REDIRECT_URL = 'user_auth:signin'
+ACCOUNT_ADAPTER = 'core.adapters.RoleBasedAccountAdapter'
 LOGIN_URL = 'user_auth:signin'
 
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
