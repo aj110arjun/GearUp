@@ -24,13 +24,16 @@ from django.db.models import Q
 
 from .forms import UserCreationForm, SigninForm, OTPVerificationForm, ProfileUpdateForm, CustomPasswordChangeForm, CustomPasswordResetForm, CustomSetPasswordForm, ForgotPasswordForm, ResetPasswordForm, EmailChangeForm, EmailChangeOTPForm
 from .models import UserModel, OTP, PasswordResetToken
-from core.services import send_otp_email, send_password_reset_otp_email, send_email_change_otp_email
+from core.services import (
+    send_otp_email, send_password_reset_otp_email, 
+    send_email_change_otp_email, get_login_redirect_url
+)
 
 
 @never_cache
 def signup(request):
     if request.user.is_authenticated:
-        return redirect('user_home:home')
+        return redirect(get_login_redirect_url(request.user))
 
     # Check if user is already in OTP verification stage
     if 'signup_data' in request.session and 'otp_sent' in request.session:
@@ -69,7 +72,7 @@ def signup(request):
 @never_cache
 def signin(request):
     if request.user.is_authenticated:
-        return redirect('user_home:home')  # or 'dashboard'
+        return redirect(get_login_redirect_url(request.user))
 
     if request.method == 'POST':
         form = SigninForm(request.POST)
@@ -83,10 +86,10 @@ def signin(request):
                 request.session.set_expiry(0)
             
             
-            # Redirect to next page or home
+            # Redirect to next page or home/dashboard
             messages.success(request, f'Successfully signed in as {user.get_full_name() or user.username}')
-            next_page = request.GET.get('next', 'user_home:home')
-            return redirect(next_page)
+            next_page = request.GET.get('next')
+            return redirect(get_login_redirect_url(user, next_page))
     else:
         form = SigninForm()
 
@@ -100,7 +103,7 @@ def signin(request):
 @never_cache
 def verify_otp(request):
     if request.user.is_authenticated:
-        return redirect('user_home:home')
+        return redirect(get_login_redirect_url(request.user))
     
     if 'signup_data' not in request.session or 'otp_sent' not in request.session:
         return redirect('signup')
@@ -525,7 +528,7 @@ def resend_reset_email(request):
 def forgot_password(request):
     """Step 1: Request password reset OTP"""
     if request.user.is_authenticated:
-        return redirect('user_home:home')
+        return redirect(get_login_redirect_url(request.user))
     
     if request.method == 'POST':
         form = ForgotPasswordForm(request.POST)
@@ -552,7 +555,7 @@ def forgot_password(request):
 def verify_reset_otp(request):
     """Step 2: Verify OTP for password reset"""
     if request.user.is_authenticated:
-        return redirect('user_home:home')
+        return redirect(get_login_redirect_url(request.user))
     
     if 'reset_email' not in request.session or 'reset_otp_sent' not in request.session:
         messages.error(request, "Please request a password reset first.")
@@ -621,7 +624,7 @@ def resend_reset_otp(request):
 def reset_password(request):
     """Step 3: Set new password after OTP verification"""
     if request.user.is_authenticated:
-        return redirect('user_home:home')
+        return redirect(get_login_redirect_url(request.user))
     
     if 'reset_email' not in request.session or 'reset_otp_verified' not in request.session:
         messages.error(request, "Please verify OTP first.")
