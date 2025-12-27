@@ -20,12 +20,13 @@ from common.products.models import Product, Category
 from common.admin.auth_dashboard.sales_report import generate_report_response
 
 from .forms import AdminSigninForm
+from core.services import get_login_redirect_url
 
 @never_cache
 def admin_signin(request):
-    # Redirect if already authenticated and is staff
-    if request.user.is_authenticated and request.user.is_staff:
-        return redirect('auth_dashboard:dashboard')
+    # Redirect if already authenticated
+    if request.user.is_authenticated:
+        return redirect(get_login_redirect_url(request.user))
     
     # Redirect regular users to user dashboard - REMOVED to allow switching accounts
     # if request.user.is_authenticated and not request.user.is_staff:
@@ -44,9 +45,9 @@ def admin_signin(request):
             
             messages.success(request, f"Welcome back, {user.username}!")
             
-            # Redirect to next page or admin dashboard
-            next_page = request.GET.get('next', 'auth_dashboard:dashboard')
-            return redirect(next_page)
+            # Redirect to next page or admin dashboard/home
+            next_page = request.GET.get('next')
+            return redirect(get_login_redirect_url(user, next_page))
     else:
         form = AdminSigninForm()
 
