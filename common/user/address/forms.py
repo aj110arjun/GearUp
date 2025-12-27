@@ -78,23 +78,21 @@ class AddressForm(forms.ModelForm):
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number', '').strip()
-        if phone_number:
-            # Remove spaces, hyphens, and parentheses for validation
-            clean_phone = re.sub(r'[\s\-\(\)]', '', phone_number)
-            
-            # Check if it contains only numbers and optional + at start
-            if not re.match(r'^\+?\d+$', clean_phone):
-                raise ValidationError("Phone number should contain only numbers and optional country code with +.")
-            
-            # Check length (minimum 10 digits excluding +)
-            digits_only = clean_phone.lstrip('+')
-            if len(digits_only) < 10:
-                raise ValidationError("Phone number should be at least 10 digits long.")
-            
-            if len(digits_only) > 15:
-                raise ValidationError("Phone number is too long.")
+        if not phone_number:
+            raise ValidationError("Phone number is required.")
         
-        return phone_number
+        # Remove all non-digit characters
+        digits_only = re.sub(r'\D', '', phone_number)
+        
+        # Check if it has exactly 10 digits
+        if len(digits_only) != 10:
+            raise ValidationError("Phone number must be exactly 10 digits.")
+        
+        # Check if it starts with valid Indian mobile digits (optional but common: 6, 7, 8, 9)
+        if not re.match(r'^[6-9]', digits_only):
+            raise ValidationError("Please enter a valid Indian mobile number starting with 6, 7, 8, or 9.")
+            
+        return digits_only
 
     def clean_address_line1(self):
         address_line1 = self.cleaned_data.get('address_line1', '').strip()
