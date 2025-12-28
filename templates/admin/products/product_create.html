@@ -292,20 +292,23 @@
           {% endif %}
 
           <!-- Status -->
-          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
             <div>
               <p class="text-sm font-medium text-gray-900">Publish Product</p>
               <p class="text-xs text-gray-600">Make product visible in store immediately</p>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
+            <div class="checkbox-btn">
               <input type="checkbox" 
                      name="is_active" 
                      id="id_is_active"
-                     class="sr-only peer" 
                      {% if form.is_active.value or form.is_active.value == None %}checked{% endif %}>
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-            </label>
-          </div>
+              <span class="checkmark">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                </svg>
+              </span>
+            </div>
+          </label>
 
         </div>
 
@@ -654,12 +657,58 @@ document.addEventListener('DOMContentLoaded', function() {
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-.peer:checked ~ .peer-checked\:bg-indigo-600 {
+.peer:checked ~ .peer-checked\\:bg-indigo-600 {
   background-color: #4f46e5;
 }
 
-.peer:checked ~ .peer-checked\:after\:translate-x-full:after {
+.peer:checked ~ .peer-checked\\:after\\:translate-x-full:after {
   transform: translateX(100%);
+}
+
+/* Checkbox Button Styles */
+.checkbox-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-btn input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkbox-btn .checkmark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #e5e7eb;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.checkbox-btn .checkmark svg {
+  opacity: 0;
+  color: white;
+  transition: opacity 0.2s ease;
+}
+
+.checkbox-btn input:checked + .checkmark {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.checkbox-btn input:checked + .checkmark svg {
+  opacity: 1;
+}
+
+.checkbox-btn input:focus + .checkmark {
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
 /* Cropper.js custom styles */

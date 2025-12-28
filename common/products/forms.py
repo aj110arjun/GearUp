@@ -69,6 +69,12 @@ class ProductCreateForm(forms.ModelForm):
             'sku': 'Leave blank to auto-generate SKU after saving',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set category choices to only active and non-deleted
+        self.fields['category'].queryset = Category.objects.filter(is_active=True, is_deleted=False)
+        self.fields['category'].empty_label = "Select a category"
+
     def clean_image(self):
         image = self.cleaned_data.get('image')
         if image and hasattr(image, 'file'):  # It's a file upload
@@ -223,7 +229,7 @@ class ProductEditForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Set category choices
-        self.fields['category'].queryset = Category.objects.filter(is_active=True)
+        self.fields['category'].queryset = Category.objects.filter(is_active=True, is_deleted=False)
         self.fields['category'].empty_label = "Select a category"
         
         # Slug and SKU are not editable in edit mode

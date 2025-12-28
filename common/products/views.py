@@ -24,6 +24,7 @@ from .forms import (
     ProductEditForm,
     ProductImageForm,
     ProductImageFormSet,
+    ProductVariantForm,
     ProductVariantFormSet,
     CategoryForm,
     ProductOfferForm,
@@ -33,8 +34,6 @@ from .forms import (
 
 logger = logging.getLogger(__name__)
 
-@staff_member_required(login_url='auth_dashboard:signin')
-@never_cache
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_listing(request):
@@ -49,18 +48,20 @@ def product_listing(request):
     sort_by = request.GET.get('sort', '')
     
     # Base QuerySet
-    products = Product.objects.all().prefetch_related('variants', 'category')
+    products = Product.objects.filter(is_deleted=False, category__is_deleted=False).prefetch_related('variants', 'category')
     
     # 1. Dashboard Stats (Calculated on full queryset before filtering)
-    total_products = Product.objects.count()
-    active_products = Product.objects.filter(is_active=True).count()
+    total_products = Product.objects.filter(is_deleted=False).count()
+    active_products = Product.objects.filter(is_active=True, is_deleted=False).count()
     
     # Complex stats requiring variant aggregation
     # Products with at least one variant out of stock (stock_quantity = 0)
-    out_of_stock_products = Product.objects.filter(variants__stock_quantity=0).distinct().count()
+    out_of_stock_products = Product.objects.filter(is_deleted=False, variants__stock_quantity=0, variants__is_deleted=False).distinct().count()
     
     # Products with low stock (<= 10) but not out of stock
     low_stock_products = Product.objects.filter(
+        is_deleted=False,
+        variants__is_deleted=False,
         variants__stock_quantity__lte=10, 
         variants__stock_quantity__gt=0
     ).distinct().count()
@@ -79,11 +80,14 @@ def product_listing(request):
 
     if stock_status:
         if stock_status == 'true': # In Stock
-            products = products.filter(variants__stock_quantity__gt=0).distinct()
+            products = products.filter(variants__stock_quantity__gt=0, variants__is_deleted=False).distinct()
         elif stock_status == 'false': # Out of Stock
-            products = products.filter(variants__stock_quantity=0).distinct()
+            # This is tricky in Django ORM with distinct. 
+            # Usually, we want products where NO active/non-deleted variant has stock.
+            # For simplicity, we'll keep the current logic but add is_deleted filter.
+            products = products.filter(variants__stock_quantity=0, variants__is_deleted=False).distinct()
         elif stock_status == 'low': # Low Stock
-            products = products.filter(variants__stock_quantity__lte=10, variants__stock_quantity__gt=0).distinct()
+            products = products.filter(variants__stock_quantity__lte=10, variants__stock_quantity__gt=0, variants__is_deleted=False).distinct()
 
     if active_status:
         if active_status == 'true':
@@ -95,13 +99,13 @@ def product_listing(request):
     if sort_by == 'name':
         products = products.order_by('name')
     elif sort_by == 'price_asc':
-        products = products.annotate(sorting_price=Min('variants__price')).order_by('sorting_price')
+        products = products.annotate(sorting_price=Min('variants__price', filter=Q(variants__is_deleted=False))).order_by('sorting_price')
     elif sort_by == 'price_desc':
-        products = products.annotate(sorting_price=Min('variants__price')).order_by('-sorting_price')
+        products = products.annotate(sorting_price=Min('variants__price', filter=Q(variants__is_deleted=False))).order_by('-sorting_price')
     elif sort_by == 'stock_asc':
-        products = products.annotate(sorting_stock=Sum('variants__stock_quantity')).order_by('sorting_stock')
+        products = products.annotate(sorting_stock=Sum('variants__stock_quantity', filter=Q(variants__is_deleted=False))).order_by('sorting_stock')
     elif sort_by == 'stock_desc':
-        products = products.annotate(sorting_stock=Sum('variants__stock_quantity')).order_by('-sorting_stock')
+        products = products.annotate(sorting_stock=Sum('variants__stock_quantity', filter=Q(variants__is_deleted=False))).order_by('-sorting_stock')
     elif sort_by == 'newest':
         products = products.order_by('-created_at')
     else:
@@ -121,12 +125,12 @@ def product_listing(request):
 
     # 5. Enrich objects for template display (Total stock calculation)
     for product in products_page:
-        product.total_stock = product.variants.aggregate(total=Sum('stock_quantity'))['total'] or 0
+        product.total_stock = product.variants.filter(is_deleted=False).aggregate(total=Sum('stock_quantity'))['total'] or 0
 
     # 6. Context
     context = {
         'products': products_page,
-        'categories': Category.objects.filter(is_active=True),
+        'categories': Category.objects.filter(is_active=True, is_deleted=False),
         'total_products': total_products,
         'active_products': active_products,
         'out_of_stock_products': out_of_stock_products,
@@ -168,8 +172,10 @@ def product_delete(request, slug):
     if request.method == 'POST':
         try:
             product_name = product.name
-            product.delete()
-            messages.success(request, f'Product "{product_name}" has been deleted successfully!')
+            product.is_deleted = True
+            product.is_active = False # Also deactivate it
+            product.save()
+            messages.success(request, f'Product "{product_name}" has been soft deleted successfully!')
             return redirect('products:product_list')
         except Exception as e:
             messages.error(request, f'An error occurred while deleting the product: {str(e)}')
@@ -192,13 +198,13 @@ def product_detail(request, product_slug):
         slug=product_slug
     )
     images = product.images.all()
-    variants = product.variants.all()
+    variants = product.variants.filter(is_deleted=False)
     
     # Stock summary
     total_stock = variants.aggregate(total=Sum('stock_quantity'))['total'] or 0
-    active_variants = variants.filter(is_active=True).count()
-    out_of_stock_variants = variants.filter(stock_quantity=0).count()
-    low_stock_variants = variants.filter(stock_quantity__lte=10, stock_quantity__gt=0).count()
+    active_variants = variants.filter(is_active=True, is_deleted=False).count()
+    out_of_stock_variants = variants.filter(stock_quantity=0, is_deleted=False).count()
+    low_stock_variants = variants.filter(stock_quantity__lte=10, stock_quantity__gt=0, is_deleted=False).count()
     
     context = {
         'product': product,
@@ -284,8 +290,8 @@ def product_create(request):
         # GET request - show empty form
         form = ProductCreateForm()
     
-    # Get active categories for the dropdown
-    categories = Category.objects.filter(is_active=True).order_by('name')
+    # Get active and non-deleted categories for the dropdown
+    categories = Category.objects.filter(is_active=True, is_deleted=False).order_by('name')
     
     context = {
         'form': form,
@@ -299,29 +305,18 @@ def product_create(request):
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def product_edit(request, slug):
-    """Full product editing with variants and images"""
+    """Full product editing with images. Variants are managed separately."""
     product = get_object_or_404(Product, slug=slug)
     
     if request.method == 'POST':
         form = ProductEditForm(request.POST, request.FILES, instance=product)
-        variant_formset = ProductVariantFormSet(request.POST, instance=product)
         image_formset = ProductImageFormSet(request.POST, request.FILES, instance=product)
         
-        if form.is_valid() and variant_formset.is_valid() and image_formset.is_valid():
+        if form.is_valid() and image_formset.is_valid():
             try:
                 with transaction.atomic():
                     # Save the main product form
                     product = form.save()
-                    
-                    # Handle variants
-                    variants = variant_formset.save(commit=False)
-                    for variant in variants:
-                        variant.product = product
-                        variant.save()
-                    
-                    # Delete marked variants
-                    for variant in variant_formset.deleted_objects:
-                        variant.delete()
                     
                     # Handle images
                     images = image_formset.save(commit=False)
@@ -368,17 +363,16 @@ def product_edit(request, slug):
             messages.error(request, 'Please correct the errors below.')
     else:
         form = ProductEditForm(instance=product)
-        variant_formset = ProductVariantFormSet(instance=product)
         image_formset = ProductImageFormSet(instance=product)
     
-    categories = Category.objects.filter(is_active=True).order_by('name')
+    categories = Category.objects.filter(is_active=True, is_deleted=False).order_by('name')
     
     context = {
         'form': form,
-        'variant_formset': variant_formset,
         'image_formset': image_formset,
         'product': product,
-        'categories': categories,
+        'variants': product.variants.filter(is_deleted=False),
+        'categories': Category.objects.filter(is_active=True, is_deleted=False).order_by('name'),
         'is_edit': True,
         'title': f'Edit Product - {product.name}',
     }
@@ -410,13 +404,54 @@ def add_variant_admin(request, slug):
     }
     return render(request, 'admin/products/variant_add.html', context)
 
+@user_passes_test(lambda u: u.is_superuser)
+@never_cache
+def edit_variant_admin(request, variant_id):
+    """
+    Separate view to edit an existing variant.
+    """
+    variant = get_object_or_404(ProductVariant, id=variant_id)
+    product = variant.product
+    
+    if request.method == 'POST':
+        form = ProductVariantForm(request.POST, instance=variant)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Variant updated successfully!')
+            return redirect('products:product_edit', slug=product.slug)
+    else:
+        form = ProductVariantForm(instance=variant)
+    
+    context = {
+        'product': product,
+        'variant': variant,
+        'form': form,
+    }
+    return render(request, 'admin/products/variant_edit.html', context)
+
+@user_passes_test(lambda u: u.is_superuser)
+@never_cache
+def delete_variant_admin(request, variant_id):
+    """
+    Soft delete a variant.
+    """
+    variant = get_object_or_404(ProductVariant, id=variant_id)
+    product = variant.product
+    
+    variant.is_deleted = True
+    variant.is_active = False
+    variant.save()
+    
+    messages.success(request, 'Variant removed successfully!')
+    return redirect('products:product_edit', slug=product.slug)
+
 @staff_member_required(login_url='auth_dashboard:signin')
 @never_cache
 def category_list(request):
-    # Get all categories with related data and annotate with counts
-    categories = Category.objects.prefetch_related('products').annotate(
-        total_products_count=Count('products'),
-        active_products_count=Count('products', filter=Q(products__is_active=True))
+    # Get all non-deleted categories with related data and annotate with counts
+    categories = Category.objects.filter(is_deleted=False).prefetch_related('products').annotate(
+        total_products_count=Count('products', filter=Q(products__is_deleted=False)),
+        active_products_count=Count('products', filter=Q(products__is_active=True, products__is_deleted=False))
     ).all()
     
     # Search functionality
@@ -653,8 +688,8 @@ def category_offer_delete(request, offer_id):
 @never_cache
 def product_list_user(request):
     """User-side product listing with filtering and sorting"""
-    # Get all active products with variants, annotated with review stats
-    products = Product.objects.filter(is_active=True).annotate(
+    # Get all active and non-deleted products with variants, annotated with review stats
+    products = Product.objects.filter(is_active=True, is_deleted=False, category__is_deleted=False).annotate(
         avg_rating_sort=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
         review_count_sort=Count('reviews', filter=Q(reviews__is_approved=True))
     ).prefetch_related('variants', 'category', 'images')
@@ -685,11 +720,11 @@ def product_list_user(request):
     # Apply sorting
     if sort_by == 'price_asc':
         products = products.annotate(
-            product_min_price=Min('variants__price')
+            product_min_price=Min('variants__price', filter=Q(variants__is_active=True, variants__is_deleted=False))
         ).order_by('product_min_price')
     elif sort_by == 'price_desc':
         products = products.annotate(
-            product_min_price=Min('variants__price')
+            product_min_price=Min('variants__price', filter=Q(variants__is_active=True, variants__is_deleted=False))
         ).order_by('-product_min_price')
     elif sort_by == 'name':
         products = products.order_by('name')
@@ -719,7 +754,7 @@ def product_list_user(request):
         products_page = paginator.page(paginator.num_pages)
     
     # Get categories for filter
-    categories = Category.objects.filter(is_active=True)
+    categories = Category.objects.filter(is_active=True, is_deleted=False)
     
     # Get cart items
     cart_items = []
@@ -765,14 +800,15 @@ def product_detail_user(request, product_slug):
     product = get_object_or_404(
         Product.objects.prefetch_related('variants', 'images', 'category', 'reviews', 'reviews__user'),
         slug=product_slug,
-        is_active=True
+        is_active=True,
+        is_deleted=False
     )
 
     # Get images
     images_qs = product.images.all()
 
-    # Get active variants
-    variants = product.variants.filter(is_active=True)
+    # Get active and non-deleted variants
+    variants = product.variants.filter(is_active=True, is_deleted=False)
 
     # Get cart variant IDs for current user
     cart_variant_ids = []
@@ -787,8 +823,12 @@ def product_detail_user(request, product_slug):
     for variant in variants:
         variant.in_cart = variant.id in cart_variant_ids
 
-    # Get approved reviews with related data
-    reviews = product.reviews.filter(is_approved=True).select_related('user')
+    # Get approved reviews unioned with current user's reviews (even if unapproved)
+    reviews_base = product.reviews.select_related('user')
+    if request.user.is_authenticated:
+        reviews = reviews_base.filter(Q(is_approved=True) | Q(user=request.user)).distinct()
+    else:
+        reviews = reviews_base.filter(is_approved=True)
     
     # Get review statistics
     review_stats = {
@@ -820,7 +860,8 @@ def product_detail_user(request, product_slug):
     # Get related products (same category)
     related_products = Product.objects.filter(
         category=product.category,
-        is_active=True
+        is_active=True,
+        is_deleted=False
     ).exclude(id=product.id).prefetch_related('variants', 'images')[:4]
 
     # Get wishlist status
@@ -854,7 +895,10 @@ def submit_review(request, product_slug):
     
     # Check if user already reviewed
     if ProductReview.objects.filter(product=product, user=request.user).exists():
-        messages.warning(request, 'You have already reviewed this product.')
+        warn_msg = 'You have already reviewed this product.'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': warn_msg})
+        messages.warning(request, warn_msg)
         return redirect('products:product_detail_user', product_slug=product_slug)
     
     form = ProductReviewForm(request.POST)
@@ -866,19 +910,30 @@ def submit_review(request, product_slug):
                 review = form.save(commit=False)
                 review.product = product
                 review.user = request.user
-                
-                # Check if user purchased this product (implement your own logic)
-                # review.verified_purchase = has_user_purchased(request.user, product)
-                
                 review.save()
                 
-                messages.success(request, 'Thank you for your review! It will be visible after approval.')
-                return redirect('products:product_detail_user', product_slug=product_slug)
+                success_msg = 'Thank you for your review! It will be visible after approval.'
+                redirect_url = reverse('products:product_detail_user', args=[product.slug])
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True, 
+                        'message': success_msg,
+                        'redirect_url': redirect_url
+                    })
+                
+                messages.success(request, success_msg)
+                return redirect('products:product_detail_user', product_slug=product.slug)
                 
         except Exception as e:
             logger.error(f"Error saving review: {e}")
-            messages.error(request, 'An error occurred while saving your review.')
+            error_msg = 'An error occurred while saving your review.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': error_msg})
+            messages.error(request, error_msg)
     else:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': form.errors})
         messages.error(request, 'Please correct the errors in your review.')
     
     return redirect('products:product_detail_user', product_slug=product_slug)
@@ -985,34 +1040,46 @@ def get_review(request, review_id):
 @login_required
 @require_POST
 def update_review(request, review_id):
-    """Update an existing review"""
+    """Update an existing review with robust redirection support"""
     from .models import ProductReview
     from .forms import ProductReviewForm
     
+    logger.info(f"Updating review {review_id} for user {request.user}")
     review = get_object_or_404(ProductReview, id=review_id)
     
-    # Check if review belongs to user
     if review.user != request.user:
-        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+        logger.warning(f"Unauthorized update attempt on review {review_id} by {request.user}")
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=403)
     
-    # Get product for form validation
     product = review.product
-    
     form = ProductReviewForm(request.POST, instance=review)
     
     if form.is_valid():
-        review = form.save(commit=False)
-        review.product = product
-        review.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Review updated successfully'
-        })
+        try:
+            review = form.save()
+            success_msg = 'Review updated successfully'
+            redirect_url = reverse('products:product_detail_user', kwargs={'product_slug': product.slug})
+            
+            logger.info(f"Review {review_id} updated. Redirecting to {redirect_url}")
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': success_msg,
+                    'redirect_url': redirect_url
+                })
+            
+            messages.success(request, success_msg)
+            return redirect(redirect_url)
+        except Exception as e:
+            logger.error(f"Error saving updated review {review_id}: {e}")
+            return JsonResponse({'success': False, 'message': 'Database error occurred'}, status=500)
     
+    logger.debug(f"Form validation failed for review {review_id}: {form.errors}")
     return JsonResponse({
         'success': False,
-        'errors': form.errors
+        'errors': form.errors,
+        'message': 'Please correct the highlighted errors.'
     })
 
 @require_POST
