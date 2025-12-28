@@ -79,7 +79,7 @@ class CartItem(models.Model):
 
     @property
     def is_available(self):
-        return self.variant.stock_quantity >= self.quantity
+        return not self.variant.is_deleted and self.variant.is_active and self.variant.stock_quantity >= self.quantity
 
 class Wishlist(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

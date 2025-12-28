@@ -19,25 +19,28 @@ def home(request):
     # 1. Bestsellers (Take 4)
     bestseller_qs = Product.objects.filter(
         is_active=True, 
+        is_deleted=False,
         is_bestseller=True
     ).prefetch_related('variants', 'category')[:4]
     
     # 2. Featured (Take 8)
     featured_qs = Product.objects.filter(
         is_active=True, 
+        is_deleted=False,
         is_featured=True
     ).prefetch_related('variants', 'category')[:8]
     
     # 3. New Arrivals (Take 8 recent)
     new_arrivals_qs = Product.objects.filter(
-        is_active=True
+        is_active=True,
+        is_deleted=False
     ).order_by('-created_at').prefetch_related('variants', 'category')[:8]
 
     # Helper to process products
     def _prepare_products(qs):
         data = []
         for product in qs:
-            variants = product.variants.filter(is_active=True)
+            variants = product.variants.filter(is_active=True, is_deleted=False)
             if variants.exists():
                 first_variant = variants.first()
                 # Calculate prices

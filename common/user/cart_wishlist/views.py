@@ -49,7 +49,7 @@ def cart_view(request):
     cart_items = cart.items.select_related('variant__product').all()
     
     for item in cart_items:
-        if item.variant.stock_quantity < 1:
+        if item.variant.stock_quantity < 1 or item.variant.is_deleted:
             product = item.variant.product
             wishlist = get_or_create_wishlist(request.user)
             
@@ -61,7 +61,7 @@ def cart_view(request):
             out_of_stock_moved += 1
             
     if out_of_stock_moved > 0:
-        messages.info(request, f'{out_of_stock_moved} item(s) were moved to your wishlist as they were out of stock.')
+        messages.info(request, f'{out_of_stock_moved} item(s) were moved to your wishlist as they were unavailable or out of stock.')
         # Refresh cart items query after deletions
         cart_items = cart.items.select_related('variant__product').all()
         cart.refresh_from_db()
@@ -110,7 +110,7 @@ def add_to_cart(request):
         quantity = int(data.get('quantity', 1))
         
         # Get variant
-        variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
+        variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, is_deleted=False)
         product = variant.product
         
         # Check stock
@@ -174,7 +174,7 @@ def toggle_cart_item(request):
         data = json.loads(request.body)
         variant_id = data.get('variant_id')
         
-        variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True)
+        variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, is_deleted=False)
         
         if variant.stock_quantity < 1:
             return JsonResponse({
@@ -240,6 +240,13 @@ def update_cart_item(request, item_id):
             cart__user=request.user
         )
         
+        if cart_item.variant.is_deleted:
+            cart_item.delete()
+            return JsonResponse({
+                'success': False,
+                'message': 'This product is no longer available'
+            })
+            
         if quantity <= 0:
             cart_item.delete()
             message = 'Item removed from cart'
@@ -553,7 +560,7 @@ def move_to_cart(request, item_id):
         )
         
         # Get the first available variant
-        variant = wishlist_item.product.variants.filter(is_active=True, stock_quantity__gt=0).first()
+        variant = wishlist_item.product.variants.filter(is_active=True, is_deleted=False, stock_quantity__gt=0).first()
         
         if variant:
             cart = get_or_create_cart(request.user)
@@ -613,7 +620,7 @@ def move_all_to_cart(request):
         
         for item in wishlist_items:
             # Get the first available variant
-            variant = item.product.variants.filter(is_active=True, stock_quantity__gt=0).first()
+            variant = item.product.variants.filter(is_active=True, is_deleted=False, stock_quantity__gt=0).first()
             if variant:
                 cart_item, created = CartItem.objects.get_or_create(
                     cart=cart,

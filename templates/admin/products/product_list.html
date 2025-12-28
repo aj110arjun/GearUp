@@ -248,11 +248,13 @@
               {% endif %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {% if product.variants.first %}
-                ₹{{ product.variants.first.price }}
+              {% with first_variant=product.get_first_variant %}
+              {% if first_variant %}
+                ₹{{ first_variant.price }}
               {% else %}
                 <span class="text-gray-400">No Variant</span>
               {% endif %}
+              {% endwith %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">

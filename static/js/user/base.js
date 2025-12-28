@@ -9,7 +9,7 @@ if (menuBtn && mobileMenu) {
 }
 
 // Snackbar Notification System
-function showNotification(message, type = 'success') {
+window.showNotification = function(message, type = 'success') {
   const container = document.getElementById('snackbar-container');
   const snackbar = document.createElement('div');
   

@@ -45,10 +45,32 @@
     animation: fadeIn 0.6s ease-out forwards;
   }
   .form-input {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    color: #111827;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  }
+  .form-input::placeholder {
+    color: #9ca3af;
   }
   .readonly-input {
-    @apply w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 cursor-not-allowed;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    color: #4b5563;
+    cursor: not-allowed;
+    font-size: 1rem;
   }
   .card-hover {
     transition: all 0.3s ease;
@@ -499,45 +521,73 @@
                 </div>
               </div>
 
-              <!-- Website and Date of Birth -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label for="id_website" class="block text-sm font-semibold text-gray-700 mb-3">
-                    <i class="fas fa-globe text-emerald-500 mr-2"></i>
-                    Website
-                  </label>
-                  <input type="url" 
-                         name="website" 
-                         id="id_website" 
-                         value="{{ form.website.value|default:user.website|default:'' }}"
-                         class="form-input"
-                         placeholder="https://example.com">
-                  {% if form.website.errors %}
-                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
-                      <i class="fas fa-exclamation-circle"></i>
-                      <span>{{ form.website.errors.0 }}</span>
-                    </div>
-                  {% endif %}
-                </div>
-                
-                <div>
-                  <label for="id_date_of_birth" class="block text-sm font-semibold text-gray-700 mb-3">
-                    <i class="fas fa-birthday-cake text-emerald-500 mr-2"></i>
-                    Date of Birth
-                  </label>
-                  <input type="date" 
-                         name="date_of_birth" 
-                         id="id_date_of_birth" 
-                         value="{% if form.date_of_birth.value %}{{ form.date_of_birth.value|date:'Y-m-d' }}{% endif %}"
-                         class="form-input">
-                  {% if form.date_of_birth.errors %}
-                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
-                      <i class="fas fa-exclamation-circle"></i>
-                      <span>{{ form.date_of_birth.errors.0 }}</span>
-                    </div>
-                  {% endif %}
-                </div>
+              <!-- Date of Birth -->
+              <div>
+                <label for="id_date_of_birth_display" class="block text-sm font-semibold text-gray-700 mb-3">
+                  <i class="fas fa-birthday-cake text-emerald-500 mr-2"></i>
+                  Date of Birth
+                </label>
+                <input type="text" 
+                       id="id_date_of_birth_display" 
+                       class="form-input"
+                       placeholder="DD/MM/YYYY"
+                       maxlength="10"
+                       autocomplete="off">
+                <input type="hidden" 
+                       name="date_of_birth" 
+                       id="id_date_of_birth" 
+                       value="{% if form.date_of_birth.value %}{{ form.date_of_birth.value|date:'Y-m-d' }}{% endif %}">
+                <p class="text-xs text-gray-500 mt-1">Format: DD/MM/YYYY</p>
+                {% if form.date_of_birth.errors %}
+                  <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>{{ form.date_of_birth.errors.0 }}</span>
+                  </div>
+                {% endif %}
               </div>
+              
+              <script>
+                // Date of Birth formatting - dd/mm/yyyy
+                document.addEventListener('DOMContentLoaded', function() {
+                  const displayInput = document.getElementById('id_date_of_birth_display');
+                  const hiddenInput = document.getElementById('id_date_of_birth');
+                  
+                  // Convert existing value from YYYY-MM-DD to DD/MM/YYYY
+                  if (hiddenInput.value) {
+                    const parts = hiddenInput.value.split('-');
+                    if (parts.length === 3) {
+                      displayInput.value = parts[2] + '/' + parts[1] + '/' + parts[0];
+                    }
+                  }
+                  
+                  // Auto-format as user types
+                  displayInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                    
+                    if (value.length > 8) value = value.slice(0, 8);
+                    
+                    // Add slashes automatically
+                    if (value.length >= 4) {
+                      value = value.slice(0, 2) + '/' + value.slice(2, 4) + '/' + value.slice(4);
+                    } else if (value.length >= 2) {
+                      value = value.slice(0, 2) + '/' + value.slice(2);
+                    }
+                    
+                    e.target.value = value;
+                    
+                    // Update hidden field in YYYY-MM-DD format
+                    if (value.length === 10) {
+                      const parts = value.split('/');
+                      const day = parts[0];
+                      const month = parts[1];
+                      const year = parts[2];
+                      hiddenInput.value = year + '-' + month + '-' + day;
+                    } else {
+                      hiddenInput.value = '';
+                    }
+                  });
+                });
+              </script>
 
               <!-- Social Media Section -->
               <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
