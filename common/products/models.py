@@ -17,6 +17,7 @@ class Category(models.Model):
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -92,6 +93,7 @@ class Product(models.Model):
     
     # Status
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
     is_featured = models.BooleanField(default=False)
     is_bestseller = models.BooleanField(default=False)
     
@@ -139,12 +141,12 @@ class Product(models.Model):
     @property
     def in_stock(self):
         """Check if any variant is in stock"""
-        return self.variants.filter(stock_quantity__gt=0).exists()
+        return self.variants.filter(is_deleted=False, stock_quantity__gt=0).exists()
 
     @property
     def min_price(self):
         """Get minimum price from variants (considering offers)"""
-        variants = self.variants.filter(is_active=True)
+        variants = self.variants.filter(is_active=True, is_deleted=False)
         if variants.exists():
             return min(variant.get_discounted_price() for variant in variants)
         return 0
@@ -152,19 +154,24 @@ class Product(models.Model):
     @property
     def max_price(self):
         """Get maximum price from variants (considering offers)"""
-        variants = self.variants.filter(is_active=True)
+        variants = self.variants.filter(is_active=True, is_deleted=False)
         if variants.exists():
             return max(variant.get_discounted_price() for variant in variants)
         return 0
     
     def get_in_stock_variants(self):
         """Return all variants that are in stock"""
-        return self.variants.filter(stock_quantity__gt=0)
+        return self.variants.filter(is_deleted=False, stock_quantity__gt=0)
     
     def get_first_in_stock_variant(self):
         """Return the first variant that is in stock, or None"""
         in_stock = self.get_in_stock_variants()
         return in_stock.first() if in_stock.exists() else None
+
+    @property
+    def get_first_variant(self):
+        """Get the first non-deleted variant"""
+        return self.variants.filter(is_deleted=False).first()
 
     # ADD THESE PROPERTIES FOR TEMPLATE COMPATIBILITY
     @property
@@ -239,6 +246,7 @@ class ProductVariant(models.Model):
     
     # Status
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

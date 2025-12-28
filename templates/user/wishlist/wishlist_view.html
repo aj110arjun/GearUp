@@ -198,7 +198,7 @@
                       <!-- Image Overlay -->
                       <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div class="absolute bottom-4 left-4 right-4 flex gap-2">
-                          {% with first_variant=item.product.variants.first %}
+                          {% with first_variant=item.product.get_first_variant %}
                           {% if first_variant and first_variant.stock_quantity > 0 %}
                           <button onclick="moveToCart('{{ item.id }}')"
                                   class="flex-1 bg-white text-gray-800 px-4 py-2.5 rounded-lg font-semibold hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-300 flex items-center justify-center gap-2 text-sm transform group-hover:translate-y-0 translate-y-2 opacity-0 group-hover:opacity-100 shadow-lg">
@@ -224,7 +224,7 @@
                       <!-- Top Badges -->
                       <div class="absolute top-4 left-4 right-4 flex justify-between items-start">
                         <!-- Stock Status -->
-                        {% with first_variant=item.product.variants.first %}
+                        {% with first_variant=item.product.get_first_variant %}
                         {% if first_variant %}
                           {% if first_variant.stock_quantity > 0 %}
                             <span class="stock-badge bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
@@ -248,7 +248,7 @@
                       </div>
 
                       <!-- Sale Badge -->
-                      {% with first_variant=item.product.variants.first %}
+                      {% with first_variant=item.product.get_first_variant %}
                       {% if first_variant and first_variant.compare_price and first_variant.compare_price > first_variant.price %}
                       <div class="absolute bottom-4 right-4 sale-badge text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                         <i class="fas fa-tag mr-1"></i>
@@ -306,7 +306,7 @@
 
                       <!-- Price -->
                       <div class="mb-5">
-                        {% with first_variant=item.product.variants.first %}
+                        {% with first_variant=item.product.get_first_variant %}
                         {% if first_variant %}
                           <div class="flex items-center gap-2">
                             <span class="price-tag text-white text-2xl font-bold px-4 py-2 rounded-lg inline-block">
@@ -330,7 +330,7 @@
 
                       <!-- Action Buttons -->
                         <div class="space-y-3">
-                          {% with first_variant=item.product.variants.first %}
+                          {% with first_variant=item.product.get_first_variant %}
                           {% if first_variant and first_variant.stock_quantity > 0 %}
                           <button onclick="moveToCart('{{ item.id }}')"
                                   class="w-full bg-emerald-500 text-white py-2.5 rounded-lg font-bold hover:bg-emerald-600 transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-lg">

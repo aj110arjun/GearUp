@@ -224,7 +224,7 @@
   <div id="product-grid" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
     {% if products %}
     {% for product in products %}
-    {% with first_variant=product.variants.first %}
+    {% with first_variant=product.get_first_variant %}
     <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group {% if not first_variant or first_variant.stock_quantity <= 0 %}out-of-stock opacity-70{% endif %}">
       <!-- Image Container -->
       <div class="relative overflow-hidden bg-gray-50">

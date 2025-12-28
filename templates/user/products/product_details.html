@@ -1,5 +1,5 @@
 {% extends "user/base.html" %}
-{% load static %}
+{% load static category_extras %}
 {% block title %}{{ product.name }} - GearUp{% endblock %}
 {% block breadcrumbs %}
 <div class="breadcrumb py-3">
@@ -592,34 +592,25 @@
                   <!-- Actions -->
                   <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                    {% with user_vote=user_votes|default:"" %}
-                      {% for review_id, vote_value in user_votes.items %}
-                        {% if review_id == review.id %}
-                          {% with user_vote=vote_value %}
-                          {% endwith %}
-                        {% endif %}
-                      {% endfor %}
-                      
-                      <button type="button" 
-                              onclick="voteReview('{{ review.id }}', 'helpful')"
-                              class="vote-btn-helpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 transition-all {% if user_vote == True %}bg-blue-100 border-blue-300{% endif %}"
-                              data-review-id="{{ review.id }}"
-                              data-vote-type="helpful">
-                        <i class="fas fa-thumbs-up mr-2 {% if user_vote == True %}text-blue-600{% else %}text-gray-600{% endif %}"></i>
-                        <span>Helpful</span>
-                        <span class="ml-2 text-gray-600 helpful-count">{{ review.helpful_votes }}</span>
-                      </button>
-                      
-                      <button type="button" 
-                              onclick="voteReview('{{ review.id }}', 'not_helpful')"
-                              class="vote-btn-nothelpful flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-red-50 transition-all {% if user_vote == False %}bg-red-100 border-red-300{% endif %}"
-                              data-review-id="{{ review.id }}"
-                              data-vote-type="not_helpful">
-                        <i class="fas fa-thumbs-down mr-2 {% if user_vote == False %}text-red-600{% else %}text-gray-600{% endif %}"></i>
-                        <span>Not Helpful</span>
-                        <span class="ml-2 text-gray-600 nothelpful-count">{{ review.not_helpful_votes }}</span>
-                      </button>
-                    {% endwith %}
+                      {% with user_vote=user_votes|get_item_int:review.id %}
+                        <button type="button" 
+                                class="vote-btn-helpful review-vote-btn flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 transition-all {% if user_vote == True %}bg-blue-100 border-blue-300{% endif %}"
+                                data-review-id="{{ review.id }}"
+                                data-vote-type="helpful">
+                          <i class="fas fa-thumbs-up mr-2 {% if user_vote == True %}text-blue-600{% else %}text-gray-600{% endif %}"></i>
+                          <span>Helpful</span>
+                          <span class="ml-2 text-gray-600 helpful-count">{{ review.helpful_votes }}</span>
+                        </button>
+                        
+                        <button type="button" 
+                                class="vote-btn-nothelpful review-vote-btn flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-red-50 transition-all {% if user_vote == False %}bg-red-100 border-red-300{% endif %}"
+                                data-review-id="{{ review.id }}"
+                                data-vote-type="not_helpful">
+                          <i class="fas fa-thumbs-down mr-2 {% if user_vote == False %}text-red-600{% else %}text-gray-600{% endif %}"></i>
+                          <span>Not Helpful</span>
+                          <span class="ml-2 text-gray-600 nothelpful-count">{{ review.not_helpful_votes }}</span>
+                        </button>
+                      {% endwith %}
                     {% else %}
                     <a href="{% url 'user_auth:signin' %}?next={{ request.path }}"
                        class="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
@@ -924,6 +915,61 @@
   // --- Review Management ---
   let currentEditingReviewId = null;
 
+  function initStarRating(containerId, inputId, labelId, starsClass) {
+    const container = document.getElementById(containerId);
+    const input = document.getElementById(inputId);
+    const label = document.getElementById(labelId);
+    if (!container || !input) return;
+
+    const stars = container.querySelectorAll('.' + starsClass);
+    const labels = {
+      1: 'Poor - I hate it', 
+      2: 'Fair - I don\'t like it', 
+      3: 'Good - It\'s okay', 
+      4: 'Very Good - I like it', 
+      5: 'Excellent - I love it'
+    };
+
+    stars.forEach(star => {
+      star.addEventListener('mouseenter', function() {
+        const val = parseInt(this.dataset.value);
+        updateStarsUI(stars, val, true);
+      });
+
+      star.addEventListener('mouseleave', function() {
+        const currentVal = parseInt(input.value) || 0;
+        updateStarsUI(stars, currentVal, false);
+      });
+
+      star.addEventListener('click', function() {
+        const val = parseInt(this.dataset.value);
+        input.value = val;
+        if (label) {
+          label.textContent = labels[val];
+          label.className = 'mt-2 text-sm font-medium text-yellow-600';
+        }
+        updateStarsUI(stars, val, false);
+      });
+    });
+  }
+
+  function updateStarsUI(stars, value, isHover) {
+    stars.forEach(star => {
+      const val = parseInt(star.dataset.value);
+      const icon = star.querySelector('i');
+      if (val <= value) {
+        icon.classList.replace('far', 'fas');
+        icon.classList.add('text-yellow-500');
+        if (isHover) icon.style.opacity = '0.7';
+        else icon.style.opacity = '1';
+      } else {
+        icon.classList.replace('fas', 'far');
+        icon.classList.remove('text-yellow-500');
+        icon.style.opacity = '1';
+      }
+    });
+  }
+
   window.openEditReviewModal = function(reviewId) {
     currentEditingReviewId = reviewId;
     fetch(`{% url 'products:get_review' 0 %}`.replace('0', reviewId), {
@@ -937,25 +983,17 @@
         document.getElementById('edit-rating-value').value = rating;
         
         const stars = document.querySelectorAll('#edit-star-rating-input .edit-rating-star');
-        stars.forEach(star => {
-          const val = parseInt(star.dataset.value);
-          const icon = star.querySelector('i');
-          if (val <= rating) {
-            icon.classList.replace('far', 'fas');
-            icon.classList.add('text-yellow-500');
-          } else {
-            icon.classList.replace('fas', 'far');
-            icon.classList.remove('text-yellow-500');
-          }
-        });
+        updateStarsUI(stars, rating, false);
 
         const labels = {
           1: 'Poor - I hate it', 2: 'Fair - I don\'t like it', 
           3: 'Good - It\'s okay', 4: 'Very Good - I like it', 5: 'Excellent - I love it'
         };
         const lbl = document.getElementById('edit-rating-label');
-        lbl.textContent = labels[rating];
-        lbl.className = 'mt-2 text-sm font-medium text-yellow-600';
+        if (lbl) {
+            lbl.textContent = labels[rating];
+            lbl.className = 'mt-2 text-sm font-medium text-yellow-600';
+        }
         
         document.getElementById('edit-review-title').value = data.review.title;
         document.getElementById('edit-review-comment').value = data.review.comment;
@@ -963,7 +1001,7 @@
         document.getElementById('edit-review-form').action = `{% url 'products:update_review' 0 %}`.replace('0', reviewId);
         document.getElementById('edit-review-modal').classList.remove('hidden');
       } else {
-        showNotification('Error loading review', 'error');
+        showNotification(data.error || 'Error loading review', 'error');
       }
     });
   };
@@ -981,7 +1019,104 @@
     document.getElementById('review-modal').classList.add('hidden');
   };
 
+  // Global form submission handler using event delegation
+  document.addEventListener('submit', function(e) {
+    const form = e.target;
+    
+    // Only handle our review forms
+    if (form.id !== 'review-form' && form.id !== 'edit-review-form') {
+      return;
+    }
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log(`[ReviewForm] Intercepted submit for: ${form.id}`);
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+    
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+    }
+
+    const formData = new FormData(form);
+    const actionUrl = form.getAttribute('action') || window.location.href;
+    
+    console.log(`[ReviewForm] Submitting to: ${actionUrl}`);
+
+    fetch(actionUrl, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': csrftoken
+      },
+      body: formData
+    })
+    .then(response => {
+      console.log(`[ReviewForm] Response: ${response.status}`);
+      if (response.redirected) {
+        window.location.href = response.url;
+        return null;
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (!data) return;
+      console.log(`[ReviewForm] Data:`, data);
+
+      if (data.success) {
+        console.log(`[ReviewForm] SUCCESS! Refreshing page...`);
+        
+        // Close the appropriate modal
+        if (form.id === 'review-form') {
+          document.getElementById('review-modal').classList.add('hidden');
+        } else {
+          document.getElementById('edit-review-modal').classList.add('hidden');
+        }
+        
+        // Immediate reload without notification
+        setTimeout(() => {
+          window.location.reload(true);
+        }, 100);
+      } else {
+        let errorMessage = 'Please check the form.';
+        if (data.errors) {
+          errorMessage = Object.values(data.errors).flat().join(', ');
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+        
+        if (typeof window.showNotification === 'function') {
+          window.showNotification(errorMessage, 'error');
+        } else {
+          alert('Error: ' + errorMessage);
+        }
+        
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalHtml;
+        }
+      }
+    })
+    .catch(error => {
+      console.error('[ReviewForm] Error:', error);
+      
+      if (typeof window.showNotification === 'function') {
+        window.showNotification('Something went wrong. Please try again.', 'error');
+      } else {
+        alert('Error: Something went wrong. Please try again.');
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHtml;
+      }
+    });
+  }, true);  // Use capture phase to ensure we get the event first
+
   // --- Cart & Wishlist Actions ---
+  // ... (keep existing cart/wishlist/vote functions) ...
   window.addToCart = function(variantId) {
     const button = document.querySelector(`button[onclick="addToCart('${variantId}')"]`);
     if (!button) return;
@@ -1051,18 +1186,125 @@
     });
   };
 
+  // Attach to window explicitly for robust access
   window.voteReview = function(reviewId, voteType) {
-    fetch(`{% url 'products:vote_review' 0 %}`.replace('0', reviewId), {
+    console.info('[Vote] Request started:', { reviewId, voteType });
+    
+    const container = document.getElementById(`review-${reviewId}`);
+    if (!container) {
+        console.error('[Vote] Container not found for ID:', reviewId);
+        return;
+    }
+
+    const hBtn = container.querySelector('.vote-btn-helpful');
+    const nhBtn = container.querySelector('.vote-btn-nothelpful');
+    if (!hBtn || !nhBtn) return;
+
+    const btn = voteType === 'helpful' ? hBtn : nhBtn;
+    const hCount = container.querySelector('.helpful-count');
+    const nhCount = container.querySelector('.nothelpful-count');
+    const statsHelpful = container.querySelector('.review-stats-helpful');
+
+    // 1. Snapshot current state
+    const oldState = {
+        h: hBtn.classList.contains('bg-blue-100'),
+        nh: nhBtn.classList.contains('bg-red-100'),
+        hc: parseInt(hCount.textContent) || 0,
+        nhc: parseInt(nhCount.textContent) || 0
+    };
+
+    // 2. Perform Optimistic UI Update immediately
+    let nextH = oldState.h;
+    let nextNH = oldState.nh;
+    let nextHC = oldState.hc;
+    let nextNHC = oldState.nhc;
+
+    if (voteType === 'helpful') {
+        if (nextH) { nextHC--; nextH = false; }
+        else { 
+            nextHC++; nextH = true; 
+            if (nextNH) { nextNHC--; nextNH = false; }
+        }
+    } else {
+        if (nextNH) { nextNHC--; nextNH = false; }
+        else { 
+            nextNHC++; nextNH = true; 
+            if (nextH) { nextHC--; nextH = false; }
+        }
+    }
+
+    // Immediate DOM Update helper
+    const applyState = (h, nh, hc, nhc) => {
+        hCount.textContent = hc;
+        nhCount.textContent = nhc;
+        if (statsHelpful) statsHelpful.textContent = `${hc} found this helpful`;
+
+        // Helpful Button Styling
+        if (h) {
+            hBtn.classList.add('bg-blue-100', 'border-blue-300');
+            hBtn.querySelector('i').className = 'fas fa-thumbs-up mr-2 text-blue-600';
+        } else {
+            hBtn.classList.remove('bg-blue-100', 'border-blue-300');
+            hBtn.querySelector('i').className = 'fas fa-thumbs-up mr-2 text-gray-600';
+        }
+
+        // Not Helpful Button Styling
+        if (nh) {
+            nhBtn.classList.add('bg-red-100', 'border-red-300');
+            nhBtn.querySelector('i').className = 'fas fa-thumbs-down mr-2 text-red-600';
+        } else {
+            nhBtn.classList.remove('bg-red-100', 'border-red-300');
+            nhBtn.querySelector('i').className = 'fas fa-thumbs-down mr-2 text-gray-600';
+        }
+    };
+
+    // Apply optimistic state instantly
+    applyState(nextH, nextNH, nextHC, nextNHC);
+    btn.style.transform = 'scale(0.95)';
+    setTimeout(() => btn.style.transform = 'scale(1)', 100);
+
+    // 3. Prepare Fetch
+    const token = getCookie('csrftoken');
+    if (!token) {
+        showNotification('Login required or session expired', 'warning');
+        applyState(oldState.h, oldState.nh, oldState.hc, oldState.nhc);
+        return;
+    }
+
+    const url = '{% url "products:vote_review" 999999 %}'.replace('999999', reviewId);
+
+    fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+      headers: { 
+          'Content-Type': 'application/json', 
+          'X-CSRFToken': token, 
+          'X-Requested-With': 'XMLHttpRequest' 
+      },
       body: JSON.stringify({ vote_type: voteType })
     })
-    .then(response => response.json())
+    .then(async response => {
+        if (response.status === 403) {
+            showNotification('Please login to vote', 'warning');
+            throw new Error('AUTH');
+        }
+        if (!response.ok) throw new Error('SERVER');
+        return response.json();
+    })
     .then(data => {
-      if (data.success) {
-        showNotification('Vote recorded', 'success');
-        // Simple recharge to update UI or manual update if highly dynamic
-        setTimeout(() => window.location.reload(), 1000);
+      if (data && data.success) {
+        // Final Sync with server data (in case other users voted or calculations differed)
+        applyState(data.user_helpful_vote === true, data.user_helpful_vote === false, data.helpful_votes, data.not_helpful_votes);
+        const actionMsg = data.action === 'added' ? 'Vote recorded' : data.action === 'changed' ? 'Vote updated' : 'Vote removed';
+        showNotification(actionMsg, 'success');
+      } else {
+        throw new Error(data.error || 'FAIL');
+      }
+    })
+    .catch(error => {
+      console.error('[Vote] Error:', error);
+      if (error.message !== 'AUTH') {
+          showNotification('Update failed. Reverting...', 'error');
+          applyState(oldState.h, oldState.nh, oldState.hc, oldState.nhc);
       }
     });
   };
@@ -1126,6 +1368,26 @@
       editComment.oninput = function() {
         document.getElementById('edit-char-count').textContent = this.value.length;
       };
+    }
+
+    // Initialize Star Ratings
+    initStarRating('star-rating-input', 'rating-value', 'rating-label', 'star-rating button');
+    initStarRating('edit-star-rating-input', 'edit-rating-value', 'edit-rating-label', 'edit-rating-star');
+
+    // --- Delegated Click Handler for Votes ---
+    const reviewsContainer = document.getElementById('reviews-container');
+    if (reviewsContainer) {
+        reviewsContainer.addEventListener('click', function(e) {
+            const btn = e.target.closest('.review-vote-btn');
+            if (btn) {
+                e.preventDefault();
+                const reviewId = btn.dataset.reviewId;
+                const voteType = btn.dataset.voteType;
+                if (window.voteReview) {
+                    window.voteReview(reviewId, voteType);
+                }
+            }
+        });
     }
 
     // Review loading

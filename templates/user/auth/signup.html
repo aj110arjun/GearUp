@@ -136,6 +136,7 @@
                                            type="text" 
                                            value="{{ form.first_name.value|default:'' }}" 
                                            required 
+                                           placeholder="Enter your first name"
                                            class="appearance-none block w-full px-3 py-2 border {% if form.first_name.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
                                 </div>
                                 {% if form.first_name.errors %}
@@ -156,6 +157,7 @@
                                            type="text" 
                                            value="{{ form.last_name.value|default:'' }}" 
                                            required 
+                                           placeholder="Enter your last name"
                                            class="appearance-none block w-full px-3 py-2 border {% if form.last_name.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
                                 </div>
                                 {% if form.last_name.errors %}
@@ -178,6 +180,7 @@
                                        autocomplete="email" 
                                        value="{{ form.email.value|default:'' }}" 
                                        required 
+                                       placeholder="Enter your email address"
                                        class="appearance-none block w-full px-3 py-2 border {% if form.email.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
                             </div>
                             {% if form.email.errors %}
@@ -198,6 +201,7 @@
                                     type="password" 
                                     autocomplete="new-password" 
                                     required 
+                                    placeholder="Create a strong password"
                                     class="appearance-none block w-full px-3 py-2 border {% if form.password1.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
                                 <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <i class="far fa-eye text-gray-400"></i>
@@ -230,6 +234,7 @@
                                        type="password" 
                                        autocomplete="new-password" 
                                        required 
+                                       placeholder="Confirm your password"
                                        class="appearance-none block w-full px-3 py-2 border {% if form.password2.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
                                 <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <i class="far fa-eye text-gray-400"></i>
