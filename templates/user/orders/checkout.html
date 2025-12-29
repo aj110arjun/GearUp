@@ -415,7 +415,7 @@
             <button type="button" id="place-order-btn"
                     class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow-sm hover:shadow-md flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed">
               <i class="fas fa-lock"></i>
-              <span id="place-order-text">Place Order (Cash on Delivery)</span>
+              <span id="place-order-text">Place Order</span>
             </button>
             
             <a href="{% url 'shop:cart' %}" 
@@ -627,8 +627,8 @@ document.addEventListener('DOMContentLoaded', function() {
         placeOrderBtn.innerHTML = '<i class="fas fa-wallet"></i> Pay with Wallet';
         break;
       case 'cash_on_delivery':
-        buttonText.textContent = 'Place Order (Cash on Delivery)';
-        placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Place Order (Cash on Delivery)';
+        buttonText.textContent = 'Place Order';
+        placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Place Order';
         break;
     }
   }

@@ -667,10 +667,11 @@
           });
       };
 
-      window.globalMoveToCart = async function(itemId, element) {
+      window.globalMoveToCart = async function(itemId, element, variantId = null) {
           if (element) element.style.opacity = '0.5';
           const url = window.GEAR_UP_CONFIG.moveToCartUrl.replace('00000000-0000-0000-0000-000000000000', itemId);
-          const data = await window.globalApiPOST(url);
+          const body = variantId ? { variant_id: variantId } : {};
+          const data = await window.globalApiPOST(url, body);
           if (data.success) {
               if (element) {
                   element.style.transition = 'all 0.3s';
