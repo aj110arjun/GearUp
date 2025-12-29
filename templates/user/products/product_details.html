@@ -1116,74 +1116,13 @@
   }, true);  // Use capture phase to ensure we get the event first
 
   // --- Cart & Wishlist Actions ---
-  // ... (keep existing cart/wishlist/vote functions) ...
   window.addToCart = function(variantId) {
-    const button = document.querySelector(`button[onclick="addToCart('${variantId}')"]`);
-    if (!button) return;
-    const originalHTML = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Adding...</span>';
-    button.disabled = true;
-
-    fetch('{% url "shop:add_to_cart" %}', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-      body: JSON.stringify({ variant_id: variantId, quantity: 1 })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        if (data.added) {
-          button.innerHTML = '<i class="fas fa-check-circle"></i><span>In Cart</span>';
-          button.classList.remove('from-emerald-500', 'to-emerald-600');
-          button.classList.add('from-green-500', 'to-green-600');
-          // Update Wishlist state if mutual exclusivity is enforced
-          const wishlistBtn = document.querySelector('.wishlist-btn');
-          if (wishlistBtn) {
-            const icon = wishlistBtn.querySelector('i');
-            icon.classList.replace('fas', 'far');
-            icon.classList.remove('text-red-500');
-            wishlistBtn.classList.remove('border-red-300', 'bg-red-50');
-          }
-        }
-        if (data.cart_count !== undefined) window.updateCartCount(data.cart_count);
-        if (data.wishlist_count !== undefined) window.updateWishlistCount(data.wishlist_count);
-        showNotification(data.message, 'success');
-      } else {
-        showNotification(data.message || 'Error adding to cart', 'error');
-        button.innerHTML = originalHTML;
-      }
-    })
-    .finally(() => button.disabled = false);
+    const productId = "{{ product.id }}";
+    if (window.globalAddToCart) window.globalAddToCart(productId, variantId);
   };
 
   window.toggleWishlist = function(productId) {
-    const button = document.querySelector(`.wishlist-btn[data-product-id="${productId}"]`);
-    const icon = button.querySelector('i');
-    const isAdded = icon.classList.contains('fas');
-
-    fetch('{% url "products:toggle_wishlist" %}', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
-      body: JSON.stringify({ product_id: productId })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        if (data.status === 'added') {
-          icon.classList.replace('far', 'fas');
-          icon.classList.add('text-red-500');
-          button.classList.add('border-red-300', 'bg-red-50');
-          showNotification('Added to wishlist', 'success');
-        } else {
-          icon.classList.replace('fas', 'far');
-          icon.classList.remove('text-red-500');
-          button.classList.remove('border-red-300', 'bg-red-50');
-          showNotification('Removed from wishlist', 'success');
-        }
-        if (data.wishlist_count !== undefined) window.updateWishlistCount(data.wishlist_count);
-        if (data.cart_count !== undefined) window.updateCartCount(data.cart_count);
-      }
-    });
+    if (window.globalToggleWishlist) window.globalToggleWishlist(productId);
   };
 
   // Attach to window explicitly for robust access

@@ -204,214 +204,219 @@
     </div>
   </div>
 
-  <!-- Skeleton Loader -->
-  <div id="product-skeletons" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-    {% for i in "12345678" %}
-    <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-      <div class="shimmer h-48 rounded-lg mb-4"></div>
-      <div class="shimmer h-4 w-3/4 rounded mb-3"></div>
-      <div class="shimmer h-4 w-1/2 rounded mb-3"></div>
-      <div class="shimmer h-10 w-full rounded-lg mb-3"></div>
-      <div class="flex gap-2">
-        <div class="shimmer h-10 flex-1 rounded-lg"></div>
-        <div class="shimmer h-10 flex-1 rounded-lg"></div>
+  <!-- Product Grid Container -->
+  <div id="product-grid-container">
+    <!-- Skeleton Loader -->
+    <div id="product-skeletons" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {% for i in "12345678" %}
+      <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+        <div class="shimmer h-48 rounded-lg mb-4"></div>
+        <div class="shimmer h-4 w-3/4 rounded mb-3"></div>
+        <div class="shimmer h-4 w-1/2 rounded mb-3"></div>
+        <div class="shimmer h-10 w-full rounded-lg mb-3"></div>
+        <div class="flex gap-2">
+          <div class="shimmer h-10 flex-1 rounded-lg"></div>
+          <div class="shimmer h-10 flex-1 rounded-lg"></div>
+        </div>
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
 
-  <!-- Product Grid -->
-  <div id="product-grid" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-    {% if products %}
-    {% for product in products %}
-    {% with first_variant=product.get_first_variant %}
-    <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group {% if not first_variant or first_variant.stock_quantity <= 0 %}out-of-stock opacity-70{% endif %}">
-      <!-- Image Container -->
-      <div class="relative overflow-hidden bg-gray-50">
-        {% if product.image %}
-        <img src="{{ product.image.url }}" 
-             class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500" 
-             alt="{{ product.name }}">
-        {% else %}
-        <img src="{% static 'images/placeholder.png' %}" 
-             class="w-full h-56 object-cover" 
-             alt="No image">
-        {% endif %}
-        
-        <!-- Rating Badge (Overlay on Image) -->
-        {% if product.avg_rating %}
-        <div class="rating-badge">
-          <div class="stars">
-            {% for i in "12345"|make_list %}
-              {% if forloop.counter <= product.avg_rating %}
-                <i class="fas fa-star text-yellow-400"></i>
-              {% elif forloop.counter|add:"-0.5" <= product.avg_rating %}
-                <i class="fas fa-star-half-alt text-yellow-400"></i>
-              {% else %}
-                <i class="far fa-star text-yellow-400"></i>
-              {% endif %}
-            {% endfor %}
-          </div>
-          <span class="rating-value">{{ product.avg_rating|floatformat:1 }}</span>
-          {% if product.review_count %}
-          <span class="review-count">({{ product.review_count }})</span>
-          {% endif %}
-        </div>
-        {% endif %}
-        
-        <!-- Quick View Overlay -->
-        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <a href="{% url 'products:product_detail_user' product.slug %}"
-             class="bg-white text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-            Quick View
-          </a>
-        </div>
-        
-        <!-- Top Left: Discount Badge -->
-        {% if first_variant and first_variant.discount_percentage > 0 %}
-        <div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
-          {{ first_variant.discount_percentage }}% OFF
-        </div>
-        {% endif %}
-        
-        <!-- Top Right: Wishlist Button -->
-        {% if user.is_authenticated %}
-        <button class="wishlist-btn absolute top-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-md {% if product.id in wishlist_product_ids %}text-red-500{% else %}text-gray-600{% endif %} z-20"
-                data-product-id="{{ product.id }}"
-                title="{% if product.id in wishlist_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
-          <i class="{% if product.id in wishlist_product_ids %}fas fa-heart{% else %}far fa-heart{% endif %} text-lg"></i>
-        </button>
-        {% else %}
-        <a href="{% url 'user_auth:login' %}" 
-           class="absolute top-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-md text-gray-600 z-20"
-           title="Login to add to wishlist">
-          <i class="far fa-heart text-lg"></i>
-        </a>
-        {% endif %}
-        
-        <!-- Bottom Right: Stock Badge -->
-        {% if first_variant %}
-          {% if first_variant.stock_quantity <= 0 %}
-          <div class="absolute bottom-3 right-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
-            Out of Stock
-          </div>
-          {% elif first_variant.stock_quantity <= 10 %}
-          <div class="absolute bottom-3 right-3 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
-            Low Stock
-          </div>
-          {% endif %}
-        {% endif %}
-      </div>
-
-      <!-- Product Info -->
-      <div class="p-4">
-        <h3 class="font-semibold text-gray-800 mb-2 truncate group-hover:text-emerald-600 transition-colors">
-          {{ product.name }}
-        </h3>
-
-        <!-- Brand and Category -->
-        <div class="flex items-center gap-2 mb-2">
-          {% if product.brand %}
-          <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-            {{ product.brand }}
-          </span>
-          {% endif %}
-          {% if product.category %}
-          <span class="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
-            {{ product.category.name }}
-          </span>
-          {% endif %}
-        </div>
-
-        <!-- Rating (Below product name - if not showing overlay) -->
-        {% if product.avg_rating %}
-        <div class="flex items-center gap-2 mb-3">
-          <div class="star-rating-sm">
-            {% for i in "12345"|make_list %}
-              {% if forloop.counter <= product.avg_rating %}
-                <i class="fas fa-star text-yellow-400"></i>
-              {% elif forloop.counter|add:"-0.5" <= product.avg_rating %}
-                <i class="fas fa-star-half-alt text-yellow-400"></i>
-              {% else %}
-                <i class="far fa-star text-yellow-400"></i>
-              {% endif %}
-            {% endfor %}
-          </div>
-          <span class="text-sm font-semibold text-gray-800">{{ product.avg_rating|floatformat:1 }}</span>
-          {% if product.review_count %}
-          <span class="review-count">({{ product.review_count }})</span>
-          {% endif %}
-        </div>
-        {% else %}
-        <div class="mb-3">
-          <span class="text-xs text-gray-500 italic">No reviews yet</span>
-        </div>
-        {% endif %}
-
-        <!-- Pricing -->
-        {% if first_variant %}
-          {% if first_variant.discount_percentage > 0 %}
-            <div class="flex items-center gap-2 mb-4">
-              <span class="text-2xl font-bold text-emerald-600">₹{{ first_variant.get_discounted_price }}</span>
-              <span class="text-sm text-gray-400 line-through">₹{{ first_variant.price }}</span>
-            </div>
-          {% else %}
-            <div class="text-2xl font-bold text-emerald-600 mb-4">
-              ₹{{ first_variant.price }}
-            </div>
-          {% endif %}
-        {% else %}
-          <p class="text-gray-500 text-sm mb-4">No variants available</p>
-        {% endif %}
-
-        <!-- Action Buttons -->
-        <div class="space-y-2">
-          <!-- Add to Cart Button -->
-          {% if user.is_authenticated %}
-            {% if first_variant and first_variant.stock_quantity > 0 %}
-              <button type="button"
-                      class="cart-btn w-full py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 {% if first_variant.id in cart_variant_ids %}bg-green-600 text-white hover:bg-green-700{% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}"
-                      data-product-id="{{ product.id }}" 
-                      data-variant-id="{{ first_variant.id }}"
-                      data-in-cart="{% if first_variant.id in cart_variant_ids %}true{% else %}false{% endif %}"
-                      title="{% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}">
-                <i class="{% if first_variant.id in cart_variant_ids %}fas fa-check-circle{% else %}fas fa-shopping-cart{% endif %}"></i>
-                {% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}
-              </button>
+    <!-- Product Grid (hidden initially) -->
+    <div id="product-grid" style="display: none;">
+      {% if products %}
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for product in products %}
+        {% with first_variant=product.get_first_variant %}
+        <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group {% if not first_variant or first_variant.stock_quantity <= 0 %}out-of-stock opacity-70{% endif %}">
+          <!-- Image Container -->
+          <div class="relative overflow-hidden bg-gray-50">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" 
+                 class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500" 
+                 alt="{{ product.name }}">
             {% else %}
-              <button class="w-full py-2.5 rounded-lg font-semibold bg-gray-400 text-white cursor-not-allowed" disabled>
-                <i class="fas fa-times-circle"></i>
-                Out of Stock
-              </button>
+            <img src="{% static 'images/placeholder.png' %}" 
+                 class="w-full h-56 object-cover" 
+                 alt="No image">
             {% endif %}
-          {% else %}
+            
+            <!-- Rating Badge (Overlay on Image) -->
+            {% if product.avg_rating %}
+            <div class="rating-badge">
+              <div class="stars">
+                {% for i in "12345"|make_list %}
+                  {% if forloop.counter <= product.avg_rating %}
+                    <i class="fas fa-star text-yellow-400"></i>
+                  {% elif forloop.counter|add:"-0.5" <= product.avg_rating %}
+                    <i class="fas fa-star-half-alt text-yellow-400"></i>
+                  {% else %}
+                    <i class="far fa-star text-yellow-400"></i>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              <span class="rating-value">{{ product.avg_rating|floatformat:1 }}</span>
+              {% if product.review_count %}
+              <span class="review-count">({{ product.review_count }})</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Quick View Overlay -->
+            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <a href="{% url 'products:product_detail_user' product.slug %}"
+                 class="bg-white text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                Quick View
+              </a>
+            </div>
+            
+            <!-- Top Left: Discount Badge -->
+            {% if first_variant and first_variant.discount_percentage > 0 %}
+            <div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
+              {{ first_variant.discount_percentage }}% OFF
+            </div>
+            {% endif %}
+            
+            <!-- Top Right: Wishlist Button -->
+            {% if user.is_authenticated %}
+            <button class="wishlist-btn absolute top-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-md {% if product.id in wishlist_product_ids %}text-red-500{% else %}text-gray-600{% endif %} z-20"
+                    data-product-id="{{ product.id }}"
+                    title="{% if product.id in wishlist_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
+              <i class="{% if product.id in wishlist_product_ids %}fas fa-heart{% else %}far fa-heart{% endif %} text-lg"></i>
+            </button>
+            {% else %}
             <a href="{% url 'user_auth:login' %}" 
-               class="w-full py-2.5 rounded-lg font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
-              <i class="fas fa-shopping-cart"></i>
-              Login to Add to Cart
+               class="absolute top-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-md text-gray-600 z-20"
+               title="Login to add to wishlist">
+              <i class="far fa-heart text-lg"></i>
             </a>
-          {% endif %}
-          
-          <!-- View Details Button -->
-          <a href="{% url 'products:product_detail_user' product.slug %}" 
-             class="w-full py-2.5 rounded-lg font-semibold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2">
-            <i class="fas fa-eye"></i>
-            View Details
-          </a>
+            {% endif %}
+            
+            <!-- Bottom Right: Stock Badge -->
+            {% if first_variant %}
+              {% if first_variant.stock_quantity <= 0 %}
+              <div class="absolute bottom-3 right-3 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
+                Out of Stock
+              </div>
+              {% elif first_variant.stock_quantity <= 10 %}
+              <div class="absolute bottom-3 right-3 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10">
+                Low Stock
+              </div>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <!-- Product Info -->
+          <div class="p-4">
+            <h3 class="font-semibold text-gray-800 mb-2 truncate group-hover:text-emerald-600 transition-colors">
+              {{ product.name }}
+            </h3>
+
+            <!-- Brand and Category -->
+            <div class="flex items-center gap-2 mb-2">
+              {% if product.brand %}
+              <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                {{ product.brand }}
+              </span>
+              {% endif %}
+              {% if product.category %}
+              <span class="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                {{ product.category.name }}
+              </span>
+              {% endif %}
+            </div>
+
+            <!-- Rating (Below product name - if not showing overlay) -->
+            {% if product.avg_rating %}
+            <div class="flex items-center gap-2 mb-3">
+              <div class="star-rating-sm">
+                {% for i in "12345"|make_list %}
+                  {% if forloop.counter <= product.avg_rating %}
+                    <i class="fas fa-star text-yellow-400"></i>
+                  {% elif forloop.counter|add:"-0.5" <= product.avg_rating %}
+                    <i class="fas fa-star-half-alt text-yellow-400"></i>
+                  {% else %}
+                    <i class="far fa-star text-yellow-400"></i>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              <span class="text-sm font-semibold text-gray-800">{{ product.avg_rating|floatformat:1 }}</span>
+              {% if product.review_count %}
+              <span class="review-count">({{ product.review_count }})</span>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="mb-3">
+              <span class="text-xs text-gray-500 italic">No reviews yet</span>
+            </div>
+            {% endif %}
+
+            <!-- Pricing -->
+            {% if first_variant %}
+              {% if first_variant.discount_percentage > 0 %}
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="text-2xl font-bold text-emerald-600">₹{{ first_variant.get_discounted_price }}</span>
+                  <span class="text-sm text-gray-400 line-through">₹{{ first_variant.price }}</span>
+                </div>
+              {% else %}
+                <div class="text-2xl font-bold text-emerald-600 mb-4">
+                  ₹{{ first_variant.price }}
+                </div>
+              {% endif %}
+            {% else %}
+              <p class="text-gray-500 text-sm mb-4">No variants available</p>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="space-y-2">
+              <!-- Add to Cart Button -->
+              {% if user.is_authenticated %}
+                {% if first_variant and first_variant.stock_quantity > 0 %}
+                  <button type="button"
+                          class="cart-btn w-full py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 {% if first_variant.id in cart_variant_ids %}bg-green-600 text-white hover:bg-green-700{% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}"
+                          data-product-id="{{ product.id }}" 
+                          data-variant-id="{{ first_variant.id }}"
+                          data-in-cart="{% if first_variant.id in cart_variant_ids %}true{% else %}false{% endif %}"
+                          title="{% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}">
+                    <i class="{% if first_variant.id in cart_variant_ids %}fas fa-check-circle{% else %}fas fa-shopping-cart{% endif %}"></i>
+                    {% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}
+                  </button>
+                {% else %}
+                  <button class="w-full py-2.5 rounded-lg font-semibold bg-gray-400 text-white cursor-not-allowed" disabled>
+                    <i class="fas fa-times-circle"></i>
+                    Out of Stock
+                  </button>
+                {% endif %}
+              {% else %}
+                <a href="{% url 'user_auth:login' %}" 
+                   class="w-full py-2.5 rounded-lg font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
+                  <i class="fas fa-shopping-cart"></i>
+                  Login to Add to Cart
+                </a>
+              {% endif %}
+              
+              <!-- View Details Button -->
+              <a href="{% url 'products:product_detail_user' product.slug %}" 
+                 class="w-full py-2.5 rounded-lg font-semibold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-eye"></i>
+                View Details
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="col-span-full text-center py-16">
+        <div class="inline-block bg-white rounded-2xl shadow-sm p-12 border border-gray-100">
+          <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+          <p class="text-gray-600 text-lg font-medium">No products found</p>
+          <p class="text-gray-500 text-sm mt-2">Try adjusting your filters or search query</p>
         </div>
       </div>
+      {% endif %}
     </div>
-    {% endwith %}
-    {% endfor %}
-    {% else %}
-    <div class="col-span-full text-center py-16">
-      <div class="inline-block bg-white rounded-2xl shadow-sm p-12 border border-gray-100">
-        <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
-        <p class="text-gray-600 text-lg font-medium">No products found</p>
-        <p class="text-gray-500 text-sm mt-2">Try adjusting your filters or search query</p>
-      </div>
-    </div>
-    {% endif %}
   </div>
 
   <!-- Pagination -->
@@ -461,232 +466,163 @@
   {% endif %}
 </div>
 
-
-
 <script>
-  // Debug info
-  console.log('=== TEMPLATE DEBUG INFO ===');
-  console.log('Wishlist URL:', "{% url 'shop:toggle_wishlist' %}");
-  console.log('Cart URL:', "{% url 'shop:toggle_cart_item' %}");
-  console.log('Product List URL:', "{% url 'products:product_list_user' %}");
-  console.log('User authenticated:', {{ user.is_authenticated|yesno:"true,false" }});
-  console.log('CSRF token present:', '{{ csrf_token }}' !== '');
-
-  // Show/Hide Toast
-
-
 // Product List Page Logic
-(function() {
-  // 1. Reveal products after loading
-  function revealProducts() {
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Product list page loading...');
+  
+  // Function to safely get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  
+  // 1. Hide skeleton and show content
+  function showContent() {
     const skeletons = document.getElementById('product-skeletons');
     const grid = document.getElementById('product-grid');
     
-    if (skeletons) skeletons.classList.add('hidden');
+    console.log('Showing content...');
+    
+    if (skeletons) {
+      console.log('Hiding skeleton');
+      // Add fade out animation
+      skeletons.style.opacity = '0';
+      skeletons.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => {
+        skeletons.style.display = 'none';
+      }, 300);
+    }
+    
     if (grid) {
-      grid.classList.remove('hidden');
-      grid.classList.add('grid'); // Ensure it's showing as grid
-      console.log('Products revealed');
+      console.log('Showing grid');
+      grid.style.display = 'block';
+      grid.style.opacity = '0';
+      setTimeout(() => {
+        grid.style.transition = 'opacity 0.5s ease-in-out';
+        grid.style.opacity = '1';
+      }, 50);
     }
   }
-
-  // 2. Search clear functionality
+  
+  // 2. Initialize search functionality
   function initSearch() {
     const input = document.getElementById('search-input');
     const clearBtn = document.getElementById('clear-btn');
-    if (!input || !clearBtn) return;
-
+    
+    if (!input || !clearBtn) {
+      console.log('Search elements not found');
+      return;
+    }
+    
+    console.log('Initializing search...');
+    
     function toggleClearBtn() {
       clearBtn.classList.toggle('hidden', !input.value);
     }
-
+    
     input.addEventListener('input', toggleClearBtn);
-    clearBtn.addEventListener('click', () => {
+    clearBtn.addEventListener('click', function() {
       input.value = '';
       toggleClearBtn();
       input.focus();
     });
+    
+    // Initialize state
     toggleClearBtn();
   }
-
-  // --- Product State Sync Functions ---
-  // These ensure that if a product's state changes, all buttons for that product are updated
   
-  window.updateProductWishlistState = function(productId, isInWishlist) {
-    console.log(`[Sync] Updating Wishlist State for ${productId}: ${isInWishlist}`);
-    document.querySelectorAll(`.wishlist-btn[data-product-id="${productId}"]`).forEach(btn => {
-      if (isInWishlist) {
-        btn.innerHTML = '<i class="fas fa-heart text-lg"></i>';
-        btn.classList.remove('text-gray-600');
-        btn.classList.add('text-red-500');
-        btn.title = 'Remove from Wishlist';
-      } else {
-        btn.innerHTML = '<i class="far fa-heart text-lg"></i>';
-        btn.classList.add('text-gray-600');
-        btn.classList.remove('text-red-500');
-        btn.title = 'Add to Wishlist';
-      }
-    });
-  };
-
-  window.updateProductCartState = function(productId, isInCart) {
-    console.log(`[Sync] Updating Cart State for ${productId}: ${isInCart}`);
-    document.querySelectorAll(`.cart-btn[data-product-id="${productId}"]`).forEach(btn => {
-      if (isInCart) {
-        btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
-        btn.classList.add('bg-green-600', 'hover:bg-green-700');
-        btn.innerHTML = '<i class="fas fa-check-circle"></i> In Cart';
-        btn.title = 'In Cart';
-        btn.dataset.inCart = 'true';
-      } else {
-        btn.classList.remove('bg-green-600', 'hover:bg-green-700');
-        btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
-        btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
-        btn.title = 'Add to Cart';
-        btn.dataset.inCart = 'false';
-      }
-    });
-  };
-
-  // 3. Wishlist Management
-  function initWishlist() {
-    document.querySelectorAll('.wishlist-btn').forEach(button => {
-      button.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const productId = button.dataset.productId;
-        const originalHTML = button.innerHTML;
-        
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        button.disabled = true;
-        
-        try {
-          const response = await fetch("{% url 'shop:toggle_wishlist' %}", {
-            method: 'POST',
-            headers: {
-              'X-CSRFToken': '{{ csrf_token }}',
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ product_id: productId })
-          });
+  // 3. Initialize wishlist and cart buttons
+  function initActionButtons() {
+    console.log('Initializing action buttons...');
+    
+    // Wishlist buttons
+    const wishlistButtons = document.querySelectorAll('.wishlist-btn');
+    if (wishlistButtons.length > 0) {
+      console.log(`Found ${wishlistButtons.length} wishlist buttons`);
+      wishlistButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const productId = this.dataset.productId;
+          console.log('Wishlist button clicked for product:', productId);
           
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          
-          const data = await response.json();
-          console.log('[Wishlist AJAX] Response:', data);
-          
-          if (!data.success) {
-            showNotification(data.message || 'Error processing request', 'error');
-            button.innerHTML = originalHTML;
-            button.disabled = false;
-            return;
-          }
-          
-          if (data.status === 'added') {
-            window.updateProductWishlistState(productId, true);
-            // MUTUAL EXCLUSIVITY: Item is removed from cart on backend
-            window.updateProductCartState(productId, false);
-            showNotification(data.message || 'Added to wishlist', 'success');
+          if (window.globalToggleWishlist) {
+            window.globalToggleWishlist(productId);
           } else {
-            window.updateProductWishlistState(productId, false);
-            showNotification(data.message || 'Removed from wishlist', 'success');
+            console.error('globalToggleWishlist function not found');
           }
-          
-          if (data.wishlist_count !== undefined) window.updateWishlistCount(data.wishlist_count);
-          if (data.cart_count !== undefined) window.updateCartCount(data.cart_count);
-          
-        } catch (error) {
-          console.error('[Wishlist AJAX] Error:', error);
-          showNotification('Please try again.', 'error');
-          button.innerHTML = originalHTML;
-        } finally {
-          button.disabled = false;
-        }
-      });
-    });
-  }
-
-  // 4. Cart Management
-  function initCart() {
-    document.querySelectorAll(".cart-btn").forEach(button => {
-      button.addEventListener("click", function (e) {
-        e.preventDefault();
-        const btn = this;
-        const productId = btn.getAttribute("data-product-id");
-        const variantId = btn.getAttribute("data-variant-id");
-        const originalHTML = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        btn.disabled = true;
-
-        fetch("{% url 'shop:toggle_cart_item' %}", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token }}",
-            "X-Requested-With": "XMLHttpRequest"
-          },
-          body: JSON.stringify({
-            product_id: productId,
-            variant_id: variantId,
-            quantity: 1
-          }),
-        })
-        .then(response => {
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          return response.json();
-        })
-        .then(data => {
-          console.log('[Cart AJAX] Response:', data);
-          
-          if (!data.success) {
-            showNotification(data.message || 'Error processing request', 'error');
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
-            return;
-          }
-          
-          if (data.added) {
-            window.updateProductCartState(productId, true);
-            // MUTUAL EXCLUSIVITY: Item is removed from wishlist on backend
-            window.updateProductWishlistState(productId, false);
-            showNotification(data.message || 'Added to cart', 'success');
-          } else {
-            window.updateProductCartState(productId, false);
-            showNotification(data.message || 'Removed from cart', 'success');
-          }
-          
-          if (data.cart_count !== undefined) window.updateCartCount(data.cart_count);
-          if (data.wishlist_count !== undefined) window.updateWishlistCount(data.wishlist_count);
-        })
-        .catch(error => {
-          console.error('[Cart AJAX] Error:', error);
-          showNotification('Error processing request', 'error');
-          btn.innerHTML = originalHTML;
-        })
-        .finally(() => {
-          btn.disabled = false;
         });
       });
+    }
+    
+    // Cart buttons
+    const cartButtons = document.querySelectorAll('.cart-btn');
+    if (cartButtons.length > 0) {
+      console.log(`Found ${cartButtons.length} cart buttons`);
+      cartButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const productId = this.dataset.productId;
+          const variantId = this.dataset.variantId;
+          console.log('Cart button clicked for variant:', variantId);
+          
+          if (window.globalAddToCart) {
+            window.globalAddToCart(productId, variantId);
+          } else {
+            console.error('globalAddToCart function not found');
+          }
+        });
+      });
+    }
+  }
+  
+  // 4. Initialize everything
+  function initializePage() {
+    console.log('Initializing product page...');
+    
+    initSearch();
+    initActionButtons();
+    
+    // Show content after a short delay
+    // This ensures the skeleton is visible long enough for the user to see it
+    setTimeout(showContent, 800);
+    
+    // Also trigger on window load as a fallback
+    window.addEventListener('load', function() {
+      console.log('Window loaded, ensuring content is shown');
+      // Check if content is still hidden and show it
+      const grid = document.getElementById('product-grid');
+      if (grid && grid.style.display === 'none') {
+        showContent();
+      }
     });
   }
+  
+  // Start initialization
+  initializePage();
+});
 
-  // Initialize All
-  function init() {
-    console.log('Initializing product list page...');
-    initSearch();
-    initWishlist();
-    initCart();
-    
-    // Reveal products
-    setTimeout(revealProducts, 1000);
+// Fallback for older browsers or if DOMContentLoaded already fired
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded event fired');
+  });
+} else {
+  console.log('DOM already loaded, initializing directly');
+  // If DOM is already loaded, run initialization
+  if (typeof initializePage === 'function') {
+    initializePage();
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
+}
 </script>
 {% endblock %}
