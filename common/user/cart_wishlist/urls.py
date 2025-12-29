@@ -12,6 +12,7 @@ urlpatterns = [
     path('cart/remove/<uuid:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('cart/clear/', views.clear_cart, name='clear_cart'),
     path('cart/move-all-to-wishlist/', views.move_all_to_wishlist, name='move_all_to_wishlist'),
+    path('cart/move-to-wishlist/<uuid:item_id>/', views.move_to_wishlist, name='move_to_wishlist'),
     path('cart/data/', views.get_cart_data, name='get_cart_data'),
     
     # Wishlist URLs

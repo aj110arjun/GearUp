@@ -1117,18 +1117,18 @@ def toggle_wishlist(request):
         
         if wishlist.items.filter(product=product).exists():
             wishlist.items.filter(product=product).delete()
-            return JsonResponse({'status': 'removed'})
+            return JsonResponse({'success': True, 'status': 'removed'})
         else:
             wishlist.items.create(product=product)
-            return JsonResponse({'status': 'added'})
+            return JsonResponse({'success': True, 'status': 'added'})
             
     except Product.DoesNotExist:
-        return JsonResponse({'error': 'Product not found'}, status=404)
+        return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         logger.error(f"Error toggling wishlist: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @require_POST
 @login_required
