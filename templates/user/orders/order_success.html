@@ -248,8 +248,55 @@
 
 {% block extra_js %}
 <!-- Order Success Styles -->
-<link rel="stylesheet" href="{% static 'css/user/order_success.css' %}">
+<style>
+  /* Order Success Page Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .bg-white {
+    animation: fadeInUp 0.6s ease-out;
+  }
+</style>
 
 <!-- Order Success JavaScript -->
-<script src="{% static 'js/user/order_success.js' %}"></script>
+<script>
+  (function() {
+    let secondsLeft = 5;
+    const countdownElement = document.getElementById('countdown');
+    
+    const timer = setInterval(function() {
+      secondsLeft--;
+      if (countdownElement) {
+        countdownElement.textContent = secondsLeft;
+      }
+      
+      if (secondsLeft <= 0) {
+        clearInterval(timer);
+        const container = document.querySelector('[data-order-list-url]');
+        const redirectUrl = container ? container.dataset.orderListUrl : null;
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        }
+      }
+    }, 1000);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    });
+  })();
+</script>
 {% endblock %}

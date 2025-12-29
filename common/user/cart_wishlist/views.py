@@ -229,6 +229,48 @@ def toggle_cart_item(request):
 @require_POST
 @login_required
 @transaction.atomic
+def update_cart_item_ajax(request):
+    try:
+        data = json.loads(request.body)
+        item_id = data.get('item_id')
+        quantity = int(data.get('quantity', 1))
+        
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        
+        if cart_item.variant.is_deleted:
+            cart_item.delete()
+            return JsonResponse({'success': False, 'message': 'Product no longer available'})
+            
+        if quantity <= 0:
+            cart_item.delete()
+            message = 'Item removed'
+        else:
+            if quantity > cart_item.variant.stock_quantity:
+                return JsonResponse({'success': False, 'message': f'Only {cart_item.variant.stock_quantity} available'})
+            cart_item.quantity = quantity
+            cart_item.save()
+            message = 'Quantity updated'
+            
+        cart = get_or_create_cart(request.user)
+        wishlist = get_or_create_wishlist(request.user)
+        
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'item_quantity': cart_item.quantity if quantity > 0 else 0,
+            'cart_count': cart.total_items,
+            'wishlist_count': wishlist.total_items,
+            'subtotal': cart.subtotal,
+            'total_discount': cart.total_discount,
+            'final_total': cart.final_total,
+            'shipping_cost': cart.shipping_cost,
+            'total_savings': cart.total_discount
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': 'Error updating cart'})
+
+@login_required
+@transaction.atomic
 def update_cart_item(request, item_id):
     try:
         data = json.loads(request.body)
