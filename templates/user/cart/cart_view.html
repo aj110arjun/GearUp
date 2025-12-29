@@ -54,7 +54,7 @@
     </div>
 
     <!-- Main Content -->
-    <div id="cart-content" class="hidden">
+    <div id="cart-content" style="display: none;">
       {% if cart_items %}
       <div class="lg:grid lg:grid-cols-12 lg:gap-8">
         
@@ -72,7 +72,7 @@
             
             <div class="divide-y divide-gray-200" id="cart-items-container">
               {% for item in cart_items %}
-              <div class="p-6 cart-item" id="cart-item-{{ item.id }}" data-item-id="{{ item.id }}">
+              <div class="p-6 cart-item" id="cart-item-{{ item.id }}" data-item-id="{{ item.id }}" data-max-qty="{{ item.max_quantity }}">
                 <div class="flex items-start space-x-4">
                   
                   <!-- Product Image -->
@@ -126,7 +126,7 @@
                         In Stock
                       </span>
                       {% else %}
-                      <span class="inline-flex items-center text-sm text-red-600 font-medium">
+                      <span class="out-of-stock-label inline-flex items-center text-sm text-red-600 font-medium">
                         <i class="fas fa-exclamation-triangle mr-1"></i>
                         Out of Stock
                       </span>
@@ -305,348 +305,23 @@
 </div>
 
 <script>
-// Utility Functions
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-function getCurrentQuantity(itemId) {
-    const quantitySpan = document.getElementById(`quantity-${itemId}`);
-    return quantitySpan ? parseInt(quantitySpan.textContent) : 1;
-}
-
-function getMaxQuantity(itemId) {
-    const maxQuantityText = document.getElementById(`max-quantity-${itemId}`);
-    if (maxQuantityText) {
-        return parseInt(maxQuantityText.textContent.replace('Max: ', '')) || 5;
-    }
-    return 5;
-}
-
-function updateButtonStates(itemId, quantity) {
-    const itemEl = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
-    if (!itemEl) return;
-    
-    const decrementBtn = itemEl.querySelector('.decrement-btn');
-    const incrementBtn = itemEl.querySelector('.increment-btn');
-    const maxQuantity = getMaxQuantity(itemId);
-
-    if (decrementBtn) {
-        decrementBtn.disabled = quantity <= 1;
-        decrementBtn.classList.toggle('opacity-50', quantity <= 1);
-        decrementBtn.classList.toggle('cursor-not-allowed', quantity <= 1);
-    }
-
-    if (incrementBtn) {
-        incrementBtn.disabled = quantity >= maxQuantity;
-        incrementBtn.classList.toggle('opacity-50', quantity >= maxQuantity);
-        incrementBtn.classList.toggle('cursor-not-allowed', quantity >= maxQuantity);
-    }
-}
-
-// Cart Management Functions
-function incrementQuantity(itemId) {
-    const currentQuantity = getCurrentQuantity(itemId);
-    const maxQuantity = getMaxQuantity(itemId);
-    if (currentQuantity >= maxQuantity) {
-        if (window.showNotification) window.showNotification(`Maximum quantity (${maxQuantity}) reached`, 'warning');
-        return;
-    }
-    updateCartItem(itemId, currentQuantity + 1);
-}
-
-function decrementQuantity(itemId) {
-    const currentQuantity = getCurrentQuantity(itemId);
-    if (currentQuantity <= 1) return;
-    updateCartItem(itemId, currentQuantity - 1);
-}
-
-function updateCartItem(itemId, quantity) {
-    const url = `{% url 'shop:update_cart_item' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId);
-    
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken'),
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({ quantity: quantity })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            if (window.updateCartCount) window.updateCartCount(data.cart_count);
-            
-            if (quantity === 0) {
-                const itemElement = document.getElementById(`cart-item-${itemId}`);
-                if (itemElement) itemElement.remove();
-                if (window.showNotification) window.showNotification(data.message, 'success');
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                const quantitySpan = document.getElementById(`quantity-${itemId}`);
-                if (quantitySpan) quantitySpan.textContent = quantity;
-                
-                const itemTotal = document.querySelector(`.cart-item[data-item-id="${itemId}"] .item-total`);
-                if (itemTotal) itemTotal.textContent = `₹${data.item_total}`;
-                
-                updateButtonStates(itemId, quantity);
-                
-                if (data.max_quantity !== undefined) {
-                    const maxQuantityText = document.getElementById(`max-quantity-${itemId}`);
-                    if (maxQuantityText) maxQuantityText.textContent = `Max: ${data.max_quantity}`;
-                }
-            }
-            
-            updateOrderSummary(data);
-            if (window.showNotification) window.showNotification(data.message, 'success');
-        } else {
-            if (window.showNotification) window.showNotification(data.message, 'error');
-            else alert(data.message);
-            setTimeout(() => location.reload(), 1500);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        if (window.showNotification) window.showNotification('Error updating cart', 'error');
-    });
-}
-
-function removeFromCart(itemId) {
-    console.log('removeFromCart called for:', itemId);
-    
-    const performAction = () => {
-        const url = `{% url 'shop:remove_from_cart' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId);
-        
-        fetch(url, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": getCookie("csrftoken"),
-                "X-Requested-With": "XMLHttpRequest",
-                "Content-Type": "application/json"
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const itemElement = document.getElementById(`cart-item-${itemId}`);
-                if (itemElement) {
-                    itemElement.style.transition = "all 0.5s ease";
-                    itemElement.style.opacity = "0";
-                    itemElement.style.transform = "translateX(20px)";
-                    setTimeout(() => {
-                        itemElement.remove();
-                        if (data.cart_count === 0) location.reload();
-                    }, 500);
-                }
-                if (window.showNotification) window.showNotification(data.message, "success");
-                updateOrderSummary(data);
-                if (window.updateCartCount) window.updateCartCount(data.cart_count);
-            } else {
-                if (window.showNotification) window.showNotification(data.message, "error");
-            }
-        })
-        .catch(error => {
-            console.error("Error:", error);
-            if (window.showNotification) window.showNotification("Error removing item", "error");
-        });
-    };
-
-    if (window.showConfirmModal) {
-        window.showConfirmModal({
-            title: "Remove Item?",
-            message: "Are you sure you want to remove this item from your cart?",
-            confirmText: "Remove",
-            cancelText: "Cancel",
-            variant: "danger",
-            onConfirm: performAction
-        });
-    } else if (confirm("Are you sure you want to remove this item?")) {
-        performAction();
-    }
-}
-
-function moveToWishlist(cartItemId) {
-    console.log('moveToWishlist called for:', cartItemId);
-    
-    const performAction = () => {
-        const itemElement = document.getElementById(`cart-item-${cartItemId}`);
-        if (itemElement) {
-            itemElement.style.opacity = '0.5';
-            itemElement.style.pointerEvents = 'none';
-        }
-
-        const url = `{% url 'shop:move_to_wishlist' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', cartItemId);
-        
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'X-Requested-With': 'XMLHttpRequest',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (window.showNotification) window.showNotification(data.message, 'success');
-                if (window.updateCartCount) window.updateCartCount(data.cart_count);
-                if (window.updateWishlistCount) window.updateWishlistCount(data.wishlist_count);
-                updateOrderSummary(data);
-                
-                if (itemElement) {
-                    itemElement.style.transition = "all 0.3s ease";
-                    itemElement.style.transform = 'translateX(20px)';
-                    itemElement.style.opacity = '0';
-                    setTimeout(() => {
-                        itemElement.remove();
-                        if (data.cart_count === 0) location.reload();
-                    }, 300);
-                } else {
-                    setTimeout(() => location.reload(), 1000);
-                }
-            } else {
-                if (window.showNotification) window.showNotification(data.message || 'Failed to move to wishlist', 'error');
-                if (itemElement) {
-                    itemElement.style.opacity = '1';
-                    itemElement.style.pointerEvents = 'auto';
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (window.showNotification) window.showNotification('Error moving to wishlist', 'error');
-            if (itemElement) {
-                itemElement.style.opacity = '1';
-                itemElement.style.pointerEvents = 'auto';
-            }
-        });
-    };
-
-    if (window.showConfirmModal) {
-        window.showConfirmModal({
-            title: 'Move to Wishlist?',
-            message: 'Are you sure you want to move this item to your wishlist?',
-            confirmText: 'Move',
-            cancelText: 'Cancel',
-            variant: 'success',
-            onConfirm: performAction
-        });
-    } else if (confirm('Move this item to wishlist?')) {
-        performAction();
-    }
-}
-
-function moveAllToWishlist() {
-    const performAction = () => {
-        const container = document.getElementById('cart-items-container');
-        if (container) {
-            container.style.opacity = '0.5';
-            container.style.pointerEvents = 'none';
-        }
-        fetch('{% url "shop:move_all_to_wishlist" %}', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'X-Requested-With': 'XMLHttpRequest',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (window.showNotification) window.showNotification(data.message, 'success');
-                if (window.updateCartCount) window.updateCartCount(data.cart_count);
-                if (window.updateWishlistCount) window.updateWishlistCount(data.wishlist_count);
-                if (container) {
-                    container.style.transition = 'all 0.5s ease';
-                    container.style.transform = 'translateX(100%)';
-                    container.style.opacity = '0';
-                }
-                setTimeout(() => location.reload(), 500);
-            } else {
-                if (window.showNotification) window.showNotification(data.message || 'Failed to move all items', 'error');
-                if (container) {
-                    container.style.opacity = '1';
-                    container.style.pointerEvents = 'auto';
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (window.showNotification) window.showNotification('Error moving all to wishlist', 'error');
-            if (container) {
-                container.style.opacity = '1';
-                container.style.pointerEvents = 'auto';
-            }
-        });
-    };
-    
-    if (window.showConfirmModal) {
-        window.showConfirmModal({
-            title: 'Move All to Wishlist?',
-            message: 'Are you sure you want to move all items from your cart to your wishlist?',
-            confirmText: 'Move All',
-            cancelText: 'Cancel',
-            variant: 'success',
-            onConfirm: performAction
-        });
-    } else if (confirm('Move all items to wishlist?')) {
-        performAction();
-    }
-}
-
-function proceedToCheckout() {
-    const cartItems = document.querySelectorAll('.cart-item');
-    let hasUnavailable = false;
-    for (const item of cartItems) {
-        if (item.querySelector('.text-red-600') && item.textContent.includes('Out of Stock')) {
-            hasUnavailable = true;
-            break;
-        }
-    }
-    if (hasUnavailable) {
-        if (window.showNotification) window.showNotification('Please remove out-of-stock items before checkout', 'error');
-        return;
-    }
-    window.location.href = "{% url 'orders:checkout' %}";
-}
-
-function updateOrderSummary(data) {
-    if (data.subtotal !== undefined) {
-        const el = document.getElementById('subtotal-display');
-        if (el) el.textContent = `₹${data.subtotal}`;
-    }
-    if (data.total_discount !== undefined) {
-        const el = document.getElementById('discount-display');
-        if (el) el.textContent = `-₹${data.total_discount}`;
-    }
-    if (data.final_total !== undefined) {
-        const el = document.getElementById('cart-total');
-        if (el) el.textContent = `₹${data.final_total}`;
-    }
-}
-
-// Initialize page
+// Fix skeleton loading issue
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Cart initializing...');
+    console.log('DOM loaded, initializing cart...');
     
-    // Show content after a brief delay
-    setTimeout(function() {
+    // Function to show content and hide skeleton
+    function showContent() {
         const skeleton = document.getElementById('cart-skeleton');
         const content = document.getElementById('cart-content');
-        if (skeleton) skeleton.style.display = 'none';
+        
+        if (skeleton) {
+            skeleton.style.opacity = '0';
+            skeleton.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+                skeleton.style.display = 'none';
+            }, 300);
+        }
+        
         if (content) {
             content.style.display = 'block';
             content.style.opacity = '0';
@@ -655,23 +330,250 @@ document.addEventListener('DOMContentLoaded', function() {
                 content.style.opacity = '1';
             }, 50);
         }
-    }, 400);
+    }
     
-    // Set up initial UI states
+    // Always show content after a short delay, regardless of loading
+    // This ensures skeleton doesn't get stuck
+    setTimeout(showContent, 800); // Show after 800ms max
+    
+    // If page loads faster than 800ms, show immediately
+    window.addEventListener('load', function() {
+        // Show content immediately if not already shown
+        const content = document.getElementById('cart-content');
+        if (content && content.style.display === 'none') {
+            showContent();
+        }
+    });
+});
+
+// CSRF handling and basic notifications are now in base.js (getCookie, globalApiPOST, showNotification)
+
+function updateButtonStates(itemId, quantity) {
+    const itemEl = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    if (!itemEl) return;
+    
+    const decBtn = itemEl.querySelector('.decrement-btn');
+    const incBtn = itemEl.querySelector('.increment-btn');
+    const maxQty = parseInt(itemEl.dataset.maxQty || 5);
+
+    if (decBtn) {
+        decBtn.disabled = quantity <= 1;
+        decBtn.classList.toggle('opacity-50', quantity <= 1);
+        decBtn.classList.toggle('cursor-not-allowed', quantity <= 1);
+    }
+
+    if (incBtn) {
+        incBtn.disabled = quantity >= maxQty;
+        incBtn.classList.toggle('opacity-50', quantity >= maxQty);
+        incBtn.classList.toggle('cursor-not-allowed', quantity >= maxQty);
+    }
+}
+
+function updateOrderSummary(data) {
+    const ids = {
+        'subtotal-display': data.subtotal,
+        'shipping-display': data.shipping_cost,
+        'cart-total': data.final_total,
+        'discount-display': data.total_discount
+    };
+    
+    for (const [id, value] of Object.entries(ids)) {
+        const el = document.getElementById(id);
+        if (el && value !== undefined) {
+            let prefix = '₹';
+            if (id === 'discount-display') prefix = '-₹';
+            el.textContent = typeof value === 'number' ? `${prefix}${value.toLocaleString('en-IN')}` : value;
+        }
+    }
+}
+
+function incrementQuantity(itemId) {
+    const itemEl = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    if (!itemEl) return;
+    
+    const qtyText = document.getElementById(`quantity-${itemId}`);
+    if (!qtyText) return;
+    
+    const currentQty = parseInt(qtyText.textContent);
+    const maxQty = parseInt(itemEl.dataset.maxQty || 5);
+    
+    if (currentQty >= maxQty) {
+        if (window.showNotification) {
+            window.showNotification(`Maximum quantity (${maxQty}) reached`, 'warning');
+        }
+        return;
+    }
+    
+    updateCartItem(itemId, currentQty + 1);
+}
+
+function decrementQuantity(itemId) {
+    const qtyText = document.getElementById(`quantity-${itemId}`);
+    if (!qtyText) return;
+    
+    const currentQty = parseInt(qtyText.textContent);
+    if (currentQty <= 1) return;
+    
+    updateCartItem(itemId, currentQty - 1);
+}
+
+function updateCartItem(itemId, quantity) {
+    const itemEl = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    const qtyText = document.getElementById(`quantity-${itemId}`);
+    const itemTotal = itemEl?.querySelector('.item-total');
+    
+    if (!qtyText || !itemEl) return;
+    
+    qtyText.classList.add('updating');
+    itemEl.style.pointerEvents = 'none';
+
+    // Check if we have a proper API URL
+    const updateUrl = window.cartApiUrls?.update || '{% url "shop:update_cart_item_ajax" %}';
+    
+    window.globalApiPOST(updateUrl, {
+        item_id: itemId,
+        quantity: quantity
+    })
+    .then(data => {
+        if (data.success) {
+            qtyText.textContent = data.item_quantity || quantity;
+            
+            if (itemTotal && data.item_total) {
+                itemTotal.textContent = `₹${data.item_total}`;
+            }
+            
+            updateButtonStates(itemId, data.item_quantity || quantity);
+            updateOrderSummary(data);
+            
+            if (window.showNotification) {
+                window.showNotification(data.message || 'Cart updated', 'success');
+            }
+        } else {
+            if (window.showNotification) {
+                window.showNotification(data.message || 'Error updating cart', 'error');
+            }
+        }
+    })
+    .catch(e => {
+        console.error('Cart update error:', e);
+        if (window.showNotification) {
+            window.showNotification('Connection error. Please try again.', 'error');
+        }
+    })
+    .finally(() => {
+        qtyText.classList.remove('updating');
+        itemEl.style.pointerEvents = 'auto';
+    });
+}
+
+function moveAllToWishlist() {
+    if (!window.showConfirmModal) {
+        if (confirm('Move all items from your cart to your wishlist?')) {
+            performMoveAllToWishlist();
+        }
+        return;
+    }
+
+    window.showConfirmModal({
+        title: 'Move All to Wishlist?',
+        message: 'Move all items from your cart to your wishlist?',
+        confirmText: 'Move All',
+        cancelText: 'Cancel',
+        variant: 'success',
+        onConfirm: performMoveAllToWishlist
+    });
+}
+
+function performMoveAllToWishlist() {
+    const container = document.getElementById('cart-items-container');
+    if (container) {
+        container.style.opacity = '0.5';
+        container.style.pointerEvents = 'none';
+    }
+    
+    const moveAllUrl = window.cartApiUrls?.moveAllToWishlist || '{% url "shop:move_all_to_wishlist" %}';
+    
+    window.globalApiPOST(moveAllUrl)
+    .then(data => {
+        if (data.success) {
+            if (window.showNotification) {
+                window.showNotification(data.message, 'success');
+            }
+            if (window.updateCartCount) {
+                window.updateCartCount(data.cart_count || 0);
+            }
+            if (window.updateWishlistCount) {
+                window.updateWishlistCount(data.wishlist_count || 0);
+            }
+            
+            // Show animation and reload
+            if (container) {
+                container.style.transition = 'all 0.5s ease';
+                container.style.transform = 'translateX(100%)';
+                container.style.opacity = '0';
+            }
+            
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        } else {
+            if (window.showNotification) {
+                window.showNotification(data.message || 'Error moving items', 'error');
+            }
+            if (container) {
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'auto';
+            }
+        }
+    })
+    .catch(e => {
+        console.error('Move all error:', e);
+        if (window.showNotification) {
+            window.showNotification('Connection error', 'error');
+        }
+        if (container) {
+            container.style.opacity = '1';
+            container.style.pointerEvents = 'auto';
+        }
+    });
+}
+
+function proceedToCheckout() {
+    // Check for out of stock items
+    const outOfStockItems = document.querySelectorAll('.cart-item:has(.out-of-stock-label)');
+    if (outOfStockItems.length > 0) {
+        if (window.showNotification) {
+            window.showNotification('Please remove out-of-stock items before checkout', 'error');
+        } else {
+            alert('Please remove out-of-stock items before checkout');
+        }
+        return;
+    }
+    
+    // Check if cart is empty
+    const cartItems = document.querySelectorAll('.cart-item');
+    if (cartItems.length === 0) {
+        if (window.showNotification) {
+            window.showNotification('Your cart is empty', 'error');
+        }
+        return;
+    }
+    
+    window.location.href = '{% url "orders:checkout" %}';
+}
+
+// Initialize event listeners after DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize button states
     document.querySelectorAll('.cart-item').forEach(item => {
         const itemId = item.dataset.itemId;
-        const qtyS = item.querySelector('.quantity-text');
-        if (qtyS) updateButtonStates(itemId, parseInt(qtyS.textContent));
+        const qtyText = item.querySelector('.quantity-text');
+        if (qtyText) {
+            updateButtonStates(itemId, parseInt(qtyText.textContent));
+        }
     });
 
-    // Set up event listeners for all buttons
-    const moveAllBtn = document.getElementById('move-all-to-wishlist-btn');
-    if (moveAllBtn) moveAllBtn.addEventListener('click', moveAllToWishlist);
-
-    const checkoutBtn = document.getElementById('checkout-btn');
-    if (checkoutBtn) checkoutBtn.addEventListener('click', proceedToCheckout);
-    
-    // Quantity buttons
+    // Set up event listeners for quantity buttons
     document.querySelectorAll('.increment-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -686,29 +588,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    /* 
-    // Remove buttons - Handled by direct URL routing (No AJAX)
-    document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            removeFromCart(this.dataset.itemId);
-        });
-    });
+    // Move All to Wishlist button
+    const moveAllBtn = document.getElementById('move-all-to-wishlist-btn');
+    if (moveAllBtn) {
+        moveAllBtn.addEventListener('click', moveAllToWishlist);
+    }
     
-    // Wishlist buttons - Handled by direct URL routing (No AJAX)
-    document.querySelectorAll('.move-to-wishlist-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            moveToWishlist(this.dataset.itemId);
-        });
-    });
-    */
+    // Checkout button
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', proceedToCheckout);
+    }
     
-    // Make functions available globally for any inline handlers (just in case)
+    // Make functions globally available
     window.incrementQuantity = incrementQuantity;
     window.decrementQuantity = decrementQuantity;
-    window.removeFromCart = removeFromCart;
-    window.moveToWishlist = moveToWishlist;
     window.moveAllToWishlist = moveAllToWishlist;
     window.proceedToCheckout = proceedToCheckout;
 });
@@ -721,6 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
 .quantity-text {
     min-width: 40px;
     text-align: center;
+    display: inline-block;
 }
 
 .decrement-btn:disabled,
@@ -769,10 +664,19 @@ document.addEventListener('DOMContentLoaded', function() {
     100% { transform: scale(1); }
 }
 
-/* Loading animation */
+/* Loading animations */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+#cart-skeleton {
+    animation: fadeIn 0.3s ease;
 }
 
 #cart-content {
@@ -812,6 +716,7 @@ button:disabled {
 .move-to-wishlist-btn {
     cursor: pointer !important;
     transition: transform 0.2s ease, color 0.2s ease;
+    text-decoration: none !important;
 }
 
 .remove-from-cart-btn:hover {
@@ -820,6 +725,20 @@ button:disabled {
 
 .move-to-wishlist-btn:hover {
     transform: scale(1.05);
+}
+
+/* Skeleton animation */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 </style>
 {% endblock %}
