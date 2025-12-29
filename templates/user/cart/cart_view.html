@@ -63,7 +63,7 @@
           <div class="bg-white rounded-lg shadow-sm">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h2 class="text-lg font-semibold text-gray-900">Cart Items ({{ cart.total_items }})</h2>
-              <button id="move-all-to-wishlist-btn" 
+              <button id="move-all-to-wishlist-btn" type="button"
                       class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition flex items-center gap-1 group">
                 <i class="fas fa-heart group-hover:text-red-500 transition-colors"></i>
                 Move All to Wishlist
@@ -166,18 +166,18 @@
                       <div class="flex items-center space-x-4">
                         
                         <!-- Remove Item -->
-                        <button data-item-id="{{ item.id }}"
-                                class="remove-from-cart-btn inline-flex items-center text-sm font-medium text-red-600 hover:text-red-700 transition">
+                        <a href="{% url 'shop:remove_from_cart' item.id %}"
+                           class="remove-from-cart-btn inline-flex items-center text-sm font-medium text-red-600 hover:text-red-700 transition">
                           <i class="fas fa-trash mr-1"></i>
                           Remove
-                        </button>
+                        </a>
 
                         <!-- Move to Wishlist -->
-                        <button data-item-id="{{ item.id }}"
-                                class="move-to-wishlist-btn inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 transition group">
+                        <a href="{% url 'shop:move_to_wishlist' item.id %}"
+                           class="move-to-wishlist-btn inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 transition group">
                           <i class="far fa-heart mr-1 group-hover:fas group-hover:fa-heart group-hover:text-red-500"></i>
                           <span class="group-hover:text-red-600">Wishlist</span>
-                        </button>
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -243,7 +243,7 @@
             
             <!-- Checkout Button -->
             <div class="px-6 py-4 border-t border-gray-200">
-              <button id="checkout-btn"
+              <button id="checkout-btn" type="button"
                 class="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
                   <i class="fas fa-lock text-sm bg-white/20 p-1.5 rounded-md"></i>
                   <span>Proceed to Checkout</span>
@@ -305,34 +305,6 @@
 </div>
 
 <script>
-// Based on the error, your Django URLs might be different. 
-// Let me create a more flexible URL system that will work with your setup:
-
-// First, let's get the base URL
-const BASE_URL = window.location.origin;
-
-// Create URL patterns based on what URLs we know exist
-function getUpdateUrl(itemId) {
-    // Try different patterns - choose based on what works in your Django
-    return `${BASE_URL}/shop/cart/update/${itemId}/`;
-}
-
-function getRemoveUrl(itemId) {
-    return `${BASE_URL}/shop/cart/remove/${itemId}/`;
-}
-
-function getMoveToWishlistUrl(itemId) {
-    return `${BASE_URL}/shop/cart/move-to-wishlist/${itemId}/`;
-}
-
-function getMoveAllToWishlistUrl() {
-    return `${BASE_URL}/shop/cart/move-all-to-wishlist/`;
-}
-
-function getCheckoutUrl() {
-    return `${BASE_URL}/orders/checkout/`;
-}
-
 // Utility Functions
 function getCookie(name) {
     let cookieValue = null;
@@ -363,8 +335,11 @@ function getMaxQuantity(itemId) {
 }
 
 function updateButtonStates(itemId, quantity) {
-    const decrementBtn = document.querySelector(`.cart-item[data-item-id="${itemId}"] .decrement-btn`);
-    const incrementBtn = document.querySelector(`.cart-item[data-item-id="${itemId}"] .increment-btn`);
+    const itemEl = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    if (!itemEl) return;
+    
+    const decrementBtn = itemEl.querySelector('.decrement-btn');
+    const incrementBtn = itemEl.querySelector('.increment-btn');
     const maxQuantity = getMaxQuantity(itemId);
 
     if (decrementBtn) {
@@ -384,35 +359,28 @@ function updateButtonStates(itemId, quantity) {
 function incrementQuantity(itemId) {
     const currentQuantity = getCurrentQuantity(itemId);
     const maxQuantity = getMaxQuantity(itemId);
-    
     if (currentQuantity >= maxQuantity) {
-        showNotification(`Maximum quantity (${maxQuantity}) reached`, 'warning');
+        if (window.showNotification) window.showNotification(`Maximum quantity (${maxQuantity}) reached`, 'warning');
         return;
     }
-    
-    const newQuantity = currentQuantity + 1;
-    updateCartItem(itemId, newQuantity);
+    updateCartItem(itemId, currentQuantity + 1);
 }
 
 function decrementQuantity(itemId) {
     const currentQuantity = getCurrentQuantity(itemId);
-    
-    if (currentQuantity <= 1) {
-        return;
-    }
-    
-    const newQuantity = currentQuantity - 1;
-    updateCartItem(itemId, newQuantity);
+    if (currentQuantity <= 1) return;
+    updateCartItem(itemId, currentQuantity - 1);
 }
 
 function updateCartItem(itemId, quantity) {
-    const url = getUpdateUrl(itemId);
+    const url = `{% url 'shop:update_cart_item' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId);
     
     fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({ quantity: quantity })
     })
@@ -424,7 +392,7 @@ function updateCartItem(itemId, quantity) {
             if (quantity === 0) {
                 const itemElement = document.getElementById(`cart-item-${itemId}`);
                 if (itemElement) itemElement.remove();
-                showNotification(data.message, 'success');
+                if (window.showNotification) window.showNotification(data.message, 'success');
                 setTimeout(() => location.reload(), 1000);
             } else {
                 const quantitySpan = document.getElementById(`quantity-${itemId}`);
@@ -437,35 +405,35 @@ function updateCartItem(itemId, quantity) {
                 
                 if (data.max_quantity !== undefined) {
                     const maxQuantityText = document.getElementById(`max-quantity-${itemId}`);
-                    if (maxQuantityText) {
-                        maxQuantityText.textContent = `Max: ${data.max_quantity}`;
-                    }
+                    if (maxQuantityText) maxQuantityText.textContent = `Max: ${data.max_quantity}`;
                 }
             }
             
             updateOrderSummary(data);
-            showNotification(data.message, 'success');
+            if (window.showNotification) window.showNotification(data.message, 'success');
         } else {
-            showNotification(data.message, 'error');
+            if (window.showNotification) window.showNotification(data.message, 'error');
+            else alert(data.message);
             setTimeout(() => location.reload(), 1500);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('Error updating cart', 'error');
+        if (window.showNotification) window.showNotification('Error updating cart', 'error');
     });
 }
 
 function removeFromCart(itemId) {
-    const confirmMessage = "Are you sure you want to remove this item from your cart?";
+    console.log('removeFromCart called for:', itemId);
     
-    if (confirm(confirmMessage)) {
-        const url = getRemoveUrl(itemId);
+    const performAction = () => {
+        const url = `{% url 'shop:remove_from_cart' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId);
         
         fetch(url, {
             method: "POST",
             headers: {
                 "X-CSRFToken": getCookie("csrftoken"),
+                "X-Requested-With": "XMLHttpRequest",
                 "Content-Type": "application/json"
             }
         })
@@ -474,108 +442,52 @@ function removeFromCart(itemId) {
             if (data.success) {
                 const itemElement = document.getElementById(`cart-item-${itemId}`);
                 if (itemElement) {
+                    itemElement.style.transition = "all 0.5s ease";
                     itemElement.style.opacity = "0";
                     itemElement.style.transform = "translateX(20px)";
                     setTimeout(() => {
-                        if (itemElement) itemElement.remove();
+                        itemElement.remove();
                         if (data.cart_count === 0) location.reload();
                     }, 500);
                 }
-                
-                showNotification(data.message, "success");
+                if (window.showNotification) window.showNotification(data.message, "success");
                 updateOrderSummary(data);
-                
                 if (window.updateCartCount) window.updateCartCount(data.cart_count);
             } else {
-                showNotification(data.message, "error");
+                if (window.showNotification) window.showNotification(data.message, "error");
             }
         })
         .catch(error => {
             console.error("Error:", error);
-            showNotification("Error removing item", "error");
+            if (window.showNotification) window.showNotification("Error removing item", "error");
         });
+    };
+
+    if (window.showConfirmModal) {
+        window.showConfirmModal({
+            title: "Remove Item?",
+            message: "Are you sure you want to remove this item from your cart?",
+            confirmText: "Remove",
+            cancelText: "Cancel",
+            variant: "danger",
+            onConfirm: performAction
+        });
+    } else if (confirm("Are you sure you want to remove this item?")) {
+        performAction();
     }
 }
 
 function moveToWishlist(cartItemId) {
-    const itemElement = document.getElementById(`cart-item-${cartItemId}`);
-    if (itemElement) {
-        itemElement.style.opacity = '0.5';
-        itemElement.style.pointerEvents = 'none';
-    }
-
-    const url = getMoveToWishlistUrl(cartItemId);
+    console.log('moveToWishlist called for:', cartItemId);
     
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            
-            if (window.updateCartCount) window.updateCartCount(data.cart_count);
-            if (window.updateWishlistCount) window.updateWishlistCount(data.wishlist_count);
-            
-            updateOrderSummary(data);
-            
-            if (itemElement) {
-                itemElement.style.transform = 'translateX(20px)';
-                itemElement.style.opacity = '0';
-                setTimeout(() => {
-                    itemElement.remove();
-                    if (data.cart_count === 0) {
-                        location.reload();
-                    }
-                }, 300);
-            } else {
-                setTimeout(() => location.reload(), 1000);
-            }
-        } else {
-            showNotification(data.message || 'Failed to move to wishlist', 'error');
-            if (itemElement) {
-                itemElement.style.opacity = '1';
-                itemElement.style.pointerEvents = 'auto';
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error moving to wishlist:', error);
-        showNotification('Error moving to wishlist. Please try again.', 'error');
+    const performAction = () => {
+        const itemElement = document.getElementById(`cart-item-${cartItemId}`);
         if (itemElement) {
-            itemElement.style.opacity = '1';
-            itemElement.style.pointerEvents = 'auto';
-        }
-    });
-}
-
-function moveAllToWishlist() {
-    const cartItems = document.querySelectorAll('.cart-item');
-    if (cartItems.length === 0) {
-        showNotification('No items in cart to move', 'info');
-        return;
-    }
-    
-    const confirmMessage = 'Are you sure you want to move all items from your cart to your wishlist?';
-    
-    if (confirm(confirmMessage)) {
-        const container = document.getElementById('cart-items-container');
-        if (container) {
-            container.style.opacity = '0.5';
-            container.style.pointerEvents = 'none';
+            itemElement.style.opacity = '0.5';
+            itemElement.style.pointerEvents = 'none';
         }
 
-        const url = getMoveAllToWishlistUrl();
+        const url = `{% url 'shop:move_to_wishlist' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', cartItemId);
         
         fetch(url, {
             method: 'POST',
@@ -585,32 +497,86 @@ function moveAllToWishlist() {
                 'Content-Type': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showNotification(data.message, 'success');
-                
+                if (window.showNotification) window.showNotification(data.message, 'success');
                 if (window.updateCartCount) window.updateCartCount(data.cart_count);
                 if (window.updateWishlistCount) window.updateWishlistCount(data.wishlist_count);
+                updateOrderSummary(data);
                 
-                // Show animation for all items moving
+                if (itemElement) {
+                    itemElement.style.transition = "all 0.3s ease";
+                    itemElement.style.transform = 'translateX(20px)';
+                    itemElement.style.opacity = '0';
+                    setTimeout(() => {
+                        itemElement.remove();
+                        if (data.cart_count === 0) location.reload();
+                    }, 300);
+                } else {
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } else {
+                if (window.showNotification) window.showNotification(data.message || 'Failed to move to wishlist', 'error');
+                if (itemElement) {
+                    itemElement.style.opacity = '1';
+                    itemElement.style.pointerEvents = 'auto';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (window.showNotification) window.showNotification('Error moving to wishlist', 'error');
+            if (itemElement) {
+                itemElement.style.opacity = '1';
+                itemElement.style.pointerEvents = 'auto';
+            }
+        });
+    };
+
+    if (window.showConfirmModal) {
+        window.showConfirmModal({
+            title: 'Move to Wishlist?',
+            message: 'Are you sure you want to move this item to your wishlist?',
+            confirmText: 'Move',
+            cancelText: 'Cancel',
+            variant: 'success',
+            onConfirm: performAction
+        });
+    } else if (confirm('Move this item to wishlist?')) {
+        performAction();
+    }
+}
+
+function moveAllToWishlist() {
+    const performAction = () => {
+        const container = document.getElementById('cart-items-container');
+        if (container) {
+            container.style.opacity = '0.5';
+            container.style.pointerEvents = 'none';
+        }
+        fetch('{% url "shop:move_all_to_wishlist" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (window.showNotification) window.showNotification(data.message, 'success');
+                if (window.updateCartCount) window.updateCartCount(data.cart_count);
+                if (window.updateWishlistCount) window.updateWishlistCount(data.wishlist_count);
                 if (container) {
                     container.style.transition = 'all 0.5s ease';
                     container.style.transform = 'translateX(100%)';
                     container.style.opacity = '0';
                 }
-                
-                // Reload after animation to show empty cart state
-                setTimeout(() => {
-                    location.reload();
-                }, 500);
+                setTimeout(() => location.reload(), 500);
             } else {
-                showNotification(data.message || 'Failed to move items to wishlist', 'error');
+                if (window.showNotification) window.showNotification(data.message || 'Failed to move all items', 'error');
                 if (container) {
                     container.style.opacity = '1';
                     container.style.pointerEvents = 'auto';
@@ -618,92 +584,68 @@ function moveAllToWishlist() {
             }
         })
         .catch(error => {
-            console.error('Error moving all to wishlist:', error);
-            showNotification('Error moving items to wishlist. Please try again.', 'error');
+            console.error('Error:', error);
+            if (window.showNotification) window.showNotification('Error moving all to wishlist', 'error');
             if (container) {
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
             }
         });
+    };
+    
+    if (window.showConfirmModal) {
+        window.showConfirmModal({
+            title: 'Move All to Wishlist?',
+            message: 'Are you sure you want to move all items from your cart to your wishlist?',
+            confirmText: 'Move All',
+            cancelText: 'Cancel',
+            variant: 'success',
+            onConfirm: performAction
+        });
+    } else if (confirm('Move all items to wishlist?')) {
+        performAction();
     }
 }
 
 function proceedToCheckout() {
-    const unavailableItems = document.querySelectorAll('.cart-item:has(.text-red-600)');
-    if (unavailableItems.length > 0) {
-        showNotification('Please remove out-of-stock items before checkout', 'error');
+    const cartItems = document.querySelectorAll('.cart-item');
+    let hasUnavailable = false;
+    for (const item of cartItems) {
+        if (item.querySelector('.text-red-600') && item.textContent.includes('Out of Stock')) {
+            hasUnavailable = true;
+            break;
+        }
+    }
+    if (hasUnavailable) {
+        if (window.showNotification) window.showNotification('Please remove out-of-stock items before checkout', 'error');
         return;
     }
-    
-    window.location.href = getCheckoutUrl();
+    window.location.href = "{% url 'orders:checkout' %}";
 }
 
 function updateOrderSummary(data) {
     if (data.subtotal !== undefined) {
-        const subtotalDisplay = document.getElementById('subtotal-display');
-        if (subtotalDisplay) subtotalDisplay.textContent = `₹${data.subtotal}`;
+        const el = document.getElementById('subtotal-display');
+        if (el) el.textContent = `₹${data.subtotal}`;
     }
-    
     if (data.total_discount !== undefined) {
-        const discountDisplay = document.getElementById('discount-display');
-        if (discountDisplay) discountDisplay.textContent = `-₹${data.total_discount}`;
+        const el = document.getElementById('discount-display');
+        if (el) el.textContent = `-₹${data.total_discount}`;
     }
-    
     if (data.final_total !== undefined) {
-        const totalDisplay = document.getElementById('cart-total');
-        if (totalDisplay) totalDisplay.textContent = `₹${data.final_total}`;
+        const el = document.getElementById('cart-total');
+        if (el) el.textContent = `₹${data.final_total}`;
     }
-}
-
-function showNotification(message, type = 'success') {
-    // Check if notification system already exists
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(message, type);
-        return;
-    }
-    
-    // Fallback notification
-    const colors = {
-        success: 'bg-emerald-500',
-        error: 'bg-red-500',
-        warning: 'bg-yellow-500',
-        info: 'bg-blue-500'
-    };
-    
-    const icons = {
-        success: 'fas fa-check-circle',
-        error: 'fas fa-exclamation-circle',
-        warning: 'fas fa-exclamation-triangle',
-        info: 'fas fa-info-circle'
-    };
-    
-    const notification = document.createElement('div');
-    notification.className = `fixed top-6 right-6 ${colors[type]} text-white px-6 py-4 rounded-xl shadow-2xl z-50 transform transition-all duration-500 translate-x-0 opacity-100 max-w-md`;
-    notification.innerHTML = `
-        <div class="flex items-center gap-3">
-        <i class="${icons[type]} text-xl"></i>
-        <span class="font-medium">${message}</span>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        notification.style.opacity = '0';
-        setTimeout(() => notification.remove(), 500);
-    }, 5000);
 }
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing cart...');
+    console.log('Cart initializing...');
     
     // Show content after a brief delay
     setTimeout(function() {
         const skeleton = document.getElementById('cart-skeleton');
         const content = document.getElementById('cart-content');
-        
         if (skeleton) skeleton.style.display = 'none';
         if (content) {
             content.style.display = 'block';
@@ -713,75 +655,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 content.style.opacity = '1';
             }, 50);
         }
-    }, 600);
+    }, 400);
     
-    // Set up event listeners
-    function initializeEventListeners() {
-        console.log('Initializing event listeners...');
-        
-        // Move All to Wishlist button
-        const moveAllBtn = document.getElementById('move-all-to-wishlist-btn');
-        if (moveAllBtn) {
-            console.log('Found move all button');
-            moveAllBtn.addEventListener('click', moveAllToWishlist);
-        } else {
-            console.log('Move all button not found');
-        }
-        
-        // Individual wishlist buttons
-        const wishlistBtns = document.querySelectorAll('.move-to-wishlist-btn');
-        console.log(`Found ${wishlistBtns.length} wishlist buttons`);
-        wishlistBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const itemId = this.getAttribute('data-item-id');
-                console.log('Wishlist button clicked for item:', itemId);
-                moveToWishlist(itemId);
-            });
-        });
-        
-        // Remove buttons
-        const removeBtns = document.querySelectorAll('.remove-from-cart-btn');
-        removeBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const itemId = this.getAttribute('data-item-id');
-                removeFromCart(itemId);
-            });
-        });
-        
-        // Quantity buttons
-        const incrementBtns = document.querySelectorAll('.increment-btn');
-        incrementBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const itemId = this.getAttribute('data-item-id');
-                incrementQuantity(itemId);
-            });
-        });
-        
-        const decrementBtns = document.querySelectorAll('.decrement-btn');
-        decrementBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const itemId = this.getAttribute('data-item-id');
-                decrementQuantity(itemId);
-            });
-        });
-        
-        // Checkout button
-        const checkoutBtn = document.getElementById('checkout-btn');
-        if (checkoutBtn) {
-            checkoutBtn.addEventListener('click', proceedToCheckout);
-        }
-        
-        // Make functions globally available
-        window.incrementQuantity = incrementQuantity;
-        window.decrementQuantity = decrementQuantity;
-        window.removeFromCart = removeFromCart;
-        window.moveToWishlist = moveToWishlist;
-        window.moveAllToWishlist = moveAllToWishlist;
-        window.proceedToCheckout = proceedToCheckout;
-    }
+    // Set up initial UI states
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const itemId = item.dataset.itemId;
+        const qtyS = item.querySelector('.quantity-text');
+        if (qtyS) updateButtonStates(itemId, parseInt(qtyS.textContent));
+    });
+
+    // Set up event listeners for all buttons
+    const moveAllBtn = document.getElementById('move-all-to-wishlist-btn');
+    if (moveAllBtn) moveAllBtn.addEventListener('click', moveAllToWishlist);
+
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) checkoutBtn.addEventListener('click', proceedToCheckout);
     
-    // Initialize event listeners
-    initializeEventListeners();
+    // Quantity buttons
+    document.querySelectorAll('.increment-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            incrementQuantity(this.dataset.itemId);
+        });
+    });
+    
+    document.querySelectorAll('.decrement-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            decrementQuantity(this.dataset.itemId);
+        });
+    });
+    
+    /* 
+    // Remove buttons - Handled by direct URL routing (No AJAX)
+    document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            removeFromCart(this.dataset.itemId);
+        });
+    });
+    
+    // Wishlist buttons - Handled by direct URL routing (No AJAX)
+    document.querySelectorAll('.move-to-wishlist-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            moveToWishlist(this.dataset.itemId);
+        });
+    });
+    */
+    
+    // Make functions available globally for any inline handlers (just in case)
+    window.incrementQuantity = incrementQuantity;
+    window.decrementQuantity = decrementQuantity;
+    window.removeFromCart = removeFromCart;
+    window.moveToWishlist = moveToWishlist;
+    window.moveAllToWishlist = moveAllToWishlist;
+    window.proceedToCheckout = proceedToCheckout;
 });
 </script>
 <style>
@@ -871,10 +800,26 @@ button:disabled {
     background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .cart-item:hover::before {
     opacity: 1;
+}
+
+/* Button hover effects */
+.remove-from-cart-btn,
+.move-to-wishlist-btn {
+    cursor: pointer !important;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.remove-from-cart-btn:hover {
+    transform: scale(1.05);
+}
+
+.move-to-wishlist-btn:hover {
+    transform: scale(1.05);
 }
 </style>
 {% endblock %}
