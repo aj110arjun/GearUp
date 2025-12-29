@@ -284,7 +284,6 @@ def update_cart_item(request, item_id):
             'message': 'Error updating cart'
         })
 
-@require_POST
 @login_required
 def remove_from_cart(request, item_id):
     try:
@@ -296,20 +295,30 @@ def remove_from_cart(request, item_id):
         cart_item.delete()
         
         cart = get_or_create_cart(request.user)
-        return JsonResponse({
-            'success': True,
-            'message': 'Item removed from cart',
-            'cart_count': cart.total_items,
-            'subtotal': cart.subtotal,
-            'total_discount': cart.total_discount,
-            'final_total': cart.final_total
-        })
+        
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.method == 'POST':
+            return JsonResponse({
+                'success': True,
+                'message': 'Item removed from cart',
+                'cart_count': cart.total_items,
+                'subtotal': cart.subtotal,
+                'total_discount': cart.total_discount,
+                'final_total': cart.final_total
+            })
+        
+        from django.contrib import messages
+        messages.success(request, 'Item removed from cart')
+        return redirect('shop:cart')
         
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': 'Error removing item from cart'
-        })
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.method == 'POST':
+            return JsonResponse({
+                'success': False,
+                'message': 'Error removing item from cart'
+            })
+        from django.contrib import messages
+        messages.error(request, 'Error removing item from cart')
+        return redirect('shop:cart')
 
 @login_required
 def clear_cart(request):
@@ -318,11 +327,10 @@ def clear_cart(request):
     messages.success(request, 'Cart cleared successfully')
     return redirect('shop:cart')
 
-@require_POST
 @login_required
 @transaction.atomic
 def move_to_wishlist(request, item_id):
-    """AJAX endpoint to move cart item to wishlist"""
+    """Move cart item to wishlist - supports both AJAX and Routing"""
     try:
         cart_item = get_object_or_404(
             CartItem, 
@@ -342,22 +350,31 @@ def move_to_wishlist(request, item_id):
         cart.refresh_from_db()
         wishlist.refresh_from_db()
         
-        return JsonResponse({
-            'success': True,
-            'message': 'Product moved to wishlist successfully',
-            'cart_count': cart.total_items,
-            'wishlist_count': wishlist.total_items,
-            'subtotal': float(cart.subtotal),
-            'total_discount': float(cart.total_discount),
-            'final_total': float(cart.final_total)
-        })
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.method == 'POST':
+            return JsonResponse({
+                'success': True,
+                'message': 'Product moved to wishlist successfully',
+                'cart_count': cart.total_items,
+                'wishlist_count': wishlist.total_items,
+                'subtotal': float(cart.subtotal),
+                'total_discount': float(cart.total_discount),
+                'final_total': float(cart.final_total)
+            })
+        
+        from django.contrib import messages
+        messages.success(request, 'Product moved to wishlist successfully')
+        return redirect('shop:cart')
         
     except Exception as e:
         print(f"Error in move_to_wishlist: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'message': 'Error moving product to wishlist'
-        })
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.method == 'POST':
+            return JsonResponse({
+                'success': False,
+                'message': 'Error moving product to wishlist'
+            })
+        from django.contrib import messages
+        messages.error(request, 'Error moving product to wishlist')
+        return redirect('shop:cart')
 
 @require_POST
 @login_required
