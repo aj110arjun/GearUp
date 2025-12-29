@@ -175,9 +175,9 @@
             {% if variants %}
             <div class="flex items-center space-x-2">
               <span class="text-3xl font-bold text-gray-900">
-                ${{ product.min_price }}
+                ₹{{ product.min_price }}
                 {% if product.min_price != product.max_price %}
-                  - ${{ product.max_price }}
+                  - ₹{{ product.max_price }}
                 {% endif %}
               </span>
             </div>
@@ -198,7 +198,7 @@
             <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-500">
               <i class="fas fa-truck text-green-600 text-2xl mb-2"></i>
               <p class="font-semibold text-gray-800">Free Delivery</p>
-              <p class="text-sm text-gray-500">On orders over $50</p>
+              <p class="text-sm text-gray-500">On orders over ₹50</p>
             </div>
             <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500">
               <i class="fas fa-shield-alt text-blue-600 text-2xl mb-2"></i>
@@ -251,13 +251,13 @@
                     <!-- Pricing -->
                     <div class="flex items-center space-x-3">
                       {% if variant.get_discounted_price < variant.price %}
-                        <span class="text-2xl font-bold text-gray-800 discounted-price" data-price="{{ variant.get_discounted_price }}">${{ variant.get_discounted_price|floatformat:2 }}</span>
-                        <span class="text-lg text-gray-400 line-through original-price">${{ variant.price }}</span>
+                        <span class="text-2xl font-bold text-gray-800 discounted-price" data-price="{{ variant.get_discounted_price }}">₹{{ variant.get_discounted_price|floatformat:2 }}</span>
+                        <span class="text-lg text-gray-400 line-through original-price">₹{{ variant.price }}</span>
                         <span class="px-2 py-1 bg-red-500 text-white rounded-md text-xs font-bold">
                           {{ variant.discount_percentage }}% OFF
                         </span>
                       {% else %}
-                        <span class="text-2xl font-bold text-gray-800" data-price="{{ variant.price }}">${{ variant.price }}</span>
+                        <span class="text-2xl font-bold text-gray-800" data-price="{{ variant.price }}">₹{{ variant.price }}</span>
                       {% endif %}
                     </div>
                     

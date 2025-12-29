@@ -470,7 +470,7 @@ def move_all_to_wishlist(request):
 @login_required
 def wishlist_view(request):
     wishlist = get_or_create_wishlist(request.user)
-    wishlist_items = wishlist.items.select_related('product').annotate(
+    wishlist_items = wishlist.items.select_related('product').prefetch_related('product__variants').annotate(
         avg_rating_sort=Avg('product__reviews__rating', filter=Q(product__reviews__is_approved=True)),
         review_count_sort=Count('product__reviews', filter=Q(product__reviews__is_approved=True))
     ).all()
@@ -618,8 +618,19 @@ def move_to_cart(request, item_id):
             wishlist__user=request.user
         )
         
-        # Get the first available variant
-        variant = wishlist_item.product.variants.filter(is_active=True, is_deleted=False, stock_quantity__gt=0).first()
+        # Get variant (either specified or first available)
+        variant = None
+        if request.body:
+            try:
+                data = json.loads(request.body)
+                variant_id = data.get('variant_id')
+                if variant_id:
+                    variant = wishlist_item.product.variants.filter(id=variant_id, is_active=True, is_deleted=False).first()
+            except json.JSONDecodeError:
+                pass
+        
+        if not variant:
+            variant = wishlist_item.product.variants.filter(is_active=True, is_deleted=False, stock_quantity__gt=0).first()
         
         if variant:
             cart = get_or_create_cart(request.user)
