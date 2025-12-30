@@ -1,0 +1,24 @@
+{% extends 'user/emails/base_email.html' %}
+
+{% block header %}Payment Failed{% endblock %}
+
+{% block content %}
+    <p>Hi {{ user.first_name|default:user.username }},</p>
+    <p style="color: #dc2626;">We encountered an issue processing your payment for your recent order(s).</p>
+
+    <ul>
+        {% for order in orders %}
+        <li><strong>Order #{{ order.order_number }}</strong> - Amount: ₹{{ order.total_amount }}</li>
+        {% endfor %}
+    </ul>
+
+    {% if reason %}
+    <p><strong>Reason:</strong> {{ reason }}</p>
+    {% endif %}
+
+    <p>Don't worry, your gear is still reserved for a short time. Please retry the payment to complete your order.</p>
+
+    <p style="text-align: center;">
+        <a href="{{ retry_url }}" class="button" style="background-color: #dc2626;">Retry Payment</a>
+    </p>
+{% endblock %}

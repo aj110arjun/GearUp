@@ -204,3 +204,89 @@ def get_login_redirect_url(user, next_page=None):
     if user.is_staff or user.is_superuser:
         return 'auth_dashboard:dashboard'
     return 'user_home:home'
+
+
+def send_order_placed_email(user, orders):
+    """Send email confirmation when order is placed"""
+    if not orders:
+        return
+        
+    subject = f'Order Placed - #{orders[0].order_number}'
+    context = {
+        'user': user,
+        'orders': orders,
+        'first_order': orders[0],
+        'my_orders_url': f"{settings.SITE_URL}/orders/",
+    }
+
+    html_message = render_to_string('user/emails/order_placed.html', context)
+    
+    send_mail(
+        subject,
+        '', # Plain text fallback (could be generated)
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html_message,
+        fail_silently=True
+    )
+
+def send_payment_success_email(user, orders, payment_id=None, payment_method='Online'):
+    """Send email for successful payment"""
+    if not orders:
+        return
+        
+    subject = f'Payment Received - Order #{orders[0].order_number}'
+    total_paid = sum(order.total_amount for order in orders)
+    
+    context = {
+        'user': user,
+        'orders': orders,
+        'total_paid': total_paid,
+        'payment_method': payment_method,
+        'payment_id': payment_id,
+        'my_orders_url': f"{settings.SITE_URL}/orders/",
+    }
+
+    html_message = render_to_string('user/emails/payment_success.html', context)
+    
+    send_mail(
+        subject,
+        '',
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html_message,
+        fail_silently=True
+    )
+
+def send_payment_failed_email(user, orders, reason="Transaction Failed"):
+    """Send email for failed payment"""
+    if not orders:
+        return
+
+    subject = f'Payment Failed - Order #{orders[0].order_number}'
+    
+    # Generate retry URL (if single order, direct to details, else list)
+    base_url = settings.SITE_URL
+    if len(orders) == 1:
+        # Assuming there is a generic payment failed page or order details
+        retry_url = f"{base_url}/orders/payment-failed/{orders[0].order_id}/"
+    else:
+        retry_url = f"{base_url}/orders/"
+        
+    context = {
+        'user': user,
+        'orders': orders,
+        'reason': reason,
+        'retry_url': retry_url,
+    }
+
+    html_message = render_to_string('user/emails/payment_failed.html', context)
+    
+    send_mail(
+        subject,
+        '',
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html_message,
+        fail_silently=True
+    )

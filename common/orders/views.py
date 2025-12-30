@@ -33,7 +33,12 @@ from .forms import OrderStatusForm, ReturnRequestForm
 from common.user.cart_wishlist.models import Cart, CartItem
 from common.wallet.models import Wallet, Transaction
 
-from core.services import WalletService
+from core.services import (
+    WalletService, 
+    send_order_placed_email, 
+    send_payment_success_email, 
+    send_payment_failed_email
+)
 from core.razorpay_service import RazorpayService
 
 
@@ -250,6 +255,9 @@ def process_checkout(request, cart, cart_items, wallet):
     # Deactivate the cart
     cart.delete()
     
+    # Send order confirmation email
+    send_order_placed_email(request.user, created_orders)
+    
     # Record coupon usage if coupon was applied
     if coupon_obj and created_orders:
         from .models import CouponUsage
@@ -266,6 +274,7 @@ def process_checkout(request, cart, cart_items, wallet):
 
     # If payment failed, redirect to payment failed page
     if payment_failed:
+        send_payment_failed_email(request.user, created_orders, reason="Payment failed during checkout initial attempt")
         if len(created_orders) == 1:
             return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
         else:
@@ -291,6 +300,8 @@ def process_checkout(request, cart, cart_items, wallet):
                     order.payment_failure_reason = "Payment verification failed"
                     order.save()
                 
+                send_payment_failed_email(request.user, created_orders, reason="Payment verification failed")
+                
                 if len(created_orders) == 1:
                     return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
                 else:
@@ -307,6 +318,9 @@ def process_checkout(request, cart, cart_items, wallet):
                     payment_status='completed',
                     payment_type='credit'
                 )
+            
+            # Send success email
+            send_payment_success_email(request.user, created_orders, payment_id=razorpay_payment_id, payment_method='Razorpay')
         except Exception as e:
             # Handle verification error
             for order in created_orders:
@@ -315,6 +329,8 @@ def process_checkout(request, cart, cart_items, wallet):
                 order.last_payment_attempt = timezone.now()
                 order.payment_failure_reason = f"Payment verification error: {str(e)}"
                 order.save()
+            
+            send_payment_failed_email(request.user, created_orders, reason=str(e))
             
             if len(created_orders) == 1:
                 return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
@@ -344,6 +360,8 @@ def process_checkout(request, cart, cart_items, wallet):
                 order.payment_status = 'paid'
                 order.paid_at = timezone.now()
                 order.save()
+            
+            send_payment_success_email(request.user, created_orders, payment_method='Wallet')
                 
         except ValueError as e:
             for order in created_orders:
@@ -352,6 +370,8 @@ def process_checkout(request, cart, cart_items, wallet):
                 order.last_payment_attempt = timezone.now()
                 order.payment_failure_reason = f"Wallet payment failed: {str(e)}"
                 order.save()
+            
+            send_payment_failed_email(request.user, created_orders, reason=str(e))
             
             if len(created_orders) == 1:
                 return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
