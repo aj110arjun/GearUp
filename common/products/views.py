@@ -388,7 +388,7 @@ def add_variant_admin(request, slug):
     product = get_object_or_404(Product, slug=slug)
     
     if request.method == 'POST':
-        form = ProductVariantForm(request.POST)
+        form = ProductVariantForm(request.POST, product=product)
         if form.is_valid():
             variant = form.save(commit=False)
             variant.product = product
@@ -396,7 +396,7 @@ def add_variant_admin(request, slug):
             messages.success(request, f'Variant {variant} added successfully.')
             return redirect('products:product_edit', slug=product.slug)
     else:
-        form = ProductVariantForm()
+        form = ProductVariantForm(product=product)
     
     context = {
         'product': product,

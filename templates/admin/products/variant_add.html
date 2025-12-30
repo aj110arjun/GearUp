@@ -135,7 +135,7 @@
                         <!-- Size -->
                         <div>
                             <label for="{{ form.size.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                                Size <span class="text-gray-400 font-normal">(e.g., M, L, XL)</span>
+                                Size <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(e.g., M, L, XL)</span>
                             </label>
                             {{ form.size }}
                             {% if form.size.errors %}
@@ -149,7 +149,7 @@
                         <!-- Color -->
                         <div>
                             <label for="{{ form.color.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                                Color <span class="text-gray-400 font-normal">(e.g., Red, Blue)</span>
+                                Color <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(e.g., Red, Blue)</span>
                             </label>
                             {{ form.color }}
                             {% if form.color.errors %}
