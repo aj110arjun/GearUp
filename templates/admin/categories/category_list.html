@@ -298,44 +298,7 @@
   </div>
 
   <!-- Pagination -->
-  {% if categories.paginator.count > 0 %}
-  <div class="flex flex-col md:flex-row justify-between items-center mt-6 px-2">
-    <p class="text-sm text-gray-700 mb-4 md:mb-0">
-      Showing <span class="font-medium">{{ categories.start_index }}</span> to <span class="font-medium">{{ categories.end_index }}</span> of 
-      <span class="font-medium">{{ categories.paginator.count }}</span> results
-    </p>
-
-    <div class="flex items-center space-x-1">
-      {% if categories.has_previous %}
-        <a href="?page={{ categories.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-          Previous
-        </a>
-      {% endif %}
-
-      {% for num in categories.paginator.page_range %}
-        {% if categories.number == num %}
-          <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-            class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
-            {{ num }}
-          </a>
-        {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
-          <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-            class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-            {{ num }}
-          </a>
-        {% endif %}
-      {% endfor %}
-
-      {% if categories.has_next %}
-        <a href="?page={{ categories.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-          Next
-        </a>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
+  {% include 'partials/pagination.html' %}
 
 </div>
 
