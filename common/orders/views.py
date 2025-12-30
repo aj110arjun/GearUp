@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from django.urls import reverse_lazy
 from django.http import JsonResponse
 from django.conf import settings
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.http import require_POST, require_http_methods
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -413,8 +413,20 @@ def order_list(request):
         order_status__in=['processing', 'shipped', 'pending']
     ).count()
     
+    # Pagination
+    paginator = Paginator(orders, 10) # 10 orders per page
+    page = request.GET.get('page')
+    
+    try:
+        orders_page = paginator.page(page)
+    except PageNotAnInteger:
+        orders_page = paginator.page(1)
+    except EmptyPage:
+        orders_page = paginator.page(paginator.num_pages)
+    
     context = {
-        'orders': orders,
+        'orders': orders_page,
+        'page_obj': orders_page,
         'delivered_count': delivered_count,
         'in_progress_count': in_progress_count,
         'active_tab': 'orders',
