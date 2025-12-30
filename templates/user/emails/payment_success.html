@@ -1,0 +1,26 @@
+{% extends 'user/emails/base_email.html' %}
+
+{% block header %}Payment Received!{% endblock %}
+
+{% block content %}
+    <p>Hi {{ user.first_name|default:user.username }},</p>
+    <p>Good news! We have successfully received your payment for the following order(s):</p>
+
+    <ul>
+        {% for order in orders %}
+        <li><strong>Order #{{ order.order_number }}</strong> - Amount: ₹{{ order.total_amount }}</li>
+        {% endfor %}
+    </ul>
+
+    <p><strong>Total Amount Paid:</strong> ₹{{ total_paid }}</p>
+    <p><strong>Payment Method:</strong> {{ payment_method }}</p>
+    {% if payment_id %}
+    <p><strong>Transaction ID:</strong> {{ payment_id }}</p>
+    {% endif %}
+
+    <p>Your order is now being processed.</p>
+
+    <p style="text-align: center;">
+        <a href="{{ my_orders_url }}" class="button">Track Your Order</a>
+    </p>
+{% endblock %}
