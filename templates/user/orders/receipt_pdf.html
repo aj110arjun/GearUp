@@ -133,7 +133,7 @@
         </tr>
         <tr>
             <td>Shipping</td>
-            <td class="text-right">FREE</td>
+            <td class="text-right">₹{{ order.shipping_cost }}</td>
         </tr>
         {% if order.payment_status == 'refunded' %}
         <tr>
