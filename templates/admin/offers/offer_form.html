@@ -29,7 +29,7 @@
                     </label>
                     {{ form.product }}
                     {% if form.product.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.product.errors.0 }}</p>
+                        <p class="form-error-text">{{ form.product.errors.0 }}</p>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -41,7 +41,7 @@
                     </label>
                     {{ form.category }}
                     {% if form.category.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.category.errors.0 }}</p>
+                        <p class="form-error-text">{{ form.category.errors.0 }}</p>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -52,7 +52,7 @@
                     </label>
                     {{ form.name }}
                     {% if form.name.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.name.errors.0 }}</p>
+                        <p class="form-error-text">{{ form.name.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -63,7 +63,7 @@
                     {{ form.discount_percentage }}
                     <p class="text-xs text-gray-500 mt-1">Enter a value between 10 and 90</p>
                     {% if form.discount_percentage.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.discount_percentage.errors.0 }}</p>
+                        <p class="form-error-text">{{ form.discount_percentage.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -74,7 +74,7 @@
                         </label>
                         {{ form.start_date }}
                         {% if form.start_date.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.start_date.errors.0 }}</p>
+                            <p class="form-error-text">{{ form.start_date.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
@@ -83,7 +83,7 @@
                         </label>
                         {{ form.end_date }}
                         {% if form.end_date.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.end_date.errors.0 }}</p>
+                            <p class="form-error-text">{{ form.end_date.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>

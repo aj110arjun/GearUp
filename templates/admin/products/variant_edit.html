@@ -20,7 +20,7 @@
             {% csrf_token %}
             
             {% if form.non_field_errors %}
-            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4">
+            <div class="mb-6 mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -28,7 +28,7 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm text-red-700">{{ form.non_field_errors.0 }}</p>
+                        <p class="text-sm text-red-800 font-medium">{{ form.non_field_errors.0 }}</p>
                     </div>
                 </div>
             </div>
@@ -42,7 +42,7 @@
                     </label>
                     {{ form.size }}
                     {% if form.size.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.size.errors.0 }}</p>
+                        <p class="form-error-text">{{ form.size.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -53,7 +53,7 @@
                     </label>
                     {{ form.color }}
                     {% if form.color.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.color.errors.0 }}</p>
+                        <p class="form-error-text">{{ form.color.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -64,7 +64,7 @@
                     </label>
                     {{ form.price }}
                     {% if form.price.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.price.errors.0 }}</p>
+                        <p class="form-error-text">{{ form.price.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -75,7 +75,7 @@
                     </label>
                     {{ form.stock_quantity }}
                     {% if form.stock_quantity.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.stock_quantity.errors.0 }}</p>
+                        <p class="form-error-text">{{ form.stock_quantity.errors.0 }}</p>
                     {% endif %}
                 </div>
 

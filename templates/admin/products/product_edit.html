@@ -74,19 +74,27 @@
 
     <!-- Form Errors -->
     {% if form.errors or variant_formset.errors or image_formset.errors %}
-    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-      <h3 class="text-lg font-semibold text-red-700 mb-2">Please correct the following errors:</h3>
-      <ul class="list-disc list-inside text-red-600 space-y-1">
+    <div class="mb-8 p-6 bg-red-50 border border-red-200 rounded-2xl">
+      <h3 class="text-lg font-bold text-red-800 mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1-1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        Please correct the following errors:
+      </h3>
+      <ul class="space-y-2">
         {% for field, errors in form.errors.items %}
-          <li>{{ field }}: {{ errors.0 }}</li>
+          <li class="text-sm text-red-800 font-medium flex items-center">
+            <span class="font-semibold mr-2 capitalize text-xs bg-red-100 px-2 py-0.5 rounded">{{ field }}</span>
+            <span>{{ errors.0 }}</span>
+          </li>
         {% endfor %}
-        
-
-        
         {% for form in image_formset %}
           {% for field, errors in form.errors.items %}
             {% if errors %}
-              <li>Image {{ forloop.parentloop.counter }} - {{ field }}: {{ errors.0 }}</li>
+              <li class="text-sm text-red-800 font-medium flex items-center">
+                <span class="font-semibold mr-2 capitalize text-xs bg-red-100 px-2 py-0.5 rounded">Image {{ forloop.parentloop.counter }}</span>
+                <span>{{ errors.0 }}</span>
+              </li>
             {% endif %}
           {% endfor %}
         {% endfor %}
@@ -167,7 +175,7 @@
                 </label>
                 {{ form.name }}
                 {% if form.name.errors %}
-                  <p class="text-red-500 text-sm mt-2">{{ form.name.errors.0 }}</p>
+                  <p class="form-error-text">{{ form.name.errors.0 }}</p>
                 {% endif %}
               </div>
 
@@ -178,7 +186,7 @@
                 </label>
                 {{ form.brand }}
                 {% if form.brand.errors %}
-                  <p class="text-red-500 text-sm mt-2">{{ form.brand.errors.0 }}</p>
+                  <p class="form-error-text">{{ form.brand.errors.0 }}</p>
                 {% endif %}
               </div>
 
@@ -189,7 +197,7 @@
                 </label>
                 {{ form.category }}
                 {% if form.category.errors %}
-                  <p class="text-red-500 text-sm mt-2">{{ form.category.errors.0 }}</p>
+                  <p class="form-error-text">{{ form.category.errors.0 }}</p>
                 {% endif %}
               </div>
 
@@ -200,7 +208,7 @@
                 </label>
                 {{ form.description }}
                 {% if form.description.errors %}
-                  <p class="text-red-500 text-sm mt-2">{{ form.description.errors.0 }}</p>
+                  <p class="form-error-text">{{ form.description.errors.0 }}</p>
                 {% endif %}
               </div>
 
@@ -342,7 +350,7 @@
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Upload Image</label>
                                 {{ image_formset.empty_form.image }}
                                 {% if image_formset.empty_form.errors.image %}
-                                    <p class="text-red-500 text-xs mt-1">{{ image_formset.empty_form.errors.image.0 }}</p>
+                                    <p class="form-error-text">{{ image_formset.empty_form.errors.image.0 }}</p>
                                 {% endif %}
                                 <div class="mt-2">
                                   <button type="button" class="crop-new-image hidden text-indigo-600 hover:text-indigo-800 text-xs font-medium inline-flex items-center" data-input-id="">
@@ -411,7 +419,7 @@
                              {{ form.image }}
                              
                              {% if form.errors.image %}
-                                <p class="text-red-500 text-xs mt-1">{{ form.errors.image.0 }}</p>
+                                <p class="form-error-text">{{ form.errors.image.0 }}</p>
                              {% endif %}
 
                              {% if form.instance.pk and form.instance.image %}
@@ -437,7 +445,7 @@
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Alt Text</label>
                                 {{ form.alt_text }}
                                 {% if form.errors.alt_text %}
-                                    <p class="text-red-500 text-xs mt-1">{{ form.errors.alt_text.0 }}</p>
+                                    <p class="form-error-text">{{ form.errors.alt_text.0 }}</p>
                                 {% endif %}
                             </div>
                             {{ form.is_primary.as_hidden }}
