@@ -1,0 +1,47 @@
+{% extends 'user/emails/base_email.html' %}
+
+{% block header %}Order Placed Successfully!{% endblock %}
+
+{% block content %}
+    <p>Hi {{ user.first_name|default:user.username }},</p>
+    <p>Thank you for your order! We've received your request and are getting your gear ready for adventure.</p>
+
+    <h3>Order Details</h3>
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.order_number }}</td>
+                <td>
+                    {{ order.product.name }}
+                    {% if order.variant %}
+                    <br><small>{{ order.variant.variant_value }}</small>
+                    {% endif %}
+                </td>
+                <td>{{ order.quantity }}</td>
+                <td>₹{{ order.total_amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px;">
+        <p><strong>Shipping Address:</strong><br>
+        {{ first_order.shipping_address.full_name }}<br>
+        {{ first_order.shipping_address.address_line1 }}<br>
+        {{ first_order.shipping_address.city }}, {{ first_order.shipping_address.state }} {{ first_order.shipping_address.zip_code }}
+        </p>
+    </div>
+
+    <p style="text-align: center;">
+        <a href="{{ my_orders_url }}" class="button">View My Orders</a>
+    </p>
+{% endblock %}
