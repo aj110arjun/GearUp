@@ -312,133 +312,168 @@
                 <div>
                   <h2 class="text-lg font-semibold text-gray-900">Product Images</h2>
                   <p class="text-sm text-gray-600 mt-1">
-                    Upload and manage product images. Primary images cannot be deleted.
+                    Upload and manage product images. Drag to reorder (coming soon).
                   </p>
                 </div>
-                <button type="button" id="add-image" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button type="button" id="add-image-btn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-all shadow-sm">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
                   Add Image
                 </button>
               </div>
             </div>
+            
             <div class="p-6">
               {{ image_formset.management_form }}
               
-              <div id="image-forms" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% for image_form in image_formset %}
-                <div class="image-form group border border-gray-200 rounded-lg p-4 relative hover:border-gray-300 transition-colors 
-                            {% if image_form.instance.is_primary %}border-2 border-indigo-300 bg-indigo-50{% endif %}">
-                  {{ image_form.id }}
-                  
-                  <!-- Primary Image Badge -->
-                  {% if image_form.instance.is_primary %}
-                  <div class="absolute top-2 left-2 z-10">
-                    <span class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-md">
-                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                      </svg>
-                      Primary Image
-                    </span>
-                  </div>
-                  {% endif %}
-                  
-                  <!-- Image Preview -->
-                  {% if image_form.instance.pk and image_form.instance.image %}
-                  <div class="mb-4 relative">
-                    <img src="{{ image_form.instance.image.url }}" alt="{{ image_form.instance.alt_text }}" class="w-full h-48 object-cover rounded-lg">
-                    <div class="absolute top-2 right-2 flex gap-1">
-                      <button type="button" class="crop-existing-image bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors" data-image-url="{{ image_form.instance.image.url }}" title="Crop Image">
-                        <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  {% endif %}
-                  
-                  <!-- Delete Button (Hidden for Primary Images) -->
-                  {% if not image_form.instance.is_primary %}
-                    {% if image_form.instance.pk %}
-                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <label class="flex items-center text-xs bg-red-50 text-red-600 hover:text-red-700 hover:bg-red-100 px-2 py-1 rounded cursor-pointer transition-colors">
-                        {{ image_form.DELETE }}
-                        <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        <span class="ml-1">Delete</span>
-                      </label>
-                    </div>
-                    {% endif %}
-                  {% else %}
-                    <!-- Message for Primary Image -->
-                    <div class="text-xs text-indigo-600 mb-2 flex items-start">
-                      <svg class="w-4 h-4 flex-shrink-0 mr-1 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>This Image Can't be Deleted. What You Can do is Change The Image</span>
-                    </div>
-                  {% endif %}
-                  
-                  <!-- Form Fields -->
-                  <div class="space-y-3">
-                    <div>
-                      <label class="block text-xs font-medium text-gray-700 mb-1">Image</label>
-                      <div class="image-upload-container">
-                        {{ image_form.image }}
-                        <div class="image-preview-container mt-2 hidden">
-                          <div class="relative">
-                            <img id="preview-{{ forloop.counter0 }}" class="w-full h-48 object-cover rounded-lg border border-gray-200">
-                            <div class="absolute top-2 right-2 flex gap-1">
-                              <button type="button" class="crop-new-image bg-white rounded-full p-2 shadow-md hover:bg-gray-100 transition-colors" data-input-id="id_images-{{ forloop.counter0 }}-image" title="Crop Image">
-                                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
+              <!-- Empty Form Template (Hidden) -->
+              <template id="image-empty-form">
+                 <tr class="image-form-row hover:bg-gray-50 transition-colors border-b last:border-b-0">
+                    <td class="px-6 py-4 whitespace-nowrap align-top w-24">
+                        <div class="image-preview-container w-20 h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden relative">
+                            <span class="text-gray-400 text-xs text-center p-1 no-image-text">No Image</span>
+                            <img src="" class="w-full h-full object-cover hidden preview-img" alt="Preview">
                         </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label class="block text-xs font-medium text-gray-700 mb-1">Alt Text</label>
-                      {{ image_form.alt_text }}
-                    </div>
-                    
-                    <!-- Primary Image Checkbox (Only for non-primary images) -->
-                    {% if not image_form.instance.is_primary %}
-                    <div class="flex items-center">
-                      <label class="flex items-center cursor-pointer">
-                        {{ image_form.is_primary }}
-                        <span class="ml-2 text-sm text-gray-700">Set as Primary</span>
-                      </label>
-                    </div>
-                    {% else %}
-                      {{ image_form.is_primary.as_hidden }}
-                      <div class="text-xs text-indigo-600 mt-1 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        This is the primary image
-                      </div>
-                    {% endif %}
-                    
-                    {% if image_form.instance.pk %}
-                    <span class="text-xs text-gray-500">ID: {{ image_form.instance.id }}</span>
-                    {% endif %}
-                  </div>
-                  
-                  {% if image_form.errors %}
-                  <div class="mt-2 text-red-500 text-xs">
-                    {{ image_form.errors }}
-                  </div>
-                  {% endif %}
-                </div>
-                {% endfor %}
+                    </td>
+                    <td class="px-6 py-4 align-top">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Upload Image</label>
+                                {{ image_formset.empty_form.image }}
+                                {% if image_formset.empty_form.errors.image %}
+                                    <p class="text-red-500 text-xs mt-1">{{ image_formset.empty_form.errors.image.0 }}</p>
+                                {% endif %}
+                                <div class="mt-2">
+                                  <button type="button" class="crop-new-image hidden text-indigo-600 hover:text-indigo-800 text-xs font-medium inline-flex items-center" data-input-id="">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                    Crop
+                                  </button>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 align-top">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Alt Text</label>
+                                {{ image_formset.empty_form.alt_text }}
+                            </div>
+                            <!-- Hidden meta info -->
+                            {{ image_formset.empty_form.is_primary.as_hidden }}
+                        </div>
+                        {{ image_formset.empty_form.id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right align-middle">
+                         <div class="hidden">
+                             {{ image_formset.empty_form.DELETE }}
+                         </div>
+                         <button type="button" class="delete-image-row text-red-600 hover:text-red-900 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove Image">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                         </button>
+                    </td>
+                 </tr>
+              </template>
+
+              <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200" id="images-table">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Preview</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image File</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200" id="image-table-body">
+                    {% for form in image_formset %}
+                    <tr class="image-form-row hover:bg-gray-50 transition-colors">
+                      <td class="px-6 py-4 whitespace-nowrap align-top">
+                        <div class="w-20 h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden relative group">
+                            {% if form.instance.pk and form.instance.image %}
+                                <img src="{{ form.instance.image.url }}" class="w-full h-full object-cover" alt="Preview">
+                            {% else %}
+                                <span class="text-gray-400 text-xs text-center p-1 no-image-text">No Image</span>
+                                <img src="" class="w-full h-full object-cover hidden preview-img" alt="Preview">
+                            {% endif %}
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 align-top">
+                        <div class="space-y-2">
+                             {% if form.instance.pk and form.instance.image %}
+                                <p class="text-sm text-gray-600 mb-2 truncate max-w-xs">{{ form.instance.image.name }}</p>
+                             {% endif %}
+                             
+                             {{ form.image }}
+                             
+                             {% if form.errors.image %}
+                                <p class="text-red-500 text-xs mt-1">{{ form.errors.image.0 }}</p>
+                             {% endif %}
+
+                             {% if form.instance.pk and form.instance.image %}
+                             <button type="button" class="crop-existing-image text-indigo-600 hover:text-indigo-800 text-xs font-medium inline-flex items-center mt-1" data-image-url="{{ form.instance.image.url }}">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                Crop / Adjust
+                              </button>
+                             {% else %}
+                             <button type="button" class="crop-new-image hidden text-indigo-600 hover:text-indigo-800 text-xs font-medium inline-flex items-center mt-1" data-input-id="id_images-{{ forloop.counter0 }}-image">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                Crop
+                              </button>
+                             {% endif %}
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 align-top">
+                         <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Alt Text</label>
+                                {{ form.alt_text }}
+                                {% if form.errors.alt_text %}
+                                    <p class="text-red-500 text-xs mt-1">{{ form.errors.alt_text.0 }}</p>
+                                {% endif %}
+                            </div>
+                            {{ form.is_primary.as_hidden }}
+                         </div>
+                         {{ form.id }}
+                      </td>
+                       <td class="px-6 py-4 whitespace-nowrap text-right align-middle">
+                          {% if form.instance.is_primary %}
+                            <span class="text-xs text-gray-400 cursor-not-allowed" title="Primary image cannot be deleted">
+                                <svg class="w-5 h-5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </span>
+                          {% else %}
+                            <div class="hidden">
+                                {{ form.DELETE }}
+                            </div>
+                           <button type="button" class="delete-image-row text-red-600 hover:text-red-900 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove Image">
+                                <svg class="w-5 h-5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                           {% endif %}
+                       </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
               </div>
             </div>
+            
+             <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+                <p class="text-xs text-gray-500">
+                    <span class="font-medium">Note:</span> Supported formats: JPG, PNG, GIF, WebP. Max size: 10MB.
+                </p>
+             </div>
           </div>
 
         </div>
@@ -575,140 +610,101 @@ document.addEventListener('DOMContentLoaded', function() {
 
   
   // Dynamic formset handling for images
-const addImageBtn = document.getElementById('add-image');
-const imageForms = document.getElementById('image-forms');
-const totalImageForms = document.querySelector('#id_images-TOTAL_FORMS');
+  // Dynamic formset handling for images (Table Layout)
+  const addImageBtn = document.getElementById('add-image-btn');
+  const imageTableBody = document.getElementById('image-table-body');
+  const totalImageForms = document.querySelector('#id_images-TOTAL_FORMS');
+  const emptyFormTemplate = document.getElementById('image-empty-form');
 
-if (addImageBtn && imageForms && totalImageForms) {
-  addImageBtn.addEventListener('click', function() {
-    const formCount = parseInt(totalImageForms.value);
-    
-    // Find a non-primary image form to clone (or use the first form if no non-primary exists)
-    const nonPrimaryForms = document.querySelectorAll('.image-form:not(.border-indigo-300)');
-    const templateForm = nonPrimaryForms.length > 0 ? nonPrimaryForms[0] : document.querySelector('.image-form');
-    
-    const newForm = templateForm.cloneNode(true);
-    
-    // Update form index
-    newForm.innerHTML = newForm.innerHTML.replace(/images-\d+-/g, `images-${formCount}-`);
-    newForm.innerHTML = newForm.innerHTML.replace(/images-\d+/g, `images-${formCount}`);
-    
-    // Remove primary image styling and badge
-    newForm.classList.remove('border-indigo-300', 'bg-indigo-50', 'border-2');
-    newForm.classList.add('border', 'border-gray-200');
-    
-    // Remove primary image badge if it exists
-    const primaryBadge = newForm.querySelector('.absolute.top-2.left-2');
-    if (primaryBadge) {
-      primaryBadge.remove();
-    }
-    
-    // Remove "This is the primary image" text
-    const primaryText = newForm.querySelector('.text-indigo-600');
-    if (primaryText && primaryText.textContent.includes("This Image Can't be Deleted")) {
-      primaryText.remove();
-    }
-    
-    // Clear values and remove existing image preview
-    newForm.querySelectorAll('img').forEach(img => img.remove());
-    newForm.querySelectorAll('input, select, textarea').forEach(input => {
-      if (input.type !== 'checkbox' && input.type !== 'hidden') {
-        input.value = '';
-      } else if (input.type === 'checkbox') {
-        // UNCHECK the is_primary checkbox for new images
-        if (input.name && input.name.includes('is_primary')) {
-          input.checked = false;
-        }
+  if (addImageBtn && imageTableBody && totalImageForms && emptyFormTemplate) {
+    addImageBtn.addEventListener('click', function() {
+      const formCount = parseInt(totalImageForms.value);
+      
+      // Get HTML from template and replace prefix
+      let newRowHtml = emptyFormTemplate.innerHTML;
+      newRowHtml = newRowHtml.replace(/__prefix__/g, formCount);
+      
+      // Create a temporary container to parse the string back to a node
+      const tempTable = document.createElement('table'); 
+      tempTable.innerHTML = `<tbody>${newRowHtml}</tbody>`;
+      const newRowNode = tempTable.querySelector('tr');
+
+      if (newRowNode) {
+        imageTableBody.appendChild(newRowNode);
+        
+        // Update management form
+        totalImageForms.value = formCount + 1;
+        
+        // Initialize functionality for the new row
+        initImageRow(newRowNode);
+        
+        // Highlight effect
+        newRowNode.classList.add('bg-indigo-50/50');
+        setTimeout(() => {
+          newRowNode.classList.remove('bg-indigo-50/50');
+        }, 1000);
       }
     });
+  }
+
+  // Initialize existing rows
+  document.querySelectorAll('.image-form-row').forEach(row => {
+    initImageRow(row);
+  });
+
+  function initImageRow(row) {
+    // 1. Image Preview & Crop Button
+    const imageInput = row.querySelector('input[type="file"]');
+    const previewImg = row.querySelector('.preview-img');
+    const noImageText = row.querySelector('.no-image-text');
+    const cropBtn = row.querySelector('.crop-new-image'); 
     
-    // Remove delete button for new form
-    const deleteBtn = newForm.querySelector('label[for*="DELETE"]');
+    if (imageInput) {
+      if (cropBtn && !cropBtn.getAttribute('data-input-id')) {
+         cropBtn.setAttribute('data-input-id', imageInput.id);
+      }
+
+      imageInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+          const file = this.files[0];
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            if (previewImg) {
+              previewImg.src = e.target.result;
+              previewImg.classList.remove('hidden');
+              previewImg.style.display = 'block'; 
+            }
+            if (noImageText) noImageText.classList.add('hidden');
+            if (cropBtn) cropBtn.classList.remove('hidden');
+          }
+          
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // 2. Delete/Remove Row
+    const deleteBtn = row.querySelector('.delete-image-row');
     if (deleteBtn) {
-      deleteBtn.closest('.absolute').remove();
-    }
-    
-    // Remove existing image preview
-    const existingImg = newForm.querySelector('img[src*="cloudinary"]');
-    if (existingImg) {
-      existingImg.closest('.mb-4').remove();
-    }
-    
-    // Clear any existing errors
-    const errorDiv = newForm.querySelector('.text-red-500');
-    if (errorDiv) errorDiv.innerHTML = '';
-    
-    // Add image preview functionality to the new form
-    const imageInput = newForm.querySelector('input[type="file"]');
-    const previewContainer = newForm.querySelector('.image-preview-container');
-    const previewImg = newForm.querySelector('.image-preview-container img');
-    const cropBtn = newForm.querySelector('.crop-new-image');
-    
-    if (imageInput && previewContainer) {
-      imageInput.addEventListener('change', function(e) {
-        if (this.files && this.files[0]) {
-          originalImageBlob = this.files[0];
-          const reader = new FileReader();
-          
-          reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            previewContainer.classList.remove('hidden');
+      deleteBtn.addEventListener('click', function() {
+        const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        if (deleteCheckbox) {
+          const idInput = row.querySelector('input[type="hidden"][name$="-id"]');
+          if (idInput && idInput.value) {
+             deleteCheckbox.checked = true;
+             row.style.display = 'none';
+             showNotification('Image marked for removal. Update to save changes.', 'info');
+          } else {
+             deleteCheckbox.checked = true;
+             row.style.display = 'none';
           }
-          
-          reader.readAsDataURL(this.files[0]);
+        } else {
+           row.style.display = 'none';
         }
       });
-      
-      // Set data attribute for crop button
-      cropBtn.setAttribute('data-input-id', imageInput.id);
-    }
-    
-    imageForms.appendChild(newForm);
-    totalImageForms.value = formCount + 1;
-    
-    // Show a brief highlight effect on the new form
-    newForm.style.boxShadow = '0 0 0 2px rgba(79, 70, 229, 0.3)';
-    setTimeout(() => {
-      newForm.style.boxShadow = '';
-    }, 1000);
-  });
-}
-  
-  // Initialize image preview for existing forms
-  document.querySelectorAll('.image-form').forEach(form => {
-    const imageInput = form.querySelector('input[type="file"]');
-    const previewContainer = form.querySelector('.image-preview-container');
-    const previewImg = form.querySelector('.image-preview-container img');
-    
-    if (imageInput && previewContainer) {
-      imageInput.addEventListener('change', function(e) {
-        if (this.files && this.files[0]) {
-          originalImageBlob = this.files[0];
-          const reader = new FileReader();
-          
-          reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            previewContainer.classList.remove('hidden');
-          }
-          
-          reader.readAsDataURL(this.files[0]);
-        }
-      });
-    }
-  });
-  
-// Prevent deleting primary images
-document.addEventListener('change', function(e) {
-  if (e.target && e.target.name && e.target.name.includes('DELETE')) {
-    const formElement = e.target.closest('.image-form');
-    if (formElement && formElement.classList.contains('border-indigo-300')) {
-      // This is a primary image, prevent deletion
-      e.target.checked = false;
-      showNotification('Primary images cannot be deleted. Set another image as primary first.', 'error');
-      return;
     }
   }
-});
   
   // Image cropping functionality
   const cropModal = document.getElementById('crop-modal');
@@ -1061,17 +1057,6 @@ input[type="range"] {
   appearance: none;
   cursor: pointer;
   accent-color: #4f46e5;
-}
-
-/* Primary Image Styling */
-.image-form.border-indigo-300 {
-  border: 2px solid #a5b4fc;
-  background-color: #eef2ff;
-}
-
-/* Hide delete button for primary images */
-.image-form.border-indigo-300 label[for*="DELETE"] {
-  display: none;
 }
 
 /* Image Preview */
