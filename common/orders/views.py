@@ -275,8 +275,11 @@ def process_checkout(request, cart, cart_items, wallet):
     # If payment failed, redirect to payment failed page
     if payment_failed:
         send_payment_failed_email(request.user, created_orders, reason="Payment failed during checkout initial attempt")
-        if len(created_orders) >= 1:
+        if len(created_orders) == 1:
             return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
+        else:
+            # For multiple orders, redirect to orders list with filter
+            return redirect('orders:order_list')
     
     # Handle successful payment verification
     if payment_method == 'razorpay' and razorpay_payment_id:
@@ -299,8 +302,10 @@ def process_checkout(request, cart, cart_items, wallet):
                 
                 send_payment_failed_email(request.user, created_orders, reason="Payment verification failed")
                 
-                if len(created_orders) >= 1:
+                if len(created_orders) == 1:
                     return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
+                else:
+                    return redirect('orders:order_list')
             
             # Create AdminTransaction for successful Razorpay payment
             for order in created_orders:
@@ -327,8 +332,10 @@ def process_checkout(request, cart, cart_items, wallet):
             
             send_payment_failed_email(request.user, created_orders, reason=str(e))
             
-            if len(created_orders) >= 1:
+            if len(created_orders) == 1:
                 return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
+            else:
+                return redirect('orders:order_list')
     
     # Handle wallet payment
     if payment_method == 'wallet' and wallet.balance >= final_total:
@@ -366,8 +373,10 @@ def process_checkout(request, cart, cart_items, wallet):
             
             send_payment_failed_email(request.user, created_orders, reason=str(e))
             
-            if len(created_orders) >= 1:
+            if len(created_orders) == 1:
                 return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
+            else:
+                return redirect('orders:order_list')
     
     
     # Redirect based on number of orders
@@ -379,7 +388,7 @@ def process_checkout(request, cart, cart_items, wallet):
             return redirect('orders:payment_failed', order_id=created_orders[0].order_id)
     else:
         messages.success(request, f'Order placed successfully! {len(created_orders)} individual order(s) created.')
-        return redirect('orders:order_success', order_id=created_orders[0].order_id)
+        return redirect('orders:order_list')
         
     
 
@@ -398,27 +407,14 @@ def order_list(request):
         'shipping_address'
     ).order_by('-created_at')
     
-    # Pagination
-    paginator = Paginator(orders, 10) # 10 orders per page
-    page = request.GET.get('page')
-    
-    try:
-        orders_page = paginator.page(page)
-    except PageNotAnInteger:
-        orders_page = paginator.page(1)
-    except EmptyPage:
-        orders_page = paginator.page(paginator.num_pages)
-    
-    # Calculate counts for summary cards (use original queryset or paginated? Requirements usually mean total counts)
-    # Counts should be based on ALL user orders, not just the page.
+    # Calculate counts for summary cards
     delivered_count = orders.filter(order_status='delivered').count()
     in_progress_count = orders.filter(
         order_status__in=['processing', 'shipped', 'pending']
     ).count()
     
     context = {
-        'orders': orders_page,
-        'page_obj': orders_page,
+        'orders': orders,
         'delivered_count': delivered_count,
         'in_progress_count': in_progress_count,
         'active_tab': 'orders',
