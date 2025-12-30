@@ -184,17 +184,7 @@
             </div>
             
             <div>
-              <h3 class="text-sm font-medium text-gray-500 mb-2">Pricing & Status</h3>
               <dl class="space-y-3">
-                <div>
-                  <dt class="text-sm font-medium text-gray-600">Price</dt>
-                  <dd class="text-sm text-gray-900 mt-1">
-                    <span class="text-lg font-semibold">₹{{ product.price }}</span>
-                    {% if product.compare_price %}
-                    <span class="ml-2 text-sm text-gray-500 line-through">₹{{ product.compare_price }}</span>
-                    {% endif %}
-                  </dd>
-                </div>
                 <div>
                   <dt class="text-sm font-medium text-gray-600">Status</dt>
                   <dd class="text-sm text-gray-900 mt-1">
@@ -256,7 +246,6 @@
               <thead class="bg-gray-50">
                 <tr>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variant Name</th>
-                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -266,10 +255,7 @@
                 {% for variant in variants %}
                 <tr class="hover:bg-gray-50 transition-colors">
                   <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {{ variant.name }}
-                  </td>
-                  <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                    <code class="bg-gray-100 px-2 py-1 rounded text-xs">{{ variant.sku|default:"N/A" }}</code>
+                    {{ variant.color }}/ {{ variant.size }}
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                     ₹{{ variant.price }}
