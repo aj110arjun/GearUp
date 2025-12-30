@@ -112,7 +112,7 @@
                     <!-- Messages -->
                     {% if messages %}
                         {% for message in messages %}
-                        <div class="mb-4 p-4 {% if message.tags == 'error' %}bg-red-50 border-red-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-md">
+                        <div class="mb-4 p-4 {% if message.tags == 'error' %}bg-red-50 border-red-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0">
                                     <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle text-red-400{% else %}fa-check-circle text-green-400{% endif %}"></i>
@@ -132,15 +132,15 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2 text-center">Enter 4-Digit Code</label>
                             <div class="flex justify-center space-x-2 mb-4">
-                                <input type="text" maxlength="1" class="otp-input border-2 border-gray-300 rounded-md focus:border-emerald-500 focus:ring-emerald-500" data-index="0">
-                                <input type="text" maxlength="1" class="otp-input border-2 border-gray-300 rounded-md focus:border-emerald-500 focus:ring-emerald-500" data-index="1">
-                                <input type="text" maxlength="1" class="otp-input border-2 border-gray-300 rounded-md focus:border-emerald-500 focus:ring-emerald-500" data-index="2">
-                                <input type="text" maxlength="1" class="otp-input border-2 border-gray-300 rounded-md focus:border-emerald-500 focus:ring-emerald-500" data-index="3">
+                                <input type="text" maxlength="1" class="otp-input border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:ring-emerald-500" data-index="0">
+                                <input type="text" maxlength="1" class="otp-input border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:ring-emerald-500" data-index="1">
+                                <input type="text" maxlength="1" class="otp-input border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:ring-emerald-500" data-index="2">
+                                <input type="text" maxlength="1" class="otp-input border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:ring-emerald-500" data-index="3">
                             </div>
                             <input type="hidden" name="otp_code" id="otp_code" value="">
                             
                             {% if form.otp_code.errors %}
-                            <div class="text-sm text-red-600 text-center">
+                            <div class="form-error-text text-center">
                                 {% for error in form.otp_code.errors %}
                                 <p class="flex items-center justify-center">
                                     <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
@@ -154,7 +154,7 @@
                         <div>
                             <button type="submit" 
                                     id="verifyBtn"
-                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
                                 <i class="fas fa-check-circle mr-2"></i>
                                 Verify Code
                             </button>

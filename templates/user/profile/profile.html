@@ -391,7 +391,7 @@
                          class="form-input"
                          placeholder="Enter your first name">
                   {% if form.first_name.errors %}
-                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                    <div class="form-error-text space-x-1">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.first_name.errors.0 }}</span>
                     </div>
@@ -410,7 +410,7 @@
                          class="form-input"
                          placeholder="Enter your last name">
                   {% if form.last_name.errors %}
-                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                    <div class="form-error-text space-x-1">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.last_name.errors.0 }}</span>
                     </div>
@@ -473,7 +473,7 @@
                   class="form-input"
                   placeholder="Tell us a little about yourself...">{{ form.bio.value|default:user.bio|default:'' }}</textarea>
                 {% if form.bio.errors %}
-                  <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                  <div class="form-error-text space-x-1">
                     <i class="fas fa-exclamation-circle"></i>
                     <span>{{ form.bio.errors.0 }}</span>
                   </div>
@@ -494,7 +494,7 @@
                          class="form-input"
                          placeholder="Enter your phone number">
                   {% if form.phone_number.errors %}
-                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                    <div class="form-error-text space-x-1">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.phone_number.errors.0 }}</span>
                     </div>
@@ -513,7 +513,7 @@
                          class="form-input"
                          placeholder="Your city or country">
                   {% if form.location.errors %}
-                    <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                    <div class="form-error-text space-x-1">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.location.errors.0 }}</span>
                     </div>
@@ -539,7 +539,7 @@
                        value="{% if form.date_of_birth.value %}{{ form.date_of_birth.value|date:'Y-m-d' }}{% endif %}">
                 <p class="text-xs text-gray-500 mt-1">Format: DD/MM/YYYY</p>
                 {% if form.date_of_birth.errors %}
-                  <div class="text-red-600 text-sm mt-2 flex items-center space-x-1">
+                  <div class="form-error-text space-x-1">
                     <i class="fas fa-exclamation-circle"></i>
                     <span>{{ form.date_of_birth.errors.0 }}</span>
                   </div>
