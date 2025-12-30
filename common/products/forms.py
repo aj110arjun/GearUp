@@ -298,17 +298,26 @@ class ProductEditForm(forms.ModelForm):
 class ProductVariantForm(forms.ModelForm):
     """Form for individual product variants"""
     
+    def __init__(self, *args, **kwargs):
+        self.product = kwargs.pop('product', None)
+        super().__init__(*args, **kwargs)
+        # For existing instances, get the product if not already provided
+        if not self.product and self.instance and hasattr(self.instance, 'product_id') and self.instance.product_id:
+            self.product = self.instance.product
+
     class Meta:
         model = ProductVariant
         fields = ['size', 'color', 'price', 'stock_quantity', 'is_active']
         widgets = {
             'size': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
-                'placeholder': 'e.g., M, L, XL'
+                'placeholder': 'e.g., M, L, XL',
+                'required': True
             }),
             'color': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
-                'placeholder': 'e.g., Red, Blue'
+                'placeholder': 'e.g., Red, Blue',
+                'required': True
             }),
             'price': forms.NumberInput(attrs={
                 'class': 'form-control form-control-sm',
@@ -331,6 +340,42 @@ class ProductVariantForm(forms.ModelForm):
             'price': 'Price (₹) *',
             'compare_price': 'Compare Price (₹)',
         }
+
+    def clean_size(self):
+        size = self.cleaned_data.get('size')
+        if not size or not size.strip():
+            raise ValidationError('Size is required.')
+        return size.strip()
+
+    def clean_color(self):
+        color = self.cleaned_data.get('color')
+        if not color or not color.strip():
+            raise ValidationError('Color is required.')
+        return color.strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        size = cleaned_data.get('size')
+        color = cleaned_data.get('color')
+        
+        if self.product and size and color:
+            # Check for existing variants with same size and color (case-insensitive)
+            exists = ProductVariant.objects.filter(
+                product=self.product,
+                size__iexact=size,
+                color__iexact=color,
+                is_deleted=False
+            )
+            
+            if self.instance and self.instance.pk:
+                exists = exists.exclude(pk=self.instance.pk)
+                
+            if exists.exists():
+                raise ValidationError(
+                    f'A variant with size "{size}" and color "{color}" already exists for this product.'
+                )
+        
+        return cleaned_data
 
     def clean_price(self):
         price = self.cleaned_data.get('price')
