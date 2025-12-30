@@ -331,11 +331,10 @@
         </div>
 
         <!-- Pagination (if needed later) -->
-        {% if orders.has_other_pages %}
+        <!-- Pagination -->
         <div class="mt-8 flex justify-center">
-            <!-- Add pagination here when needed -->
+             {% include 'partials/pagination.html' %}
         </div>
-        {% endif %}
 
         {% else %}
         <!-- Empty State -->
