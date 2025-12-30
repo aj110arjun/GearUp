@@ -1,13 +1,104 @@
 {% extends "admin/base_admin.html" %}
 
+{% block extra_css %}
+<style>
+    /* Modern Form Styling */
+    .form-control {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #111827;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 0.75rem;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-control:focus {
+        color: #111827;
+        background-color: #fff;
+        border-color: #4f46e5;
+        outline: 0;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+        opacity: 1;
+    }
+
+    /* Modern Checkbox styling */
+    .form-check-input {
+        appearance: none;
+        -webkit-appearance: none;
+        height: 1.5rem;
+        width: 1.5rem;
+        cursor: pointer;
+        border: 2px solid #cbd5e1;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        position: relative;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .form-check-input:checked {
+        background-color: #4f46e5;
+        border-color: #4f46e5;
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+    }
+
+    .form-check-input:hover {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.05);
+    }
+
+    .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+        border-color: #4f46e5;
+    }
+
+    /* Status Card */
+    .status-card {
+        background-color: #f8fafc;
+        border: 1.5px solid #f1f5f9;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .status-card:has(.form-check-input:checked) {
+        background-color: #f5f3ff;
+        border-color: #ddd6fe;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto py-8 px-4">
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-8 flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Add Variant</h1>
-            <p class="text-gray-600 mt-1">Adding new variant for <span class="font-semibold text-emerald-600">{{ product.name }}</span></p>
+            <nav class="flex mb-2" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                    <li><a href="{% url 'products:product_list' %}" class="hover:text-gray-700">Products</a></li>
+                    <li><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></li>
+                    <li><a href="{% url 'products:product_edit' product.slug %}" class="hover:text-gray-700">{{ product.name }}</a></li>
+                    <li><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></li>
+                    <li class="text-gray-900 font-medium">Add Variant</li>
+                </ol>
+            </nav>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Add New Variant</h1>
+            <p class="text-gray-500 mt-1">Configure size, color, and pricing for <span class="font-semibold text-indigo-600">{{ product.name }}</span></p>
         </div>
-        <a href="{% url 'products:product_edit' product.slug %}" class="text-gray-600 hover:text-gray-900 font-medium flex items-center">
+        <a href="{% url 'products:product_edit' product.slug %}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -15,90 +106,133 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <form method="post" class="p-6">
+    <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+        <form method="post" class="p-8">
             {% csrf_token %}
             
             {% if form.non_field_errors %}
-            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4">
+            <div class="mb-8 bg-red-50 border border-red-100 rounded-2xl p-4">
                 <div class="flex">
                     <div class="flex-shrink-0">
-                        <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1-1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm text-red-700">{{ form.non_field_errors.0 }}</p>
+                        <p class="text-sm font-medium text-red-800">{{ form.non_field_errors.0 }}</p>
                     </div>
                 </div>
             </div>
             {% endif %}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Size -->
+            <div class="space-y-8">
                 <div>
-                    <label for="{{ form.size.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                        Size
-                    </label>
-                    {{ form.size }}
-                    {% if form.size.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.size.errors.0 }}</p>
-                    {% endif %}
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm mr-3">1</span>
+                        Variant Options
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Size -->
+                        <div>
+                            <label for="{{ form.size.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Size <span class="text-gray-400 font-normal">(e.g., M, L, XL)</span>
+                            </label>
+                            {{ form.size }}
+                            {% if form.size.errors %}
+                                <p class="form-error-text">
+                                    <i class="fas fa-exclamation-circle text-[10px]"></i>
+                                    {{ form.size.errors.0 }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Color -->
+                        <div>
+                            <label for="{{ form.color.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Color <span class="text-gray-400 font-normal">(e.g., Red, Blue)</span>
+                            </label>
+                            {{ form.color }}
+                            {% if form.color.errors %}
+                                <p class="form-error-text">
+                                    <i class="fas fa-exclamation-circle text-[10px]"></i>
+                                    {{ form.color.errors.0 }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Color -->
-                <div>
-                    <label for="{{ form.color.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                        Color
-                    </label>
-                    {{ form.color }}
-                    {% if form.color.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.color.errors.0 }}</p>
-                    {% endif %}
-                </div>
+                <div class="pt-4 border-t border-gray-50">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm mr-3">2</span>
+                        Inventory & Multi-Pricing
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Price -->
+                        <div>
+                            <label for="{{ form.price.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Final Price (₹) <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <span class="text-gray-400 text-sm">₹</span>
+                                </div>
+                                <div class="field-with-icon">
+                                    {{ form.price }}
+                                </div>
+                            </div>
+                            <style>
+                                .field-with-icon input {
+                                    padding-left: 2.25rem !important;
+                                }
+                            </style>
+                            {% if form.price.errors %}
+                                <p class="form-error-text">
+                                    <i class="fas fa-exclamation-circle text-[10px]"></i>
+                                    {{ form.price.errors.0 }}
+                                </p>
+                            {% endif %}
+                        </div>
 
-                <!-- Price -->
-                <div>
-                    <label for="{{ form.price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                        Price (₹) <span class="text-red-500">*</span>
-                    </label>
-                    {{ form.price }}
-                    {% if form.price.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.price.errors.0 }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Stock -->
-                <div>
-                    <label for="{{ form.stock_quantity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                        Stock Quantity
-                    </label>
-                    {{ form.stock_quantity }}
-                    {% if form.stock_quantity.errors %}
-                        <p class="text-red-500 text-sm mt-1">{{ form.stock_quantity.errors.0 }}</p>
-                    {% endif %}
+                        <!-- Stock -->
+                        <div>
+                            <label for="{{ form.stock_quantity.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Initial Stock Balance
+                            </label>
+                            {{ form.stock_quantity }}
+                            {% if form.stock_quantity.errors %}
+                                <p class="form-error-text">
+                                    <i class="fas fa-exclamation-circle text-[10px]"></i>
+                                    {{ form.stock_quantity.errors.0 }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Active Status -->
-                <div class="md:col-span-2">
-                    <div class="flex items-center">
-                        {{ form.is_active }}
-                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
-                            Active (Available for purchase)
+                <div class="md:col-span-2 pt-4">
+                    <div class="status-card group">
+                        <label class="flex items-center cursor-pointer select-none">
+                            {{ form.is_active }}
+                            <div class="ml-4 flex flex-col">
+                                <span class="text-sm font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">Variant Availability</span>
+                                <span class="text-xs text-gray-500">Enable this to make the variant visible to customers and available for purchase.</span>
+                            </div>
                         </label>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8 flex items-center justify-end space-x-4 pt-6 border-t border-gray-100">
-                <a href="{% url 'products:product_edit' product.slug %}" class="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+            <div class="mt-12 flex items-center justify-end space-x-4 pt-8 border-t border-gray-100">
+                <a href="{% url 'products:product_edit' product.slug %}" class="px-8 py-3 rounded-2xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 hover:border-gray-300 transition-all text-sm uppercase tracking-wide text-center min-w-[120px]">
                     Cancel
                 </a>
-                <button type="submit" class="px-6 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 shadow-md hover:shadow-lg transition-all flex items-center">
+                <button type="submit" class="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all flex items-center text-sm uppercase tracking-wide">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Add Variant
+                    Create Variant
                 </button>
             </div>
         </form>

@@ -66,7 +66,7 @@
                         {% endfor %}
                     </select>
                     {% if form.return_reason.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.return_reason.errors.0 }}</p>
+                    <p class="form-error-text">{{ form.return_reason.errors.0 }}</p>
                     {% endif %}
                 </div>
                 
@@ -80,7 +80,7 @@
                               rows="4"
                               placeholder="Please provide details about why you want to return this product...">{{ form.return_description.value|default:'' }}</textarea>
                     {% if form.return_description.errors %}
-                    <p class="mt-1 text-sm text-red-600">{{ form.return_description.errors.0 }}</p>
+                    <p class="form-error-text">{{ form.return_description.errors.0 }}</p>
                     {% endif %}
                     <p class="mt-2 text-sm text-gray-500">Please be specific about the issue.</p>
                 </div>

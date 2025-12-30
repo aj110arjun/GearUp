@@ -48,6 +48,33 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+
+        /* Custom Form Error Styles */
+        .form-error-text {
+            color: #dc2626;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            animation: fadeInError 0.3s ease-out;
+        }
+        
+        .field-error {
+            border-color: #ef4444 !important;
+            background-color: #fffafb !important;
+        }
+        
+        .field-error:focus {
+            border-color: #dc2626 !important;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
+        }
+
+        @keyframes fadeInError {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -125,7 +152,7 @@
                                 <h3 class="text-sm font-medium text-red-800">
                                     Authentication Error
                                 </h3>
-                                <div class="mt-2 text-sm text-red-700">
+                                <div class="mt-2 text-sm text-red-800 font-medium">
                                     <ul class="list-disc list-inside space-y-1">
                                         {% for error in form.non_field_errors %}
                                         <li>{{ error }}</li>
@@ -150,18 +177,14 @@
                                        autocomplete="username" 
                                        value="{{ form.username.value|default:'' }}" 
                                        required 
-                                       class="appearance-none block w-full px-3 py-2 border {% if form.username.errors %}border-red-300{% else %}border-slate-300{% endif %} rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       class="form-control appearance-none block w-full px-3 py-2 border {% if form.username.errors %}field-error{% else %}border-slate-300{% endif %} rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter your username">
                             </div>
                             {% if form.username.errors %}
-                            <div class="mt-1 text-sm text-red-600">
-                                {% for error in form.username.errors %}
-                                <p class="flex items-center">
-                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
-                                    {{ error }}
-                                </p>
-                                {% endfor %}
-                            </div>
+                            <p class="form-error-text">
+                                <i class="fas fa-exclamation-circle text-[10px]"></i>
+                                {{ form.username.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                         
@@ -174,21 +197,17 @@
                                        type="password" 
                                        autocomplete="current-password" 
                                        required 
-                                       class="appearance-none block w-full px-3 py-2 border {% if form.password.errors %}border-red-300{% else %}border-slate-300{% endif %} rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       class="form-control appearance-none block w-full px-3 py-2 border {% if form.password.errors %}field-error{% else %}border-slate-300{% endif %} rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter your password">
                                 <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <i class="far fa-eye text-slate-400"></i>
                                 </button>
                             </div>
                             {% if form.password.errors %}
-                            <div class="mt-1 text-sm text-red-600">
-                                {% for error in form.password.errors %}
-                                <p class="flex items-center">
-                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
-                                    {{ error }}
-                                </p>
-                                {% endfor %}
-                            </div>
+                            <p class="form-error-text">
+                                <i class="fas fa-exclamation-circle text-[10px]"></i>
+                                {{ form.password.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                         

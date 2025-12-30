@@ -47,6 +47,33 @@
         .password-toggle:hover {
             color: #065f46;
         }
+
+        /* Custom Form Error Styles */
+        .form-error-text {
+            color: #dc2626;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            animation: fadeInError 0.3s ease-out;
+        }
+        
+        .field-error {
+            border-color: #ef4444 !important;
+            background-color: #fffafb !important;
+        }
+        
+        .field-error:focus {
+            border-color: #dc2626 !important;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
+        }
+
+        @keyframes fadeInError {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -102,7 +129,7 @@
                     <!-- Display Django Messages -->
                     {% if messages %}
                         {% for message in messages %}
-                        <div class="mb-4 p-4 {% if message.tags == 'error' %}bg-red-50 border-red-200{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200{% elif message.tags == 'info' %}bg-blue-50 border-blue-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-md">
+                        <div class="mb-4 p-4 {% if message.tags == 'error' %}bg-red-50 border-red-200{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200{% elif message.tags == 'info' %}bg-blue-50 border-blue-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0">
                                     <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle text-red-400{% elif message.tags == 'warning' %}fa-exclamation-triangle text-yellow-400{% elif message.tags == 'info' %}fa-info-circle text-blue-400{% else %}fa-check-circle text-green-400{% endif %} mt-0.5"></i>
@@ -119,7 +146,7 @@
 
                     <!-- Display non-field errors -->
                     {% if form.non_field_errors %}
-                    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
@@ -128,7 +155,7 @@
                                 <h3 class="text-sm font-medium text-red-800">
                                     Authentication Error
                                 </h3>
-                                <div class="mt-2 text-sm text-red-700">
+                                <div class="mt-2 text-sm form-error-text">
                                     <ul class="list-disc list-inside space-y-1">
                                         {% for error in form.non_field_errors %}
                                         <li>{{ error }}</li>
@@ -153,18 +180,14 @@
                                        autocomplete="email" 
                                        value="{{ form.email.value|default:'' }}" 
                                        required 
-                                       class="appearance-none block w-full px-3 py-2 border {% if form.email.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                                       class="form-control appearance-none block w-full px-4 py-3 border {% if form.email.errors %}field-error{% else %}border-gray-300{% endif %} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
                                        placeholder="Enter your email address">
                             </div>
                             {% if form.email.errors %}
-                            <div class="mt-1 text-sm text-red-600">
-                                {% for error in form.email.errors %}
-                                <p class="flex items-center">
-                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
-                                    {{ error }}
-                                </p>
-                                {% endfor %}
-                            </div>
+                            <p class="form-error-text">
+                                <i class="fas fa-exclamation-circle text-[10px]"></i>
+                                {{ form.email.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                         
@@ -177,21 +200,17 @@
                                        type="password" 
                                        autocomplete="current-password" 
                                        required 
-                                       class="appearance-none block w-full px-3 py-2 border {% if form.password.errors %}border-red-300{% else %}border-gray-300{% endif %} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                                       class="form-control appearance-none block w-full px-4 py-3 border {% if form.password.errors %}field-error{% else %}border-gray-300{% endif %} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
                                        placeholder="Enter your password">
                                 <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <i class="far fa-eye text-gray-400"></i>
                                 </button>
                             </div>
                             {% if form.password.errors %}
-                            <div class="mt-1 text-sm text-red-600">
-                                {% for error in form.password.errors %}
-                                <p class="flex items-center">
-                                    <i class="fas fa-exclamation-circle mr-1 text-xs"></i>
-                                    {{ error }}
-                                </p>
-                                {% endfor %}
-                            </div>
+                            <p class="form-error-text">
+                                <i class="fas fa-exclamation-circle text-[10px]"></i>
+                                {{ form.password.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                         
@@ -206,7 +225,7 @@
                         
                         <div>
                             <button type="submit" 
-                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
                                 Sign In
                             </button>
                         </div>
@@ -223,7 +242,7 @@
                         </div>
                         
                         <div class="mt-6">
-                            <a href="{% url 'google_login' %}" class="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
+                            <a href="{% url 'google_login' %}" class="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
                                 <i class="fab fa-google text-red-500 mr-2"></i>
                                 <span>Continue with Google</span>
                             </a>
