@@ -70,18 +70,20 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            Start Date & Time
+                            Start Date
                         </label>
                         {{ form.start_date }}
+                        <p class="text-xs text-gray-500 mt-1">Offer starts from 00:00 on this date</p>
                         {% if form.start_date.errors %}
                             <p class="form-error-text">{{ form.start_date.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
                         <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                            End Date & Time
+                            End Date
                         </label>
                         {{ form.end_date }}
+                        <p class="text-xs text-gray-500 mt-1">Offer ends at 23:59 on this date</p>
                         {% if form.end_date.errors %}
                             <p class="form-error-text">{{ form.end_date.errors.0 }}</p>
                         {% endif %}
@@ -107,4 +109,26 @@
         </form>
     </div>
 </div>
+
+<script>
+// Update minimum end date when start date changes for offers
+function updateOfferEndDate() {
+    const startDateInput = document.querySelector('input[name="start_date"]');
+    const endDateInput = document.querySelector('input[name="end_date"]');
+    
+    if (startDateInput && endDateInput && startDateInput.value) {
+        endDateInput.min = startDateInput.value;
+        
+        // If end date is before new start date, update it
+        if (endDateInput.value && endDateInput.value < startDateInput.value) {
+            endDateInput.value = startDateInput.value;
+        }
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateOfferEndDate();
+});
+</script>
 {% endblock %}
