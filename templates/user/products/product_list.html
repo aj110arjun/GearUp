@@ -191,7 +191,7 @@
   <div class="flex items-center justify-between mb-6">
     <p class="text-gray-600">
       {% if products %}
-        Showing <strong>{{ products|length }}</strong> products
+        Showing <strong>{{ products.start_index }}-{{ products.end_index }}</strong> of <strong>{{ products.paginator.count }}</strong> products
       {% endif %}
     </p>
     <div class="flex gap-2">
@@ -420,7 +420,7 @@
   </div>
 
   <!-- Pagination -->
-  {% include 'partials/pagination.html' %}
+  {% include 'partials/pagination.html' with page_obj=products primary_color='emerald' %}
 
 </div>
 

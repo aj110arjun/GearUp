@@ -15,6 +15,12 @@ class PortalIsolationMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated:
+            # Check for blocked users
+            if not request.user.is_active:
+                logout(request)
+                messages.error(request, "Your account has been deactivated. Please contact support.")
+                return redirect('user_auth:signin')
+
             path = request.path
             portal = request.session.get('auth_portal')
             
