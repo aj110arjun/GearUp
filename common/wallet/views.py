@@ -10,6 +10,7 @@ from core.services import WalletService
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from decimal import Decimal
 
 # Initialize Razorpay client
@@ -91,7 +92,18 @@ def make_payment(request):
 @login_required
 def transaction_history(request):
     wallet, created = Wallet.objects.get_or_create(user=request.user)
-    transactions = Transaction.objects.filter(wallet=wallet)
+    transactions_list = Transaction.objects.filter(wallet=wallet).order_by('-created_at')
+    
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(transactions_list, 8)  # 8 transactions per page
+    
+    try:
+        transactions = paginator.page(page)
+    except PageNotAnInteger:
+        transactions = paginator.page(1)
+    except EmptyPage:
+        transactions = paginator.page(paginator.num_pages)
     
     return render(request, 'user/wallet/transaction_history.html', {
         'transactions': transactions,

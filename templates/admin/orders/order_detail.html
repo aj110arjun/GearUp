@@ -65,11 +65,12 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="printInvoice()"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center gap-2">
-                    <i class="fas fa-print"></i>
-                    <span>Print Invoice</span>
-                </button>
+                <a href="{% url 'orders:admin_download_invoice' order.order_id %}" 
+                   target="_blank"
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center gap-2 shadow-sm">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Download Invoice</span>
+                </a>
             </div>
         </div>
 
@@ -495,10 +496,11 @@
                         </button>
                         
                         <!-- Download Invoice -->
-                        <a href="" 
+                        <a href="{% url 'orders:admin_download_invoice' order.order_id %}" 
+                           target="_blank"
                            class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm flex items-center justify-center gap-2">
                             <i class="fas fa-file-invoice"></i>
-                            Download Invoice
+                            Download PDF
                         </a>
                     </div>
                 </div>
@@ -611,83 +613,6 @@
 </div>
 
 <script>
-    // Print invoice
-    function printInvoice() {
-        // Create a print-friendly version
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Invoice - Order #${order.order_number}</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    .invoice-header { text-align: center; margin-bottom: 30px; }
-                    .invoice-details { margin-bottom: 30px; }
-                    .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                    .invoice-table th, .invoice-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    .invoice-table th { background-color: #f2f2f2; }
-                    .total-row { font-weight: bold; }
-                </style>
-            </head>
-            <body>
-                <div class="invoice-header">
-                    <h1>INVOICE</h1>
-                    <h2>Order #{{ order.order_number }}</h2>
-                    <p>Date: {{ order.created_at|date:"F j, Y" }}</p>
-                </div>
-                
-                <div class="invoice-details">
-                    <h3>Customer Details</h3>
-                    <p>{{ order.user.get_full_name }}</p>
-                    <p>{{ order.user.email }}</p>
-                    {% if order.shipping_address %}
-                    <p>{{ order.shipping_address.address_line1 }}</p>
-                    <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }} - {{ order.shipping_address.pincode }}</p>
-                    {% endif %}
-                </div>
-                
-                <table class="invoice-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Quantity</th>
-                            <th>Unit Price</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{ order.product_name }}</td>
-                            <td>{{ order.quantity }}</td>
-                            <td>₹{{ order.unit_price|intcomma }}</td>
-                            <td>₹{{ order.subtotal|intcomma }}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">Tax</td>
-                            <td>₹{{ order.tax_amount|intcomma }}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">Shipping</td>
-                            <td>₹{{ order.shipping_cost|intcomma }}</td>
-                        </tr>
-                        <tr class="total-row">
-                            <td colspan="3">Total</td>
-                            <td>₹{{ order.total_amount|intcomma }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <div style="margin-top: 30px;">
-                    <p>Payment Method: {{ order.get_payment_method_display }}</p>
-                    <p>Status: {{ order.get_order_status_display }}</p>
-                </div>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-    }
     
     // Cancel modal functions
     function showCancelModal(orderId, orderNumber) {

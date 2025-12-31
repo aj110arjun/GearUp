@@ -3,6 +3,7 @@ from .models import AdminTransaction
 from django.db.models import Sum, Q
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.cache import never_cache
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 @staff_member_required
 @never_cache
@@ -50,9 +51,19 @@ def transaction_list(request):
             Q(user__email__icontains=search_query) |
             Q(description__icontains=search_query)
         )
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(transactions, 8)  # 8 transactions per page
+
+    try:
+        transactions_page = paginator.page(page)
+    except PageNotAnInteger:
+        transactions_page = paginator.page(1)
+    except EmptyPage:
+        transactions_page = paginator.page(paginator.num_pages)
     
     context={
-        'transactions': transactions,
+        'transactions': transactions_page,
         'total_transactions': total_transactions,
         'total_credits': total_credits,
         'total_debits': total_debits,

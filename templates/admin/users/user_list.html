@@ -218,8 +218,8 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center">
                                 <div class="relative flex-shrink-0">
-                                    {% if user.profile_picture %}
-                                    <img src="{{ user.profile_picture.url }}" 
+                                    {% if user.profile_image %}
+                                    <img src="{{ user.profile_image.url }}" 
                                          class="h-12 w-12 rounded-full border-2 border-white shadow-sm object-cover"
                                          alt="{{ user.username }}">
                                     {% else %}
@@ -290,8 +290,33 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <!-- Fixed Dropdown -->
-                            <a href="{% url 'auth_dashboard:admin_user_detail' user.id %}">View</a>
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'auth_dashboard:admin_user_detail' user.id %}" 
+                                   class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                   title="View Details">
+                                    <i class="fas fa-eye text-sm"></i>
+                                </a>
+                                
+                                {% if user.is_active %}
+                                <form method="POST" action="{% url 'auth_dashboard:admin_user_deactivate' user.id %}" class="inline" onsubmit="return confirm('Are you sure you want to block this user?')">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                            title="Block User">
+                                        <i class="fas fa-user-slash text-sm"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{% url 'auth_dashboard:admin_user_activate' user.id %}" class="inline" onsubmit="return confirm('Are you sure you want to unblock this user?')">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                                            title="Unblock User">
+                                        <i class="fas fa-user-check text-sm"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}

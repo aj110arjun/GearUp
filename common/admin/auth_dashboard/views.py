@@ -464,6 +464,10 @@ def admin_user_activate(request, user_id):
     else:
         messages.info(request, f"User {user.get_full_name() or user.username} is already active.")
     
+    # Try to redirect to referring page
+    referer = request.META.get('HTTP_REFERER')
+    if referer and 'users' in referer:
+        return redirect(referer)
     return redirect('auth_dashboard:admin_user_list')
 
 
@@ -491,6 +495,10 @@ def admin_user_deactivate(request, user_id):
     else:
         messages.info(request, f"User {user.get_full_name() or user.username} is already inactive.")
     
+    # Try to redirect to referring page
+    referer = request.META.get('HTTP_REFERER')
+    if referer and 'users' in referer:
+        return redirect(referer)
     return redirect('auth_dashboard:admin_user_list')
 
 

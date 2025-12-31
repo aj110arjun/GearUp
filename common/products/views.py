@@ -114,7 +114,7 @@ def product_listing(request):
 
     # 4. Pagination
     page = request.GET.get('page', 1)
-    paginator = Paginator(products, 10) # 10 items per page as requested
+    paginator = Paginator(products, 8) # 8 items per page as requested
 
     try:
         products_page = paginator.page(page)
@@ -484,7 +484,7 @@ def category_list(request):
     
     # Pagination
     page = request.GET.get('page', 1)
-    paginator = Paginator(categories, 20)  # 20 categories per page
+    paginator = Paginator(categories, 8)  # 8 categories per page
     
     try:
         categories_page = paginator.page(page)

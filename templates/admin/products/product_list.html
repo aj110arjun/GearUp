@@ -313,44 +313,7 @@
   </div>
 
   <!-- Pagination -->
-  {% if products.paginator.count > 0 %}
-  <div class="flex flex-col md:flex-row justify-between items-center mt-6 px-2">
-    <p class="text-sm text-gray-700 mb-4 md:mb-0">
-      Showing <span class="font-medium">{{ products.start_index }}</span> to <span class="font-medium">{{ products.end_index }}</span> of 
-      <span class="font-medium">{{ products.paginator.count }}</span> results
-    </p>
-
-    <div class="flex items-center space-x-1">
-      {% if products.has_previous %}
-        <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-          Previous
-        </a>
-      {% endif %}
-
-      {% for num in products.paginator.page_range %}
-        {% if products.number == num %}
-          <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-            class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
-            {{ num }}
-          </a>
-        {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
-          <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-            class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-            {{ num }}
-          </a>
-        {% endif %}
-      {% endfor %}
-
-      {% if products.has_next %}
-        <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-          Next
-        </a>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
+  {% include 'partials/pagination.html' with page_obj=products primary_color='indigo' %}
 
 </div>
 
