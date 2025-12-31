@@ -1,0 +1,50 @@
+{% extends 'user/base.html' %}
+{% load static %}
+
+{% block title %}Confirm Delete Address - GearUp{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-gray-100">
+            <div class="text-center mb-8">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4 transition-transform hover:scale-110 duration-300">
+                    <i class="fas fa-trash-alt text-red-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">
+                    Delete Address?
+                </h2>
+                <p class="mt-2 text-sm text-gray-500">
+                    This action cannot be undone. Are you sure you want to remove this address?
+                </p>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-5 mb-8 border border-gray-200">
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Address Details</h3>
+                <div class="text-gray-600 text-sm space-y-1">
+                    <p class="font-bold text-gray-900 text-base mb-1">{{ address.full_name }}</p>
+                    <p>{{ address.address_line1 }}</p>
+                    {% if address.address_line2 %}<p>{{ address.address_line2 }}</p>{% endif %}
+                    <p>{{ address.city }}, {{ address.state }} {{ address.zip_code }}</p>
+                    <p class="flex items-center mt-2">
+                        <i class="fas fa-phone-alt text-gray-400 mr-2 text-xs"></i>
+                        {{ address.phone_number }}
+                    </p>
+                </div>
+            </div>
+
+            <form method="POST" action="{% url 'address:address_delete' address.id %}{% if next_url %}?next={{ next_url }}{% endif %}" class="space-y-3">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 active:scale-95">
+                    Yes, Delete Address
+                </button>
+                <a href="{{ next_url|default:'address:address_list' }}" 
+                   class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
+                    No, Keep Address
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

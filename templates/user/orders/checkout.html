@@ -90,12 +90,32 @@
                 <input type="radio" name="shipping_address" value="{{ address.id }}" 
                        class="mt-1 text-blue-600 shipping-address-radio" 
                        {% if address.is_default %}checked{% endif %}>
-                <div class="ml-3">
-                  <div class="flex items-center space-x-2 mb-2">
-                    <span class="font-medium text-gray-900">{{ address.full_name }}</span>
-                    {% if address.is_default %}
-                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Default</span>
-                    {% endif %}
+                <div class="ml-3 flex-1">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                      <span class="font-medium text-gray-900">{{ address.full_name }}</span>
+                      {% if address.is_default %}
+                      <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Default</span>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Address Actions -->
+                    <div class="flex items-center gap-1">
+                      <a href="{% url 'address:address_edit' address.id %}?next={% url 'orders:checkout' %}" 
+                         class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
+                         onclick="event.stopPropagation();"
+                         title="Edit Address">
+                        <i class="fas fa-edit text-sm"></i>
+                      </a>
+                      {% if not address.is_default %}
+                      <a href="{% url 'address:address_delete' address.id %}?next={% url 'orders:checkout' %}" 
+                         class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                         onclick="event.stopPropagation();"
+                         title="Delete Address">
+                        <i class="fas fa-trash text-sm"></i>
+                      </a>
+                      {% endif %}
+                    </div>
                   </div>
                   <p class="text-gray-600 text-sm">{{ address.address_line1 }}</p>
                   {% if address.address_line2 %}
