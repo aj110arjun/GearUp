@@ -166,15 +166,17 @@ def process_checkout(request, cart, cart_items, wallet):
             coupon_discount = Decimal('0')
             coupon_obj = None
     
-    # Apply coupon discount to cart total
-    cart_total_after_coupon = cart_total - coupon_discount
-    if cart_total_after_coupon < 0:
-        cart_total_after_coupon = Decimal('0')
-    
-    # Calculate tax on discounted amount
-    tax_amount = cart_total_after_coupon * Decimal('0.1')
+    # Calculate tax on original cart total
+    tax_amount = cart_total * Decimal('0.1')
     shipping_cost = Decimal(str(cart_items.count() * 20))
-    final_total = cart_total_after_coupon + tax_amount + shipping_cost
+    
+    # Calculate final total before coupon
+    total_before_coupon = cart_total + tax_amount + shipping_cost
+    
+    # Apply coupon discount to final total
+    final_total = total_before_coupon - coupon_discount
+    if final_total < 0:
+        final_total = Decimal('0')
     
     # Handle wallet payment
     if payment_method == 'wallet':
@@ -191,19 +193,20 @@ def process_checkout(request, cart, cart_items, wallet):
     for cart_item in cart_items:
         subtotal = cart_item.total_price
         
-        # Apply proportional coupon discount to this item
+        # Apply proportional coupon discount to this item's share
         item_coupon_discount = Decimal('0')
         if coupon_discount > 0 and total_items_price > 0:
             item_coupon_discount = (subtotal / total_items_price) * coupon_discount
         
-        # Calculate item total after coupon
-        subtotal_after_coupon = subtotal - item_coupon_discount
-        if subtotal_after_coupon < 0:
-            subtotal_after_coupon = Decimal('0')
-        
-        tax_amount_item = subtotal_after_coupon * Decimal('0.1')
+        # Tax remains on the full subtotal before coupon
+        tax_amount_item = subtotal * Decimal('0.1')
         shipping_cost_item = Decimal('20.00')
-        total_amount_item = subtotal_after_coupon + tax_amount_item + shipping_cost_item
+        
+        # Final amount for this item is (Subtotal + Tax + Shipping) - Coupon Discount
+        item_total_before_coupon = subtotal + tax_amount_item + shipping_cost_item
+        total_amount_item = item_total_before_coupon - item_coupon_discount
+        if total_amount_item < 0:
+            total_amount_item = Decimal('0')
         
 
         # Determine payment status
@@ -744,15 +747,17 @@ def create_razorpay_order(request):
         except:
             coupon_discount = Decimal('0')
         
-        # Apply coupon discount
-        cart_total_after_coupon = cart_total - coupon_discount
-        if cart_total_after_coupon < 0:
-            cart_total_after_coupon = Decimal('0')
-        
-        # Calculate tax on discounted amount
-        tax_amount = cart_total_after_coupon * Decimal('0.1')
+        # Calculate tax on original cart total
+        tax_amount = cart_total * Decimal('0.1')
         shipping_cost = Decimal(str(cart_items.count() * 20))
-        final_total = cart_total_after_coupon + tax_amount + shipping_cost
+        
+        # Calculate final total before coupon
+        total_before_coupon = cart_total + tax_amount + shipping_cost
+        
+        # Apply coupon discount to final total
+        final_total = total_before_coupon - coupon_discount
+        if final_total < 0:
+            final_total = Decimal('0')
         
 
         # Create Razorpay order
