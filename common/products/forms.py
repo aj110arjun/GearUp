@@ -8,6 +8,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import FileExtensionValidator
 from django.forms import inlineformset_factory
+from django.utils import timezone
 
 from cloudinary.models import CloudinaryField
 from PIL import Image
@@ -559,13 +560,16 @@ class ProductOfferForm(forms.ModelForm):
                 'min': '10',
                 'max': '90'
             }),
-            'start_date': forms.DateTimeInput(attrs={
+            'start_date': forms.DateInput(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
-                'type': 'datetime-local'
+                'type': 'date',
+                'min': timezone.now().strftime('%Y-%m-%d'),
+                'onchange': 'updateOfferEndDate()'
             }),
-            'end_date': forms.DateTimeInput(attrs={
+            'end_date': forms.DateInput(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
-                'type': 'datetime-local'
+                'type': 'date',
+                'min': timezone.now().strftime('%Y-%m-%d')
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 transition-all cursor-pointer'
@@ -596,9 +600,15 @@ class ProductOfferForm(forms.ModelForm):
         product = cleaned_data.get('product')
         is_active = cleaned_data.get('is_active')
 
-        # 1. Date Validation: End Time > Start Time
-        if start_date and end_date and end_date <= start_date:
-            raise ValidationError('End date must be greater than start date.')
+        # 1. Date Validation: End Date must be >= Start Date
+        if start_date and end_date:
+            # Convert datetime to date for comparison if needed
+            from datetime import date
+            start = start_date.date() if hasattr(start_date, 'date') else start_date
+            end = end_date.date() if hasattr(end_date, 'date') else end_date
+            
+            if end < start:
+                raise ValidationError('End date cannot be before start date.')
 
         # 2. Prevent overlapping active offers for the same product
         if product and start_date and end_date and is_active:
@@ -640,13 +650,16 @@ class CategoryOfferForm(forms.ModelForm):
                 'min': '10',
                 'max': '90'
             }),
-            'start_date': forms.DateTimeInput(attrs={
+            'start_date': forms.DateInput(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
-                'type': 'datetime-local'
+                'type': 'date',
+                'min': timezone.now().strftime('%Y-%m-%d'),
+                'onchange': 'updateOfferEndDate()'
             }),
-            'end_date': forms.DateTimeInput(attrs={
+            'end_date': forms.DateInput(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all',
-                'type': 'datetime-local'
+                'type': 'date',
+                'min': timezone.now().strftime('%Y-%m-%d')
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 transition-all cursor-pointer'
@@ -678,9 +691,15 @@ class CategoryOfferForm(forms.ModelForm):
         category = cleaned_data.get('category')
         is_active = cleaned_data.get('is_active')
 
-        # 1. Date Validation: End Time > Start Time
-        if start_date and end_date and end_date <= start_date:
-            raise ValidationError('End date must be greater than start date.')
+        # 1. Date Validation: End Date must be >= Start Date
+        if start_date and end_date:
+            # Convert datetime to date for comparison if needed
+            from datetime import date
+            start = start_date.date() if hasattr(start_date, 'date') else start_date
+            end = end_date.date() if hasattr(end_date, 'date') else end_date
+            
+            if end < start:
+                raise ValidationError('End date cannot be before start date.')
 
         # 2. Prevent overlapping active offers for the same category
         if category and start_date and end_date and is_active:
