@@ -378,13 +378,6 @@
               <span>₹{{ cart_total|floatformat:2 }}</span>
             </div>
             
-            {% if cart.total_discount and cart.total_discount > 0 %}
-            <div class="flex justify-between text-green-600">
-              <span>Discount</span>
-              <span>-₹{{ cart.total_discount|floatformat:2 }}</span>
-            </div>
-            {% endif %}
-            
             <!-- Coupon Discount Line -->
             <div id="coupon-discount-line" class="flex justify-between text-emerald-600 font-semibold hidden">
               <span>Coupon Discount</span>
@@ -884,16 +877,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('coupon-discount-line').classList.remove('hidden');
     document.getElementById('coupon-discount-amount').textContent = '-₹' + data.discount_amount.toFixed(2);
     
-    // Calculate new subtotal after coupon
-    const newSubtotal = originalSubtotal - data.discount_amount;
-    
-    // Recalculate tax on new subtotal
-    const newTax = newSubtotal * 0.1;
-    document.getElementById('tax-amount').textContent = '₹' + newTax.toFixed(2);
-    
-    // Calculate new total
-    const newTotal = newSubtotal + newTax + shippingCost;
+    // Negate discount from the total amount
+    const newTotal = originalTotal - data.discount_amount;
     document.getElementById('final-total').textContent = '₹' + newTotal.toFixed(2);
+    
+    // Keep tax display consistent with original subtotal
+    const originalTax = originalSubtotal * 0.1;
+    document.getElementById('tax-amount').textContent = '₹' + originalTax.toFixed(2);
   }
 
   // Add some visual enhancements

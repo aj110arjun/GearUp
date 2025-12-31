@@ -247,14 +247,6 @@
                 <span id="subtotal-display">₹{{ cart.subtotal }}</span>
               </div>
               
-              <!-- Discount -->
-              {% if cart.total_discount > 0 %}
-              <div class="flex justify-between text-green-600">
-                <span>Discount</span>
-                <span id="discount-display">-₹{{ cart.total_discount }}</span>
-              </div>
-              {% endif %}
-              
               <!-- Shipping -->
               <div class="flex justify-between text-gray-600">
                 <span>Shipping</span>
