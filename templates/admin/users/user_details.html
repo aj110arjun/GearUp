@@ -413,7 +413,7 @@
         const form = document.getElementById('deactivateForm');
         
         userNameElement.textContent = userName;
-        form.action = `/admin/admin/users/${userId}/deactivate/`; // Update this URL
+        form.action = `{% url 'auth_dashboard:admin_user_deactivate' 0 %}`.replace('0', userId);
         
         modal.classList.remove('hidden');
         setTimeout(() => {

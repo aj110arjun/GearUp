@@ -49,7 +49,7 @@
         <!-- Page Numbers -->
         {% for i in page_obj.paginator.page_range %}
           {% if page_obj.number == i %}
-            <span aria-current="page" class="relative z-10 inline-flex items-center bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ i }}</span>
+            <span aria-current="page" class="relative z-10 inline-flex items-center bg-{{ primary_color|default:'indigo' }}-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-{{ primary_color|default:'indigo' }}-600">{{ i }}</span>
           {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
             <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">{{ i }}</a>
           {% endif %}

@@ -107,12 +107,8 @@
             {% endif %}
         </div>
 
-        <!-- Pagination (if you add it later) -->
-        {% if is_paginated %}
-        <div class="mt-6 flex justify-center">
-            <!-- Add pagination here if needed -->
-        </div>
-        {% endif %}
+        <!-- Pagination -->
+        {% include 'partials/pagination.html' with page_obj=transactions primary_color='emerald' %}
     </div>
 </div>
 {% endblock %}

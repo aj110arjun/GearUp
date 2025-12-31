@@ -41,123 +41,160 @@
 
         
 
-        <!-- Filters and Search -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-            <h6 class="text-lg font-bold text-gray-900 mb-4">Filters & Search</h6>
-            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Search -->
-                <div class="lg:col-span-2">
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-400"></i>
-                        </div>
-                        <input type="text" 
-                               class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               name="search" 
-                               placeholder="Search by order #, customer, or product..."
-                               value="{{ search_query }}">
-                    </div>
+        <!-- Enhanced Filters and Search -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Filter Orders</h3>
+                    <p class="text-sm text-gray-500">Search and filter through all customer orders</p>
                 </div>
-                
-                <!-- Status Filters -->
-                <div class="grid grid-cols-2 gap-2">
-                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                            name="order_status">
-                        <option value="">All Order Status</option>
-                        {% for value, label in ORDER_STATUS_CHOICES %}
-                        <option value="{{ value }}" {% if order_status_filter == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                    
-                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                            name="payment_status">
-                        <option value="">All Payment Status</option>
-                        {% for value, label in PAYMENT_STATUS_CHOICES %}
-                        <option value="{{ value }}" {% if payment_status_filter == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <!-- Date and Method Filters -->
-                <div class="grid grid-cols-2 gap-2">
-                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                            name="payment_method">
-                        <option value="">All Payment Methods</option>
-                        {% for value, label in PAYMENT_METHOD_CHOICES %}
-                        <option value="{{ value }}" {% if payment_method_filter == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                    
-                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                            name="date_filter">
-                        <option value="">All Time</option>
-                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
-                        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>Last 7 Days</option>
-                        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>Last 30 Days</option>
-                        <option value="year" {% if date_filter == 'year' %}selected{% endif %}>Last Year</option>
-                    </select>
-                </div>
-                
-                <!-- Advanced Filters Toggle -->
-                <div class="lg:col-span-4">
-                    <button type="button" 
-                            onclick="toggleAdvancedFilters()"
-                            class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
-                        <i class="fas fa-sliders-h"></i>
-                        <span>Advanced Filters</span>
+                <div class="flex items-center space-x-2 mt-4 md:mt-0">
+                    <button id="toggle-advanced" type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
+                        <i class="fas fa-sliders-h mr-2"></i>
+                        Advanced
                     </button>
+                    <a href="?" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
+                        <i class="fas fa-undo mr-2"></i>
+                        Reset
+                    </a>
                 </div>
-                
-                <!-- Advanced Filters (Hidden by default) -->
-                <div id="advancedFilters" class="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-4 hidden">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="date" 
-                               name="start_date" 
-                               value="{{ start_date }}"
-                               class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               placeholder="Start Date">
-                        
-                        <input type="date" 
-                               name="end_date" 
-                               value="{{ end_date }}"
-                               class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               placeholder="End Date">
+            </div>
+
+            <form method="get" id="filter-form" class="space-y-6">
+                <!-- Main Filters Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Search -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            </div>
+                            <input type="text" name="search" value="{{ search_query }}"
+                                   placeholder="Order #, customer, product..."
+                                   class="block w-full pl-10 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                            {% if search_query %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'search' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+                               class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times-circle"></i>
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" 
-                               name="min_amount" 
-                               value="{{ min_amount }}"
-                               class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               placeholder="Min Amount" step="0.01">
-                        
-                        <input type="number" 
-                               name="max_amount" 
-                               value="{{ max_amount }}"
-                               class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               placeholder="Max Amount" step="0.01">
+
+                    <!-- Order Status -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Order Status</label>
+                        <select name="order_status" class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                            <option value="">All Statuses</option>
+                            {% for value, label in ORDER_STATUS_CHOICES %}
+                            <option value="{{ value }}" {% if order_status_filter == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    
-                    <select class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                            name="sort">
-                        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
-                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
-                        <option value="-total_amount" {% if sort_by == '-total_amount' %}selected{% endif %}>Highest Amount</option>
-                        <option value="total_amount" {% if sort_by == 'total_amount' %}selected{% endif %}>Lowest Amount</option>
-                        <option value="order_number" {% if sort_by == 'order_number' %}selected{% endif %}>Order # A-Z</option>
-                        <option value="-order_number" {% if sort_by == '-order_number' %}selected{% endif %}>Order # Z-A</option>
-                    </select>
-                    
-                    <div class="flex gap-2">
-                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg transition duration-200 flex items-center justify-center gap-2">
-                            <i class="fas fa-filter"></i>
-                            <span>Apply Filters</span>
-                        </button>
-                        <a href="{% url 'orders:admin_order_list' %}" 
-                           class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200 flex items-center justify-center">
-                            <i class="fas fa-redo"></i>
+
+                    <!-- Payment Status -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Payment Status</label>
+                        <select name="payment_status" class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                            <option value="">All Payment Status</option>
+                            {% for value, label in PAYMENT_STATUS_CHOICES %}
+                            <option value="{{ value }}" {% if payment_status_filter == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div id="advanced-section" class="hidden pt-6 border-t border-gray-100">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Payment Method -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
+                            <select name="payment_method" class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                                <option value="">All Methods</option>
+                                {% for value, label in PAYMENT_METHOD_CHOICES %}
+                                <option value="{{ value }}" {% if payment_method_filter == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Date Preset -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Time Period</label>
+                            <select name="date_filter" class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                                <option value="">All Time</option>
+                                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                                <option value="week" {% if date_filter == 'week' %}selected{% endif %}>This Week</option>
+                                <option value="month" {% if date_filter == 'month' %}selected{% endif %}>This Month</option>
+                                <option value="year" {% if date_filter == 'year' %}selected{% endif %}>This Year</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort By -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
+                            <select name="sort" class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                                <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
+                                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+                                <option value="-total_amount" {% if sort_by == '-total_amount' %}selected{% endif %}>Highest Amount</option>
+                                <option value="total_amount" {% if sort_by == 'total_amount' %}selected{% endif %}>Lowest Amount</option>
+                            </select>
+                        </div>
+
+                        <!-- Amount Range -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Price Range</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" name="min_amount" value="{{ min_amount }}" placeholder="Min"
+                                       class="block w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                                <span class="text-gray-400">-</span>
+                                <input type="number" name="max_amount" value="{{ max_amount }}" placeholder="Max"
+                                       class="block w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Custom Date Range -->
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Custom Date Range</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-calendar-alt text-gray-400"></i>
+                                    </div>
+                                    <input type="date" name="start_date" value="{{ start_date }}"
+                                           class="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                                </div>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-calendar-check text-gray-400"></i>
+                                    </div>
+                                    <input type="date" name="end_date" value="{{ end_date }}"
+                                           class="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Filters & Submit -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center pt-4 gap-4">
+                    <div class="flex flex-wrap gap-2">
+                        {% if applied_filters %}
+                        <span class="text-sm font-medium text-gray-500 self-center mr-2">Applied:</span>
+                        {% for filter in applied_filters %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                            {{ filter }}
+                        </span>
+                        {% endfor %}
+                        <a href="?" class="text-sm font-bold text-red-500 hover:text-red-700 ml-2 self-center">
+                            Clear all
                         </a>
+                        {% endif %}
                     </div>
+                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                        Apply Filters
+                    </button>
                 </div>
             </form>
         </div>
@@ -284,18 +321,12 @@
                                        title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="#" 
-                                       class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
-                                       title="Print Invoice">
-                                        <i class="fas fa-print"></i>
+                                    <a href="{% url 'orders:admin_download_invoice' order.order_id %}" 
+                                       target="_blank"
+                                       class="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+                                       title="Download Invoice">
+                                        <i class="fas fa-file-pdf"></i>
                                     </a>
-                                    {% if order.can_be_cancelled %}
-                                    <button onclick="showCancelModal('{{ order.id }}', '{{ order.order_number }}')"
-                                            class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                            title="Cancel Order">
-                                        <i class="fas fa-times-circle"></i>
-                                    </button>
-                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -321,41 +352,7 @@
             </div>
             
             <!-- Pagination -->
-            {% if page_obj.paginator.num_pages > 1 %}
-            <div class="bg-white px-6 py-4 border-t border-gray-200">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                    <div>
-                        <p class="text-sm text-gray-700">
-                            Showing <span class="font-medium">{{ page_obj.start_index }}</span> to <span class="font-medium">{{ page_obj.end_index }}</span> of <span class="font-medium">{{ page_obj.paginator.count }}</span> entries
-                        </p>
-                    </div>
-                    <nav class="flex items-center space-x-2">
-                        {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if order_status_filter %}&order_status={{ order_status_filter }}{% endif %}{% if payment_status_filter %}&payment_status={{ payment_status_filter }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
-                           class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                            <i class="fas fa-chevron-left"></i>
-                        </a>
-                        {% endif %}
-                        
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                            <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg">{{ num }}</span>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if order_status_filter %}&order_status={{ order_status_filter }}{% endif %}{% if payment_status_filter %}&payment_status={{ payment_status_filter }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
-                               class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">{{ num }}</a>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if order_status_filter %}&order_status={{ order_status_filter }}{% endif %}{% if payment_status_filter %}&payment_status={{ payment_status_filter }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
-                           class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                        {% endif %}
-                    </nav>
-                </div>
-            </div>
-            {% endif %}
+            {% include 'partials/pagination.html' with page_obj=page_obj primary_color='indigo' %}
         </div>
     </div>
 </div>
@@ -467,11 +464,39 @@
 </style>
 
 <script>
-    // Advanced filters toggle
-    function toggleAdvancedFilters() {
-        const filters = document.getElementById('advancedFilters');
-        filters.classList.toggle('hidden');
-    }
+    // Enhanced Filters JS
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggle-advanced');
+        const advancedSection = document.getElementById('advanced-section');
+        const filterForm = document.getElementById('filter-form');
+        
+        if (toggleBtn && advancedSection && filterForm) {
+            // Toggle advanced filters
+            toggleBtn.addEventListener('click', () => {
+                advancedSection.classList.toggle('hidden');
+            });
+
+            // Auto-submit selects
+            const autoSubmitSelects = filterForm.querySelectorAll('select');
+            autoSubmitSelects.forEach(select => {
+                select.addEventListener('change', () => {
+                    filterForm.submit();
+                });
+            });
+            
+            // Auto-open advanced if any advanced filter is active
+            const advancedInputs = advancedSection.querySelectorAll('input, select');
+            let hasActiveAdvanced = false;
+            advancedInputs.forEach(input => {
+                if (input.value && input.value !== '' && input.name !== 'sort') { // Ignore sort for auto-open
+                    hasActiveAdvanced = true;
+                }
+            });
+            if (hasActiveAdvanced) {
+                advancedSection.classList.remove('hidden');
+            }
+        }
+    });
     
     // Cancel order modal
     function showCancelModal(orderId, orderNumber) {

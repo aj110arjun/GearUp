@@ -399,7 +399,7 @@ def order_list(request):
     ).order_by('-created_at')
     
     # Pagination
-    paginator = Paginator(orders, 10) # 10 orders per page
+    paginator = Paginator(orders, 8) # 8 orders per page
     page = request.GET.get('page')
     
     try:
@@ -417,7 +417,7 @@ def order_list(request):
     ).count()
     
     # Pagination
-    paginator = Paginator(orders, 10) # 10 orders per page
+    paginator = Paginator(orders, 8) # 8 orders per page
     page = request.GET.get('page')
     
     try:
@@ -623,6 +623,17 @@ def admin_order_list(request):
     if sort_by in valid_sort_fields:
         orders = orders.order_by(sort_by)
     
+    # Track applied filters for display
+    applied_filters = []
+    if search_query: applied_filters.append(f'Search: {search_query}')
+    if order_status_filter: applied_filters.append(f'Order: {dict(Order.ORDER_STATUS_CHOICES).get(order_status_filter)}')
+    if payment_status_filter: applied_filters.append(f'Payment: {dict(Order.PAYMENT_STATUS_CHOICES).get(payment_status_filter)}')
+    if payment_method_filter: applied_filters.append(f'Method: {dict(Order.PAYMENT_METHOD_CHOICES).get(payment_method_filter)}')
+    if date_filter: applied_filters.append(f'Time: {date_filter.title()}')
+    if start_date and end_date: applied_filters.append(f'Range: {start_date} to {end_date}')
+    if min_amount: applied_filters.append(f'Min: ₹{min_amount}')
+    if max_amount: applied_filters.append(f'Max: ₹{max_amount}')
+
     # Calculate statistics
     total_orders = orders.count()
     total_revenue = orders.aggregate(total=Sum('total_amount'))['total'] or 0
@@ -637,7 +648,7 @@ def admin_order_list(request):
     payment_stats = {item['payment_status']: item['count'] for item in payment_counts}
     
     # Pagination
-    paginator = Paginator(orders, 20)
+    paginator = Paginator(orders, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -649,11 +660,12 @@ def admin_order_list(request):
         'payment_status_filter': payment_status_filter,
         'payment_method_filter': payment_method_filter,
         'date_filter': date_filter,
-        'start_date': start_date,
-        'end_date': end_date,
+        'start_date': str(start_date) if start_date else '',
+        'end_date': str(end_date) if end_date else '',
         'min_amount': min_amount,
         'max_amount': max_amount,
         'sort_by': sort_by,
+        'applied_filters': applied_filters,
         'total_orders': total_orders,
         'total_revenue': total_revenue,
         'average_order_value': average_order_value,
@@ -1607,7 +1619,7 @@ def admin_download_invoice(request, order_id):
         'generated_by': request.user.get_full_name(),
     }
     
-    html_string = render_to_string('orders/invoice_pdf.html', context)
+    html_string = render_to_string('user/orders/invoice_pdf.html', context)
     html = HTML(string=html_string)
     pdf_file = html.write_pdf()
     
