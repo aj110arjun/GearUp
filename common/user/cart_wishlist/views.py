@@ -44,26 +44,21 @@ def cart_view(request):
     """View to display shopping cart and automatically move out-of-stock items to wishlist"""
     cart = get_or_create_cart(request.user)
     
-    # Check for out-of-stock items and move them to wishlist
+    cart_items = cart.items.select_related('variant__product').prefetch_related('variant__product__variants').all()
     out_of_stock_moved = 0
-    cart_items = cart.items.select_related('variant__product').all()
     
-    for item in cart_items:
+    # Check for out-of-stock items and move them to wishlist
+    for item in list(cart_items):
         if item.variant.stock_quantity < 1 or item.variant.is_deleted:
             product = item.variant.product
             wishlist = get_or_create_wishlist(request.user)
-            
-            # Add to wishlist (get_or_create ensures no duplicates)
             WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
-            
-            # Remove all variants of this product from cart
             CartItem.objects.filter(cart=cart, variant__product=product).delete()
             out_of_stock_moved += 1
             
     if out_of_stock_moved > 0:
         messages.info(request, f'{out_of_stock_moved} item(s) were moved to your wishlist as they were unavailable or out of stock.')
-        # Refresh cart items query after deletions
-        cart_items = cart.items.select_related('variant__product').all()
+        cart_items = cart.items.select_related('variant__product').prefetch_related('variant__product__variants').all()
         cart.refresh_from_db()
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.GET.get('ajax') == 'true':
@@ -225,6 +220,73 @@ def toggle_cart_item(request):
             'success': False,
             'message': 'Error toggling cart item'
         })
+
+@require_POST
+@login_required
+@transaction.atomic
+def update_cart_variant_ajax(request):
+    try:
+        data = json.loads(request.body)
+        item_id = data.get('item_id')
+        new_variant_id = data.get('variant_id')
+        
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        new_variant = get_object_or_404(ProductVariant, id=new_variant_id, product=cart_item.variant.product, is_active=True, is_deleted=False)
+        
+        # Check stock for new variant
+        if new_variant.stock_quantity < 1:
+            return JsonResponse({'success': False, 'message': 'Selected variant is out of stock'})
+
+        # Check if another cart item already has this variant
+        existing_item = CartItem.objects.filter(cart=cart_item.cart, variant=new_variant).exclude(id=item_id).first()
+        
+        merged = False
+        if existing_item:
+            # Merge quantities if same variant already in cart
+            existing_item.quantity += cart_item.quantity
+            # Check stock for merged quantity
+            if existing_item.quantity > new_variant.stock_quantity:
+                existing_item.quantity = new_variant.stock_quantity
+            # Apply project max quantity limit (5)
+            if existing_item.quantity > 5:
+                existing_item.quantity = 5
+                
+            existing_item.save()
+            cart_item.delete()
+            message = 'Items merged in cart'
+            item_id = str(existing_item.id)
+            quantity = existing_item.quantity
+            merged = True
+        else:
+            # Check stock for new variant
+            if cart_item.quantity > new_variant.stock_quantity:
+                cart_item.quantity = new_variant.stock_quantity
+            
+            cart_item.variant = new_variant
+            cart_item.save()
+            message = 'Variant updated'
+            quantity = cart_item.quantity
+
+        cart = cart_item.cart
+        cart.refresh_from_db()
+        
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'merged': merged,
+            'item_id': item_id,
+            'item_quantity': quantity,
+            'item_unit_price': float(new_variant.get_discounted_price()),
+            'item_total': float(new_variant.get_discounted_price() * quantity),
+            'cart_count': cart.total_items,
+            'subtotal': float(cart.subtotal),
+            'total_discount': float(cart.total_discount),
+            'final_total': float(cart.final_total),
+            'shipping_cost': float(cart.shipping_cost),
+        })
+    except Exception as e:
+        print(f"Error updating variant: {str(e)}")
+        return JsonResponse({'success': False, 'message': 'Error updating variant'})
 
 @require_POST
 @login_required
