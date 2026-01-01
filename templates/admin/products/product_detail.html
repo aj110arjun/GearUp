@@ -188,7 +188,12 @@
                 <div>
                   <dt class="text-sm font-medium text-gray-600">Status</dt>
                   <dd class="text-sm text-gray-900 mt-1">
-                    {% if product.is_active %}
+                    {% if product.is_deleted %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      <i class="fas fa-trash-alt mr-1"></i>
+                      Deleted
+                    </span>
+                    {% elif product.is_active %}
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -207,11 +212,11 @@
                 </div>
                 <div>
                   <dt class="text-sm font-medium text-gray-600">Created</dt>
-                  <dd class="text-sm text-gray-900 mt-1">{{ product.created_at|date:"M d, Y H:i" }}</dd>
+                  <dd class="text-sm text-gray-900 mt-1">{{ product.created_at|date:"d/m/Y H:i" }}</dd>
                 </div>
                 <div>
                   <dt class="text-sm font-medium text-gray-600">Last Updated</dt>
-                  <dd class="text-sm text-gray-900 mt-1">{{ product.updated_at|date:"M d, Y H:i" }}</dd>
+                  <dd class="text-sm text-gray-900 mt-1">{{ product.updated_at|date:"d/m/Y H:i" }}</dd>
                 </div>
               </dl>
             </div>
@@ -367,6 +372,14 @@
             Edit Product
           </a>
           
+          {% if not product.is_deleted %}
+          <a href="{% url 'products:product_toggle_status' slug=product.slug %}" 
+             class="w-full flex items-center justify-center px-4 py-3 {% if product.is_active %}bg-orange-600 hover:bg-orange-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white text-sm font-medium rounded-lg transition-colors">
+            <i class="fas {% if product.is_active %}fa-ban{% else %}fa-check-circle{% endif %} mr-2"></i>
+            {% if product.is_active %}Deactivate Product{% else %}Activate Product{% endif %}
+          </a>
+          {% endif %}
+          
           <a href="{% url 'products:product_list' %}" 
              class="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -374,6 +387,34 @@
             </svg>
             Back to Products
           </a>
+        </div>
+      </div>
+
+      <!-- Danger Zone Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
+        <div class="bg-red-50 border-b border-red-100 px-6 py-4">
+          <h2 class="text-lg font-semibold text-red-900">Danger Zone</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          {% if product.is_deleted %}
+          <a href="{% url 'products:product_restore' slug=product.slug %}" 
+             class="w-full flex items-center justify-center px-4 py-3 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100">
+            <i class="fas fa-undo mr-2"></i>
+            Restore Product
+          </a>
+          <p class="text-xs text-gray-500 mt-2 italic text-center">
+            Restoring will make the product visible in the catalog again.
+          </p>
+          {% else %}
+          <a href="{% url 'products:product_delete' slug=product.slug %}" 
+             class="w-full flex items-center justify-center px-4 py-3 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors">
+            <i class="fas fa-trash-alt mr-2"></i>
+            Soft Delete (Mark Deleted)
+          </a>
+          <p class="text-xs text-gray-500 mt-2 italic">
+            Soft delete will hide the product from the storefront but keep it in the archive.
+          </p>
+          {% endif %}
         </div>
       </div>
 
@@ -424,18 +465,6 @@
 
 <!-- JavaScript -->
 <script>
-function toggleProductStatus() {
-  const isActive = {{ product.is_active|lower }};
-  const action = isActive ? 'deactivate' : 'activate';
-  const productName = "{{ product.name }}";
-  
-  if (confirm(`Are you sure you want to ${action} "${productName}"?`)) {
-    // Here you would typically make an AJAX call to update the product status
-    // For now, we'll redirect to the edit page
-    window.location.href = "{% url 'products:product_edit' slug=product.slug %}";
-  }
-}
-
 // Add any additional interactive functionality here
 document.addEventListener('DOMContentLoaded', function() {
   // You can add more interactive features as needed

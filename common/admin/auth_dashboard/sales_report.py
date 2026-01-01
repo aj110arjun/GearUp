@@ -119,11 +119,11 @@ class SalesReportGenerator:
                 'order_status',
                 'payment_status',
                 'payment_method'
-            )[:200])  # Limit to 200 orders for performance
+            )[:1000])  # Increased limit for custom reports
         }
     
     def generate_pdf_report(self):
-        """Generate PDF report using ReportLab with improved styling"""
+        """Generate PDF report using ReportLab with improved styling and pagination"""
         data = self.get_report_data()
         
         # Create buffer for PDF
@@ -135,32 +135,45 @@ class SalesReportGenerator:
             pagesize=landscape(letter),
             rightMargin=30,
             leftMargin=30,
-            topMargin=30,
-            bottomMargin=30,
-            title="Sales Report"
+            topMargin=50,
+            bottomMargin=50,
+            title=f"Sales Report - {self.start_date.strftime('%d/%m/%Y')}"
         )
         
         # Create story (content)
         story = []
         styles = getSampleStyleSheet()
         
-        # Custom styles
+        # Custom styles for premium look
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Title'],
-            fontSize=20,
-            spaceAfter=15,
+            fontSize=24,
+            spaceAfter=20,
             alignment=1,
-            textColor=colors.HexColor('#1F2937'),
+            textColor=colors.HexColor('#111827'),
             fontName='Helvetica-Bold'
         )
         
         heading_style = ParagraphStyle(
             'CustomHeading2',
             parent=styles['Heading2'],
-            fontSize=14,
+            fontSize=16,
+            spaceBefore=20,
+            spaceAfter=12,
+            textColor=colors.HexColor('#1F2937'),
+            fontName='Helvetica-Bold',
+            borderPadding=5,
+            borderWidth=0,
+            borderStyle=None
+        )
+
+        subheading_style = ParagraphStyle(
+            'CustomSubHeading',
+            parent=styles['Normal'],
+            fontSize=12,
             spaceAfter=10,
-            textColor=colors.HexColor('#111827'),
+            textColor=colors.HexColor('#4B5563'),
             fontName='Helvetica-Bold'
         )
         
@@ -168,207 +181,224 @@ class SalesReportGenerator:
             'CustomNormal',
             parent=styles['Normal'],
             fontSize=10,
-            spaceAfter=5,
-            textColor=colors.HexColor('#374151')
+            spaceAfter=8,
+            textColor=colors.HexColor('#374151'),
+            leading=14
         )
         
-        # Title
-        title = Paragraph(f"SALES REPORT", title_style)
-        story.append(title)
+        # Header - Title and Metadata
+        story.append(Paragraph(f"SALES PERFORMANCE REPORT", title_style))
         
-        # Period and generated date in one line
-        period_info = f"""<para alignment='center' spaceAfter=15>
-        <font size=10 color='#6B7280'>
-        Period: {self.start_date.strftime('%b %d, %Y')} to {self.end_date.strftime('%b %d, %Y')} | 
-        Generated: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+        period_info = f"""<para alignment='center' spaceAfter=30>
+        <font size=11 color='#6B7280'>
+        <b>Period:</b> {self.start_date.strftime('%d/%m/%Y')} to {self.end_date.strftime('%d/%m/%Y')} | 
+        <b>Generated:</b> {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
         </font></para>"""
-        
         story.append(Paragraph(period_info, styles['Normal']))
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 10))
         
-        # Summary Section
-        story.append(Paragraph("SUMMARY", heading_style))
+        # 1. Executive Summary Table
+        story.append(Paragraph("EXECUTIVE SUMMARY", heading_style))
         
         summary_data = [
-            ['Metric', 'Value'],
-            ['Total Orders', str(data['summary']['total_orders'])],
-            ['Total Revenue', f"Rs. {data['summary']['total_revenue']:,.2f}"],
-            ['Average Order Value', f"Rs. {data['summary']['avg_order_value']:,.2f}"],
-            ['Completed Orders', str(data['summary']['orders_completed'])],
-            ['Pending Orders', str(data['summary']['orders_pending'])],
-            ['Total Customers', str(data['summary']['total_customers'])],
-            ['Report Duration', f"{data['period']['days']} days"],
+            [Paragraph("<b>Metric</b>", normal_style), Paragraph("<b>Value</b>", normal_style)],
+            ['Total Orders Received', str(data['summary']['total_orders'])],
+            ['Total Net Revenue', f"Rs. {data['summary']['total_revenue']:,.2f}"],
+            ['Average Order Value (AOV)', f"Rs. {data['summary']['avg_order_value']:,.2f}"],
+            ['Delivered Orders', str(data['summary']['orders_completed'])],
+            ['Fulfillment Pipeline (Pending/Processing)', str(data['summary']['orders_pending'])],
+            ['Unique Customers Served', str(data['summary']['total_customers'])],
+            ['Total Analytics Period', f"{data['period']['days']} Days"],
         ]
         
-        summary_table = Table(summary_data, colWidths=[180, 180])
+        summary_table = Table(summary_data, colWidths=[240, 240])
         summary_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3B82F6')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F3F4F6')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#111827')),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('FONTSIZE', (0, 1), (-1, -1), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-            ('TOPPADDING', (0, 1), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('TOPPADDING', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#E5E7EB')),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#FAFAFA')]),
         ]))
         story.append(summary_table)
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 30))
         
-        # Top Products Section
+        # 2. Top Performing Products
         if data['product_sales']:
-            story.append(Paragraph("TOP PRODUCTS", heading_style))
+            story.append(Paragraph("TOP PERFORMING PRODUCTS", heading_style))
             
-            product_data = [['#', 'Product', 'Brand', 'Category', 'Qty', 'Revenue']]
-            for idx, product in enumerate(data['product_sales'][:15], 1):  # Top 15 for PDF
+            product_data = [[
+                Paragraph("<b>#</b>", normal_style), 
+                Paragraph("<b>Product Name</b>", normal_style), 
+                Paragraph("<b>Brand</b>", normal_style), 
+                Paragraph("<b>Category</b>", normal_style), 
+                Paragraph("<b>Quantity</b>", normal_style), 
+                Paragraph("<b>Total Revenue</b>", normal_style)
+            ]]
+            
+            for idx, product in enumerate(data['product_sales'][:20], 1):
                 product_data.append([
                     str(idx),
-                    product['product__name'] or 'Unknown',
-                    product['product__brand'] or 'Unknown',
+                    Paragraph(product['product__name'] or 'Unknown', normal_style),
+                    product['product__brand'] or '-',
                     product['product__category__name'] or 'Uncategorized',
                     str(product['quantity_sold']),
-                    f"Rs. {float(product['total_revenue'] or 0):,.2f}"
+                    f"Rs.{float(product['total_revenue'] or 0):,.2f}"
                 ])
             
-            product_table = Table(product_data, colWidths=[25, 120, 70, 80, 40, 70])
+            product_table = Table(product_data, colWidths=[30, 220, 90, 100, 60, 110], repeatRows=1)
             product_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10B981')),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F2937')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (0, -1), 'CENTER'),  # Index column centered
-                ('ALIGN', (1, 0), (4, -1), 'LEFT'),
+                ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+                ('ALIGN', (4, 0), (4, -1), 'CENTER'),
                 ('ALIGN', (5, 0), (5, -1), 'RIGHT'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 9),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                ('TOPPADDING', (0, 1), (-1, -1), 5),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
             ]))
             story.append(product_table)
-            story.append(Spacer(1, 20))
-        
-        # Order Details Section (for detailed reports)
+            story.append(Spacer(1, 30))
+
+        # 3. Order Details Section (Comprehensive)
         if self.report_type == 'detailed' and data['orders']:
-            story.append(Paragraph("ORDER DETAILS", heading_style))
+            story.append(Paragraph("DETAILED TRANSACTION LOG", heading_style))
+            story.append(Paragraph(f"Listing latest {len(data['orders'])} eligible transactions", subheading_style))
             
-            order_data = [['Order #', 'Date', 'Customer', 'Product', 'Qty', 'Total Rs. ']]
-            for order in data['orders'][:25]:  # Top 25 orders for PDF
+            order_data = [[
+                Paragraph("<b>Order #</b>", normal_style), 
+                Paragraph("<b>Date</b>", normal_style), 
+                Paragraph("<b>Customer Details</b>", normal_style), 
+                Paragraph("<b>Product</b>", normal_style), 
+                Paragraph("<b>Qty</b>", normal_style), 
+                Paragraph("<b>Method</b>", normal_style),
+                Paragraph("<b>Net Total</b>", normal_style)
+            ]]
+            
+            for order in data['orders']:
                 customer_name = f"{order['user__first_name'] or ''} {order['user__last_name'] or ''}".strip()
                 if not customer_name:
                     customer_name = order['user__email'].split('@')[0]
                 
-                # Format order number (remove 'ORD' prefix if exists, show last 6 chars)
-                order_num = order['order_number']
-                if order_num.startswith('ORD'):
-                    order_num = order_num[3:]  # Remove 'ORD' prefix
-                order_num = order_num[-6:]  # Show last 6 characters
+                method_display = dict(Order.PAYMENT_METHOD_CHOICES).get(order['payment_method'], order['payment_method'])
                 
                 order_data.append([
-                    f"#{order_num}",
-                    order['created_at'].strftime('%d/%m/%y') if order['created_at'] else '',
-                    customer_name[:12],
-                    (order['product__name'] or 'Unknown')[:15],
+                    f"#{order['order_number'][-8:]}",
+                    order['created_at'].strftime('%d/%m/%Y') if order['created_at'] else '-',
+                    Paragraph(f"<b>{customer_name}</b><br/><font size=8>{order['user__email']}</font>", normal_style),
+                    Paragraph(f"{order['product__name'] or 'Unknown'}<br/><font size=8 color='#6B7280'>{order['variant__size'] or ''} {order['variant__color'] or ''}</font>", normal_style),
                     str(order['quantity']),
-                    f"{float(order['total_amount'] or 0):,.2f}"
+                    method_display,
+                    f"Rs.{float(order['total_amount'] or 0):,.2f}"
                 ])
             
-            order_table = Table(order_data, colWidths=[55, 50, 65, 90, 30, 50])
+            # Using broader widths for detailed logs
+            order_table = Table(order_data, colWidths=[70, 80, 140, 180, 40, 70, 90], repeatRows=1)
             order_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#8B5CF6')),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4B5563')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (0, -1), 'CENTER'),  # Order # centered
-                ('ALIGN', (1, 0), (4, -1), 'CENTER'),  # Date, Customer, Product, Qty centered
-                ('ALIGN', (5, 0), (5, -1), 'RIGHT'),   # Total right-aligned
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 8),
-                ('FONTSIZE', (0, 1), (-1, -1), 7),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-                ('TOPPADDING', (0, 1), (-1, -1), 4),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
-            ]))
-            story.append(order_table)
-            story.append(Spacer(1, 15))
-            
-            # Add total row
-            total_row = [
-                ['', '', '', '', 'Total:', f"Rs. {data['summary']['total_revenue']:,.2f}"]
-            ]
-            total_table = Table(total_row, colWidths=[55, 50, 65, 90, 30, 50])
-            total_table.setStyle(TableStyle([
-                ('ALIGN', (4, 0), (4, 0), 'RIGHT'),
-                ('ALIGN', (5, 0), (5, 0), 'RIGHT'),
-                ('FONTNAME', (4, 0), (5, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (4, 0), (5, 0), 8),
-                ('TOPPADDING', (0, 0), (-1, 0), 8),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-            ]))
-            story.append(total_table)
-            story.append(Spacer(1, 10))
-        
-        # Category Sales Section
-        if data['category_sales']:
-            story.append(Paragraph("CATEGORY ANALYSIS", heading_style))
-            
-            category_data = [['Category', 'Qty Sold', 'Revenue Rs. ']]
-            for category in data['category_sales'][:10]:  # Top 10 categories
-                category_data.append([
-                    category['product__category__name'] or 'Uncategorized',
-                    str(category['quantity_sold']),
-                    f"{float(category['total_revenue'] or 0):,.2f}"
-                ])
-            
-            category_table = Table(category_data, colWidths=[140, 60, 80])
-            category_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F59E0B')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (1, -1), 'LEFT'),
-                ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+                ('ALIGN', (0, 0), (1, -1), 'CENTER'),
+                ('ALIGN', (4, 0), (4, -1), 'CENTER'),
+                ('ALIGN', (6, 0), (6, -1), 'RIGHT'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 9),
                 ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-                ('TOPPADDING', (0, 1), (-1, -1), 5),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('TOPPADDING', (0, 1), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F3F4F6')]),
+            ]))
+            story.append(order_table)
+            story.append(Spacer(1, 20))
+            
+            # Grand Total Summary Row (Finalizer)
+            grand_total_data = [
+                ['', '', '', '', '', 'GRAND TOTAL:', f"Rs. {data['summary']['total_revenue']:,.2f}"]
+            ]
+            grand_total_table = Table(grand_total_data, colWidths=[70, 80, 140, 180, 40, 70, 90])
+            grand_total_table.setStyle(TableStyle([
+                ('ALIGN', (5, 0), (6, 0), 'RIGHT'),
+                ('FONTNAME', (5, 0), (6, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (5, 0), (6, 0), 10),
+                ('TEXTCOLOR', (6, 0), (6, 0), colors.HexColor('#111827')),
+                ('TOPPADDING', (0, 0), (-1, 0), 12),
+            ]))
+            story.append(grand_total_table)
+        
+        # 4. Category and Method Analysis (Two-column layout if space permits)
+        if data['category_sales']:
+            story.append(Paragraph("CATEGORY PERFORMANCE", heading_style))
+            
+            category_data = [[
+                Paragraph("<b>Category</b>", normal_style), 
+                Paragraph("<b>Units Sold</b>", normal_style), 
+                Paragraph("<b>Revenue</b>", normal_style)
+            ]]
+            for category in data['category_sales']:
+                category_data.append([
+                    category['product__category__name'] or 'Uncategorized',
+                    str(category['quantity_sold']),
+                    f"Rs. {float(category['total_revenue'] or 0):,.2f}"
+                ])
+            
+            category_table = Table(category_data, colWidths=[300, 100, 120])
+            category_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6366F1')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (1, 0), (1, -1), 'CENTER'),
+                ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E0E7FF')),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
             ]))
             story.append(category_table)
-            story.append(Spacer(1, 15))
-        
-        # Footer
-        footer_text = f"""<para alignment='center' spaceBefore=20>
-        <font size=8 color='#9CA3AF'>
-        Report generated by E-commerce Dashboard | Page 1 of 1
-        </font></para>"""
-        
-        story.append(Paragraph(footer_text, styles['Normal']))
-        
-        try:
-            # Build PDF
-            doc.build(story)
+
+        # Build footer with page numbers
+        def add_header_footer(canvas, doc):
+            canvas.saveState()
             
-            # Get PDF from buffer
+            # Footer
+            footer_text = f"GearUp Sales Report | Generated: {timezone.now().strftime('%d/%m/%Y %H:%M')} | Page {doc.page}"
+            canvas.setFont('Helvetica', 8)
+            canvas.setStrokeColor(colors.lightgrey)
+            canvas.line(30, 40, doc.width + 30, 40)
+            canvas.drawCentredString(doc.width/2 + 30, 25, footer_text)
+            
+            # Header Branding (Small logo/text at top right)
+            canvas.setFont('Helvetica-Bold', 10)
+            canvas.drawRightString(doc.width + 30, doc.height + 70, "GEARUP E-COMMERCE")
+            canvas.setFont('Helvetica', 8)
+            canvas.drawRightString(doc.width + 30, doc.height + 60, "Official Internal Sales Document")
+            
+            canvas.restoreState()
+
+        try:
+            doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
             pdf = buffer.getvalue()
             buffer.close()
-            
             return pdf
         except Exception as e:
-            # Create a simple error PDF
             buffer = BytesIO()
             c = canvas.Canvas(buffer, pagesize=landscape(letter))
-            c.drawString(100, 500, f"Error generating PDF: {str(e)}")
+            c.drawString(50, 500, f"System Error Encountered during PDF Generation: {str(e)}")
             c.save()
             pdf = buffer.getvalue()
             buffer.close()
@@ -464,13 +494,13 @@ class SalesReportGenerator:
             # Report period
             ws_summary['A3'] = "Report Period:"
             ws_summary['A3'].style = 'metric_style'
-            ws_summary['B3'] = f"{self.start_date.strftime('%B %d, %Y')} to {self.end_date.strftime('%B %d, %Y')}"
+            ws_summary['B3'] = f"{self.start_date.strftime('%d/%m/%Y')} to {self.end_date.strftime('%d/%m/%Y')}"
             ws_summary['B3'].style = 'value_style'
             
             # Generated date
             ws_summary['A4'] = "Generated:"
             ws_summary['A4'].style = 'metric_style'
-            ws_summary['B4'] = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+            ws_summary['B4'] = timezone.now().strftime('%d/%m/%Y %H:%M:%S')
             ws_summary['B4'].style = 'value_style'
             
             # Spacer
@@ -519,7 +549,7 @@ class SalesReportGenerator:
                 
                 # Subtitle
                 ws_orders.merge_cells('A2:N2')
-                ws_orders['A2'] = f"Showing {len(data['orders'])} orders from {self.start_date.strftime('%b %d, %Y')} to {self.end_date.strftime('%b %d, %Y')}"
+                ws_orders['A2'] = f"Showing {len(data['orders'])} orders from {self.start_date.strftime('%d/%m/%Y')} to {self.end_date.strftime('%d/%m/%Y')}"
                 ws_orders['A2'].alignment = Alignment(horizontal='center')
                 ws_orders['A2'].font = Font(name='Calibri', size=10, color='6B7280')
                 
@@ -539,7 +569,7 @@ class SalesReportGenerator:
                 # Data
                 for row_idx, order in enumerate(data['orders'], start=5):
                     ws_orders.cell(row=row_idx, column=1, value=order['order_number']).style = 'data_style'
-                    ws_orders.cell(row=row_idx, column=2, value=order['created_at'].strftime('%Y-%m-%d %H:%M') if order['created_at'] else '').style = 'data_style'
+                    ws_orders.cell(row=row_idx, column=2, value=order['created_at'].strftime('%d/%m/%Y %H:%M') if order['created_at'] else '').style = 'data_style'
                     
                     customer_name = f"{order['user__first_name'] or ''} {order['user__last_name'] or ''}".strip()
                     if not customer_name:
@@ -688,7 +718,7 @@ class SalesReportGenerator:
                 
                 # Data
                 for row_idx, day in enumerate(data['daily_sales'], start=4):
-                    ws_daily.cell(row=row_idx, column=1, value=day['date'].strftime('%Y-%m-%d') if day['date'] else '').style = 'data_style'
+                    ws_daily.cell(row=row_idx, column=1, value=day['date'].strftime('%d/%m/%Y') if day['date'] else '').style = 'data_style'
                     ws_daily.cell(row=row_idx, column=2, value=day['order_count']).style = 'data_style'
                     
                     # Currency cells
@@ -737,8 +767,8 @@ class SalesReportGenerator:
         
         # Header
         writer.writerow(['E-COMMERCE SALES REPORT'])
-        writer.writerow([f"Period: {self.start_date.strftime('%b %d, %Y')} to {self.end_date.strftime('%b %d, %Y')}"])
-        writer.writerow([f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"])
+        writer.writerow([f"Period: {self.start_date.strftime('%d/%m/%Y')} to {self.end_date.strftime('%d/%m/%Y')}"])
+        writer.writerow([f"Generated: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}"])
         writer.writerow([''])
         
         # Summary Section
@@ -786,7 +816,7 @@ class SalesReportGenerator:
                 
                 writer.writerow([
                     order['order_number'],
-                    order['created_at'].strftime('%Y-%m-%d %H:%M') if order['created_at'] else '',
+                    order['created_at'].strftime('%d/%m/%Y %H:%M') if order['created_at'] else '',
                     customer_name,
                     order['user__email'],
                     order['product__name'] or 'Unknown',

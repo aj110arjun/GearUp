@@ -322,11 +322,11 @@ def update_cart_item_ajax(request):
             'item_quantity': cart_item.quantity if quantity > 0 else 0,
             'cart_count': cart.total_items,
             'wishlist_count': wishlist.total_items,
-            'subtotal': cart.subtotal,
-            'total_discount': cart.total_discount,
-            'final_total': cart.final_total,
-            'shipping_cost': cart.shipping_cost,
-            'total_savings': cart.total_discount
+            'subtotal': float(cart.subtotal),
+            'total_discount': float(cart.total_discount),
+            'final_total': float(cart.final_total),
+            'shipping_cost': float(cart.shipping_cost),
+            'total_savings': float(cart.total_discount)
         })
     except Exception as e:
         return JsonResponse({'success': False, 'message': 'Error updating cart'})

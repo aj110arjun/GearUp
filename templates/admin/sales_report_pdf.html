@@ -150,7 +150,7 @@
     <div class="header">
         <h1>Sales Report</h1>
         <div class="subtitle">
-            Period: {{ data.period.start_date|date:"F d, Y" }} - {{ data.period.end_date|date:"F d, Y" }}
+            Period: {{ data.period.start_date|date:"d/m/Y" }} - {{ data.period.end_date|date:"d/m/Y" }}
         </div>
         <div style="font-size: 11px; color: #95a5a6;">
             Generated on: {{ report_date|date:"F d, Y H:i" }}

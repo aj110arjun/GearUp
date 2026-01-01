@@ -18,88 +18,8 @@
   {% endblock %}
   <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dhpo5iq3m/image/upload/guide_mar3hq.png">
 
-  <style>
-    body {
-      font-family: 'Inter', 'Segoe UI', sans-serif;
-    }
-    
-    .sidebar-gradient {
-      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-    }
-    
-    .header-gradient {
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    }
-    
-    .active-link {
-      background: rgba(255, 255, 255, 0.1);
-      border-left: 4px solid #60a5fa;
-    }
-    
-    .nav-item {
-      transition: all 0.3s ease;
-      border-left: 4px solid transparent;
-    }
-    
-    .nav-item:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-left: 4px solid #93c5fd;
-      transform: translateX(4px);
-    }
-    
-    .stats-card {
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      transition: all 0.3s ease;
-    }
-    
-    .stats-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
-    
-    .logout-btn {
-      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-      transition: all 0.3s ease;
-    }
-    
-    .logout-btn:hover {
-      background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
-      transform: translateY(-2px);
-    }
-
-    /* Global Form Styles */
-    .form-control {
-      transition: all 0.2s ease;
-    }
-
-    /* Custom Form Error Styles */
-    .form-error-text {
-      color: #dc2626;
-      font-size: 0.75rem;
-      font-weight: 500;
-      margin-top: 0.375rem;
-      display: flex;
-      align-items: center;
-      gap: 0.375rem;
-      animation: fadeInError 0.3s ease-out;
-    }
-
-    .field-error {
-      border-color: #ef4444 !important;
-      background-color: #fffafb !important;
-    }
-    
-    .field-error:focus {
-      border-color: #dc2626 !important;
-      box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
-    }
-
-    @keyframes fadeInError {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-  </style>
+  <link rel="stylesheet" href="{% static 'css/common/forms.css' %}">
+  <link rel="stylesheet" href="{% static 'css/admin/base.css' %}">
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -172,6 +92,11 @@
           <span>Return Requests</span>
           <span class="ml-auto bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-semibold">3</span>
         </a>
+
+        <a href="{% url 'auth_dashboard:admin_cancellations' %}" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 {% if request.resolver_match.url_name == 'admin_cancellations' %}active-link{% endif %}">
+          <i class="fas fa-archive w-5 text-center"></i>
+          <span>Cancellations</span>
+        </a>
       </div>
     </nav>
 
@@ -243,72 +168,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 
+  <!-- External Core Logic -->
+  <script src="{% static 'js/common/utils.js' %}"></script>
+  <script src="{% static 'js/admin/base.js' %}"></script>
+
+  <!-- Page Specific Message Handler -->
   <script>
-    // Snackbar Functions
-    function showSnackbar(message, type = 'success') {
-      const snackbar = document.getElementById('snackbar');
-      const messageElement = snackbar.querySelector('.snackbar-message');
-      const iconElement = snackbar.querySelector('.snackbar-icon i');
-      const contentElement = snackbar.querySelector('.snackbar-content');
-      
-      // Set message
-      messageElement.textContent = message;
-      
-      // Set icon and colors based on type
-      if (type === 'success') {
-        iconElement.className = 'fas fa-check-circle text-2xl';
-        contentElement.className = 'flex items-center gap-4 px-6 py-4 rounded-xl shadow-2xl border max-w-md snackbar-content bg-gradient-to-r from-green-50 to-emerald-50 border-green-200';
-        iconElement.style.color = '#10b981';
-        messageElement.style.color = '#065f46';
-      } else if (type === 'error') {
-        iconElement.className = 'fas fa-exclamation-circle text-2xl';
-        contentElement.className = 'flex items-center gap-4 px-6 py-4 rounded-xl shadow-2xl border max-w-md snackbar-content bg-gradient-to-r from-red-50 to-rose-50 border-red-200';
-        iconElement.style.color = '#ef4444';
-        messageElement.style.color = '#991b1b';
-      } else if (type === 'warning') {
-        iconElement.className = 'fas fa-exclamation-triangle text-2xl';
-        contentElement.className = 'flex items-center gap-4 px-6 py-4 rounded-xl shadow-2xl border max-w-md snackbar-content bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200';
-        iconElement.style.color = '#f59e0b';
-        messageElement.style.color = '#92400e';
-      } else if (type === 'info') {
-        iconElement.className = 'fas fa-info-circle text-2xl';
-        contentElement.className = 'flex items-center gap-4 px-6 py-4 rounded-xl shadow-2xl border max-w-md snackbar-content bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200';
-        iconElement.style.color = '#3b82f6';
-        messageElement.style.color = '#1e40af';
-      }
-      
-      // Show snackbar with animation
-      snackbar.classList.remove('translate-y-32', 'opacity-0');
-      snackbar.classList.add('translate-y-0', 'opacity-100');
-      
-      // Auto-hide after 4 seconds
-      setTimeout(() => {
-        hideSnackbar();
-      }, 4000);
-    }
-    
-    function hideSnackbar() {
-      const snackbar = document.getElementById('snackbar');
-      snackbar.classList.remove('translate-y-0', 'opacity-100');
-      snackbar.classList.add('translate-y-32', 'opacity-0');
-    }
-
-    // Add active state management
     document.addEventListener('DOMContentLoaded', function() {
-      // Disable browser validation
-      document.querySelectorAll('form').forEach(form => {
-        form.setAttribute('novalidate', 'true');
-      });
-
-      // Highlight fields with errors
-      document.querySelectorAll('.form-error-text').forEach(errorMsg => {
-        const container = errorMsg.parentElement;
-        const input = container.querySelector('input, select, textarea');
-        if (input) {
-          input.classList.add('field-error');
-        }
-      });
-
       // Display Django messages as snackbar
       {% if messages %}
         {% for message in messages %}
@@ -323,26 +189,6 @@
           {% endif %}
         {% endfor %}
       {% endif %}
-
-      // Add hover effects to all interactive elements
-      const interactiveElements = document.querySelectorAll('.nav-item, .stats-card, button');
-      interactiveElements.forEach(element => {
-        element.addEventListener('mouseenter', function() {
-          this.style.transform = 'translateY(-2px)';
-        });
-        element.addEventListener('mouseleave', function() {
-          this.style.transform = 'translateY(0)';
-        });
-      });
-      
-      // Update current page indicator
-      const currentPath = window.location.pathname;
-      const navLinks = document.querySelectorAll('.nav-item');
-      navLinks.forEach(link => {
-        if (link.href.includes(currentPath)) {
-          link.classList.add('active-link');
-        }
-      });
     });
   </script>
   {% block extra_js %}

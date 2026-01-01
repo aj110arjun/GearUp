@@ -177,8 +177,8 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ order.return_requested_at|date:"M d, Y" }}</div>
-                            <div class="text-sm text-gray-500">{{ order.return_requested_at|date:"g:i A" }}</div>
+                            <div class="text-sm text-gray-900">{{ order.return_requested_at|date:"d/m/Y" }}</div>
+                            <div class="text-sm text-gray-500">{{ order.return_requested_at|date:"H:i" }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
@@ -266,11 +266,11 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if order.return_approved_at %}
-                            <div class="text-sm text-gray-900">{{ order.return_approved_at|date:"M d, Y" }}</div>
-                            <div class="text-sm text-gray-500">{{ order.return_approved_at|date:"g:i A" }}</div>
+                            <div class="text-sm text-gray-900">{{ order.return_approved_at|date:"d/m/Y" }}</div>
+                            <div class="text-sm text-gray-500">{{ order.return_approved_at|date:"H:i" }}</div>
                             {% elif order.return_rejected_at %}
-                            <div class="text-sm text-gray-900">{{ order.return_rejected_at|date:"M d, Y" }}</div>
-                            <div class="text-sm text-gray-500">{{ order.return_rejected_at|date:"g:i A" }}</div>
+                            <div class="text-sm text-gray-900">{{ order.return_rejected_at|date:"d/m/Y" }}</div>
+                            <div class="text-sm text-gray-500">{{ order.return_rejected_at|date:"H:i" }}</div>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">

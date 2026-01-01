@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% load static %}
 
 {% block title %}Admin - Product Management{% endblock title %}
 
@@ -33,97 +34,126 @@
       </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-              </svg>
-            </div>
+    <!-- Modernized Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Total Products</p>
+            <p class="text-3xl font-black text-gray-900">{{ total_products }}</p>
           </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Total Products</p>
-            <p class="text-2xl font-bold text-gray-900">{{ total_products }}</p>
+          <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
+            <i class="fas fa-boxes-stacked text-2xl"></i>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-xs">
+          <span class="text-green-600 font-bold flex items-center">
+            <i class="fas fa-chart-line mr-1"></i> +2.4%
+          </span>
+          <span class="text-gray-400 ml-2">from last month</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Active Now</p>
+            <p class="text-3xl font-black text-gray-900">{{ active_products }}</p>
+          </div>
+          <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner">
+            <i class="fas fa-check-double text-2xl"></i>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div class="w-full bg-gray-100 rounded-full h-1.5">
+            <div class="bg-emerald-500 h-1.5 rounded-full" style="width: 85%"></div>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Out of Stock</p>
+            <p class="text-3xl font-black text-red-600">{{ out_of_stock_products }}</p>
           </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Active Products</p>
-            <p class="text-2xl font-bold text-gray-900">{{ active_products }}</p>
+          <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 shadow-inner">
+            <i class="fas fa-hourglass-end text-2xl"></i>
           </div>
+        </div>
+        <div class="mt-4 text-xs">
+          <span class="text-red-500 font-bold underline cursor-pointer">View critical items</span>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Low Stock</p>
+            <p class="text-3xl font-black text-amber-600">{{ low_stock_products }}</p>
           </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Out of Stock</p>
-            <p class="text-2xl font-bold text-gray-900">{{ out_of_stock_products }}</p>
+          <div class="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 shadow-inner">
+            <i class="fas fa-triangle-exclamation text-2xl"></i>
           </div>
         </div>
-      </div>
-
-      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-              </svg>
-            </div>
-          </div>
-          <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Low Stock</p>
-            <p class="text-2xl font-bold text-gray-900">{{ low_stock_products }}</p>
-          </div>
+        <div class="mt-4 text-xs font-medium text-amber-700">
+          Requires reorder soon
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Rest of your existing code remains the same -->
-  <!-- Filters and Search -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-      <h3 class="text-lg font-semibold text-gray-800 mb-2 md:mb-0">Filter Products</h3>
-      <div class="flex items-center space-x-2">
-        <button id="bulk-actions-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-          Bulk Actions
+  <!-- Modernized Filters and Search Container -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 transform transition-all hover:shadow-md">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div>
+        <h3 class="text-xl font-black text-gray-900">Search & Filters</h3>
+        <p class="text-sm text-gray-500">Fine-tune your product catalog view</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+        <button id="filter-toggle" class="md:hidden flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition-all">
+          <i class="fas fa-filter mr-2"></i> Toggle
         </button>
-        <button id="filter-toggle" class="md:hidden bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
-          </svg>
-          Filters
+        <button id="bulk-actions-btn" class="flex-1 md:flex-none inline-flex items-center justify-center px-4 py-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-sm font-bold text-indigo-700 hover:bg-indigo-100 transition-all">
+           <i class="fas fa-list-check mr-2"></i> Bulk Actions
         </button>
+        <a href="?" class="flex-1 md:flex-none inline-flex items-center justify-center px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition-all">
+          <i class="fas fa-rotate-left mr-2"></i> Reset
+        </a>
       </div>
     </div>
 
-    <form method="get" id="filter-form" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <form method="get" id="filter-form" class="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 items-end">
+      <!-- Enhanced Search Box -->
+      <div class="md:col-span-2">
+        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Search Keywords</label>
+        <div class="relative group">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-400 group-focus-within:text-indigo-500 transition-colors"></i>
+          </div>
+          <input type="text" name="q" id="search-input"
+                 value="{{ filters.search|default:'' }}"
+                 placeholder="Search name, SKU, category..."
+                 class="block w-full pl-11 pr-24 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-500 transition-all text-sm font-medium">
+          <div class="absolute inset-y-0 right-0 p-1.5 flex items-center space-x-1">
+            <button type="button" id="clear-btn"
+                    class="p-2 text-gray-300 hover:text-gray-500 transition-colors {% if not filters.search %}hidden{% endif %}"
+                    aria-label="Clear search">
+              <i class="fas fa-times-circle"></i>
+            </button>
+            <button type="submit"
+                    class="h-full px-4 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+              GO
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Category</label>
         <select name="category"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                class="block w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-500 transition-all text-sm font-medium cursor-pointer">
           <option value="">All Categories</option>
           {% for cat in categories %}
           <option value="{{ cat.id }}" {% if filters.category == cat.id|stringformat:"s" %}selected{% endif %}>
@@ -134,170 +164,162 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Stock Status</label>
+        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Inventory</label>
         <select name="in_stock"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-          <option value="">All Stock Status</option>
+                class="block w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-500 transition-all text-sm font-medium cursor-pointer">
+          <option value="">Everything</option>
           <option value="true" {% if filters.in_stock == 'true' %}selected{% endif %}>In Stock</option>
           <option value="false" {% if filters.in_stock == 'false' %}selected{% endif %}>Out of Stock</option>
-          <option value="low" {% if filters.in_stock == 'low' %}selected{% endif %}>Low Stock</option>
+          <option value="low" {% if filters.in_stock == 'low' %}selected{% endif %}>Low Stock Only</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Visibility</label>
         <select name="is_active"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-          <option value="">All Status</option>
-          <option value="true" {% if filters.is_active == 'true' %}selected{% endif %}>Active</option>
-          <option value="false" {% if filters.is_active == 'false' %}selected{% endif %}>Inactive</option>
+                class="block w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-500 transition-all text-sm font-medium cursor-pointer">
+          <option value="">Any Status</option>
+          <option value="true" {% if filters.is_active == 'true' %}selected{% endif %}>Active Only</option>
+          <option value="false" {% if filters.is_active == 'false' %}selected{% endif %}>Inactive Only</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Sort By</label>
         <select name="sort"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-          <option value="">Default</option>
+                class="block w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-500 transition-all text-sm font-medium cursor-pointer">
+          <option value="">Latest Arrival</option>
           <option value="name" {% if filters.sort == 'name' %}selected{% endif %}>Name (A–Z)</option>
-          <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>Price Low → High</option>
-          <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Price High → Low</option>
-          <option value="stock_asc" {% if filters.sort == 'stock_asc' %}selected{% endif %}>Stock Low → High</option>
-          <option value="stock_desc" {% if filters.sort == 'stock_desc' %}selected{% endif %}>Stock High → Low</option>
-          <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest First</option>
+          <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+          <option value="stock_asc" {% if filters.sort == 'stock_asc' %}selected{% endif %}>Stock: Low to High</option>
+          <option value="stock_desc" {% if filters.sort == 'stock_desc' %}selected{% endif %}>Stock: High to Low</option>
         </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-        <div class="relative flex items-center">
-          <input type="text" name="q" id="search-input"
-                 value="{{ filters.search }}"
-                 placeholder="Search products..."
-                 class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-20">
-          <button type="button" id="clear-btn"
-                  class="absolute right-12 text-gray-400 hover:text-gray-600 text-xl transition"
-                  aria-label="Clear search">&times;</button>
-          <button type="submit"
-                  class="absolute right-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition">
-            Search
-          </button>
-        </div>
       </div>
     </form>
 
-    <!-- Applied Filters -->
+    <!-- Detailed Applied Filters Feedback -->
     {% if applied_filters %}
-    <div class="mt-4 flex flex-wrap gap-2">
-      <span class="text-sm text-gray-600">Applied filters:</span>
-      {% for filter in applied_filters %}
-      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-        {{ filter }}
-        <button type="button" class="ml-1.5 text-indigo-600 hover:text-indigo-900">
-          &times;
-        </button>
-      </span>
-      {% endfor %}
-      <a href="?" class="text-sm text-indigo-600 hover:text-indigo-800 ml-2">Clear all</a>
+    <div class="mt-8 pt-5 border-t border-gray-100 flex flex-wrap items-center gap-4">
+      <span class="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Active Filters</span>
+      <div class="flex flex-wrap gap-2 items-center">
+        {% for filter in applied_filters %}
+        <span class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm animate-in fade-in slide-in-from-left-3">
+          <i class="fas fa-tag mr-2 opacity-50"></i>
+          {{ filter }}
+          <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{% if forloop.parentloop.counter != forloop.counter %}&{{ key }}={{ value }}{% endif %}{% endif %}{% endfor %}" class="ml-3 text-indigo-300 hover:text-indigo-600 transition-colors">
+            <i class="fas fa-times"></i>
+          </a>
+        </span>
+        {% endfor %}
+        <a href="?" class="text-xs font-black text-red-500 hover:text-red-700 bg-red-50 px-4 py-2 rounded-xl transition-all ml-2 flex items-center gap-2">
+          <i class="fas fa-trash-can"></i>
+          CLEAR ALL
+        </a>
+      </div>
     </div>
     {% endif %}
   </div>
 
-  <!-- Products Table -->
-  <div class="bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden">
+
+  <!-- Enhanced Products Table -->
+  <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden transform transition-all">
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50/50 border-b border-gray-100">
+            <th class="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Product</th>
+            <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Category</th>
+            <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+            <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Price Range</th>
+            <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Inventory</th>
+            <th class="px-8 py-5 text-right text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="divide-y divide-gray-50">
           {% for product in products %}
-          <tr class="hover:bg-gray-50 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap">
+          <tr class="group hover:bg-indigo-50/30 transition-all duration-200">
+            <td class="px-8 py-6">
               <div class="flex items-center">
-                <div class="flex-shrink-0 h-12 w-12 mr-4">
-                  <img class="h-12 w-12 rounded-lg object-cover border border-gray-200" 
-                       src="{{ product.image.url|default:'/static/images/no-image.jpg' }}" 
+                <div class="h-14 w-14 flex-shrink-0 relative">
+                  {% if product.image %}
+                  <img class="h-14 w-14 rounded-xl object-cover shadow-sm border border-gray-100 group-hover:scale-105 transition-transform duration-300" 
+                       src="{{ product.image.url }}" 
                        alt="{{ product.name }}">
+                  {% else %}
+                  <div class="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm">
+                    {{ product.name|first|upper }}
+                  </div>
+                  {% endif %}
+                  {% if not product.is_active %}
+                  <div class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></div>
+                  {% endif %}
                 </div>
-                <div class="ml-0">
-                  <div class="text-sm font-medium text-gray-900">{{ product.name|title }}</div>
+                <div class="ml-4">
+                  <div class="text-sm font-black text-gray-900 leading-tight">{{ product.name }}</div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">SKU: {{ product.sku|default:"N/A" }}</div>
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ product.category.name }}</div>
+            <td class="px-6 py-6">
+              <span class="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-200">
+                {{ product.category.name }}
+              </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-6">
               {% if product.is_active %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Active
-                </span>
+              <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+                Active
+              </span>
               {% else %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                  Inactive
-                </span>
+              <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200">
+                <span class="h-1.5 w-1.5 rounded-full bg-gray-400 mr-2"></span>
+                Draft
+              </span>
               {% endif %}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {% with first_variant=product.get_first_variant %}
-              {% if first_variant %}
-                ₹{{ first_variant.price }}
-              {% else %}
-                <span class="text-gray-400">No Variant</span>
+            <td class="px-6 py-6 font-medium">
+              <div class="text-sm text-gray-900 font-bold">₹{{ product.min_price|floatformat:2 }}</div>
+              {% if product.min_price != product.max_price %}
+              <div class="text-[10px] text-gray-400 mt-0.5">up to ₹{{ product.max_price|floatformat:2 }}</div>
               {% endif %}
-              {% endwith %}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                {% if product.total_stock > 10 %}
-                  <span class="text-sm text-gray-900">{{ product.total_stock }}</span>
-                {% elif product.total_stock > 0 %}
-                  <span class="text-sm text-yellow-600 font-medium">{{ product.total_stock }}</span>
-                  <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    Low
-                  </span>
-                {% else %}
-                  <span class="text-sm text-red-600 font-medium">0</span>
-                  <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    Out
-                  </span>
-                {% endif %}
+            <td class="px-6 py-6">
+              <div class="flex items-center gap-3">
+                <div class="text-sm font-black {% if product.total_stock <= 10 %}text-red-600{% elif product.total_stock <= 50 %}text-amber-600{% else %}text-gray-900{% endif %}">
+                  {{ product.total_stock }}
+                </div>
+                <div class="flex-1 max-w-[60px] bg-gray-100 rounded-full h-1">
+                  <div class="h-1 rounded-full {% if product.total_stock <= 10 %}bg-red-500{% elif product.total_stock <= 50 %}bg-amber-500{% else %}bg-indigo-500{% endif %}" 
+                       style="width: {% if product.total_stock > 100 %}100{% else %}{{ product.total_stock }}{% endif %}%"></div>
+                </div>
               </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <div class="flex justify-end space-x-2">
-                <a href="{% url 'products:product_detail' product_slug=product.slug %}" 
-                   class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md text-sm transition">
-                  View
+            <td class="px-8 py-6 text-right">
+              <div class="flex justify-end items-center gap-2">
+                <a href="{% url 'products:product_detail' product.slug %}" 
+                   class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                   title="View Details">
+                  <i class="fas fa-eye text-sm"></i>
                 </a>
-                <a href="{% url 'products:product_edit' slug=product.slug %}" 
-                   class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-md text-sm transition">
-                  Edit
+                <a href="{% url 'products:product_edit' product.slug %}" 
+                   class="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                   title="Edit Product">
+                  <i class="fas fa-edit text-sm"></i>
                 </a>
+                <div class="relative inline-block text-left" x-data="{ open: false }">
+                  <button @click="open = !open" 
+                          class="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all">
+                    <i class="fas fa-ellipsis-v text-sm"></i>
+                  </button>
+                  <!-- Add dropdown logic here if using Alpine or regular JS -->
+                </div>
               </div>
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="8" class="px-6 py-12 text-center">
-              <div class="flex flex-col items-center justify-center">
-                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                </svg>
-                <h3 class="text-lg font-medium text-gray-900 mb-1">No products found</h3>
-                <p class="text-gray-500 mb-4">Try adjusting your search or filter to find what you're looking for.</p>
-                <div class="flex space-x-3">
-                  <a href="{% url 'products:product_create' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
-                    Add Your First Product
                   </a>
                   <a href="{% url 'products:category_create' %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                     Create Category
@@ -317,43 +339,7 @@
 
 </div>
 
-<!-- JavaScript -->
-<script>
-  // Clear search functionality
-  const input = document.getElementById('search-input');
-  const clearBtn = document.getElementById('clear-btn');
-
-  function toggleClearBtn() {
-    clearBtn.style.display = input.value ? 'block' : 'none';
-  }
-
-  input.addEventListener('input', toggleClearBtn);
-
-  clearBtn.addEventListener('click', () => {
-    input.value = '';
-    toggleClearBtn();
-    input.focus();
-  });
-
-  toggleClearBtn();
-
-  // Mobile filter toggle
-  const filterToggle = document.getElementById('filter-toggle');
-  const filterForm = document.getElementById('filter-form');
-  
-  if (filterToggle && filterForm) {
-    filterToggle.addEventListener('click', () => {
-      filterForm.classList.toggle('hidden');
-      filterForm.classList.toggle('grid');
-    });
-  }
-
-  // Auto-submit filters on change (except search)
-  const filterSelects = document.querySelectorAll('select[name="category"], select[name="in_stock"], select[name="is_active"], select[name="sort"]');
-  filterSelects.forEach(select => {
-    select.addEventListener('change', function() {
-      this.form.submit();
-    });
-  });
-</script>
+{% block extra_js %}
+<script src="{% static 'js/admin/product_list.js' %}"></script>
+{% endblock %}
 {% endblock content %}

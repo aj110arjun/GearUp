@@ -97,7 +97,7 @@
                                 <div>
                                     <p class="font-semibold text-gray-800 capitalize">{{ transaction.get_transaction_type_display }}</p>
                                     <p class="text-sm text-gray-600">{{ transaction.description|default:"No description" }}</p>
-                                    <p class="text-xs text-gray-500 mt-1">{{ transaction.created_at|date:"d M Y, H:i" }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ transaction.created_at|date:"d/m/Y H:i" }}</p>
                                 </div>
                             </div>
                             <div class="text-right">

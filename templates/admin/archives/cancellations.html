@@ -1,0 +1,263 @@
+{% extends "admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Cancellations & Archives - GearUp Admin{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Cancellations & Archives</h1>
+        <p class="text-gray-600 mt-2">Manage cancelled orders and deleted products from your catalog.</p>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-red-50 p-6 rounded-2xl border border-red-100 flex items-center gap-4">
+            <div class="bg-red-500 p-4 rounded-xl text-white shadow-lg shadow-red-200">
+                <i class="fas fa-times-circle text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-red-600 text-sm font-semibold uppercase tracking-wider">Cancelled Orders</p>
+                <h3 class="text-2xl font-bold text-gray-800">{{ cancelled_orders.paginator.count }}</h3>
+            </div>
+        </div>
+        <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100 flex items-center gap-4">
+            <div class="bg-orange-500 p-4 rounded-xl text-white shadow-lg shadow-orange-200">
+                <i class="fas fa-trash-alt text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-orange-600 text-sm font-semibold uppercase tracking-wider">Deleted Products</p>
+                <h3 class="text-2xl font-bold text-gray-800">{{ deleted_products.paginator.count }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Container -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Tab Headers -->
+        <div class="flex border-b border-gray-100 bg-gray-50/50 px-4 pt-4">
+            <button onclick="switchTab('orders')" id="tab-orders-btn" 
+                    class="px-8 py-4 text-sm font-bold border-b-2 transition-all duration-300 rounded-t-xl
+                    {% if not request.GET.product_page %}border-blue-600 text-blue-600 bg-white{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-shopping-bag mr-2"></i>
+                Cancelled Orders
+            </button>
+            <button onclick="switchTab('products')" id="tab-products-btn" 
+                    class="px-8 py-4 text-sm font-bold border-b-2 transition-all duration-300 rounded-t-xl
+                    {% if request.GET.product_page %}border-blue-600 text-blue-600 bg-white{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-cube mr-2"></i>
+                Deleted Products
+            </button>
+        </div>
+
+        <!-- Orders Tab -->
+        <div id="tab-orders" class="{% if request.GET.product_page %}hidden{% endif %}">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
+                            <th class="px-6 py-4 font-semibold">Order ID</th>
+                            <th class="px-6 py-4 font-semibold">Customer</th>
+                            <th class="px-6 py-4 font-semibold">Product</th>
+                            <th class="px-6 py-4 font-semibold">Amount</th>
+                            <th class="px-6 py-4 font-semibold">Cancelled On</th>
+                            <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for order in cancelled_orders %}
+                        <tr class="hover:bg-gray-50/80 transition-colors group">
+                            <td class="px-6 py-4">
+                                <span class="font-bold text-gray-900">#{{ order.order_number }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                        {{ order.user.first_name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ order.user.get_full_name }}</p>
+                                        <p class="text-xs text-gray-500">{{ order.user.email }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-medium text-gray-900">{{ order.product.name }}</p>
+                                <p class="text-xs text-gray-500">{{ order.variant.get_display_name }}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-bold text-gray-900">₹{{ order.total_amount }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                {{ order.cancelled_at|date:"d/m/Y" }}
+                                <span class="block text-xs text-gray-400">{{ order.cancelled_at|date:"H:i" }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="{% url 'orders:admin_order_detail' order.order_id %}" 
+                                   class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white transition-all">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-20 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="bg-gray-100 p-6 rounded-full mb-4">
+                                        <i class="fas fa-search text-4xl text-gray-300"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-700">No Cancelled Orders</h3>
+                                    <p class="text-gray-500 mt-2">All orders are currently active or completed.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination for Orders -->
+            {% if cancelled_orders.has_other_pages %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <div class="flex justify-center gap-2">
+                    {% if cancelled_orders.has_previous %}
+                    <a href="?order_page={{ cancelled_orders.previous_page_number }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% for num in cancelled_orders.paginator.page_range %}
+                    <a href="?order_page={{ num }}" class="w-10 h-10 flex items-center justify-center rounded-xl {% if cancelled_orders.number == num %}bg-blue-600 text-white{% else %}bg-white border border-gray-200 text-gray-600 hover:bg-gray-50{% endif %} font-bold shadow-sm transition-all">
+                        {{ num }}
+                    </a>
+                    {% endfor %}
+
+                    {% if cancelled_orders.has_next %}
+                    <a href="?order_page={{ cancelled_orders.next_page_number }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Products Tab -->
+        <div id="tab-products" class="{% if not request.GET.product_page %}hidden{% endif %}">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
+                            <th class="px-6 py-4 font-semibold">Product</th>
+                            <th class="px-6 py-4 font-semibold">Category</th>
+                            <th class="px-6 py-4 font-semibold">Deleted On</th>
+                            <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for product in deleted_products %}
+                        <tr class="hover:bg-gray-50/80 transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 flex-shrink-0">
+                                        {% if product.image %}
+                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                        <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                            <i class="fas fa-image"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-900">{{ product.name }}</p>
+                                        <p class="text-xs text-gray-500">Brand: {{ product.brand }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                                    {{ product.category.name }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                {{ product.updated_at|date:"d/m/Y" }}
+                                <span class="block text-xs text-gray-400 font-medium">Was deleted from active catalog</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="{% url 'products:product_detail' product_slug=product.slug %}" 
+                                   class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-20 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="bg-gray-100 p-6 rounded-full mb-4">
+                                        <i class="fas fa-box-open text-4xl text-gray-300"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-700">No Deleted Products</h3>
+                                    <p class="text-gray-500 mt-2">All products in the catalog are currently active.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination for Products -->
+            {% if deleted_products.has_other_pages %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <div class="flex justify-center gap-2">
+                    {% if deleted_products.has_previous %}
+                    <a href="?product_page={{ deleted_products.previous_page_number }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% for num in deleted_products.paginator.page_range %}
+                    <a href="?product_page={{ num }}" class="w-10 h-10 flex items-center justify-center rounded-xl {% if deleted_products.number == num %}bg-blue-600 text-white{% else %}bg-white border border-gray-200 text-gray-600 hover:bg-gray-50{% endif %} font-bold shadow-sm transition-all">
+                        {{ num }}
+                    </a>
+                    {% endfor %}
+
+                    {% if deleted_products.has_next %}
+                    <a href="?product_page={{ deleted_products.next_page_number }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        const ordersTab = document.getElementById('tab-orders');
+        const productsTab = document.getElementById('tab-products');
+        const ordersBtn = document.getElementById('tab-orders-btn');
+        const productsBtn = document.getElementById('tab-products-btn');
+
+        if (tab === 'orders') {
+            ordersTab.classList.remove('hidden');
+            productsTab.classList.add('hidden');
+            ordersBtn.classList.add('border-blue-600', 'text-blue-600', 'bg-white');
+            ordersBtn.classList.remove('border-transparent', 'text-gray-500');
+            productsBtn.classList.remove('border-blue-600', 'text-blue-600', 'bg-white');
+            productsBtn.classList.add('border-transparent', 'text-gray-500');
+        } else {
+            ordersTab.classList.add('hidden');
+            productsTab.classList.remove('hidden');
+            productsBtn.classList.add('border-blue-600', 'text-blue-600', 'bg-white');
+            productsBtn.classList.remove('border-transparent', 'text-gray-500');
+            ordersBtn.classList.remove('border-blue-600', 'text-blue-600', 'bg-white');
+            ordersBtn.classList.add('border-transparent', 'text-gray-500');
+        }
+    }
+</script>
+{% endblock %}

@@ -3,6 +3,11 @@
 {% load static %}
 
 {% block title %}Order Details - GearUp{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/user/order_details.css' %}">
+{% endblock %}
+
 {% block breadcrumbs %}
 <div class="breadcrumb py-3">
     <div class="container mx-auto px-4 lg:px-6">
@@ -61,7 +66,7 @@
                             #{{ order.order_number }}
                         </span>
                     </div>
-                    <p class="text-sm text-gray-500">Placed on {{ order.created_at|date:"F d, Y" }}</p>
+                    <p class="text-sm text-gray-500">Placed on {{ order.created_at|date:"d/m/Y" }}</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <a href="{% url 'orders:order_list' %}" 
@@ -157,7 +162,7 @@
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <p class="text-sm font-medium text-gray-500 mb-2">Order Date</p>
-                <p class="text-lg font-bold text-gray-900">{{ order.created_at|date:"M d, Y" }}</p>
+                <p class="text-lg font-bold text-gray-900">{{ order.created_at|date:"d/m/Y" }}</p>
                 <p class="text-xs text-gray-400 mt-1">{{ order.created_at|time:"g:i A" }}</p>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
@@ -360,7 +365,7 @@
                                         </svg>
                                         <div>
                                             <p class="text-xs text-gray-500">Order Date</p>
-                                            <p class="font-semibold text-gray-900">{{ order.created_at|date:"M d, Y" }}</p>
+                                            <p class="font-semibold text-gray-900">{{ order.created_at|date:"d/m/Y" }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -701,13 +706,13 @@
                                         {% if order.paid_at %}
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Paid On:</span>
-                                            <span class="font-medium text-gray-900">{{ order.paid_at|date:"M d, Y" }}</span>
+                                            <span class="font-medium text-gray-900">{{ order.paid_at|date:"d/m/Y" }}</span>
                                         </div>
                                         {% endif %}
                                         {% if order.refunded_at %}
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Refunded On:</span>
-                                            <span class="font-medium text-red-600">{{ order.refunded_at|date:"M d, Y" }}</span>
+                                            <span class="font-medium text-red-600">{{ order.refunded_at|date:"d/m/Y" }}</span>
                                         </div>
                                         {% endif %}
                                         {% if order.razorpay_payment_id %}
@@ -740,7 +745,7 @@
                             <h3 class="text-lg font-bold text-blue-800 mb-2">Not Satisfied with your purchase?</h3>
                             <p class="text-sm text-blue-600 mb-4">
                                 {% if order.delivered_at %}
-                                Delivered on {{ order.delivered_at|date:"M d, Y" }}
+                                Delivered on {{ order.delivered_at|date:"d/m/Y" }}
                                 {% endif %}
                                 You can request a return within 30 days of delivery.
                             </p>
@@ -775,7 +780,7 @@
                             </div>
                             <div class="space-y-4">
                                 <p class="text-sm text-orange-700">
-                                    Submitted on <strong>{{ order.return_requested_at|date:"F j, Y" }}</strong> at <strong>{{ order.return_requested_at|time:"g:i A" }}</strong>.
+                                    Submitted on <strong>{{ order.return_requested_at|date:"d/m/Y" }}</strong> at <strong>{{ order.return_requested_at|time:"g:i A" }}</strong>.
                                 </p>
                                 
                                 {% if order.return_reason %}
@@ -818,7 +823,7 @@
                             </div>
                             <div class="space-y-4">
                                 <p class="text-sm text-green-700">
-                                    Approved on <strong>{{ order.return_approved_at|date:"F j, Y" }}</strong>.
+                                    Approved on <strong>{{ order.return_approved_at|date:"d/m/Y" }}</strong>.
                                 </p>
                                 <div class="bg-green-100 p-4 rounded-lg">
                                     <h4 class="text-sm font-medium text-green-800 mb-2">Next Steps:</h4>
@@ -862,7 +867,7 @@
                             </div>
                             <div class="space-y-4">
                                 <p class="text-sm text-red-700">
-                                    Rejected on <strong>{{ order.return_rejected_at|date:"F j, Y" }}</strong>.
+                                    Rejected on <strong>{{ order.return_rejected_at|date:"d/m/Y" }}</strong>.
                                 </p>
                                 
                                 {% if order.return_rejection_reason %}
@@ -901,7 +906,7 @@
                         </div>
                         <div class="space-y-4">
                             <p class="text-sm text-purple-700">
-                                You reviewed this product on <strong>{{ existing_review.created_at|date:"F j, Y" }}</strong>
+                                You reviewed this product on <strong>{{ existing_review.created_at|date:"d/m/Y" }}</strong>
                             </p>
                             
                             <div class="bg-white p-5 rounded-xl border border-purple-200">
@@ -1054,10 +1059,10 @@
 
 
 <!-- Loading Overlay for Payment Retry -->
-<div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-2xl p-8 text-center max-w-sm mx-4">
-        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+<div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200] hidden">
+    <div class="bg-white rounded-2xl p-8 text-center max-w-sm mx-4 shadow-2xl">
+        <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <svg class="w-8 h-8 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
             </svg>
         </div>
@@ -1066,133 +1071,19 @@
     </div>
 </div>
 
-<style>
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-    
-    .animate-pulse {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-</style>
+<!-- Order Details Specific Scripts -->
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-    function retryRazorpayPayment(orderId) {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        
-        // Show loading
-        loadingOverlay.classList.remove('hidden');
-        
-        // Fetch Razorpay order for retry
-        fetch("{% url 'orders:retry_payment' order.order_id %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({})
-        })
-        .then(response => response.json())
-        .then(data => {
-            loadingOverlay.classList.add('hidden');
-            
-            if (data.success) {
-                const options = {
-                    key: data.key_id,
-                    amount: data.amount,
-                    currency: data.currency,
-                    name: 'GearUp - Retry Payment',
-                    description: `Payment for Order #{{ order.order_number }}`,
-                    order_id: data.order_id,
-                    handler: function(response) {
-                        // Payment successful - VERIFY the payment
-                        verifyPayment(response);
-                    },
-                    prefill: {
-                        name: data.user_name || '',
-                        email: data.user_email || '',
-                        contact: data.user_contact || ''
-                    },
-                    theme: {
-                        color: '#10b981'
-                    },
-                    modal: {
-                        ondismiss: function() {
-                            console.log('Payment modal closed');
-                        }
-                    }
-                };
-                
-                const rzp = new Razorpay(options);
-                rzp.open();
-                
-                rzp.on('payment.failed', function(response) {
-                    console.error('Payment failed:', response.error);
-                    // Redirect to payment failed page
-                    window.location.href = `{% url 'orders:payment_failed' order.order_id %}`;
-                });
-                
-            } else {
-                alert('Failed to initialize payment: ' + data.error);
-            }
-        })
-        .catch(error => {
-            loadingOverlay.classList.add('hidden');
-            console.error('Error:', error);
-            alert('Failed to initialize payment. Please try again.');
-        });
-    }
-    
-    function verifyPayment(paymentResponse) {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        loadingOverlay.classList.remove('hidden');
-        
-        // Create form data for verification
-        const formData = new FormData();
-        formData.append('razorpay_payment_id', paymentResponse.razorpay_payment_id);
-        formData.append('razorpay_order_id', paymentResponse.razorpay_order_id);
-        formData.append('razorpay_signature', paymentResponse.razorpay_signature);
-        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
-        
-        // Verify payment with server
-        fetch("{% url 'orders:verify_retry_payment' order.order_id %}", {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            loadingOverlay.classList.add('hidden');
-            if (response.ok) {
-                // Redirect to success page
-                window.location.href = "{% url 'orders:order_success' order.order_id %}";
-            } else {
-                // Show error and reload
-                alert('Payment verification failed. Please try again.');
-                window.location.reload();
-            }
-        })
-        .catch(error => {
-            loadingOverlay.classList.add('hidden');
-            console.error('Verification error:', error);
-            alert('Payment verification failed. Please try again.');
-            window.location.reload();
-        });
-    }
-    
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
+    window.ORDER_DETAILS_CONFIG = {
+        orderId: "{{ order.order_id }}",
+        orderNumber: "{{ order.order_number }}",
+        retryPaymentUrl: "{% url 'orders:retry_payment' order.order_id %}",
+        verifyRetryPaymentUrl: "{% url 'orders:verify_retry_payment' order.order_id %}",
+        orderSuccessUrl: "{% url 'orders:order_success' order.order_id %}",
+        paymentFailedUrl: "{% url 'orders:payment_failed' order.order_id %}"
+    };
 </script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="{% static 'js/user/order_details.js' %}"></script>
+{% endblock %}
 {% endblock %}
