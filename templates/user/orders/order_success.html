@@ -1,6 +1,9 @@
 {% extends "user/base.html" %}
 {% load static %}
 {% load humanize %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/user/order_success.css' %}">
+{% endblock %}
 {% block breadcrumbs %}
 <div class="breadcrumb py-3">
     <div class="container mx-auto px-4 lg:px-6">
@@ -63,7 +66,7 @@
         
         {% if order %}
         <!-- Order Details Card -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden mb-8">
+        <div class="bg-white success-card rounded-2xl shadow-lg border border-gray-200 overflow-hidden mb-8">
             <div class="bg-blue-600 px-8 py-6">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div>
@@ -91,11 +94,11 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Order Date</span>
-                                <span class="font-medium">{{ order.created_at|date:"F j, Y" }}</span>
+                                <span class="font-medium">{{ order.created_at|date:"d/m/Y" }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Order Time</span>
-                                <span class="font-medium">{{ order.created_at|date:"g:i A" }}</span>
+                                <span class="font-medium">{{ order.created_at|date:"H:i" }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Payment Method</span>
@@ -247,56 +250,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Order Success Styles -->
-<style>
-  /* Order Success Page Animations */
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .bg-white {
-    animation: fadeInUp 0.6s ease-out;
-  }
-</style>
-
-<!-- Order Success JavaScript -->
-<script>
-  (function() {
-    let secondsLeft = 5;
-    const countdownElement = document.getElementById('countdown');
-    
-    const timer = setInterval(function() {
-      secondsLeft--;
-      if (countdownElement) {
-        countdownElement.textContent = secondsLeft;
-      }
-      
-      if (secondsLeft <= 0) {
-        clearInterval(timer);
-        const container = document.querySelector('[data-order-list-url]');
-        const redirectUrl = container ? container.dataset.orderListUrl : null;
-        if (redirectUrl) {
-          window.location.href = redirectUrl;
-        }
-      }
-    }, 1000);
-
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      }
-    });
-  })();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="{% static 'js/user/order_success.js' %}"></script>
 {% endblock %}

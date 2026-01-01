@@ -275,14 +275,14 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="text-sm">
-                                <span class="font-semibold text-gray-900 block">{{ user.date_joined|date:"M d, Y" }}</span>
+                                <span class="font-semibold text-gray-900 block">{{ user.date_joined|date:"d/m/Y" }}</span>
                                 <span class="text-gray-600">{{ user.date_joined|timesince }} ago</span>
                             </div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="text-sm">
                                 {% if user.last_login %}
-                                <span class="font-semibold text-gray-900 block">{{ user.last_login|date:"M d, Y" }}</span>
+                                <span class="font-semibold text-gray-900 block">{{ user.last_login|date:"d/m/Y" }}</span>
                                 <span class="text-gray-600">{{ user.last_login|timesince }} ago</span>
                                 {% else %}
                                 <span class="text-gray-600">Never logged in</span>

@@ -1,0 +1,64 @@
+/* Product Details specific styles */
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+
+.shimmer {
+    background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#zoom-lens {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    width: 40px;
+    height: 40px;
+}
+
+#zoom-result {
+    border: 1px solid #d4d4d4;
+    width: 300px;
+    height: 300px;
+}
+
+.image-zoom {
+    transition: transform 0.3s ease;
+}
+
+.thumb-img {
+    transition: all 0.2s ease;
+}
+
+.thumb-img.active {
+    border-color: #3b82f6;
+    transform: scale(1.05);
+}
+
+.variant-item {
+    transition: all 0.3s ease;
+}
+
+.variant-item:hover {
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+/* Star Rating */
+.star-rating button {
+    transition: all 0.2s ease;
+}
+
+.star-rating button:hover {
+    transform: scale(1.2);
+}

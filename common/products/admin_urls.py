@@ -24,4 +24,6 @@ urlpatterns = [
     path('variant/edit/<uuid:variant_id>/', views.edit_variant_admin, name='edit_variant_admin'),
     path('variant/delete/<uuid:variant_id>/', views.delete_variant_admin, name='delete_variant_admin'),
     path('delete/<slug:slug>/', views.product_delete, name='product_delete'),
+    path('restore/<slug:slug>/', views.product_restore, name='product_restore'),
+    path('toggle-status/<slug:slug>/', views.product_toggle_status, name='product_toggle_status'),
 ]

@@ -1,11 +1,12 @@
 {% extends "admin/base_admin.html" %}
+{% load static %}
 {% load custom_filters %}
 
 {% block title %}Admin Dashboard - E-commerce Analytics{% endblock title %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/admin/dashboard.css' %}">
 
 <main class="p-6 bg-gray-50 min-h-screen space-y-8">
   <!-- Header Section -->
@@ -511,7 +512,7 @@
               {% endif %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ order.created_at|date:"M d, Y" }}
+              {{ order.created_at|date:"d/m/Y" }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               ₹{{ order.total_amount|floatformat:2 }}
@@ -603,6 +604,7 @@
           <div>
             <label class="block text-sm font-medium mb-1">Report Format</label>
             <select name="format" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <option value="pdf">PDF Document (.pdf)</option>
               <option value="excel">Excel (.xlsx) - Recommended</option>
               <option value="csv">CSV (.csv)</option>
             </select>
@@ -637,239 +639,17 @@
 <!-- Chartist JS -->
 <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
 
+<!-- Dashboard Configuration -->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Check if we have sales data
-    const hasSalesData = {{ daily_sales|length|default:0 }} > 0;
-    
-    if (hasSalesData) {
-      // Prepare chart data
-      const labels = [
-        {% for day in daily_sales %}
-          '{{ day.date }}',
-        {% endfor %}
-      ];
-      
-      const series = [
-        [
-          {% for day in daily_sales %}
-            {{ day.sales|default:0 }},
-          {% endfor %}
-        ]
-      ];
-      
-      // Chart options
-      const options = {
-        showArea: true,
-        showLine: true,
-        showPoint: true,
-        fullWidth: true,
-        axisX: {
-          showGrid: true,
-          showLabel: true,
-          offset: 30
-        },
-        axisY: {
-          showGrid: true,
-          showLabel: true,
-          onlyInteger: false,
-          scaleMinSpace: 40,
-          labelInterpolationFnc: function(value) {
-            if (value >= 1000000) {
-              return '₹' + (value / 1000000).toFixed(1) + 'M';
-            } else if (value >= 1000) {
-              return '₹' + (value / 1000).toFixed(0) + 'k';
-            }
-            return '₹' + value;
-          }
-        },
-        chartPadding: {
-          top: 20,
-          right: 20,
-          bottom: 30,
-          left: 40
-        },
-        low: 0
-      };
-      
-      // Create chart
-      new Chartist.Line('#sales-chart', {
-        labels: labels,
-        series: series
-      }, options);
-      
-      // Add custom CSS for the chart
-      const style = document.createElement('style');
-      style.textContent = `
-        .ct-series-a .ct-line {
-          stroke: #3b82f6;
-          stroke-width: 3px;
-          stroke-dasharray: 0;
-        }
-        
-        .ct-series-a .ct-point {
-          stroke: #3b82f6;
-          stroke-width: 8px;
-          stroke-linecap: round;
-        }
-        
-        .ct-series-a .ct-area {
-          fill: url(#gradient);
-          fill-opacity: 0.3;
-        }
-        
-        .ct-grid {
-          stroke: #e5e7eb;
-          stroke-dasharray: 0;
-          stroke-width: 1px;
-        }
-        
-        .ct-label {
-          color: #6b7280;
-          font-size: 0.75rem;
-          font-weight: 500;
-        }
-        
-        #sales-chart .ct-chart-line .ct-label.ct-vertical.ct-start {
-          justify-content: flex-start;
-        }
-      `;
-      document.head.appendChild(style);
-      
-      // Add SVG gradient for area fill
-      const chartContainer = document.querySelector('#sales-chart');
-      const svg = chartContainer.querySelector('svg');
-      if (svg) {
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-        gradient.setAttribute('id', 'gradient');
-        gradient.setAttribute('x1', '0%');
-        gradient.setAttribute('y1', '0%');
-        gradient.setAttribute('x2', '0%');
-        gradient.setAttribute('y2', '100%');
-        
-        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop1.setAttribute('offset', '0%');
-        stop1.setAttribute('stop-color', '#3b82f6');
-        stop1.setAttribute('stop-opacity', '0.5');
-        
-        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop2.setAttribute('offset', '100%');
-        stop2.setAttribute('stop-color', '#3b82f6');
-        stop2.setAttribute('stop-opacity', '0');
-        
-        gradient.appendChild(stop1);
-        gradient.appendChild(stop2);
-        defs.appendChild(gradient);
-        svg.insertBefore(defs, svg.firstChild);
-      }
-    } else {
-      console.log('No sales data available');
-    }
-    
-    // Add hover effects to cards
-    const cards = document.querySelectorAll('.transition-transform');
-    cards.forEach(card => {
-      card.addEventListener('mouseenter', () => {
-        card.style.transform = 'scale(1.02)';
-        card.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-      });
-      
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = 'scale(1)';
-        card.style.boxShadow = '';
-      });
-    });
-    
-    // Auto-refresh data every 5 minutes (optional)
-    // setTimeout(() => {
-    //   window.location.reload();
-    // }, 300000); // 5 minutes
-    
-    // Auto-submit filter form
-    const filterSelect = document.querySelector('select[name="filter"]');
-    if (filterSelect) {
-      filterSelect.addEventListener('change', function() {
-        this.form.submit();
-      });
-    }
-  });
-  
-  // Report Modal Functions
-  function openReportModal() {
-    document.getElementById('reportModal').classList.remove('hidden');
-    document.getElementById('reportModal').classList.add('flex');
-    document.body.style.overflow = 'hidden';
-  }
-  
-  function closeReportModal() {
-    document.getElementById('reportModal').classList.add('hidden');
-    document.getElementById('reportModal').classList.remove('flex');
-    document.body.style.overflow = 'auto';
-  }
-  
-  // Close modal when clicking outside
-  document.getElementById('reportModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeReportModal();
-    }
-  });
-  
-  // Close modal with Escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeReportModal();
-    }
-  });
+  window.DASHBOARD_CONFIG = {
+    salesData: [
+      {% for day in daily_sales %}
+        { date: '{{ day.date }}', sales: {{ day.sales|default:0 }} },
+      {% endfor %}
+    ]
+  };
 </script>
 
-<style>
-  /* Custom scrollbar for overflow containers */
-  .max-h-96::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .max-h-96::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
-  
-  .max-h-96::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-  }
-  
-  .max-h-96::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
-  }
-  
-  /* Smooth transitions */
-  .transition-transform {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  }
-  
-  /* Table hover effects */
-  tbody tr {
-    transition: background-color 0.2s ease;
-  }
-  
-  /* Modal animations */
-  #reportModal {
-    transition: opacity 0.3s ease;
-  }
-  
-  #reportModal > div {
-    transform: translateY(0);
-    transition: transform 0.3s ease;
-  }
-  
-  #reportModal.hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
-  
-  #reportModal.hidden > div {
-    transform: translateY(-20px);
-  }
-</style>
+<!-- External Dashboard Logic -->
+<script src="{% static 'js/admin/dashboard.js' %}"></script>
 {% endblock content %}

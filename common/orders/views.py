@@ -449,28 +449,20 @@ def cancel_order(request, order_id):
     """Cancel an order"""
     order = get_object_or_404(Order, order_id=order_id, user=request.user)
     wallet = get_object_or_404(Wallet, user=request.user)
-    transaction = Transaction.objects.filter(wallet=wallet)
-
-
-    
     if not order.can_be_cancelled:
-        print(request, 'This order cannot be cancelled.')
+        messages.error(request, 'This order cannot be cancelled.')
         return redirect('orders:order_list')
     
-    if order.payment_status == 'paid' and order.payment_method in ['razorpay', 'wallet']:
-        
-        order.order_status = 'cancelled'
-        # wallet.balance += order.total_amount
-        # transaction.create(
-        #     wallet=wallet,
-        #     transaction_type='refund',
-        #     description=f'Your Refund for order #{order.order_number} has been credited on your wallet',
-        #     amount=order.total_amount,
-        #     status='refunded'
-        # )
-        
-        # wallet.save()
+    if request.method == 'POST':
+        # Save cancellation reason
+        cancellation_reason = request.POST.get('cancellation_reason')
+        cancellation_description = request.POST.get('cancellation_description', '').strip()
+        if cancellation_reason:
+            order.cancellation_reason = cancellation_reason
+        if cancellation_description:
+            order.cancellation_description = cancellation_description
 
+    if order.payment_status == 'paid' and order.payment_method in ['razorpay', 'wallet']:
         try:
             refund_amount = order.total_amount
             transaction_obj = WalletService.make_refund(
@@ -492,30 +484,18 @@ def cancel_order(request, order_id):
             
             # Update order status and payment status
             order.payment_status = 'refunded'
+            messages.success(request, f'Order #{order.order_number} cancelled. ₹{refund_amount} has been refunded to your wallet.')
             
-            messages.success(request, f'Return approved for order #{order.order_number}. ₹{refund_amount} has been refunded to customer wallet.')
-            
-        except ValueError as e:
-            # Handle refund errors
-            messages.error(request, f'Refund failed: {str(e)}')
-            return redirect('orders:admin_view_return', order_id=order_id)
         except Exception as e:
-            # Handle other errors
             messages.error(request, f'Error processing refund: {str(e)}')
-            return redirect('orders:admin_view_return', order_id=order_id)
+            return redirect('orders:order_list')
 
     # Ensure order is marked cancelled
     order.order_status = 'cancelled'
     if not order.cancelled_at:
         order.cancelled_at = timezone.now()
         
-    # Save cancellation reason
-    cancellation_reason = request.POST.get('cancellation_reason')
-    cancellation_description = request.POST.get('cancellation_description', '').strip()
-    if cancellation_reason:
-        order.cancellation_reason = cancellation_reason
-    if cancellation_description:
-        order.cancellation_description = cancellation_description
+    # Reasons are already handled at the beginning of the function if it was a POST request
 
     # Update payment status logic
     if order.payment_status == 'refunded':

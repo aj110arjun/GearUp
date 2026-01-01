@@ -1,0 +1,111 @@
+/* Admin Product Edit specific styles */
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    color: #111827;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-control::placeholder {
+    color: #9ca3af;
+}
+
+.form-control:disabled,
+.form-control:read-only {
+    background-color: #f9fafb;
+    color: #4b5563;
+    cursor: not-allowed;
+}
+
+.form-control-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* Checkboxes */
+.form-check-input {
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+/* File Input */
+input[type="file"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px dashed #d1d5db;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+}
+
+input[type="file"]:hover {
+    border-color: #4f46e5;
+}
+
+input[type="file"]::file-selector-button {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    margin-right: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: #4338ca;
+}
+
+/* Range Slider */
+input[type="range"] {
+    width: 100%;
+    height: 0.5rem;
+    background-color: #e5e7eb;
+    border-radius: 0.5rem;
+    appearance: none;
+    cursor: pointer;
+    accent-color: #4f46e5;
+}
+
+/* Cropper.js Custom Styles */
+.cropper-view-box {
+    outline: 2px solid #4f46e5;
+    outline-color: rgba(79, 70, 229, 0.75);
+}
+
+.cropper-line {
+    background-color: #4f46e5;
+}
+
+.cropper-point {
+    background-color: #4f46e5;
+}
+
+/* Highlight for new items */
+@keyframes highlight-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.highlight-new {
+    animation: highlight-pulse 1s ease-out;
+}

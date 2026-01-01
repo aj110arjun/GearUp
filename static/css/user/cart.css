@@ -1,0 +1,118 @@
+/* Shopping Cart specific styles */
+
+.cart-item {
+    transition: all 0.3s ease;
+}
+
+.quantity-text {
+    min-width: 40px;
+    text-align: center;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.quantity-text.updating {
+    background-color: #f0f9ff;
+    color: #0369a1;
+}
+
+.cart-item.moving {
+    animation: moveOut 0.5s ease forwards;
+}
+
+@keyframes moveOut {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+#move-all-to-wishlist-btn:hover i {
+    animation: heartbeat 1.5s ease infinite;
+}
+
+.move-to-wishlist-btn:hover i {
+    animation: heartbeat 0.8s ease;
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.1); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Loading animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#cart-skeleton {
+    animation: fadeIn 0.3s ease;
+}
+
+#cart-content {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Button styles */
+.decrement-btn:disabled,
+.increment-btn:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+}
+
+.cart-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.cart-item:hover::before {
+    opacity: 1;
+}
+
+.remove-from-cart-btn,
+.move-to-wishlist-btn {
+    cursor: pointer !important;
+    transition: transform 0.2s ease, color 0.2s ease;
+    text-decoration: none !important;
+}
+
+.remove-from-cart-btn:hover {
+    transform: scale(1.05);
+}
+
+.move-to-wishlist-btn:hover {
+    transform: scale(1.05);
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .5;
+    }
+}

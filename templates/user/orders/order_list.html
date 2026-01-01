@@ -143,11 +143,11 @@
                             <div class="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                                 <span class="flex items-center">
                                     <i class="fas fa-calendar mr-1"></i>
-                                    {{ order.created_at|date:"M d, Y" }}
+                                    {{ order.created_at|date:"d/m/Y" }}
                                 </span>
                                 <span class="flex items-center">
                                     <i class="fas fa-clock mr-1"></i>
-                                    {{ order.created_at|date:"g:i A" }}
+                                    {{ order.created_at|date:"H:i" }}
                                 </span>
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ order.get_payment_status_class }}">
                                     {{ order.get_payment_status_display }}
@@ -258,15 +258,12 @@
                             
                             <!-- Cancel Order Button -->
                             {% if order.can_be_cancelled %}
-                            <form method="POST" action="{% url 'orders:cancel_order' order.order_id %}" class="inline">
-                                {% csrf_token %}
-                                <button type="button" 
-                                        onclick="confirmCancelOrderList('{{ order.order_number }}', '{{ order.order_id }}')"
-                                        class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
-                                    <i class="fas fa-times mr-2"></i>
-                                    Cancel Order
-                                </button>
-                            </form>
+                            <button type="button" 
+                                    onclick="confirmCancelOrderList('{{ order.order_number }}', '{{ order.order_id }}')"
+                                    class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-times mr-2"></i>
+                                Cancel Order
+                            </button>
                             {% else %}
                             <button disabled
                                     class="w-full bg-gray-300 text-gray-500 px-4 py-3 rounded-lg font-medium cursor-not-allowed flex items-center justify-center">
@@ -320,7 +317,7 @@
                             {% if order.paid_at %}
                             <span class="flex items-center">
                                 <i class="fas fa-check-circle text-green-500 mr-1"></i>
-                                Paid on {{ order.paid_at|date:"M d, Y" }}
+                                Paid on {{ order.paid_at|date:"d/m/Y" }}
                             </span>
                             {% endif %}
                         </div>
