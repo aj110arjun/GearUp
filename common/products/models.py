@@ -9,6 +9,7 @@ from django.conf import settings
 
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from core.validators import validate_image_file
 
 
 class Category(models.Model):
@@ -78,7 +79,7 @@ class Product(models.Model):
     brand = models.CharField(max_length=100)
     
     # Image
-    image = CloudinaryField('products/')
+    image = CloudinaryField('products/', validators=[validate_image_file])
     
     # Categorization
     category = models.ForeignKey(
@@ -326,7 +327,7 @@ class ProductImage(models.Model):
     """Product images"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = CloudinaryField('product_images/')
+    image = CloudinaryField('product_images/', validators=[validate_image_file])
     alt_text = models.CharField(max_length=200, blank=True)
     is_primary = models.BooleanField(default=False)
     display_order = models.IntegerField(default=0)

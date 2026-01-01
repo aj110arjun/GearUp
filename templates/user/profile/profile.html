@@ -374,6 +374,12 @@
                     </button>
                     {% endif %}
                   </div>
+                  {% if form.profile_image.errors %}
+                  <div class="form-error-text mt-3 text-red-500 text-sm flex items-center justify-center sm:justify-start">
+                    <i class="fas fa-exclamation-circle mr-1.5"></i>
+                    <span>{{ form.profile_image.errors.0 }}</span>
+                  </div>
+                  {% endif %}
                 </div>
               </div>
 

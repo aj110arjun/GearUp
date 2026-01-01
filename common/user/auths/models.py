@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from core.services import generate_otp_code
+from core.validators import validate_image_file
 
 
 class UserModel(AbstractUser):
@@ -16,6 +17,7 @@ class UserModel(AbstractUser):
         folder='gearup/profiles/',
         blank=True,
         null=True,
+        validators=[validate_image_file],
         transformation=[
             {'width': 200, 'height': 200, 'crop': 'fill'},
         ]
