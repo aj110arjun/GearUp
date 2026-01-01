@@ -558,7 +558,7 @@ def admin_order_list(request):
             Q(user__first_name__icontains=search_query) |
             Q(user__last_name__icontains=search_query) |
             Q(product__name__icontains=search_query) |
-            Q(shipping_address__phone__icontains=search_query)
+            Q(shipping_address__phone_number__icontains=search_query)
         )
     
     # Status filters
@@ -1448,7 +1448,25 @@ def admin_view_return(request, order_id):
 @never_cache
 def order_detail(request, order_id):
     """Display order details"""
+    from common.products.models import ProductReview
+    from common.products.forms import ProductReviewForm
+    
     order = get_object_or_404(Order, order_id=order_id, user=request.user)
+    
+    # Check if user has already reviewed this product
+    existing_review = ProductReview.objects.filter(
+        product=order.product,
+        user=request.user
+    ).first()
+    
+    # Show review form if order is delivered, paid, and not reviewed
+    can_review = (order.order_status == 'delivered' and 
+                  order.payment_status == 'paid' and 
+                  not existing_review)
+    
+    # Show review section if order is delivered (regardless of review status)
+    show_review_section = (order.order_status == 'delivered' and 
+                          order.payment_status == 'paid')
     
     context = {
         'order': order,
@@ -1456,11 +1474,56 @@ def order_detail(request, order_id):
         'is_return_requested': order.is_return_requested,
         'is_return_approved': order.is_return_approved,
         'is_return_rejected': order.is_return_rejected,
-        'CANCELLATION_REASON_CHOICES': Order.CANCELLATION_REASON_CHOICES
+        'CANCELLATION_REASON_CHOICES': Order.CANCELLATION_REASON_CHOICES,
+        'can_review': can_review,
+        'existing_review': existing_review,
+        'show_review_section': show_review_section,
+        'review_form': ProductReviewForm() if can_review else None,
     }
     return render(request, 'user/orders/order_details.html', context)
 
+@login_required(login_url='user_auth:signin')
+@require_POST
+def submit_order_review(request, order_id):
+    """Submit a product review from order details page"""
+    from common.products.models import ProductReview
+    from common.products.forms import ProductReviewForm
+    
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
+    
+    # Verify order is eligible for review
+    if order.order_status != 'delivered' or order.payment_status != 'paid':
+        messages.error(request, 'Only delivered and paid orders can be reviewed.')
+        return redirect('orders:order_detail', order_id=order_id)
+    
+    # Check if user already reviewed this product
+    existing_review = ProductReview.objects.filter(
+        product=order.product,
+        user=request.user
+    ).first()
+    
+    if existing_review:
+        messages.warning(request, 'You have already reviewed this product.')
+        return redirect('orders:order_detail', order_id=order_id)
+    
+    form = ProductReviewForm(request.POST)
+    if form.is_valid():
+        review = form.save(commit=False)
+        review.product = order.product
+        review.user = request.user
+        review.verified_purchase = True  # Since review is from order
+        review.save()
+        
+        messages.success(request, 'Thank you! Your review has been submitted successfully.')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f'{field}: {error}')
+    
+    return redirect('orders:order_detail', order_id=order_id)
+
 @login_required
+
 def track_order(request, order_id):
     """Track order status with timeline"""
     order = get_object_or_404(Order, order_id=order_id, user=request.user)
