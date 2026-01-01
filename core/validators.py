@@ -51,3 +51,34 @@ class CustomPasswordValidator:
             "Your password must be at least 8 characters long, "
             "cannot be entirely numeric, and should not be a common password."
         )
+
+def validate_image_file(value):
+    import os
+    from django.core.exceptions import ValidationError
+    from cloudinary.models import CloudinaryResource
+    
+    # Skip validation if it's already a CloudinaryResource (already uploaded and validated)
+    if isinstance(value, CloudinaryResource):
+        return
+
+    if not hasattr(value, 'name'):
+        return
+
+    ext = os.path.splitext(value.name)[1]
+    valid_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+    if not ext.lower() in valid_extensions:
+        raise ValidationError(f'Unsupported file extension. Allowed extensions are: {", ".join(valid_extensions)}')
+    
+    # Check if it's actually an image using PIL
+    if hasattr(value, 'file'):
+        from PIL import Image
+        try:
+            # Need to seek to beginning if it was read before
+            if hasattr(value, 'seek'):
+                value.seek(0)
+            img = Image.open(value)
+            img.verify()
+            if hasattr(value, 'seek'):
+                value.seek(0)
+        except Exception:
+            raise ValidationError('Invalid image file.')

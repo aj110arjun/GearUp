@@ -138,9 +138,18 @@ class OTPVerificationForm(forms.Form):
         return otp_code
 
 
+from core.validators import validate_image_file
+
+
 class ProfileUpdateForm(UserChangeForm):
     password = None  # Remove password field from the form
     
+    profile_image = forms.ImageField(
+        required=False,
+        validators=[validate_image_file],
+        widget=forms.FileInput(attrs={'accept': 'image/*'})
+    )
+
     class Meta:
         model = UserModel
         fields = [
