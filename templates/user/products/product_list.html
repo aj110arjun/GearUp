@@ -31,8 +31,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/user/product_list.css' %}">
 {% endblock %}
-
-
+{% block content %}
 <div class="container mx-auto my-8 px-4 lg:px-6">
   
   <!-- Page Header -->
@@ -353,8 +352,8 @@
   {% include 'partials/pagination.html' with page_obj=products primary_color='emerald' %}
 
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/user/product_list.js' %}"></script>
-{% endblock %}
 {% endblock %}
