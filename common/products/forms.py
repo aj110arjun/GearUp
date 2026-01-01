@@ -13,6 +13,7 @@ from django.utils import timezone
 from cloudinary.models import CloudinaryField
 from PIL import Image
 
+from core.validators import validate_image_file
 from .models import Product, Category, ProductVariant, ProductImage, ProductOffer, CategoryOffer, ProductReview
 
 
@@ -27,7 +28,7 @@ class ProductCreateForm(forms.ModelForm):
             'accept': 'image/*'
         }),
         help_text='Main product image (required)',
-        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])]
+        validators=[validate_image_file]
     )
     
     class Meta:
@@ -149,7 +150,7 @@ class ProductEditForm(forms.ModelForm):
             'accept': 'image/*'
         }),
         help_text='Change main product image (optional)',
-        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])]
+        validators=[validate_image_file]
     )
     
     class Meta:
@@ -404,7 +405,7 @@ class ProductImageForm(forms.ModelForm):
             'class': 'form-control',
             'accept': 'image/*'
         }),
-        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])]
+        validators=[validate_image_file]
     )
     
     class Meta:
