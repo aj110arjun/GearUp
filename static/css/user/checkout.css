@@ -1,0 +1,12 @@
+/* Checkout specific styles */
+.payment-option, .address-option {
+    transition: all 0.3s ease;
+}
+
+#loading-overlay {
+    backdrop-filter: blur(4px);
+}
+
+#payment-details {
+    transition: all 0.3s ease;
+}

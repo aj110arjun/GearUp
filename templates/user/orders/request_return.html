@@ -28,8 +28,8 @@
                      class="w-20 h-20 object-cover rounded-lg border border-gray-200">
                 <div>
                     <h3 class="font-medium text-gray-900">{{ order.product.name }}</h3>
-                    <p class="text-sm text-gray-600">Ordered on {{ order.created_at|date:"M d, Y" }}</p>
-                    <p class="text-sm text-gray-600">Delivered on {{ order.delivered_at|date:"M d, Y" }}</p>
+                    <p class="text-sm text-gray-600">Ordered on {{ order.created_at|date:"d/m/Y" }}</p>
+                    <p class="text-sm text-gray-600">Delivered on {{ order.delivered_at|date:"d/m/Y" }}</p>
                 </div>
             </div>
         </div>

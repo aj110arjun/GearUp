@@ -1,0 +1,83 @@
+/* Dashboard specific styles */
+.ct-series-a .ct-line {
+    stroke: #3b82f6;
+    stroke-width: 3px;
+    stroke-dasharray: 0;
+}
+
+.ct-series-a .ct-point {
+    stroke: #3b82f6;
+    stroke-width: 8px;
+    stroke-linecap: round;
+}
+
+.ct-series-a .ct-area {
+    fill: url(#gradient);
+    fill-opacity: 0.3;
+}
+
+.ct-grid {
+    stroke: #e5e7eb;
+    stroke-dasharray: 0;
+    stroke-width: 1px;
+}
+
+.ct-label {
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+#sales-chart .ct-chart-line .ct-label.ct-vertical.ct-start {
+    justify-content: flex-start;
+}
+
+/* Custom scrollbar for overflow containers */
+.max-h-96::-webkit-scrollbar {
+    width: 6px;
+}
+
+.max-h-96::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.max-h-96::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.max-h-96::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Smooth transitions */
+.transition-transform {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Table hover effects */
+tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+/* Modal animations */
+#reportModal {
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+#reportModal > div {
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
+
+#reportModal.hidden {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#reportModal.hidden > div {
+    transform: translateY(-20px);
+}

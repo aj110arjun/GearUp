@@ -12,7 +12,7 @@ urlpatterns = [
     
     path('details/<uuid:order_id>/', views.order_detail, name='order_detail'),
     path('<uuid:order_id>/track/', views.track_order, name='track_order'),
-    path('<uuid:order_id>/cancel/', views.cancel_order, name='cancel_order'),
+    path('cancel/<uuid:order_id>/', views.cancel_order, name='cancel_order'),
     path('<uuid:order_id>/request-return/', views.request_return, name='request_return'),
     path('<uuid:order_id>/invoice/', views.download_invoice, name='download_invoice'),
     path('<uuid:order_id>/receipt/', views.download_receipt, name='download_receipt'),

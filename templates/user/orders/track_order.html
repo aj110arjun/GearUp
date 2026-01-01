@@ -11,7 +11,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Track Your Order</h1>
-                    <p class="text-gray-600 mt-2">Order #{{ order.order_number }} • Placed on {{ order.created_at|date:"F d, Y" }}</p>
+                    <p class="text-gray-600 mt-2">Order #{{ order.order_number }} • Placed on {{ order.created_at|date:"d/m/Y" }}</p>
                 </div>
                 <div class="mt-4 md:mt-0">
                     <a href="{% url 'orders:order_list' %}" 
@@ -57,7 +57,7 @@
                         {% if estimated_delivery %}
                         <div class="text-right">
                             <p class="text-sm text-gray-600">Estimated Delivery</p>
-                            <p class="text-lg font-semibold text-gray-900">{{ estimated_delivery|date:"F d, Y" }}</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ estimated_delivery|date:"d/m/Y" }}</p>
                         </div>
                         {% endif %}
                     </div>
@@ -94,7 +94,7 @@
                                 
                                 <!-- Status date -->
                                 {% if status.date %}
-                                <span class="text-xs text-gray-500 mt-1">{{ status.date|date:"M d, Y" }}</span>
+                                <span class="text-xs text-gray-500 mt-1">{{ status.date|date:"d/m/Y" }}</span>
                                 {% endif %}
                                 
                                 <!-- Description -->
@@ -127,7 +127,7 @@
                                         {% endif %}
                                     </div>
                                     {% if status.date %}
-                                    <span class="text-sm text-gray-500">{{ status.date|date:"M d, Y" }}</span>
+                                    <span class="text-sm text-gray-500">{{ status.date|date:"d/m/Y" }}</span>
                                     {% endif %}
                                 </div>
                                 <p class="text-sm text-gray-600 mt-1">{{ status.description }}</p>
@@ -154,10 +154,10 @@
                             <p class="text-gray-600 mt-1">
                                 {% if is_cancelled %}
                                 This order has been cancelled. 
-                                {% if order.cancelled_at %}Cancelled on {{ order.cancelled_at|date:"F d, Y" }}.{% endif %}
+                                {% if order.cancelled_at %}Cancelled on {{ order.cancelled_at|date:"d/m/Y" }}.{% endif %}
                                 {% else %}
                                 This order has been returned. 
-                                {% if order.returned_at %}Returned on {{ order.returned_at|date:"F d, Y" }}.{% endif %}
+                                {% if order.returned_at %}Returned on {{ order.returned_at|date:"d/m/Y" }}.{% endif %}
                                 {% endif %}
                             </p>
                         </div>
@@ -180,7 +180,7 @@
                         
                         <div class="flex justify-between">
                             <span class="text-gray-600">Order Date</span>
-                            <span class="font-medium text-gray-900">{{ order.created_at|date:"M d, Y" }}</span>
+                            <span class="font-medium text-gray-900">{{ order.created_at|date:"d/m/Y" }}</span>
                         </div>
                         
                         <div class="flex justify-between">

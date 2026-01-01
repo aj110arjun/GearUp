@@ -29,4 +29,6 @@ urlpatterns = [
     
     path('download-report/csv/', views.download_sales_report, 
          {'format': 'csv'}, name='download_csv'),
+    
+    path('cancellations/', views.admin_cancellations, name='admin_cancellations'),
 ]

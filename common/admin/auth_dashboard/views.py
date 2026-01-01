@@ -694,3 +694,32 @@ def coupon_usage_list(request):
     }
     
     return render(request, 'admin/coupons/coupon_usage_list.html', context)
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def admin_cancellations(request):
+    """View to see cancelled orders and deleted products"""
+    # 1. Cancelled Orders
+    cancelled_orders_qs = Order.objects.filter(order_status='cancelled').select_related(
+        'user', 'product', 'variant', 'shipping_address'
+    ).order_by('-cancelled_at')
+    
+    # 2. Deleted Products
+    deleted_products_qs = Product.objects.filter(is_deleted=True).select_related('category').order_by('-updated_at')
+    
+    # Pagination for orders
+    order_page = request.GET.get('order_page', 1)
+    order_paginator = Paginator(cancelled_orders_qs, 10)
+    cancelled_orders = order_paginator.get_page(order_page)
+    
+    # Pagination for products
+    product_page = request.GET.get('product_page', 1)
+    product_paginator = Paginator(deleted_products_qs, 10)
+    deleted_products = product_paginator.get_page(product_page)
+    
+    context = {
+        'cancelled_orders': cancelled_orders,
+        'deleted_products': deleted_products,
+        'title': 'Cancellations & Archives'
+    }
+    return render(request, 'admin/archives/cancellations.html', context)

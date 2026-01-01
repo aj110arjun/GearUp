@@ -256,6 +256,12 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Date formats
+USE_L10N = False
+DATE_FORMAT = 'd/m/Y'
+DATETIME_FORMAT = 'd/m/Y H:i'
+SHORT_DATE_FORMAT = 'd/m/Y'
+
 AUTH_USER_MODEL = 'auths.UserModel'
 
 
@@ -263,6 +269,9 @@ AUTH_USER_MODEL = 'auths.UserModel'
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

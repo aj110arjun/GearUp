@@ -37,9 +37,9 @@
                         {{ order.order_number }}
                     </span>
                     <span class="w-px h-4 bg-gray-200 hidden sm:block"></span>
-                    <span class="flex items-center"><i class="far fa-calendar-alt mr-2 text-blue-500/70"></i>{{ order.return_requested_at|date:"F d, Y" }}</span>
+                    <span class="flex items-center"><i class="far fa-calendar-alt mr-2 text-blue-500/70"></i>{{ order.return_requested_at|date:"d/m/Y" }}</span>
                     <span class="w-px h-4 bg-gray-200 hidden sm:block"></span>
-                    <span class="flex items-center"><i class="far fa-clock mr-2 text-blue-500/70"></i>{{ order.return_requested_at|date:"g:i A" }}</span>
+                    <span class="flex items-center"><i class="far fa-clock mr-2 text-blue-500/70"></i>{{ order.return_requested_at|date:"H:i" }}</span>
                 </div>
             </div>
             
@@ -104,10 +104,10 @@
                         <div class="bg-gray-50 rounded-2xl border border-gray-100 p-5 transition-all hover:shadow-md">
                             <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Request Handed</p>
                             <p class="text-lg font-extrabold text-gray-900">
-                                {{ order.return_requested_at|date:"M d, Y" }}
+                                {{ order.return_requested_at|date:"d/m/Y" }}
                             </p>
                             <p class="text-sm font-medium text-blue-600 mt-1 flex items-center">
-                                <i class="far fa-clock mr-1.5 opacity-70"></i>{{ order.return_requested_at|date:"g:i A" }}
+                                <i class="far fa-clock mr-1.5 opacity-70"></i>{{ order.return_requested_at|date:"H:i" }}
                             </p>
                         </div>
                         
@@ -115,10 +115,10 @@
                         <div class="bg-emerald-50 rounded-2xl border border-emerald-100 p-5 transition-all hover:shadow-md">
                             <p class="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">Approved On</p>
                             <p class="text-lg font-extrabold text-emerald-800">
-                                {{ order.return_approved_at|date:"M d, Y" }}
+                                {{ order.return_approved_at|date:"d/m/Y" }}
                             </p>
                             <p class="text-sm font-bold text-emerald-500 mt-1 flex items-center">
-                                <i class="far fa-clock mr-1.5 opacity-70"></i>{{ order.return_approved_at|date:"g:i A" }}
+                                <i class="far fa-clock mr-1.5 opacity-70"></i>{{ order.return_approved_at|date:"H:i" }}
                             </p>
                         </div>
                         {% endif %}
@@ -127,10 +127,10 @@
                         <div class="bg-rose-50 rounded-2xl border border-rose-100 p-5 transition-all hover:shadow-md">
                             <p class="text-xs font-bold text-rose-600 uppercase tracking-widest mb-2">Rejected On</p>
                             <p class="text-lg font-extrabold text-rose-800">
-                                {{ order.return_rejected_at|date:"M d, Y" }}
+                                {{ order.return_rejected_at|date:"d/m/Y" }}
                             </p>
                             <p class="text-sm font-bold text-rose-500 mt-1 flex items-center">
-                                <i class="far fa-clock mr-1.5 opacity-70"></i>{{ order.return_rejected_at|date:"g:i A" }}
+                                <i class="far fa-clock mr-1.5 opacity-70"></i>{{ order.return_rejected_at|date:"H:i" }}
                             </p>
                         </div>
                         {% endif %}
@@ -423,7 +423,7 @@
                             <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.1em] mb-1 text-nowrap truncate">Order Date</p>
                             <p class="text-sm font-bold text-gray-900 flex items-center truncate">
                                 <i class="far fa-calendar mr-1.5 text-blue-500/50 text-[10px] flex-shrink-0"></i>
-                                <span class="truncate">{{ order.created_at|date:"M d, Y" }}</span>
+                                <span class="truncate">{{ order.created_at|date:"d/m/Y" }}</span>
                             </p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 transition-colors hover:bg-white hover:shadow-sm overflow-hidden min-w-0">

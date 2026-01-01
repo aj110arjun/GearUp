@@ -72,21 +72,26 @@ def product_listing(request):
             Q(name__icontains=search_query) |
             Q(sku__icontains=search_query) |
             Q(brand__icontains=search_query) |
-            Q(description__icontains=search_query)
+            Q(description__icontains=search_query) |
+            Q(category__name__icontains=search_query)
         )
 
     if category_id:
-        products = products.filter(category__id=category_id)
+        try:
+            products = products.filter(category__id=category_id)
+        except (ValueError, ValidationError):
+            pass
 
     if stock_status:
         if stock_status == 'true': # In Stock
+            # Products that have at least one variant with stock > 0
             products = products.filter(variants__stock_quantity__gt=0, variants__is_deleted=False).distinct()
         elif stock_status == 'false': # Out of Stock
-            # This is tricky in Django ORM with distinct. 
-            # Usually, we want products where NO active/non-deleted variant has stock.
-            # For simplicity, we'll keep the current logic but add is_deleted filter.
-            products = products.filter(variants__stock_quantity=0, variants__is_deleted=False).distinct()
+            # Products where NO variant has stock > 0
+            # This correctly includes products with no variants at all
+            products = products.exclude(variants__stock_quantity__gt=0, variants__is_deleted=False)
         elif stock_status == 'low': # Low Stock
+            # Products that have at least one variant with stock between 1 and 10
             products = products.filter(variants__stock_quantity__lte=10, variants__stock_quantity__gt=0, variants__is_deleted=False).distinct()
 
     if active_status:
@@ -143,7 +148,7 @@ def product_listing(request):
             'is_active': active_status,
             'sort': sort_by,
         },
-        'applied_filters': [] # Optional: List of readable active filters for badges
+        'applied_filters': [] # List of readable active filters for badges
     }
     
     # Helper to create list of applied filters
@@ -152,13 +157,28 @@ def product_listing(request):
             cat = Category.objects.get(id=category_id)
             context['applied_filters'].append(f"Category: {cat.name}")
         except: pass
+    
     if stock_status:
-        map_stock = {'true': 'In Stock', 'false': 'Out of Stock', 'low': 'Low Stock'}
+        map_stock = {'true': 'Status: In Stock', 'false': 'Status: Out of Stock', 'low': 'Status: Low Stock'}
         context['applied_filters'].append(map_stock.get(stock_status, 'Stock Filter'))
+    
     if active_status:
-        context['applied_filters'].append('Active' if active_status == 'true' else 'Inactive')
+        context['applied_filters'].append('Visibility: Active' if active_status == 'true' else 'Visibility: Inactive')
+    
     if search_query:
         context['applied_filters'].append(f"Search: {search_query}")
+
+    if sort_by:
+        map_sort = {
+            'name': 'Sort: Name (A-Z)',
+            'price_asc': 'Sort: Price (Low to High)',
+            'price_desc': 'Sort: Price (High to Low)',
+            'stock_asc': 'Sort: Stock (Low to High)',
+            'stock_desc': 'Sort: Stock (High to Low)',
+            'newest': 'Sort: Newest First'
+        }
+        if sort_by in map_sort:
+            context['applied_filters'].append(map_sort[sort_by])
 
     return render(request, 'admin/products/product_list.html', context)
 
@@ -1276,3 +1296,25 @@ def ajax_reviews(request, product_slug):
         'current_page': page,
         'total_pages': paginator.num_pages,
     })
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def product_restore(request, slug):
+    """Restore a soft-deleted product"""
+    product = get_object_or_404(Product, slug=slug)
+    product.is_deleted = False
+    product.is_active = True
+    product.save()
+    messages.success(request, f'Product "{product.name}" has been restored successfully!')
+    return redirect('products:product_detail', product_slug=slug)
+
+@staff_member_required(login_url='auth_dashboard:signin')
+@never_cache
+def product_toggle_status(request, slug):
+    """Toggle product active/inactive status"""
+    product = get_object_or_404(Product, slug=slug)
+    product.is_active = not product.is_active
+    product.save()
+    status = "activated" if product.is_active else "deactivated"
+    messages.success(request, f'Product "{product.name}" has been {status}!')
+    return redirect('products:product_detail', product_slug=slug)
