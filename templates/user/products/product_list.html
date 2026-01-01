@@ -36,10 +36,10 @@
 <div class="container mx-auto my-8 px-4 lg:px-6">
   
   <!-- Results Header & Filters -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 transform transition-all hover:shadow-md">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-emerald-500 p-6 mb-8 transform transition-all hover:shadow-md">
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
       <div>
-        <h1 class="text-3xl font-black text-gray-900 tracking-tight">Shop Premium Gear</h1>
+        <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-900 tracking-tight">Shop Premium Gear</h1>
         <p class="text-gray-500 font-medium">Discover <strong>{{ products.paginator.count }}</strong> professional survival essentials</p>
       </div>
       <div class="flex items-center gap-2">
@@ -219,7 +219,7 @@
                 {% if user.is_authenticated %}
                   {% if first_variant and first_variant.stock_quantity > 0 %}
                     <button type="button"
-                            class="cart-btn w-full py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-2 {% if first_variant.id in cart_variant_ids %}bg-emerald-600 text-white shadow-emerald-100{% else %}bg-gray-900 text-white hover:bg-black hover:shadow-md shadow-gray-200{% endif %}"
+                            class="cart-btn w-full py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-2 {% if first_variant.id in cart_variant_ids %}bg-emerald-700 text-white shadow-emerald-200{% else %}bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-md shadow-emerald-100{% endif %}"
                             data-product-id="{{ product.id }}" 
                             data-variant-id="{{ first_variant.id }}">
                       <i class="{% if first_variant.id in cart_variant_ids %}fas fa-check-circle{% else %}fas fa-shopping-bag{% endif %}"></i>
@@ -232,7 +232,7 @@
                   {% endif %}
                   
                   <a href="{% url 'products:product_detail_user' product.slug %}" 
-                     class="w-full py-2 px-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all text-center flex items-center justify-center gap-1.5">
+                     class="w-full py-2 px-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 transition-all text-center flex items-center justify-center gap-1.5">
                     View Details
                   </a>
                 {% else %}
@@ -262,7 +262,7 @@
         <h3 class="text-2xl font-black text-gray-900 mb-2">No gear matches your search</h3>
         <p class="text-gray-500 font-medium max-w-xs text-center mb-10">We couldn't find any professional survival gear with the current filters.</p>
         <a href="{% url 'products:product_list_user' %}" 
-           class="px-10 py-4 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all shadow-xl shadow-gray-200">
+           class="px-10 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100">
           Reset all filters
         </a>
       </div>

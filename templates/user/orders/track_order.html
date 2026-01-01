@@ -33,12 +33,12 @@
                             <h2 class="text-xl font-bold text-gray-900">Current Status</h2>
                             <div class="mt-2 flex items-center">
                                 <span class="px-3 py-1.5 text-sm font-semibold rounded-full 
-                                    {% if order.order_status == 'delivered' %}bg-green-100 text-green-800
-                                    {% elif order.order_status == 'pending' %}bg-yellow-100 text-yellow-800
-                                    {% elif order.order_status == 'confirmed' %}bg-blue-100 text-blue-800
-                                    {% elif order.order_status == 'processing' %}bg-indigo-100 text-indigo-800
-                                    {% elif order.order_status == 'shipped' %}bg-purple-100 text-purple-800
-                                    {% elif order.order_status == 'cancelled' %}bg-red-100 text-red-800
+                                    {% if order.order_status == 'delivered' %}bg-emerald-100 text-emerald-800
+                                    {% elif order.order_status == 'pending' %}bg-amber-100 text-amber-800
+                                    {% elif order.order_status == 'confirmed' %}bg-teal-100 text-teal-800
+                                    {% elif order.order_status == 'processing' %}bg-emerald-100 text-emerald-800
+                                    {% elif order.order_status == 'shipped' %}bg-teal-100 text-teal-800
+                                    {% elif order.order_status == 'cancelled' %}bg-rose-100 text-rose-800
                                     {% elif order.order_status == 'returned' %}bg-gray-100 text-gray-800
                                     {% else %}bg-gray-100 text-gray-800{% endif %}">
                                     {{ order.get_order_status_display }}
@@ -78,13 +78,13 @@
                             <div class="flex flex-col items-center z-10">
                                 <!-- Status point -->
                                 <div class="w-10 h-10 rounded-full flex items-center justify-center mb-3 relative
-                                    {% if status.completed %}bg-green-500 text-white{% else %}bg-gray-200 text-gray-400{% endif %}
-                                    {% if status.current %}ring-4 ring-green-100{% endif %}">
+                                    {% if status.completed %}bg-emerald-500 text-white{% else %}bg-gray-200 text-gray-400{% endif %}
+                                    {% if status.current %}ring-4 ring-emerald-100{% endif %}">
                                     <i class="{{ status.icon }} {% if status.completed %}text-white{% else %}text-gray-400{% endif %}"></i>
                                     
                                     {% if status.current %}
                                     <div class="absolute -top-2 -right-2">
-                                        <div class="w-4 h-4 bg-green-500 rounded-full animate-ping"></div>
+                                        <div class="w-4 h-4 bg-emerald-500 rounded-full animate-ping"></div>
                                     </div>
                                     {% endif %}
                                 </div>
@@ -111,10 +111,10 @@
                         <h3 class="text-lg font-semibold text-gray-900">Status Details</h3>
                         {% for status in status_flow %}
                         <div class="flex items-start p-4 rounded-lg 
-                            {% if status.completed %}bg-green-50 border border-green-100{% else %}bg-gray-50{% endif %}">
+                            {% if status.completed %}bg-emerald-50 border border-emerald-100{% else %}bg-gray-50{% endif %}">
                             <div class="flex-shrink-0">
                                 <div class="w-8 h-8 rounded-full flex items-center justify-center
-                                    {% if status.completed %}bg-green-100 text-green-600{% else %}bg-gray-100 text-gray-400{% endif %}">
+                                    {% if status.completed %}bg-emerald-100 text-emerald-600{% else %}bg-gray-100 text-gray-400{% endif %}">
                                     <i class="{{ status.icon }} text-sm"></i>
                                 </div>
                             </div>
@@ -123,7 +123,7 @@
                                     <div>
                                         <span class="font-medium text-gray-900">{{ status.label }}</span>
                                         {% if status.current %}
-                                        <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">Current</span>
+                                        <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full">Current</span>
                                         {% endif %}
                                     </div>
                                     {% if status.date %}
@@ -186,9 +186,9 @@
                         <div class="flex justify-between">
                             <span class="text-gray-600">Payment Status</span>
                             <span class="px-2 py-1 text-xs font-medium rounded-full
-                                {% if order.payment_status == 'paid' %}bg-green-100 text-green-800
-                                {% elif order.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
-                                {% elif order.payment_status == 'failed' %}bg-red-100 text-red-800
+                                {% if order.payment_status == 'paid' %}bg-emerald-100 text-emerald-800
+                                {% elif order.payment_status == 'pending' %}bg-amber-100 text-amber-800
+                                {% elif order.payment_status == 'failed' %}bg-rose-100 text-rose-800
                                 {% else %}bg-gray-100 text-gray-800{% endif %}">
                                 {{ order.get_payment_status_display }}
                             </span>
@@ -298,7 +298,7 @@
                         
                         {% if order.can_be_returned %}
                         <a href="{% url 'orders:request_return' order.order_id %}"
-                           class="w-full flex items-center justify-center px-4 py-3 border border-blue-300 rounded-lg text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 transition">
+                           class="w-full flex items-center justify-center px-4 py-3 border border-emerald-300 rounded-lg text-sm font-medium text-emerald-700 bg-white hover:bg-emerald-50 transition">
                             <i class="fas fa-undo mr-2"></i>
                             Request Return
                         </a>
@@ -313,25 +313,25 @@
                 </div>
 
                 <!-- Need Help Card -->
-                <div class="bg-blue-50 rounded-xl border border-blue-100 p-6">
+                <div class="bg-emerald-50 rounded-xl border border-emerald-100 p-6">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-question-circle text-blue-500 text-xl"></i>
+                            <i class="fas fa-question-circle text-emerald-500 text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-lg font-semibold text-blue-900">Need Help?</h3>
-                            <p class="text-blue-700 mt-2 text-sm">
+                            <h3 class="text-lg font-semibold text-emerald-900">Need Help?</h3>
+                            <p class="text-emerald-700 mt-2 text-sm">
                                 Have questions about your order? Our support team is here to help.
                             </p>
                             <div class="mt-4 space-y-2">
                                 <a href="" 
-                                   class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+                                   class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-800">
                                     <i class="fas fa-headset mr-2"></i>
                                     Contact Support
                                 </a>
                                 <br>
                                 <a href="" 
-                                   class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+                                   class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-800">
                                     <i class="fas fa-question mr-2"></i>
                                     View FAQs
                                 </a>
@@ -449,11 +449,11 @@ autoRefresh();
 }
 
 /* Status point animations */
-.bg-green-500 {
+.bg-emerald-500 {
     position: relative;
 }
 
-.bg-green-500::after {
+.bg-emerald-500::after {
     content: '';
     position: absolute;
     top: 0;
@@ -461,7 +461,7 @@ autoRefresh();
     right: 0;
     bottom: 0;
     border-radius: 50%;
-    background: rgba(34, 197, 94, 0.3);
+    background: rgba(16, 185, 129, 0.3);
     animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 

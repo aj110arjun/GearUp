@@ -237,26 +237,26 @@
               
               <!-- Fix other URLs or remove if not implemented -->
               <a href="{% url 'shop:wishlist' %}" 
-                 class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-pink-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-pink-200">
-                <div class="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center">
-                  <i class="fas fa-heart text-pink-500 text-lg"></i>
+                 class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-emerald-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-emerald-200">
+                <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-heart text-emerald-500 text-lg"></i>
                 </div>
                 <span>My Wishlist</span>
               </a>
 
               <a href="{% url 'address:address_list' %}" 
-                class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-blue-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-blue-200">
-                  <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <i class="fas fa-map-marker-alt text-blue-500 text-lg"></i>
+                class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-teal-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-teal-200">
+                  <div class="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
+                      <i class="fas fa-map-marker-alt text-teal-500 text-lg"></i>
                   </div>
                   <span>My Addresses</span>
               </a>
 
               {% if user.has_usable_password %}
                 <a href="{% url 'user_auth:change_password' %}" 
-                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-amber-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-amber-200">
-                  <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-lock text-amber-500 text-lg"></i>
+                  class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-emerald-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-emerald-200">
+                  <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-lock text-emerald-500 text-lg"></i>
                   </div>
                   <span>Change Password</span>
                 </a>
@@ -271,9 +271,9 @@
               </a>
 
               <a href="{% url 'orders:order_list' %}" 
-                class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-purple-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-purple-200">
-                  <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                      <i class="fas fa-shopping-bag text-purple-500 text-lg"></i>
+                class="flex items-center space-x-4 p-4 text-gray-600 hover:bg-emerald-50 rounded-2xl font-medium transition-all duration-300 hover:shadow-md border border-transparent hover:border-emerald-200">
+                  <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                      <i class="fas fa-shopping-bag text-emerald-500 text-lg"></i>
                   </div>
                   <span>My Orders</span>
               </a>
@@ -617,7 +617,7 @@
                              placeholder="@username"
                              oninput="updateSocialLink('twitter', this.value)">
                       {% if user.twitter %}
-                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-600 transition-colors"
+                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-400 hover:text-emerald-600 transition-colors"
                            onclick="openSocialLink('twitter', '{{ user.twitter }}')"
                            title="Visit Twitter profile">
                         <i class="fab fa-twitter text-lg"></i>
@@ -641,7 +641,7 @@
                              placeholder="@username"
                              oninput="updateSocialLink('instagram', this.value)">
                       {% if user.instagram %}
-                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-pink-500 hover:text-pink-600 transition-colors"
+                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-teal-500 hover:text-teal-600 transition-colors"
                            onclick="openSocialLink('instagram', '{{ user.instagram }}')"
                            title="Visit Instagram profile">
                         <i class="fab fa-instagram text-lg"></i>
@@ -665,7 +665,7 @@
                              placeholder="username"
                              oninput="updateSocialLink('facebook', this.value)">
                       {% if user.facebook %}
-                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-800 transition-colors"
+                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-600 hover:text-emerald-800 transition-colors"
                            onclick="openSocialLink('facebook', '{{ user.facebook }}')"
                            title="Visit Facebook profile">
                         <i class="fab fa-facebook text-lg"></i>
@@ -689,7 +689,7 @@
                              placeholder="linkedin.com/in/username"
                              oninput="updateSocialLink('linkedin', this.value)">
                       {% if user.linkedin %}
-                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900 transition-colors"
+                      <div class="social-link absolute right-3 top-1/2 transform -translate-y-1/2 text-teal-700 hover:text-teal-900 transition-colors"
                            onclick="openSocialLink('linkedin', '{{ user.linkedin }}')"
                            title="Visit LinkedIn profile">
                         <i class="fab fa-linkedin text-lg"></i>
