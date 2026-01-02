@@ -123,13 +123,13 @@
                 <img src="{{ img.image.url }}" 
                      alt="{{ product.name }}"
                      data-full="{{ img.image.url }}"
-                     class="thumb-img {% if forloop.first %}border-blue-600{% else %}border-gray-200{% endif %} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0">
+                     class="thumb-img {% if forloop.first %}border-emerald-600{% else %}border-gray-200{% endif %} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0">
                 {% endfor %}
               {% else %}
                 <img src="{{ product.image.url }}" 
                      alt="{{ product.name }}"
                      data-full="{{ product.image.url }}"
-                     class="thumb-img border-blue-600 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg flex-shrink-0">
+                     class="thumb-img border-emerald-600 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg flex-shrink-0">
               {% endif %}
             </div>
           </div>
@@ -141,10 +141,10 @@
           <!-- Header -->
           <div>
             <div class="flex items-center space-x-2 mb-2">
-              <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+              <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
                 <i class="fas fa-tag mr-1"></i>{{ product.brand }}
               </span>
-              <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">
+              <span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-semibold">
                 <i class="fas fa-layer-group mr-1"></i>{{ product.category.name }}
               </span>
             </div>
@@ -184,9 +184,9 @@
           </div>
 
           <!-- Description -->
-          <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6">
+          <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
-              <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+              <i class="fas fa-info-circle text-emerald-600 mr-2"></i>
               Product Description
             </h3>
             <p class="text-gray-700 leading-relaxed">{{ product.description }}</p>
@@ -194,23 +194,23 @@
 
           <!-- Features/Highlights -->
           <div class="grid grid-cols-2 gap-4">
-            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-500">
-              <i class="fas fa-truck text-green-600 text-2xl mb-2"></i>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-emerald-500">
+              <i class="fas fa-truck text-emerald-600 text-2xl mb-2"></i>
               <p class="font-semibold text-gray-800">Free Delivery</p>
               <p class="text-sm text-gray-500">On orders over ₹50</p>
             </div>
-            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500">
-              <i class="fas fa-shield-alt text-blue-600 text-2xl mb-2"></i>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-teal-500">
+              <i class="fas fa-shield-alt text-teal-600 text-2xl mb-2"></i>
               <p class="font-semibold text-gray-800">Secure Payment</p>
               <p class="text-sm text-gray-500">100% Protected</p>
             </div>
-            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-purple-500">
-              <i class="fas fa-undo text-purple-600 text-2xl mb-2"></i>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-cyan-500">
+              <i class="fas fa-undo text-cyan-600 text-2xl mb-2"></i>
               <p class="font-semibold text-gray-800">Easy Returns</p>
               <p class="text-sm text-gray-500">30-day return policy</p>
             </div>
-            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500">
-              <i class="fas fa-headset text-orange-600 text-2xl mb-2"></i>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-emerald-400">
+              <i class="fas fa-headset text-emerald-500 text-2xl mb-2"></i>
               <p class="font-semibold text-gray-800">24/7 Support</p>
               <p class="text-sm text-gray-500">Always here to help</p>
             </div>
@@ -220,7 +220,7 @@
           {% if variants %}
           <div class="bg-white rounded-2xl p-6 shadow-xl">
             <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-              <i class="fas fa-boxes text-purple-600 mr-3"></i>
+              <i class="fas fa-boxes text-emerald-600 mr-3"></i>
               Available Options
             </h2>
             
@@ -233,12 +233,12 @@
                   <div class="flex-1">
                     <div class="flex items-center space-x-3 mb-2">
                       {% if variant.color %}
-                      <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
+                      <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-semibold">
                         <i class="fas fa-palette mr-1"></i>{{ variant.color }}
                       </span>
                       {% endif %}
                       {% if variant.size %}
-                      <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-sm font-semibold">
+                      <span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold">
                         <i class="fas fa-ruler mr-1"></i>{{ variant.size }}
                       </span>
                       {% endif %}
@@ -288,7 +288,7 @@
                         {% if variant.in_cart %}
                           <!-- Show "Go to Cart" if variant is already in cart -->
                           <a href="{% url 'shop:cart' %}"
-                             class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition shadow-lg">
+                             class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-teal-700 transition shadow-lg">
                             <i class="fas fa-shopping-cart"></i>
                             <span>Go to Cart</span>
                           </a>
@@ -332,7 +332,7 @@
       <!-- Product Specifications -->
       <div class="mt-16 bg-white rounded-3xl shadow-2xl p-8 fade-in">
         <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-          <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>
+          <i class="fas fa-clipboard-list text-emerald-600 mr-3"></i>
           Product Specifications
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -391,13 +391,13 @@
           {% if user.is_authenticated and not user_review %}
             <button type="button" 
                     onclick="openReviewModal()"
-                    class="mt-4 lg:mt-0 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg flex items-center">
+                    class="mt-4 lg:mt-0 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg flex items-center">
               <i class="fas fa-pen mr-2"></i>
               Write a Review
             </button>
           {% elif not user.is_authenticated %}
             <a href="{% url 'user_auth:signin' %}?next={{ request.path }}"
-               class="mt-4 lg:mt-0 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg flex items-center">
+               class="mt-4 lg:mt-0 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg flex items-center">
               <i class="fas fa-sign-in-alt mr-2"></i>
               Login to Review
             </a>
@@ -484,9 +484,9 @@
           </div>
           
           <!-- Review Summary -->
-          <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6">
+          <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6">
             <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-              <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+              <i class="fas fa-chart-bar text-emerald-600 mr-2"></i>
               Review Summary
             </h4>
             <ul class="space-y-2">
@@ -520,7 +520,7 @@
             {{ reviews.count }} Customer Review{{ reviews.count|pluralize }}
           </h3>
           <div class="flex items-center space-x-4">
-            <select id="sort-reviews" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+            <select id="sort-reviews" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white">
               <option value="recent">Most Recent</option>
               <option value="helpful">Most Helpful</option>
               <option value="highest">Highest Rated</option>
@@ -542,7 +542,7 @@
                 <!-- User Info -->
                 <div class="lg:w-1/4 mb-4 lg:mb-0">
                   <div class="flex items-center">
-                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                    <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
                       {% if review.user.profile_image %}
                       <img src="{{review.user.profile_image.url}}" alt="" class="rounded-full flex">
                       {% else %}
@@ -593,10 +593,10 @@
                     {% if user.is_authenticated %}
                       {% with user_vote=user_votes|get_item_int:review.id %}
                         <button type="button" 
-                                class="vote-btn-helpful review-vote-btn flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 transition-all {% if user_vote == True %}bg-blue-100 border-blue-300{% endif %}"
+                                class="vote-btn-helpful review-vote-btn flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-emerald-50 transition-all {% if user_vote == True %}bg-emerald-100 border-emerald-300{% endif %}"
                                 data-review-id="{{ review.id }}"
                                 data-vote-type="helpful">
-                          <i class="fas fa-thumbs-up mr-2 {% if user_vote == True %}text-blue-600{% else %}text-gray-600{% endif %}"></i>
+                          <i class="fas fa-thumbs-up mr-2 {% if user_vote == True %}text-emerald-600{% else %}text-gray-600{% endif %}"></i>
                           <span>Helpful</span>
                           <span class="ml-2 text-gray-600 helpful-count">{{ review.helpful_votes }}</span>
                         </button>
@@ -622,7 +622,7 @@
                     <!-- Edit Review Button -->
                     <button type="button" 
                             onclick="openEditReviewModal('{{ review.id }}')"
-                            class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg edit-review-btn"
+                            class="px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg edit-review-btn"
                             data-review-id="{{ review.id }}">
                       <i class="fas fa-edit mr-1"></i>
                       Edit Review
@@ -650,12 +650,12 @@
               {% if user.is_authenticated %}
               <button type="button" 
                       onclick="openReviewModal()"
-                      class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                      class="mt-4 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
                 Write First Review
               </button>
               {% else %}
               <a href="{% url 'user_auth:signin' %}?next={{ request.path }}"
-                 class="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                 class="mt-4 inline-block px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
                 Login to Review
               </a>
               {% endif %}
@@ -667,7 +667,7 @@
         {% if reviews.count > 5 %}
         <div class="text-center mt-8">
           <button type="button" id="load-more-reviews" 
-                  class="px-6 py-3 border-2 border-blue-600 text-blue-600 font-semibold rounded-xl hover:bg-blue-50">
+                  class="px-6 py-3 border-2 border-emerald-600 text-emerald-600 font-semibold rounded-xl hover:bg-emerald-50">
             Load More Reviews
           </button>
         </div>
@@ -679,9 +679,6 @@
 
     </div>
   </div>
-
-  <!-- Zoom Result - Fixed positioning outside the grid -->
-  <div id="zoom-result"></div>
 </div>
 
 <!-- Review Modal -->
@@ -729,7 +726,7 @@
                  id="review-title"
                  maxlength="200"
                  required
-                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                  placeholder="Summarize your experience">
         </div>
 
@@ -743,7 +740,7 @@
                     rows="5"
                     maxlength="1000"
                     required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     placeholder="Share your experience with this product..."></textarea>
           <div class="mt-1 text-sm text-gray-600 text-right">
             <span id="char-count">0</span>/1000 characters
@@ -758,7 +755,7 @@
             Cancel
           </button>
           <button type="submit" 
-                  class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700">
+                  class="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700">
             <i class="fas fa-paper-plane mr-2"></i>
             Submit Review
           </button>

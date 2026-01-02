@@ -56,8 +56,8 @@
         
         <!-- Success Message -->
         <div class="text-center mb-10">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
-                <i class="fas fa-check text-green-600 text-3xl"></i>
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 rounded-full mb-6">
+                <i class="fas fa-check text-emerald-600 text-3xl"></i>
             </div>
             <h1 class="text-4xl font-bold text-gray-900 mb-4">Order Successful!</h1>
             <p class="text-lg text-gray-600 mb-2">Thank you for your purchase.</p>
@@ -67,14 +67,14 @@
         {% if order %}
         <!-- Order Details Card -->
         <div class="bg-white success-card rounded-2xl shadow-lg border border-gray-200 overflow-hidden mb-8">
-            <div class="bg-blue-600 px-8 py-6">
+            <div class="bg-emerald-600 px-8 py-6">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div>
                         <h2 class="text-xl font-bold text-white mb-1">Order Confirmation</h2>
-                        <p class="text-blue-100 text-sm">Order #{{ order.order_number }}</p>
+                        <p class="text-emerald-100 text-sm">Order #{{ order.order_number }}</p>
                     </div>
                     <div class="mt-4 md:mt-0">
-                        <span class="inline-flex items-center px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg">
+                        <span class="inline-flex items-center px-4 py-2 bg-white text-emerald-600 font-semibold rounded-lg">
                             <i class="fas fa-receipt mr-2"></i>
                             Order Details
                         </span>
@@ -106,7 +106,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Payment Status</span>
-                                <span class="font-medium text-green-600">{{ order.get_payment_status_display }}</span>
+                                <span class="font-medium text-emerald-600">{{ order.get_payment_status_display }}</span>
                             </div>
                         </div>
                     </div>
@@ -185,16 +185,16 @@
 
         <!-- Redirection Timer -->
         <div class="mb-6 text-center">
-            <p class="text-gray-600 bg-blue-50 py-3 px-6 rounded-full inline-block border border-blue-100">
-                <i class="fas fa-clock mr-2 text-blue-500 animate-pulse"></i>
-                You will be redirected to your orders in <span id="countdown" class="font-bold text-blue-600 text-lg">5</span> seconds...
+            <p class="text-gray-600 bg-emerald-50 py-3 px-6 rounded-full inline-block border border-emerald-100">
+                <i class="fas fa-clock mr-2 text-emerald-500 animate-pulse"></i>
+                You will be redirected to your orders in <span id="countdown" class="font-bold text-emerald-600 text-lg">5</span> seconds...
             </p>
         </div>
 
         <!-- Action Buttons -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <a href="{% url 'orders:order_list' %}" 
-               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors flex items-center justify-center space-x-2">
+               class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors flex items-center justify-center space-x-2 shadow-lg shadow-indigo-200">
                 <i class="fas fa-shopping-bag"></i>
                 <span>View My Orders</span>
             </a>
@@ -207,29 +207,29 @@
         </div>
 
         <!-- Additional Information -->
-        <div class="mt-12 bg-blue-50 border border-blue-200 rounded-2xl p-6">
-            <h3 class="text-lg font-semibold text-blue-900 mb-3">What happens next?</h3>
+        <div class="mt-12 bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-emerald-900 mb-3">What happens next?</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="text-center">
-                    <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-full mb-3">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full mb-3">
                         <i class="fas fa-box text-lg"></i>
                     </div>
-                    <h4 class="font-medium text-blue-900 mb-1">Order Processing</h4>
-                    <p class="text-sm text-blue-700">We'll process your order within 24 hours.</p>
+                    <h4 class="font-medium text-emerald-900 mb-1">Order Processing</h4>
+                    <p class="text-sm text-emerald-700">We'll process your order within 24 hours.</p>
                 </div>
                 <div class="text-center">
-                    <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-full mb-3">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-teal-100 text-teal-600 rounded-full mb-3">
                         <i class="fas fa-shipping-fast text-lg"></i>
                     </div>
-                    <h4 class="font-medium text-blue-900 mb-1">Shipping</h4>
-                    <p class="text-sm text-blue-700">Your order will be shipped within 3-5 business days.</p>
+                    <h4 class="font-medium text-teal-900 mb-1">Shipping</h4>
+                    <p class="text-sm text-teal-700">Your order will be shipped within 3-5 business days.</p>
                 </div>
                 <div class="text-center">
-                    <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-full mb-3">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full mb-3">
                         <i class="fas fa-phone-alt text-lg"></i>
                     </div>
-                    <h4 class="font-medium text-blue-900 mb-1">Need Help?</h4>
-                    <p class="text-sm text-blue-700">Contact our support team for any queries.</p>
+                    <h4 class="font-medium text-emerald-900 mb-1">Need Help?</h4>
+                    <p class="text-sm text-emerald-700">Contact our support team for any queries.</p>
                 </div>
             </div>
         </div>
@@ -238,7 +238,7 @@
         {% if order %}
         <div class="mt-8 text-center">
             <a href="#" 
-               class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+               class="inline-flex items-center text-emerald-600 hover:text-emerald-800 font-medium">
                 <i class="fas fa-download mr-2"></i>
                 Download Invoice (Coming Soon)
             </a>
