@@ -126,30 +126,35 @@
           </div>
 
           <!-- Overhauled Variant Selection Area -->
-          {% if available_attributes %}
           <div class="space-y-6 pt-4" id="variant-selection-root">
-              {% for attr_name, attr_values in available_attributes.items %}
-              <div class="attribute-group" data-attribute-name="{{ attr_name }}">
-                  <div class="flex items-center justify-between mb-2">
-                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{{ attr_name }}</p>
-                    <span class="text-[10px] text-emerald-600 font-bold selected-value-display hidden">Selected: <span class="val"></span></span>
+              {% if available_attributes %}
+                  {% for attr_name, attr_values in available_attributes.items %}
+                  <div class="attribute-group" data-attribute-name="{{ attr_name }}">
+                      <div class="flex items-center justify-between mb-2">
+                        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{{ attr_name }}</p>
+                        <span class="text-[10px] text-emerald-600 font-bold selected-value-display hidden">Selected: <span class="val"></span></span>
+                      </div>
+                      <div class="flex flex-wrap gap-2.5 attribute-values">
+                          {% for val in attr_values %}
+                          <button type="button" 
+                                  class="attr-val-btn px-5 py-2.5 border-2 border-gray-100 rounded-xl text-sm font-semibold transition-all hover:border-emerald-300 hover:bg-emerald-50/30 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:grayscale"
+                                  data-attribute-value="{{ val }}">
+                              {{ val }}
+                          </button>
+                          {% endfor %}
+                      </div>
                   </div>
-                  <div class="flex flex-wrap gap-2.5 attribute-values">
-                      {% for val in attr_values %}
-                      <button type="button" 
-                              class="attr-val-btn px-5 py-2.5 border-2 border-gray-100 rounded-xl text-sm font-semibold transition-all hover:border-emerald-300 hover:bg-emerald-50/30 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:grayscale"
-                              data-attribute-value="{{ val }}">
-                          {{ val }}
-                      </button>
-                      {% endfor %}
+                  {% endfor %}
+              {% elif variants|length > 1 %}
+                  <!-- Fallback for multiple variants without attributes -->
+                  <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <p class="text-xs text-gray-500 italic">This product has multiple options. Please select one from the list below.</p>
                   </div>
-              </div>
-              {% endfor %}
+              {% endif %}
               
               <!-- Hidden state for JS -->
               <input type="hidden" id="selected-variant-id" value="">
           </div>
-          {% endif %}
 
           <!-- Price & Savings -->
           <div class="flex flex-col space-y-1 pt-4 border-t border-gray-100">
