@@ -161,6 +161,24 @@ class ProfileUpdateForm(UserChangeForm):
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
             'bio': forms.Textarea(attrs={'rows': 4}),
         }
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        if phone_number:
+            # Remove any whitespace
+            phone_number = phone_number.strip()
+            # Check if it's exactly 10 digits
+            if not re.match(r'^\d{10}$', phone_number):
+                raise ValidationError("Phone number must be exactly 10 digits.")
+        return phone_number
+
+    def clean_location(self):
+        location = self.cleaned_data.get('location')
+        if location:
+            location = location.strip()
+            if len(location) < 3:
+                raise ValidationError("Location must be at least 3 characters long.")
+        return location
     
     # def __init__(self, *args, **kwargs):
     #     super().__init__(*args, **kwargs)

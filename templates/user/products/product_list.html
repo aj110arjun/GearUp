@@ -223,7 +223,7 @@
                             data-product-id="{{ product.id }}" 
                             data-variant-id="{{ first_variant.id }}">
                       <i class="{% if first_variant.id in cart_variant_ids %}fas fa-check-circle{% else %}fas fa-shopping-bag{% endif %}"></i>
-                      {% if first_variant.id in cart_variant_ids %}In Bag{% else %}Add to Bag{% endif %}
+                      {% if first_variant.id in cart_variant_ids %}In Cart{% else %}Add to Cart{% endif %}
                     </button>
                   {% else %}
                     <button class="w-full py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest bg-gray-50 text-gray-300 cursor-not-allowed border border-gray-100" disabled>

@@ -499,6 +499,10 @@
                          value="{{ form.phone_number.value|default:user.phone_number|default:'' }}"
                          class="form-input"
                          placeholder="Enter your phone number">
+                  <div id="phone_number_error" class="form-error-text space-x-1 hidden">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="error-msg"></span>
+                  </div>
                   {% if form.phone_number.errors %}
                     <div class="form-error-text space-x-1">
                       <i class="fas fa-exclamation-circle"></i>
@@ -518,6 +522,10 @@
                          value="{{ form.location.value|default:user.location|default:'' }}"
                          class="form-input"
                          placeholder="Your city or country">
+                  <div id="location_error" class="form-error-text space-x-1 hidden">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="error-msg"></span>
+                  </div>
                   {% if form.location.errors %}
                     <div class="form-error-text space-x-1">
                       <i class="fas fa-exclamation-circle"></i>
@@ -716,7 +724,7 @@
                 </p>
                 <button type="submit" 
                         id="submitButton"
-                        class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-2xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 group">
+                        class="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 group">
                   <i class="fas fa-save group-hover:scale-110 transition-transform"></i>
                   <span>Save Changes</span>
                 </button>
@@ -1046,6 +1054,51 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.getElementById('profileForm')?.addEventListener('submit', function(e) {
+  const phoneInput = document.getElementById('id_phone_number');
+  const locationInput = document.getElementById('id_location');
+  const phoneError = document.getElementById('phone_number_error');
+  const locationError = document.getElementById('location_error');
+  
+  let isValid = true;
+  
+  // Clear previous errors
+  phoneError.classList.add('hidden');
+  locationError.classList.add('hidden');
+  phoneInput.classList.remove('border-red-500');
+  locationInput.classList.remove('border-red-500');
+  
+  // Phone validation
+  const phoneValue = phoneInput.value.trim();
+  if (phoneValue) {
+    if (!/^\d{10}$/.test(phoneValue)) {
+      phoneError.querySelector('.error-msg').textContent = 'Phone number must be exactly 10 digits.';
+      phoneError.classList.remove('hidden');
+      phoneInput.classList.add('border-red-500');
+      isValid = false;
+    }
+  }
+  
+  // Location validation
+  const locationValue = locationInput.value.trim();
+  if (locationValue) {
+    if (locationValue.length < 3) {
+      locationError.querySelector('.error-msg').textContent = 'Location must be at least 3 characters long.';
+      locationError.classList.remove('hidden');
+      locationInput.classList.add('border-red-500');
+      isValid = false;
+    }
+  }
+  
+  if (!isValid) {
+    e.preventDefault();
+    // Scroll to the first error
+    const firstError = document.querySelector('.form-error-text:not(.hidden)');
+    if (firstError) {
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
+
   const submitButton = document.getElementById('submitButton');
   submitButton.disabled = true;
   submitButton.innerHTML = `

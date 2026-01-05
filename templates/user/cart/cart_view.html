@@ -67,7 +67,7 @@
         <div class="lg:col-span-8">
           <div class="bg-white rounded-lg shadow-sm">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 class="text-lg font-semibold text-gray-900">Cart Items ({{ cart.total_items }})</h2>
+              <h2 class="text-lg font-semibold text-gray-900">Cart Items (<span id="cart-count-header">{{ cart.total_items }}</span>)</h2>
               <button id="move-all-to-wishlist-btn" type="button"
                       class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition flex items-center gap-1 group">
                 <i class="fas fa-heart group-hover:text-red-500 transition-colors"></i>
@@ -77,7 +77,7 @@
             
             <div class="divide-y divide-gray-200" id="cart-items-container">
               {% for item in cart_items %}
-              <div class="p-6 cart-item" id="cart-item-{{ item.id }}" data-item-id="{{ item.id }}" data-max-qty="{{ item.max_quantity }}">
+              <div class="p-6 cart-item" id="cart-item-{{ item.id }}" data-item-id="{{ item.id }}" data-max-qty="{{ item.max_quantity }}" data-unit-price="{{ item.unit_price }}">
                 <div class="flex items-start space-x-4">
                   
                   <!-- Product Image -->
@@ -129,7 +129,7 @@
                                            {% if variant.id == item.variant.id %}
                                              bg-emerald-600 text-white border-emerald-600 cursor-default
                                            {% else %}
-                                             bg-white text-gray-700 border-gray-300 hover:border-emerald-500 hover:text-emerald-600
+                                              bg-white text-gray-700 border-gray-300 hover:border-emerald-500 hover:text-emerald-600
                                            {% endif %}"
                                     onclick="updateVariant('{{ item.id }}', '{{ variant.id }}')"
                                     {% if variant.id == item.variant.id %}disabled{% endif %}>
@@ -148,14 +148,20 @@
                     
                     <!-- Price Section -->
                     <div class="mb-4">
-                      <div class="flex items-center space-x-2 mb-1">
-                        <span class="text-xl font-bold text-emerald-600">₹{{ item.unit_price }}</span>
-                        {% if item.variant.discount_percentage > 0 %}
-                        <span class="text-sm text-gray-500 line-through">₹{{ item.variant.price }}</span>
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 uppercase tracking-wider border border-red-100">
-                          {{ item.variant.discount_percentage }}% Off
-                        </span>
-                        {% endif %}
+                      <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-2">
+                          <span class="text-xl font-bold text-emerald-600">₹{{ item.unit_price }}</span>
+                          {% if item.variant.discount_percentage > 0 %}
+                          <span class="text-sm text-gray-500 line-through">₹{{ item.variant.price }}</span>
+                          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 uppercase tracking-wider border border-red-100">
+                            {{ item.variant.discount_percentage }}% Off
+                          </span>
+                          {% endif %}
+                        </div>
+                        <div class="text-right">
+                          <span class="block text-[10px] text-gray-400 uppercase font-semibold">Item Total</span>
+                          <span class="text-lg font-bold text-gray-900 item-total" id="item-total-{{ item.id }}">₹{{ item.total_price }}</span>
+                        </div>
                       </div>
                     </div>
                     
@@ -181,15 +187,13 @@
                         <div class="flex items-center border border-gray-300 rounded-lg">
                           <button type="button" 
                                   data-item-id="{{ item.id }}"
-                                  class="decrement-btn px-3 py-1.5 text-gray-600 hover:bg-gray-50 transition rounded-l-lg {% if item.quantity <= 1 %}opacity-50 cursor-not-allowed{% endif %}" 
-                                  {% if item.quantity <= 1 %}disabled{% endif %}>
+                                  class="decrement-btn px-3 py-1.5 text-gray-600 hover:bg-gray-50 transition rounded-l-lg">
                             <i class="fas fa-minus"></i>
                           </button>
                           <span class="quantity-text px-4 py-1.5 text-sm font-semibold text-gray-900 border-x border-gray-300" id="quantity-{{ item.id }}">{{ item.quantity }}</span>
                           <button type="button" 
                                   data-item-id="{{ item.id }}"
-                                  class="increment-btn px-3 py-1.5 text-gray-600 hover:bg-gray-50 transition rounded-r-lg {% if item.quantity >= item.max_quantity %}opacity-50 cursor-not-allowed{% endif %}" 
-                                  {% if item.quantity >= item.max_quantity %}disabled{% endif %}>
+                                  class="increment-btn px-3 py-1.5 text-gray-600 hover:bg-gray-50 transition rounded-r-lg">
                             <i class="fas fa-plus"></i>
                           </button>
                         </div>
@@ -248,7 +252,7 @@
             <div class="px-6 py-4 space-y-4">
               <!-- Subtotal -->
               <div class="flex justify-between text-gray-600">
-                <span>Subtotal ({{ cart.total_items }} items)</span>
+                <span>Subtotal (<span id="cart-count-summary">{{ cart.total_items }}</span> items)</span>
                 <span id="subtotal-display">₹{{ cart.subtotal }}</span>
               </div>
               
@@ -262,6 +266,12 @@
               <div class="flex justify-between text-gray-600">
                 <span>Tax</span>
                 <span>Calculated at checkout</span>
+              </div>
+
+              <!-- Savings -->
+              <div id="discount-row" class="flex justify-between text-emerald-600 {% if cart.total_discount == 0 %}hidden{% endif %}">
+                <span>Total Savings</span>
+                <span id="discount-display">-₹{{ cart.total_discount }}</span>
               </div>
               
               <!-- Total -->

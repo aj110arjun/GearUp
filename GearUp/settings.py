@@ -56,22 +56,23 @@ SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
-else:
-    print("DEBUG mode is ON - Security Redirections Disabled")
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
-    # Force HSTS off in case it was set
-    SECURE_HSTS_SECONDS = 0
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    SECURE_HSTS_PRELOAD = False
+# if not DEBUG:
+#     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#     # Default to True for production, but can be overridden
+#     SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+#     SESSION_COOKIE_SECURE = True
+#     CSRF_COOKIE_SECURE = True
+#     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+# else:
+#     # Local development settings - Force HTTP
+#     SECURE_SSL_REDIRECT = False
+#     SESSION_COOKIE_SECURE = False
+#     CSRF_COOKIE_SECURE = False
+#     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+#     # Disable HSTS to prevent browser from forcing HTTPS
+#     SECURE_HSTS_SECONDS = 0
+#     SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+#     SECURE_HSTS_PRELOAD = False
 
 # Session Security
 SESSION_COOKIE_HTTPONLY = True
