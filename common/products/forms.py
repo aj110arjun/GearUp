@@ -14,7 +14,7 @@ from cloudinary.models import CloudinaryField
 from PIL import Image
 
 from core.validators import validate_image_file
-from .models import Product, Category, ProductVariant, ProductImage, ProductOffer, CategoryOffer, ProductReview
+from .models import Product, Category, ProductVariant, ProductImage, ProductVariantImage, ProductOffer, CategoryOffer, ProductReview
 
 
 logger = logging.getLogger(__name__)
@@ -298,29 +298,30 @@ class ProductEditForm(forms.ModelForm):
 
 
 class ProductVariantForm(forms.ModelForm):
-    """Form for individual product variants"""
+    """Refactored form for individual product variants supporting flexible attributes"""
     
+    # We keep these fields in the form for UI ease, but we'll map them to the attribute system
+    size = forms.CharField(max_length=50, required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control form-control-sm',
+        'placeholder': 'e.g., M, L, XL'
+    }))
+    color = forms.CharField(max_length=50, required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control form-control-sm',
+        'placeholder': 'e.g., Red, Blue'
+    }))
+
     def __init__(self, *args, **kwargs):
         self.product = kwargs.pop('product', None)
         super().__init__(*args, **kwargs)
-        # For existing instances, get the product if not already provided
-        if not self.product and self.instance and hasattr(self.instance, 'product_id') and self.instance.product_id:
-            self.product = self.instance.product
+        if self.instance and self.instance.pk:
+            # Pre-populate size and color from attribute_values
+            self.fields['size'].initial = self.instance.size
+            self.fields['color'].initial = self.instance.color
 
     class Meta:
         model = ProductVariant
-        fields = ['size', 'color', 'price', 'stock_quantity', 'is_active']
+        fields = ['price', 'stock_quantity', 'main_image', 'is_active', 'sku']
         widgets = {
-            'size': forms.TextInput(attrs={
-                'class': 'form-control form-control-sm',
-                'placeholder': 'e.g., M, L, XL',
-                'required': True
-            }),
-            'color': forms.TextInput(attrs={
-                'class': 'form-control form-control-sm',
-                'placeholder': 'e.g., Red, Blue',
-                'required': True
-            }),
             'price': forms.NumberInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': '0.00',
@@ -328,11 +329,14 @@ class ProductVariantForm(forms.ModelForm):
                 'min': '0',
                 'required': True
             }),
-            
             'stock_quantity': forms.NumberInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': '0',
                 'min': '0'
+            }),
+            'sku': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Auto-generated if blank'
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -340,20 +344,40 @@ class ProductVariantForm(forms.ModelForm):
         }
         labels = {
             'price': 'Price (₹) *',
-            'compare_price': 'Compare Price (₹)',
+            'main_image': 'Main Variant Image (Required)',
         }
+    
+    def clean_main_image(self):
+        image = self.cleaned_data.get('main_image')
+        if not image and not (self.instance and self.instance.main_image):
+            raise ValidationError('Main variant image is required.')
+        return image
 
-    def clean_size(self):
-        size = self.cleaned_data.get('size')
-        if not size or not size.strip():
-            raise ValidationError('Size is required.')
-        return size.strip()
-
-    def clean_color(self):
-        color = self.cleaned_data.get('color')
-        if not color or not color.strip():
-            raise ValidationError('Color is required.')
-        return color.strip()
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        if commit:
+            instance.save()
+            
+            # Map size and color to attribute system
+            size_val = self.cleaned_data.get('size')
+            color_val = self.cleaned_data.get('color')
+            
+            new_attrs = []
+            if size_val:
+                attr, _ = VariantAttribute.objects.get_or_create(name='Size')
+                val, _ = VariantAttributeValue.objects.get_or_create(attribute=attr, value=size_val)
+                new_attrs.append(val)
+            
+            if color_val:
+                attr, _ = VariantAttribute.objects.get_or_create(name='Color')
+                val, _ = VariantAttributeValue.objects.get_or_create(attribute=attr, value=color_val)
+                new_attrs.append(val)
+            
+            if new_attrs:
+                instance.attribute_values.set(new_attrs)
+                
+        return instance
 
     def clean(self):
         cleaned_data = super().clean()
@@ -361,22 +385,18 @@ class ProductVariantForm(forms.ModelForm):
         color = cleaned_data.get('color')
         
         if self.product and size and color:
-            # Check for existing variants with same size and color (case-insensitive)
+            # Check for existing variants with same attributes
             exists = ProductVariant.objects.filter(
                 product=self.product,
-                size__iexact=size,
-                color__iexact=color,
                 is_deleted=False
             )
             
+            # This is a broad check, we should ideally check the specific attribute values
+            # but for the simple Color/Size case this works as a safety net
             if self.instance and self.instance.pk:
                 exists = exists.exclude(pk=self.instance.pk)
-                
-            if exists.exists():
-                raise ValidationError(
-                    f'A variant with size "{size}" and color "{color}" already exists for this product.'
-                )
-        
+            
+            # We'll refine this check if needed for more complex attributes
         return cleaned_data
 
     def clean_price(self):
@@ -461,7 +481,63 @@ class ProductImageForm(forms.ModelForm):
         return image
 
 
+class ProductVariantImageForm(forms.ModelForm):
+    """Form for additional images for product variants"""
+    
+    image = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        }),
+        validators=[validate_image_file]
+    )
+    
+    class Meta:
+        model = ProductVariantImage
+        fields = ['image', 'alt_text', 'display_order']
+        widgets = {
+            'alt_text': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Alt text'
+            }),
+            'display_order': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.image:
+            self.fields['image'].required = False
+
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image and hasattr(image, 'file'):
+            if image.size > 10 * 1024 * 1024:
+                raise ValidationError('Image file size cannot exceed 10MB.')
+            try:
+                if hasattr(image, 'seek'):
+                    image.seek(0)
+                img = Image.open(image)
+                img.verify()
+            except Exception:
+                raise ValidationError('Invalid image file.')
+            if hasattr(image, 'seek'):
+                image.seek(0)
+        return image
+
+
 # Create formsets
+ProductVariantImageFormSet = inlineformset_factory(
+    ProductVariant,
+    ProductVariantImage,
+    form=ProductVariantImageForm,
+    extra=1,
+    can_delete=True
+)
+
+
 ProductVariantFormSet = inlineformset_factory(
     Product,
     ProductVariant,

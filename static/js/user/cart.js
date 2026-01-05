@@ -74,6 +74,25 @@
         if (checkoutBtn) {
             checkoutBtn.addEventListener('click', proceedToCheckout);
         }
+
+        // Variant Selection Event Listeners
+        document.querySelectorAll('.change-variant-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                toggleVariantSelector(this.dataset.itemId);
+            });
+        });
+
+        document.querySelectorAll('.close-variant-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                toggleVariantSelector(this.dataset.itemId);
+            });
+        });
+
+        document.querySelectorAll('.variant-option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                updateVariant(this.dataset.itemId, this.dataset.variantId);
+            });
+        });
     });
 
     function updateButtonStates(itemId, quantity) {
@@ -270,17 +289,21 @@
         updateButtonStates(itemId, originalQty);
     }
 
-    window.toggleVariantSelector = function(itemId) {
+    function toggleVariantSelector(itemId) {
+        console.log('Toggling variant selector for item:', itemId);
         const selector = document.getElementById(`variant-selector-${itemId}`);
         if (selector) {
             selector.classList.toggle('hidden');
             if (!selector.classList.contains('hidden')) {
                 selector.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
+        } else {
+            console.error('Variant selector not found for itemId:', itemId);
         }
-    };
+    }
 
-    window.updateVariant = function(itemId, variantId) {
+    function updateVariant(itemId, variantId) {
+        console.log(`Updating variant for item ${itemId} to variant ${variantId}`);
         const itemEl = document.getElementById(`cart-item-${itemId}`);
         if (itemEl) {
             itemEl.classList.add('opacity-50', 'pointer-events-none');
@@ -293,43 +316,26 @@
             variant_id: variantId
         })
         .then(data => {
+            console.log('Variant update response:', data);
             if (data.success) {
                 if (window.showNotification) {
                     window.showNotification(data.message, 'success');
                 }
                 
                 if (data.merged) {
+                    console.log('Item merged, removing old element');
                     // Item merged into another one
-                    // 1. Fade out the current item
                     if (itemEl) {
                         itemEl.style.transition = 'all 0.4s ease';
                         itemEl.style.transform = 'scale(0.9)';
                         itemEl.style.opacity = '0';
                         setTimeout(() => itemEl.remove(), 400);
                     }
-                    
-                    // 2. Update the surviving item (if it exists on current page)
-                    const survivingItem = document.getElementById(`cart-item-${data.item_id}`);
-                    if (survivingItem) {
-                        const qtyText = document.getElementById(`quantity-${data.item_id}`);
-                        if (qtyText) {
-                            qtyText.textContent = data.item_quantity;
-                            qtyText.classList.add('success-update');
-                            setTimeout(() => qtyText.classList.remove('success-update'), 1000);
-                        }
-                    } else {
-                        // Surviving item not found or different page? reload is safer
-                        setTimeout(() => location.reload(), 500);
-                    }
+                    setTimeout(() => location.reload(), 500);
                 } else {
-                    // Simple variant update - reload is still needed because 
-                    // product info like name/image/tags might have changed
-                    // but we can do it after a short delay
+                    console.log('Simple update, reloading page');
                     setTimeout(() => location.reload(), 300);
                 }
-                
-                // Update summary anyway
-                updateOrderSummary(data);
             } else {
                 if (window.showNotification) {
                     window.showNotification(data.message || 'Error updating variant', 'error');
@@ -345,7 +351,7 @@
                 itemEl.classList.remove('opacity-50', 'pointer-events-none');
             }
         });
-    };
+    }
 
     function moveAllToWishlist() {
         if (!window.showConfirmModal) {
@@ -423,9 +429,11 @@
         window.location.href = config.checkoutUrl;
     }
 
-    // Export functions to window for onclick handlers
+    // Export functions to window for onclick handlers (though we use event listeners now)
     window.incrementQuantity = incrementQuantity;
     window.decrementQuantity = decrementQuantity;
     window.moveAllToWishlist = moveAllToWishlist;
     window.proceedToCheckout = proceedToCheckout;
+    window.toggleVariantSelector = toggleVariantSelector;
+    window.updateVariant = updateVariant;
 })();

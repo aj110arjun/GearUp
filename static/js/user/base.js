@@ -118,14 +118,18 @@ window.syncProductUI = function(productId, state, variantId = null) {
     if (state.inWishlist !== undefined) {
         document.querySelectorAll(`.wishlist-btn[data-product-id="${productId}"]`).forEach(btn => {
             const icon = btn.querySelector('i');
+            const label = btn.querySelector('.wishlist-label');
+            
             if (state.inWishlist) {
                 icon?.classList.replace('far', 'fas');
                 icon?.classList.add('text-red-500');
                 btn.classList.add('border-red-300', 'bg-red-50');
+                if (label) label.textContent = 'Remove from Wish List';
             } else {
                 icon?.classList.replace('fas', 'far');
                 icon?.classList.remove('text-red-500');
                 btn.classList.remove('border-red-300', 'bg-red-50');
+                if (label) label.textContent = 'Add to Wish List';
             }
         });
     }
@@ -177,6 +181,13 @@ window.globalToggleWishlist = async function(productId) {
 };
 
 window.globalAddToCart = async function(productId, variantId) {
+    if (!variantId) {
+        if (window.showNotification) {
+            window.showNotification('Please select a variant option first', 'warning');
+        }
+        return;
+    }
+
     const btn = document.querySelector(`.cart-btn[data-variant-id="${variantId}"]`);
     const originalContent = btn?.innerHTML;
     if (btn) {

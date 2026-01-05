@@ -44,292 +44,311 @@
   <div class="max-w-7xl mx-auto">
 
     
-    <!-- Skeleton Loader -->
-    <div id="skeleton-content">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Image Skeleton -->
-        <div>
-          <div class="shimmer rounded-2xl h-96 lg:h-[500px] mb-4"></div>
-          <div class="flex gap-3">
-            {% for i in "12345" %}
-              <div class="shimmer h-20 w-20 rounded-lg"></div>
-            {% endfor %}
-          </div>
-        </div>
-        
-        <!-- Info Skeleton -->
-        <div class="space-y-4">
-          <div class="shimmer h-10 w-4/5 rounded-lg"></div>
-          <div class="shimmer h-6 w-2/5 rounded-lg"></div>
-          <div class="shimmer h-32 w-full rounded-lg"></div>
-          <div class="shimmer h-16 w-full rounded-lg"></div>
-          <div class="space-y-3">
-            {% for i in "123" %}
-              <div class="shimmer h-24 w-full rounded-lg"></div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
+
 
     <!-- Real Content -->
-    <div id="real-content" class="hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+    <div id="real-content">
+      <div class="flex flex-col lg:flex-row gap-8 lg:gap-10">
         
-        <!-- Product Images Section -->
-        <div class="fade-in">
-          <div class="sticky top-4">
+        <!-- Column 1: Product Images (Left) -->
+        <div class="lg:w-[40%]">
+          <div class="sticky top-6">
             <!-- Main Image with Zoom -->
-            <div class="relative bg-white rounded-2xl overflow-hidden shadow-2xl mb-4 group" id="image-container">
-              <div class="aspect-square flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-white">
-                <img id="main-product-image" 
-                     src="{% if images %}{{ images.0.image.url }}{% else %}{{ product.image.url }}{% endif %}" 
-                     alt="{{ product.name }}"
-                     class="max-w-full max-h-full object-contain image-zoom cursor-zoom-in">
+            <div class="relative bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-4 group" id="image-container">
+              <div class="aspect-square flex items-center justify-center p-4">
+                {% if variants.0.main_image %}
+                    <img id="main-product-image" 
+                         src="{{ variants.0.main_image.url }}" 
+                         alt="{{ product.name }}"
+                         class="max-w-full max-h-full object-contain image-zoom cursor-zoom-in">
+                {% elif variants.0.images.exists %}
+                    <img id="main-product-image" 
+                         src="{{ variants.0.images.first.image.url }}" 
+                         alt="{{ product.name }}"
+                         class="max-w-full max-h-full object-contain image-zoom cursor-zoom-in">
+                {% else %}
+                    <img id="main-product-image" 
+                         src="{% if images %}{{ images.0.image.url }}{% else %}{{ product.image.url }}{% endif %}" 
+                         alt="{{ product.name }}"
+                         class="max-w-full max-h-full object-contain image-zoom cursor-zoom-in">
+                {% endif %}
               </div>
-
-              <!-- Zoom Lens -->
               <div id="zoom-lens" class="hidden"></div>
-              
-              <!-- Zoom Hint -->
               <div class="absolute bottom-4 right-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-xs opacity-0 group-hover:opacity-100 transition">
                 <i class="fas fa-search-plus mr-1"></i> Hover to zoom
-              </div>
-              
-              <!-- Wishlist Button Overlay -->
-              <div class="absolute top-4 right-4 z-20">
-                {% if user.is_authenticated %}
-                <button type="button" 
-                        onclick="toggleWishlist('{{ product.id }}')"
-                        class="wishlist-btn bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-lg {% if product.id in wishlist_product_ids %}text-red-500 bg-red-50 border-red-200{% else %}text-gray-400 hover:text-red-500{% endif %}"
-                        data-product-id="{{ product.id }}"
-                        title="{% if product.id in wishlist_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
-                    <i class="{% if product.id in wishlist_product_ids %}fas fa-heart{% else %}far fa-heart{% endif %} text-lg transition-transform active:scale-95"></i>
-                </button>
-                {% else %}
-                <a href="{% url 'user_auth:signin' %}?next={{ request.path }}"
-                   class="bg-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-lg text-gray-400 hover:text-red-500"
-                   title="Login to add to wishlist">
-                    <i class="far fa-heart text-lg"></i>
-                </a>
-                {% endif %}
               </div>
             </div>
 
             <!-- Thumbnail Images -->
-            <div class="flex gap-3 overflow-x-auto pb-2">
-              {% if images %}
+            <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="thumbnail-gallery-container">
+              {% if variants.0.main_image %}
+                <img src="{{ variants.0.main_image.url }}" 
+                     alt="{{ product.name }}"
+                     data-full="{{ variants.0.main_image.url }}"
+                     class="thumb-img border-emerald-600 border-2 rounded-lg cursor-pointer h-16 w-16 object-cover transition-all hover:border-emerald-500">
+                {% for v_img in variants.0.images.all %}
+                    <img src="{{ v_img.image.url }}" 
+                         alt="{{ product.name }}"
+                         data-full="{{ v_img.image.url }}"
+                         class="thumb-img border-gray-100 border-2 rounded-lg cursor-pointer h-16 w-16 object-cover transition-all hover:border-emerald-500">
+                {% endfor %}
+              {% elif images %}
                 {% for img in images %}
                 <img src="{{ img.image.url }}" 
                      alt="{{ product.name }}"
                      data-full="{{ img.image.url }}"
-                     class="thumb-img {% if forloop.first %}border-emerald-600{% else %}border-gray-200{% endif %} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0">
+                     class="thumb-img {% if forloop.first %}border-emerald-600{% else %}border-gray-100{% endif %} border-2 rounded-lg cursor-pointer h-16 w-16 object-cover transition-all hover:border-emerald-500">
                 {% endfor %}
-              {% else %}
-                <img src="{{ product.image.url }}" 
-                     alt="{{ product.name }}"
-                     data-full="{{ product.image.url }}"
-                     class="thumb-img border-emerald-600 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg flex-shrink-0">
               {% endif %}
             </div>
           </div>
         </div>
 
-        <!-- Product Details Section -->
-        <div class="fade-in space-y-6">
-          
-          <!-- Header -->
-          <div>
-            <div class="flex items-center space-x-2 mb-2">
-              <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
-                <i class="fas fa-tag mr-1"></i>{{ product.brand }}
-              </span>
-              <span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-semibold">
-                <i class="fas fa-layer-group mr-1"></i>{{ product.category.name }}
-              </span>
-            </div>
+        <!-- Column 2: Product Info (Center) -->
+        <div class="lg:w-[40%] space-y-6">
+          <div class="border-b border-gray-100 pb-4">
+            <h1 class="text-3xl font-bold text-gray-900 leading-tight mb-2">{{ product.name }}</h1>
+            <p class="text-emerald-600 font-semibold hover:underline cursor-pointer">Visit the {{ product.brand }} Store</p>
             
-            <h1 class="text-4xl font-bold text-gray-900 mb-3">{{ product.name }}</h1>
-            
-            <!-- Stock Status -->
-            <div class="flex items-center space-x-2 mb-4">
-              {% if product.in_stock %}
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                  </svg>
-                  In Stock
-                </span>
-              {% else %}
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                  <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                  </svg>
-                  Out of Stock
-                </span>
-              {% endif %}
-            </div>
-
-            <!-- Price Range -->
-            {% if variants %}
-            <div class="flex items-center space-x-2">
-              <span class="text-3xl font-bold text-gray-900">
-                ₹{{ product.min_price }}
-                {% if product.min_price != product.max_price %}
-                  - ₹{{ product.max_price }}
-                {% endif %}
-              </span>
-            </div>
-            {% endif %}
-          </div>
-
-          <!-- Description -->
-          <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
-              <i class="fas fa-info-circle text-emerald-600 mr-2"></i>
-              Product Description
-            </h3>
-            <p class="text-gray-700 leading-relaxed">{{ product.description }}</p>
-          </div>
-
-          <!-- Features/Highlights -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-emerald-500">
-              <i class="fas fa-truck text-emerald-600 text-2xl mb-2"></i>
-              <p class="font-semibold text-gray-800">Free Delivery</p>
-              <p class="text-sm text-gray-500">On orders over ₹50</p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-teal-500">
-              <i class="fas fa-shield-alt text-teal-600 text-2xl mb-2"></i>
-              <p class="font-semibold text-gray-800">Secure Payment</p>
-              <p class="text-sm text-gray-500">100% Protected</p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-cyan-500">
-              <i class="fas fa-undo text-cyan-600 text-2xl mb-2"></i>
-              <p class="font-semibold text-gray-800">Easy Returns</p>
-              <p class="text-sm text-gray-500">30-day return policy</p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-emerald-400">
-              <i class="fas fa-headset text-emerald-500 text-2xl mb-2"></i>
-              <p class="font-semibold text-gray-800">24/7 Support</p>
-              <p class="text-sm text-gray-500">Always here to help</p>
+            <div class="flex items-center mt-3 space-x-4">
+              <div class="flex items-center text-yellow-500">
+                <span class="text-sm font-bold mr-1">{{ review_stats.average_rating|floatformat:1 }}</span>
+                {% for i in "12345"|make_list %}
+                  {% if forloop.counter <= review_stats.average_rating %}
+                    <i class="fas fa-star text-xs"></i>
+                  {% else %}
+                    <i class="far fa-star text-xs"></i>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              <a href="#reviews-container" class="text-sm text-emerald-600 hover:text-emerald-700 transition">{{ review_stats.total_reviews }} ratings</a>
             </div>
           </div>
 
-          <!-- Variants Section -->
-          {% if variants %}
-          <div class="bg-white rounded-2xl p-6 shadow-xl">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-              <i class="fas fa-boxes text-emerald-600 mr-3"></i>
-              Available Options
-            </h2>
-            
-            <div class="space-y-3">
-              {% for variant in variants %}
-              <div class="group relative bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border-2 border-gray-200 hover:border-blue-500 transition-all shadow-sm hover:shadow-lg variant-item" data-variant-id="{{ variant.id }}">
-                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                  
-                  <!-- Variant Info -->
-                  <div class="flex-1">
-                    <div class="flex items-center space-x-3 mb-2">
-                      {% if variant.color %}
-                      <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-semibold">
-                        <i class="fas fa-palette mr-1"></i>{{ variant.color }}
-                      </span>
-                      {% endif %}
-                      {% if variant.size %}
-                      <span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold">
-                        <i class="fas fa-ruler mr-1"></i>{{ variant.size }}
-                      </span>
-                      {% endif %}
-                      {% if variant.sku %}
-                      <span class="text-xs text-gray-500">SKU: {{ variant.sku }}</span>
-                      {% endif %}
-                    </div>
-                    
-                    <!-- Pricing -->
-                    <div class="flex items-center space-x-3">
-                      {% if variant.get_discounted_price < variant.price %}
-                        <span class="text-2xl font-bold text-gray-800 discounted-price" data-price="{{ variant.get_discounted_price }}">₹{{ variant.get_discounted_price|floatformat:2 }}</span>
-                        <span class="text-lg text-gray-400 line-through original-price">₹{{ variant.price }}</span>
-                        <span class="px-2 py-1 bg-red-500 text-white rounded-md text-xs font-bold">
-                          {{ variant.discount_percentage }}% OFF
-                        </span>
-                      {% else %}
-                        <span class="text-2xl font-bold text-gray-800" data-price="{{ variant.price }}">₹{{ variant.price }}</span>
-                      {% endif %}
-                    </div>
-                    
-                    <!-- Stock Indicator -->
-                    {% if variant.stock_quantity > 0 %}
-                      {% if variant.is_low_stock %}
-                        <div class="mt-2 flex items-center text-red-600 text-sm font-medium">
-                          <i class="fas fa-exclamation-triangle mr-2"></i>
-                          Only {{ variant.stock_quantity }} left in stock!
-                        </div>
-                      {% else %}
-                        <div class="mt-2 flex items-center text-green-600 text-sm font-medium">
-                          <i class="fas fa-check-circle mr-2"></i>
-                          In Stock ({{ variant.stock_quantity }} available)
-                        </div>
-                      {% endif %}
-                    {% else %}
-                      <div class="mt-2 flex items-center text-red-600 text-sm font-medium">
-                        <i class="fas fa-times-circle mr-2"></i>
-                        Out of Stock
-                      </div>
-                    {% endif %}
+          <!-- Overhauled Variant Selection Area -->
+          {% if available_attributes %}
+          <div class="space-y-6 pt-4" id="variant-selection-root">
+              {% for attr_name, attr_values in available_attributes.items %}
+              <div class="attribute-group" data-attribute-name="{{ attr_name }}">
+                  <div class="flex items-center justify-between mb-2">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{{ attr_name }}</p>
+                    <span class="text-[10px] text-emerald-600 font-bold selected-value-display hidden">Selected: <span class="val"></span></span>
                   </div>
-
-                  <!-- Action Buttons -->
-                  <div class="flex items-center gap-3 min-w-[200px]">
-                    {% if variant.stock_quantity > 0 %}
-                      <div class="flex-1">
-                        {% if variant.in_cart %}
-                          <!-- Show "Go to Cart" if variant is already in cart -->
-                          <a href="{% url 'shop:cart' %}"
-                             class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-teal-700 transition shadow-lg">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Go to Cart</span>
-                          </a>
-                        {% else %}
-                          <!-- Show "Add to Cart" if variant is not in cart -->
-                          <button type="button" 
-                                  onclick="addToCart('{{ variant.id }}')"
-                                  class="cart-btn w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg"
-                                  data-product-id="{{ product.id }}"
-                                  data-variant-id="{{ variant.id }}">
-                            <i class="fas fa-cart-plus"></i>
-                            <span>Add to Cart</span>
-                          </button>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <button disabled 
-                              class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed">
-                        <i class="fas fa-times-circle"></i>
-                        <span>Out of Stock</span>
+                  <div class="flex flex-wrap gap-2.5 attribute-values">
+                      {% for val in attr_values %}
+                      <button type="button" 
+                              class="attr-val-btn px-5 py-2.5 border-2 border-gray-100 rounded-xl text-sm font-semibold transition-all hover:border-emerald-300 hover:bg-emerald-50/30 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:grayscale"
+                              data-attribute-value="{{ val }}">
+                          {{ val }}
                       </button>
-                    {% endif %}
-                    
-                    <!-- Wishlist Button -->
-                    <button type="button"
-                            onclick="toggleWishlist('{{ product.id }}')"
-                            class="flex items-center justify-center w-12 h-12 border-2 border-gray-300 rounded-xl hover:border-red-300 hover:bg-red-50 transition-colors wishlist-btn"
-                            data-product-id="{{ product.id }}"
-                            title="Add to Wishlist">
-                      <i class="far fa-heart text-gray-600 hover:text-red-500"></i>
-                    </button>
+                      {% endfor %}
                   </div>
-                </div>
               </div>
               {% endfor %}
-            </div>
+              
+              <!-- Hidden state for JS -->
+              <input type="hidden" id="selected-variant-id" value="">
           </div>
           {% endif %}
 
+          <!-- Price & Savings -->
+          <div class="flex flex-col space-y-1 pt-4 border-t border-gray-100">
+            <div class="flex items-baseline space-x-2">
+              <span class="text-red-600 text-2xl font-light" id="main-discount-percent">{% if variants and variants.0.discount_percentage %}-{{ variants.0.discount_percentage }}%{% endif %}</span>
+              <span id="main-price-display" class="text-3xl font-medium text-gray-900">
+                {% if variants|length > 1 %}
+                    ₹{{ product.min_price|floatformat:2 }} - ₹{{ product.max_price|floatformat:2 }}
+                {% elif variants %}
+                    ₹{{ variants.0.get_discounted_price|floatformat:2 }}
+                {% else %}
+                    ₹{{ product.price|floatformat:2 }}
+                {% endif %}
+              </span>
+            </div>
+            <div class="text-sm text-gray-500">
+              <span id="price-label">{% if variants|length > 1 %}Select options to see price{% else %}M.R.P.:{% endif %}</span> 
+              <span id="main-original-price" class="line-through">{% if variants|length == 1 and variants.0.get_discounted_price < variants.0.price %}₹{{ variants.0.price|floatformat:2 }}{% endif %}</span>
+            </div>
+            <p class="text-sm text-gray-800 font-semibold">Inclusive of all taxes</p>
+          </div>
+
+          <div class="pt-6">
+            <h3 class="font-bold text-gray-900 mb-2">About this item</h3>
+            <p class="text-sm text-gray-700 leading-relaxed">{{ product.description }}</p>
+          </div>
+        </div>
+
+        <!-- Column 3: Buy Box (Right - Sticky) -->
+        <div class="lg:w-[20%]">
+          <div class="sticky top-6 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+            <div id="buy-box-price" class="text-2xl font-medium text-gray-900">
+                {% if variants|length > 1 %}
+                    Select Options
+                {% else %}
+                    ₹{{ variants.0.get_discounted_price|floatformat:2 }}
+                {% endif %}
+            </div>
+            
+            <div class="space-y-4">
+                <div id="main-stock-badge-box">
+                    {% if product.in_stock %}
+                        <p class="text-green-700 text-lg font-medium" id="buy-box-stock-text">In Stock</p>
+                    {% else %}
+                        <p class="text-red-600 text-lg font-medium" id="buy-box-stock-text">Temporarily Out of Stock</p>
+                    {% endif %}
+                </div>
+
+                <div class="text-sm space-y-2">
+                    <div class="flex items-start">
+                        <i class="fas fa-truck text-emerald-600 mt-1 mr-2 w-4"></i>
+                        <span>FREE delivery <span class="font-bold">{% now "l, j F" %}</span></span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-map-marker-alt text-gray-500 mt-1 mr-2 w-4"></i>
+                        <span class="text-emerald-700">Select delivery location</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2" id="cart-actions-container">
+                    {% if product.in_stock %}
+                        <button type="button" 
+                                id="buy-box-cart-btn"
+                                disabled
+                                class="w-full bg-gray-200 text-gray-500 font-semibold py-3 rounded-full shadow-sm transition cursor-not-allowed opacity-75">
+                            Add to Cart
+                        </button>
+
+                        <p id="selection-hint" class="text-[10px] text-center text-amber-600 font-bold uppercase tracking-wider mt-2 animate-pulse">
+                           <i class="fas fa-hand-pointer mr-1"></i> Please Select a variant
+                        </p>
+                    {% else %}
+                        <button disabled class="w-full bg-gray-100 text-gray-400 font-semibold py-3 rounded-full border border-gray-200 cursor-not-allowed">
+                            Currently Unavailable
+                        </button>
+                    {% endif %}
+                </div>
+
+                <div class="text-xs text-gray-500 space-y-1 pt-2">
+                    <div class="flex justify-between">
+                        <span>Ships from</span>
+                        <span class="text-gray-900 font-medium">GearUp</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Sold by</span>
+                        <span class="text-emerald-700 font-medium">GearUp Official</span>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100">
+                    <button type="button" 
+                            {% if user.is_authenticated %}
+                            onclick="globalToggleWishlist('{{ product.id }}')"
+                            {% else %}
+                            onclick="window.location.href='{% url 'user_auth:signin' %}?next={{ request.path }}'"
+                            {% endif %}
+                            class="wishlist-btn w-full text-sm text-emerald-700 hover:underline font-medium flex items-center justify-center {% if product.id in wishlist_product_ids %}bg-red-50 border-red-300{% endif %}"
+                            data-product-id="{{ product.id }}">
+                        <i class="{% if product.id in wishlist_product_ids %}fas fa-heart text-red-500{% else %}far fa-heart{% endif %} mr-2"></i> 
+                        <span class="wishlist-label">
+                            {% if product.id in wishlist_product_ids %}Remove from Wish List{% else %}Add to Wish List{% endif %}
+                        </span>
+                    </button>
+                </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Available Variations Table -->
+      {% if variants.count > 1 %}
+      <div id="available-variants-section" class="mt-8 bg-white rounded-3xl shadow-2xl p-8 fade-in border border-gray-100 overflow-hidden relative">
+        <div class="absolute top-0 right-0 p-4 opacity-5">
+          <i class="fas fa-layer-group text-9xl text-emerald-600"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+          <i class="fas fa-boxes text-emerald-600 mr-3"></i>
+          Available Variations
+        </h2>
+        
+        <div class="overflow-x-auto rounded-2xl border border-gray-100">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-100">
+                <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">The Product</th>
+                <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Price & Savings</th>
+                <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Availability</th>
+                <th class="py-4 px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="variants-table-body" class="divide-y divide-gray-50">
+              {% for v in variants %}
+              <tr data-variant-id="{{ v.id }}" onclick="selectVariantFromTable(event, '{{ v.id }}')" class="hover:bg-emerald-50/20 transition-all duration-300 group cursor-pointer">
+                <td class="py-5 px-6">
+                  <div class="flex items-center">
+                    <div class="relative w-14 h-14 flex-shrink-0 group-hover:scale-110 transition-transform duration-300 cursor-pointer">
+                      {% if v.main_image %}
+                        <img src="{{ v.main_image.url }}" class="w-full h-full rounded-xl shadow-md object-cover border border-gray-100" alt="{{ v.get_display_name }}">
+                      {% else %}
+                        <div class="w-full h-full rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200">
+                          <i class="fas fa-cube text-gray-300"></i>
+                        </div>
+                      {% endif %}
+                      {% if v.discount_percentage %}
+                        <div class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg">
+                          -{{ v.discount_percentage }}%
+                        </div>
+                      {% endif %}
+                    </div>
+                    <div class="ml-5">
+                      <p class="font-black text-gray-900 leading-tight">{{ v.get_display_name }}</p>
+                      <p class="text-[10px] text-gray-400 font-mono mt-0.5">{{ v.sku|default:"standard-sku" }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-5 px-6">
+                  <div class="flex flex-col">
+                    <span class="text-xl font-black text-emerald-600">₹{{ v.discounted_price|floatformat:2 }}</span>
+                    {% if v.discounted_price < v.price %}
+                      <span class="text-[11px] text-gray-400 line-through">₹{{ v.price|floatformat:2 }}</span>
+                      <span class="text-[10px] text-emerald-500 font-bold mt-0.5 animate-pulse">Save ₹{{ v.price|sub:v.discounted_price|floatformat:0 }}</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="py-5 px-6">
+                  {% if v.stock_quantity > 0 %}
+                    <div class="flex flex-col">
+                      <span class="inline-flex items-center w-fit px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 uppercase tracking-wide border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-ping"></span>
+                        Ready to Ship
+                      </span>
+                      {% if v.stock_quantity <= 5 %}
+                        <p class="text-[10px] text-orange-600 font-black mt-1.5 uppercase tracking-tighter">Only {{ v.stock_quantity }} units left!</p>
+                      {% else %}
+                        <p class="text-[10px] text-gray-500 mt-1.5">{{ v.stock_quantity }} units in stock</p>
+                      {% endif %}
+                    </div>
+                  {% else %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black bg-gray-100 text-gray-400 uppercase tracking-wide border border-gray-200">
+                      <i class="fas fa-clock mr-2"></i>
+                      Sold Out
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="py-5 px-6 text-right">
+                  <button type="button" 
+                          class="inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 active:scale-95 transition-all shadow-md hover:shadow-emerald-200">
+                    <i class="fas fa-hand-pointer mr-2"></i>
+                    <span class="select-btn-text">Select</span>
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
+      {% endif %}
 
       <!-- Product Specifications -->
       <div class="mt-16 bg-white rounded-3xl shadow-2xl p-8 fade-in">
@@ -348,7 +367,7 @@
           </div>
           <div class="border-b border-gray-200 pb-3">
             <span class="font-semibold text-gray-700">SKU:</span>
-            <span class="text-gray-600 ml-2">{{ product.sku }}</span>
+            <span class="text-gray-600 ml-2">{{ product.sku|default:"N/A" }}</span>
           </div>
           <div class="border-b border-gray-200 pb-3">
             <span class="font-semibold text-gray-700">Status:</span>
@@ -356,6 +375,8 @@
           </div>
         </div>
       </div>
+      
+
 
       <!-- ======================== -->
       <!-- REVIEWS AND RATINGS SECTION -->
@@ -852,17 +873,119 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
 <!-- Product Details Configuration -->
 <script>
   window.PRODUCT_DETAILS_CONFIG = {
     productId: '{{ product.id }}',
     productSlug: '{{ product.slug }}',
+    variants: {{ variants_json|safe }},
+    attributes: {{ available_attributes_json|safe }},
+    isUserAuthenticated: {{ request.user.is_authenticated|yesno:"true,false" }},
+    initialVariantId: "{{ variants.0.id }}",
+    cartUrl: '{% url "shop:cart" %}',
+    cartAddUrl: '{% url "shop:add_to_cart" %}',
     getCartDataUrl: '{% url "shop:get_cart_data" %}',
     getReviewUrl: '{% url "products:get_review" 0 %}',
     updateReviewUrl: '{% url "products:update_review" 0 %}',
     voteReviewUrl: '{% url "products:vote_review" 999999 %}',
     ajaxReviewsUrl: '{% url "products:ajax_reviews" product.slug %}',
     submitReviewUrl: '{% url "products:submit_review" product.slug %}'
+  };
+
+  /**
+   * Helper to select a variant from the table list
+   */
+  window.selectVariantFromTable = function(e, variantId) {
+    console.log('[DEBUG] selectVariantFromTable called with variantId:', variantId);
+    
+    const variant = window.PRODUCT_DETAILS_CONFIG.variants.find(v => v.id === variantId);
+    if (!variant) {
+      console.error('[DEBUG] Variant not found:', variantId);
+      return;
+    }
+
+    console.log('[DEBUG] Found variant:', variant);
+    console.log('[DEBUG] Variant attributes:', variant.attributes);
+
+    // Check if this is a simple variant with no attributes
+    const attrKeys = Object.keys(variant.attributes || {});
+    const hasAttributes = attrKeys.length > 0;
+
+    console.log('[DEBUG] Processing', attrKeys.length, 'attributes:', attrKeys);
+
+    if (!hasAttributes) {
+      console.log('[DEBUG] Variant has no attributes, directly updating UI');
+      
+      // Set the selected variant ID
+      const hiddenInput = document.getElementById('selected-variant-id');
+      if (hiddenInput) {
+        hiddenInput.value = variantId;
+      }
+      
+      if (typeof window.updateProductUI === 'function') {
+        console.log('[DEBUG] Calling window.updateProductUI');
+        window.updateProductUI(variant);
+        
+        // Scroll to gallery
+        const gallery = document.getElementById('image-container');
+        if (gallery) {
+          gallery.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else {
+        console.error('[DEBUG] window.updateProductUI is not available');
+      }
+      
+    } else {
+      // Normal variant with attributes - scroll and trigger clicks
+      console.log('[DEBUG] Variant has attributes, triggering attribute selection');
+      
+      const target = document.getElementById('variant-selection-root');
+      if (target) {
+        window.scrollTo({
+          top: target.offsetTop - 100,
+          behavior: 'smooth'
+        });
+      }
+
+      // Process each attribute with a delay
+      setTimeout(() => {
+        attrKeys.forEach((attrName, index) => {
+          const attrVal = variant.attributes[attrName];
+          console.log(`[DEBUG] Looking for attribute: ${attrName} = ${attrVal}`);
+          
+          const btn = document.querySelector(`.attribute-group[data-attribute-name="${attrName}"] .attr-val-btn[data-attribute-value="${attrVal}"]`);
+          
+          if (btn) {
+            console.log(`[DEBUG] Found button for ${attrName}, clicking...`);
+            setTimeout(() => {
+              btn.click();
+              console.log(`[DEBUG] Clicked ${attrName} button`);
+            }, index * 100);
+          } else {
+            console.error(`[DEBUG] Button not found for ${attrName} = ${attrVal}`);
+            console.log('[DEBUG] Available buttons in group:', 
+              document.querySelectorAll(`.attribute-group[data-attribute-name="${attrName}"] .attr-val-btn`)
+            );
+          }
+        });
+      }, 500);
+    }
+
+    // Provide visual feedback
+    const btn = e.target.closest('button');
+    if (btn) {
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check mr-2"></i> Selected';
+      btn.classList.replace('bg-emerald-600', 'bg-emerald-800');
+      
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.replace('bg-emerald-800', 'bg-emerald-600');
+      }, 2000);
+    }
   };
 </script>
 
