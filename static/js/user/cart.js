@@ -283,8 +283,9 @@
     window.updateVariant = function(itemId, variantId) {
         const itemEl = document.getElementById(`cart-item-${itemId}`);
         if (itemEl) {
-            itemEl.style.opacity = '0.7';
-            itemEl.style.pointerEvents = 'none';
+            itemEl.classList.add('opacity-50', 'pointer-events-none');
+            const selector = document.getElementById(`variant-selector-${itemId}`);
+            if (selector) selector.classList.add('hidden');
         }
 
         window.globalApiPOST(config.updateVariantUrl, {
@@ -296,22 +297,52 @@
                 if (window.showNotification) {
                     window.showNotification(data.message, 'success');
                 }
-                setTimeout(() => location.reload(), 300);
+                
+                if (data.merged) {
+                    // Item merged into another one
+                    // 1. Fade out the current item
+                    if (itemEl) {
+                        itemEl.style.transition = 'all 0.4s ease';
+                        itemEl.style.transform = 'scale(0.9)';
+                        itemEl.style.opacity = '0';
+                        setTimeout(() => itemEl.remove(), 400);
+                    }
+                    
+                    // 2. Update the surviving item (if it exists on current page)
+                    const survivingItem = document.getElementById(`cart-item-${data.item_id}`);
+                    if (survivingItem) {
+                        const qtyText = document.getElementById(`quantity-${data.item_id}`);
+                        if (qtyText) {
+                            qtyText.textContent = data.item_quantity;
+                            qtyText.classList.add('success-update');
+                            setTimeout(() => qtyText.classList.remove('success-update'), 1000);
+                        }
+                    } else {
+                        // Surviving item not found or different page? reload is safer
+                        setTimeout(() => location.reload(), 500);
+                    }
+                } else {
+                    // Simple variant update - reload is still needed because 
+                    // product info like name/image/tags might have changed
+                    // but we can do it after a short delay
+                    setTimeout(() => location.reload(), 300);
+                }
+                
+                // Update summary anyway
+                updateOrderSummary(data);
             } else {
                 if (window.showNotification) {
                     window.showNotification(data.message || 'Error updating variant', 'error');
                 }
                 if (itemEl) {
-                    itemEl.style.opacity = '1';
-                    itemEl.style.pointerEvents = 'auto';
+                    itemEl.classList.remove('opacity-50', 'pointer-events-none');
                 }
             }
         })
         .catch(e => {
             console.error('Variant update error:', e);
             if (itemEl) {
-                itemEl.style.opacity = '1';
-                itemEl.style.pointerEvents = 'auto';
+                itemEl.classList.remove('opacity-50', 'pointer-events-none');
             }
         });
     };
