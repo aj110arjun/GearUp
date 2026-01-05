@@ -111,8 +111,7 @@ class SalesReportGenerator:
                 'user__last_name',
                 'user__email',
                 'product__name',
-                'variant__size',
-                'variant__color',
+                'variant__sku',
                 'quantity',
                 'unit_price',
                 'total_amount',
@@ -299,7 +298,7 @@ class SalesReportGenerator:
                     f"#{order['order_number'][-8:]}",
                     order['created_at'].strftime('%d/%m/%Y') if order['created_at'] else '-',
                     Paragraph(f"<b>{customer_name}</b><br/><font size=8>{order['user__email']}</font>", normal_style),
-                    Paragraph(f"{order['product__name'] or 'Unknown'}<br/><font size=8 color='#6B7280'>{order['variant__size'] or ''} {order['variant__color'] or ''}</font>", normal_style),
+                    Paragraph(f"{order['product__name'] or 'Unknown'}<br/><font size=8 color='#6B7280'>SKU: {order['variant__sku'] or ''}</font>", normal_style),
                     str(order['quantity']),
                     method_display,
                     f"Rs.{float(order['total_amount'] or 0):,.2f}"
@@ -578,8 +577,8 @@ class SalesReportGenerator:
                     
                     ws_orders.cell(row=row_idx, column=4, value=order['user__email']).style = 'data_style'
                     ws_orders.cell(row=row_idx, column=5, value=order['product__name'] or 'Unknown').style = 'data_style'
-                    ws_orders.cell(row=row_idx, column=6, value=order['variant__size'] or '').style = 'data_style'
-                    ws_orders.cell(row=row_idx, column=7, value=order['variant__color'] or '').style = 'data_style'
+                    ws_orders.cell(row=row_idx, column=6, value=order['variant__sku'] or '').style = 'data_style'
+                    ws_orders.cell(row=row_idx, column=7, value='-').style = 'data_style' # Placeholder or remove if redundant
                     ws_orders.cell(row=row_idx, column=8, value=order['quantity']).style = 'data_style'
                     
                     # Currency cells
@@ -811,7 +810,7 @@ class SalesReportGenerator:
                 if not customer_name:
                     customer_name = order['user__email'].split('@')[0]
                 
-                variant = f"{order['variant__size'] or ''} {order['variant__color'] or ''}".strip()
+                variant = f"SKU: {order['variant__sku'] or ''}".strip()
                 variant = variant if variant else 'Standard'
                 
                 writer.writerow([

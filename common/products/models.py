@@ -230,22 +230,47 @@ class Product(models.Model):
         return {k: round((v / total) * 100, 1) for k, v in distribution.items()}
 
 
+class VariantAttribute(models.Model):
+    """Naming for attributes like 'Color', 'Size', 'Storage', etc."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=50, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class VariantAttributeValue(models.Model):
+    """Values for attributes like 'Red', 'XL', '256GB'."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    attribute = models.ForeignKey(VariantAttribute, on_delete=models.CASCADE, related_name='values')
+    value = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['attribute', 'value']
+
+    def __str__(self):
+        return f"{self.attribute.name}: {self.value}"
+
+
 class ProductVariant(models.Model):
-    """Product variants (size, color, etc.)"""
+    """
+    Refactored Product Variant model that supports flexible attributes.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     
-    # Variant attributes
-    size = models.CharField(max_length=50, blank=True)
-    color = models.CharField(max_length=50, blank=True)
+    # New flexible attributes system
+    attribute_values = models.ManyToManyField(VariantAttributeValue, related_name='variants')
     
-    # Pricing
+    # Core Data
+    sku = models.CharField(max_length=100, unique=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    # Inventory
     stock_quantity = models.IntegerField(default=0)
     
-    # Status
+    # Assets & Status
+    main_image = CloudinaryField('variant_main/', validators=[validate_image_file], null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
     
@@ -254,72 +279,68 @@ class ProductVariant(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['size', 'color']
-        unique_together = [['product', 'size', 'color']]
+        ordering = ['created_at']
 
     def __str__(self):
-        parts = [self.product.name]
-        if self.size:
-            parts.append(self.size)
-        if self.color:
-            parts.append(self.color)
-        return ' - '.join(parts)
+        return f"{self.product.name} - {self.get_display_name()}"
+
+    def save(self, *args, **kwargs):
+        # Auto-generate variant SKU if not provided
+        if not self.sku:
+            uuid_part = str(self.id).split('-')[0].upper()
+            self.sku = f"VAR-{uuid_part}"
+        super().save(*args, **kwargs)
+
+    def get_display_name(self):
+        """Dynamic display name based on all associated attributes"""
+        attrs = self.attribute_values.all()
+        if attrs.exists():
+            return ' - '.join([a.value for a in attrs])
+        return "Standard"
+
+    @property
+    def color(self):
+        """Compatibility property for legacy templates"""
+        val = self.attribute_values.filter(attribute__name__iexact='color').first()
+        return val.value if val else ""
+
+    @property
+    def size(self):
+        """Compatibility property for legacy templates"""
+        val = self.attribute_values.filter(attribute__name__iexact='size').first()
+        return val.value if val else ""
+
+    @property
+    def is_low_stock(self):
+        """Check if stock is low (threshold: 5)"""
+        return 0 < self.stock_quantity <= 5
 
     def get_best_offer(self):
-        """
-        Calculate the best available offer for this variant.
-        Checks both Product and Category offers and returns the highest discount.
-        """
+        """Checks both Product and Category offers and returns the highest discount."""
         now = timezone.now()
-        
-        # Check Product Offers
-        product_offer = self.product.offers.filter(
-            is_active=True,
-            start_date__lte=now,
-            end_date__gte=now
-        ).order_by('-discount_percentage').first()
-        
+        product_offer = self.product.offers.filter(is_active=True, start_date__lte=now, end_date__gte=now).order_by('-discount_percentage').first()
         product_discount = product_offer.discount_percentage if product_offer else 0
         
-        # Check Category Offers
-        category_offer = self.product.category.offers.filter(
-            is_active=True,
-            start_date__lte=now,
-            end_date__gte=now
-        ).order_by('-discount_percentage').first()
-        
+        category_offer = self.product.category.offers.filter(is_active=True, start_date__lte=now, end_date__gte=now).order_by('-discount_percentage').first()
         category_discount = category_offer.discount_percentage if category_offer else 0
         
-        # Return best discount
         return max(product_discount, category_discount)
 
-    def get_discounted_price(self):
-        """
-        Calculate price after applying the best offer.
-        """
+    @property
+    def discounted_price(self):
         discount_percentage = self.get_best_offer()
         if discount_percentage > 0:
-            discount_amount = (self.price * discount_percentage) / 100
-            return self.price - discount_amount
+            return self.price - (self.price * discount_percentage / 100)
         return self.price
+
+    def get_discounted_price(self):
+        return self.discounted_price
 
     @property
     def discount_percentage(self):
-        """Return the current active discount percentage"""
         return self.get_best_offer()
 
-    # ADD THESE METHODS FOR TEMPLATE COMPATIBILITY
-    def get_display_name(self):
-        """Return display name for variant selection"""
-        parts = []
-        if self.color:
-            parts.append(self.color)
-        if self.size:
-            parts.append(self.size)
-        return ' - '.join(parts) if parts else "Standard"
-
     def get_discount(self):
-        """Get discount percentage for template"""
         return self.discount_percentage
 
 
@@ -349,6 +370,24 @@ class ProductImage(models.Model):
                 is_primary=True
             ).exclude(pk=self.pk).update(is_primary=False)
         super().save(*args, **kwargs)
+
+
+class ProductVariantImage(models.Model):
+    """Additional images for individual product variants"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='images')
+    image = CloudinaryField('variant_images/', validators=[validate_image_file])
+    alt_text = models.CharField(max_length=200, blank=True)
+    display_order = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'created_at']
+
+    def __str__(self):
+        return f"{self.variant} - Image {self.display_order}"
 
 
 class ProductOffer(models.Model):
