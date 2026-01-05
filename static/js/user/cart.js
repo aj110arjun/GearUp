@@ -77,20 +77,8 @@
     });
 
     function updateButtonStates(itemId, quantity) {
-        const itemEl = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
-        if (!itemEl) return;
-        
-        const decBtn = itemEl.querySelector('.decrement-btn');
-        const incBtn = itemEl.querySelector('.increment-btn');
-        const maxQty = parseInt(itemEl.dataset.maxQty || 5);
-
-        if (decBtn) {
-            decBtn.disabled = quantity <= 1;
-        }
-
-        if (incBtn) {
-            incBtn.disabled = quantity >= maxQty;
-        }
+        // Disabling logic removed as per user request.
+        // Buttons remain enabled at all times.
     }
 
     function updateOrderSummary(data) {
@@ -118,7 +106,8 @@
     }
 
     function incrementQuantity(itemId) {
-        const itemEl = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+        const itemEl = document.getElementById(`cart-item-${itemId}`) || 
+                       document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
         if (!itemEl) return;
         
         const qtyText = document.getElementById(`quantity-${itemId}`);
@@ -134,28 +123,78 @@
             return;
         }
         
+        // Store current quantity for potential rollback
+        itemEl.dataset.originalQty = currentQty;
         updateCartItem(itemId, currentQty + 1);
     }
 
     function decrementQuantity(itemId) {
+        const itemEl = document.getElementById(`cart-item-${itemId}`) || 
+                       document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+        if (!itemEl) return;
+
         const qtyText = document.getElementById(`quantity-${itemId}`);
         if (!qtyText) return;
         
         const currentQty = parseInt(qtyText.textContent);
-        if (currentQty <= 1) return;
         
+        if (currentQty <= 1) {
+            // If decreasing from 1, ask to remove the item
+            if (window.showConfirmModal) {
+                window.showConfirmModal({
+                    title: 'Remove Item?',
+                    message: 'Do you want to remove this item from your cart?',
+                    confirmText: 'Remove',
+                    cancelText: 'Cancel',
+                    onConfirm: () => {
+                        itemEl.dataset.originalQty = currentQty;
+                        updateCartItem(itemId, 0); // Backend deletes if quantity <= 0
+                        // Since it's being removed, we should reload or hide the element
+                        setTimeout(() => location.reload(), 500);
+                    }
+                });
+            } else if (confirm('Remove item from cart?')) {
+                itemEl.dataset.originalQty = currentQty;
+                updateCartItem(itemId, 0);
+                setTimeout(() => location.reload(), 500);
+            }
+            return;
+        }
+        
+        // Store current quantity for potential rollback
+        itemEl.dataset.originalQty = currentQty;
         updateCartItem(itemId, currentQty - 1);
     }
 
     function updateCartItem(itemId, quantity) {
-        const itemEl = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+        const itemEl = document.getElementById(`cart-item-${itemId}`) || 
+                       document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
         const qtyText = document.getElementById(`quantity-${itemId}`);
-        const itemTotal = itemEl?.querySelector('.item-total');
+        const itemTotal = document.getElementById(`item-total-${itemId}`);
         
         if (!qtyText || !itemEl) return;
+
+        const originalQty = parseInt(itemEl.dataset.originalQty || qtyText.textContent);
+        const unitPrice = parseFloat(itemEl.dataset.unitPrice || 0);
+
+        // --- OPTIMISTIC UPDATE START ---
+        // Update quantity text immediately
+        qtyText.textContent = quantity;
+        qtyText.classList.add('updating', 'scale-110');
         
-        qtyText.classList.add('updating');
+        // Update item total immediately (client-side calc)
+        if (itemTotal) {
+            const tempTotal = unitPrice * quantity;
+            itemTotal.textContent = `₹${tempTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            itemTotal.classList.add('text-emerald-500', 'scale-105', 'transition-all');
+        }
+
+        // Update button states immediately
+        updateButtonStates(itemId, quantity);
+        
+        // Disable interactions during bounce
         itemEl.style.pointerEvents = 'none';
+        // --- OPTIMISTIC UPDATE END ---
 
         window.globalApiPOST(config.updateUrl, {
             item_id: itemId,
@@ -163,22 +202,38 @@
         })
         .then(data => {
             if (data.success) {
-                qtyText.textContent = data.item_quantity || quantity;
+                // Confirm with server data
+                const finalQty = data.item_quantity !== undefined ? data.item_quantity : quantity;
+                qtyText.textContent = finalQty;
                 
-                if (itemTotal && data.item_total) {
-                    itemTotal.textContent = `₹${parseFloat(data.item_total).toFixed(2)}`;
+                if (itemTotal) {
+                    const finalTotal = data.item_total !== undefined ? 
+                                 parseFloat(data.item_total) : 
+                                 (unitPrice * finalQty);
+                    itemTotal.textContent = `₹${finalTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 }
                 
-                updateButtonStates(itemId, data.item_quantity || quantity);
+                // Update button states again to be sure
+                updateButtonStates(itemId, finalQty);
+                // Update summary with real server data
                 updateOrderSummary(data);
                 
+                // Success visual splash
+                qtyText.classList.replace('updating', 'success-update');
+                setTimeout(() => {
+                    qtyText.classList.remove('success-update', 'scale-110');
+                    if (itemTotal) itemTotal.classList.remove('text-emerald-500', 'scale-105');
+                }, 400);
+
                 if (window.showNotification) {
                     window.showNotification(data.message || 'Cart updated', 'success');
                 }
             } else {
+                // ROLLBACK on backend error
                 if (window.showNotification) {
                     window.showNotification(data.message || 'Error updating cart', 'error');
                 }
+                rollbackUI(itemId, originalQty, unitPrice);
             }
         })
         .catch(e => {
@@ -186,11 +241,33 @@
             if (window.showNotification) {
                 window.showNotification('Connection error', 'error');
             }
+            // ROLLBACK on connection error
+            rollbackUI(itemId, originalQty, unitPrice);
         })
         .finally(() => {
-            qtyText.classList.remove('updating');
-            itemEl.style.pointerEvents = 'auto';
+            setTimeout(() => {
+                qtyText.classList.remove('updating', 'scale-110');
+                itemEl.style.pointerEvents = 'auto';
+            }, 300);
         });
+    }
+
+    function rollbackUI(itemId, originalQty, unitPrice) {
+        const qtyText = document.getElementById(`quantity-${itemId}`);
+        const itemTotal = document.getElementById(`item-total-${itemId}`);
+        
+        if (qtyText) {
+            qtyText.textContent = originalQty;
+            qtyText.classList.add('bg-red-50', 'text-red-600');
+            setTimeout(() => qtyText.classList.remove('bg-red-50', 'text-red-600'), 1000);
+        }
+        
+        if (itemTotal) {
+            const total = unitPrice * originalQty;
+            itemTotal.textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+        
+        updateButtonStates(itemId, originalQty);
     }
 
     window.toggleVariantSelector = function(itemId) {
@@ -206,8 +283,9 @@
     window.updateVariant = function(itemId, variantId) {
         const itemEl = document.getElementById(`cart-item-${itemId}`);
         if (itemEl) {
-            itemEl.style.opacity = '0.7';
-            itemEl.style.pointerEvents = 'none';
+            itemEl.classList.add('opacity-50', 'pointer-events-none');
+            const selector = document.getElementById(`variant-selector-${itemId}`);
+            if (selector) selector.classList.add('hidden');
         }
 
         window.globalApiPOST(config.updateVariantUrl, {
@@ -219,22 +297,52 @@
                 if (window.showNotification) {
                     window.showNotification(data.message, 'success');
                 }
-                setTimeout(() => location.reload(), 300);
+                
+                if (data.merged) {
+                    // Item merged into another one
+                    // 1. Fade out the current item
+                    if (itemEl) {
+                        itemEl.style.transition = 'all 0.4s ease';
+                        itemEl.style.transform = 'scale(0.9)';
+                        itemEl.style.opacity = '0';
+                        setTimeout(() => itemEl.remove(), 400);
+                    }
+                    
+                    // 2. Update the surviving item (if it exists on current page)
+                    const survivingItem = document.getElementById(`cart-item-${data.item_id}`);
+                    if (survivingItem) {
+                        const qtyText = document.getElementById(`quantity-${data.item_id}`);
+                        if (qtyText) {
+                            qtyText.textContent = data.item_quantity;
+                            qtyText.classList.add('success-update');
+                            setTimeout(() => qtyText.classList.remove('success-update'), 1000);
+                        }
+                    } else {
+                        // Surviving item not found or different page? reload is safer
+                        setTimeout(() => location.reload(), 500);
+                    }
+                } else {
+                    // Simple variant update - reload is still needed because 
+                    // product info like name/image/tags might have changed
+                    // but we can do it after a short delay
+                    setTimeout(() => location.reload(), 300);
+                }
+                
+                // Update summary anyway
+                updateOrderSummary(data);
             } else {
                 if (window.showNotification) {
                     window.showNotification(data.message || 'Error updating variant', 'error');
                 }
                 if (itemEl) {
-                    itemEl.style.opacity = '1';
-                    itemEl.style.pointerEvents = 'auto';
+                    itemEl.classList.remove('opacity-50', 'pointer-events-none');
                 }
             }
         })
         .catch(e => {
             console.error('Variant update error:', e);
             if (itemEl) {
-                itemEl.style.opacity = '1';
-                itemEl.style.pointerEvents = 'auto';
+                itemEl.classList.remove('opacity-50', 'pointer-events-none');
             }
         });
     };

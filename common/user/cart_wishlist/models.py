@@ -81,6 +81,11 @@ class CartItem(models.Model):
     def is_available(self):
         return not self.variant.is_deleted and self.variant.is_active and self.variant.stock_quantity >= self.quantity
 
+    @property
+    def max_quantity(self):
+        """Return the maximum allowed quantity for this item (min of 5 or stock)"""
+        return min(5, self.variant.stock_quantity)
+
 class Wishlist(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(
@@ -138,31 +143,3 @@ class WishlistItem(models.Model):
 
     def __str__(self):
         return self.product.name
-
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.db import transaction
-
-@receiver(post_save, sender=CartItem)
-def sync_cart_to_wishlist(sender, instance, **kwargs):
-    """When a product variant is in cart, ensure product is not in wishlist"""
-    with transaction.atomic():
-        # Import here to avoid circular dependencies
-        from .models import WishlistItem
-        user = instance.cart.user
-        WishlistItem.objects.filter(
-            wishlist__user=user, 
-            product=instance.variant.product
-        ).delete()
-
-@receiver(post_save, sender=WishlistItem)
-def sync_wishlist_to_cart(sender, instance, **kwargs):
-    """When a product is in wishlist, ensure all its variants are not in cart"""
-    with transaction.atomic():
-        # Import here to avoid circular dependencies
-        from .models import CartItem
-        user = instance.wishlist.user
-        CartItem.objects.filter(
-            cart__user=user, 
-            variant__product=instance.product
-        ).delete()

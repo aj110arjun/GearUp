@@ -152,7 +152,8 @@ def add_to_cart(request):
             'removed': removed,
             'message': message,
             'cart_count': cart.total_items,
-            'wishlist_count': wishlist.total_items
+            'wishlist_count': wishlist.total_items,
+            'in_wishlist': False
         })
     except Exception as e:
         return JsonResponse({
@@ -211,7 +212,8 @@ def toggle_cart_item(request):
             'removed': removed,
             'message': message,
             'cart_count': cart.total_items,
-            'wishlist_count': wishlist.total_items
+            'wishlist_count': wishlist.total_items,
+            'in_wishlist': False
         })
         
     except Exception as e:
@@ -586,7 +588,8 @@ def toggle_wishlist(request):
             'status': status,
             'message': message,
             'wishlist_count': wishlist.total_items,
-            'cart_count': cart.total_items
+            'cart_count': cart.total_items,
+            'in_cart': False
         })
         
     except Exception as e:

@@ -296,7 +296,9 @@
                           <!-- Show "Add to Cart" if variant is not in cart -->
                           <button type="button" 
                                   onclick="addToCart('{{ variant.id }}')"
-                                  class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg">
+                                  class="cart-btn w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg"
+                                  data-product-id="{{ product.id }}"
+                                  data-variant-id="{{ variant.id }}">
                             <i class="fas fa-cart-plus"></i>
                             <span>Add to Cart</span>
                           </button>

@@ -114,29 +114,38 @@ window.updateWishlistCount = function(count) {
 };
 
 // --- CORE PRODUCT ACTIONS ---
-window.syncProductUI = function(productId, state) {
-    document.querySelectorAll(`.wishlist-btn[data-product-id="${productId}"]`).forEach(btn => {
-        const icon = btn.querySelector('i');
-        if (state.inWishlist) {
-            icon?.classList.replace('far', 'fas');
-            icon?.classList.add('text-red-500');
-            btn.classList.add('border-red-300', 'bg-red-50');
-        } else {
-            icon?.classList.replace('fas', 'far');
-            icon?.classList.remove('text-red-500');
-            btn.classList.remove('border-red-300', 'bg-red-50');
-        }
-    });
+window.syncProductUI = function(productId, state, variantId = null) {
+    if (state.inWishlist !== undefined) {
+        document.querySelectorAll(`.wishlist-btn[data-product-id="${productId}"]`).forEach(btn => {
+            const icon = btn.querySelector('i');
+            if (state.inWishlist) {
+                icon?.classList.replace('far', 'fas');
+                icon?.classList.add('text-red-500');
+                btn.classList.add('border-red-300', 'bg-red-50');
+            } else {
+                icon?.classList.replace('fas', 'far');
+                icon?.classList.remove('text-red-500');
+                btn.classList.remove('border-red-300', 'bg-red-50');
+            }
+        });
+    }
 
-    document.querySelectorAll(`.cart-btn[data-product-id="${productId}"]`).forEach(btn => {
-        if (state.inCart) {
-            btn.classList.replace('bg-emerald-600', 'bg-green-600');
-            btn.innerHTML = '<i class="fas fa-check-circle"></i> In Cart';
-        } else {
-            btn.classList.replace('bg-green-600', 'bg-emerald-600');
-            btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+    if (state.inCart !== undefined) {
+        let selector = `.cart-btn[data-product-id="${productId}"]`;
+        if (variantId) {
+            selector += `[data-variant-id="${variantId}"]`;
         }
-    });
+        
+        document.querySelectorAll(selector).forEach(btn => {
+            if (state.inCart) {
+                btn.classList.replace('bg-emerald-600', 'bg-green-600');
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> In Cart';
+            } else {
+                btn.classList.replace('bg-green-600', 'bg-emerald-600');
+                btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+            }
+        });
+    }
 };
 
 window.globalToggleWishlist = async function(productId) {
@@ -146,9 +155,17 @@ window.globalToggleWishlist = async function(productId) {
     try {
         const data = await window.globalApiPOST(window.GEAR_UP_CONFIG.toggleWishlistUrl, { product_id: productId });
         if (data.success) {
-            window.syncProductUI(productId, { inWishlist: data.status === 'added' });
+            let uiState = { inWishlist: data.status === 'added' };
+            if (data.in_cart !== undefined) uiState.inCart = data.in_cart;
+            window.syncProductUI(productId, uiState);
             if (data.wishlist_count !== undefined) window.updateWishlistCount(data.wishlist_count);
+            if (data.cart_count !== undefined) window.updateCartCount(data.cart_count);
             window.showNotification(data.message, 'success');
+            if (document.getElementById('product-grid-container')) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
         } else {
             window.showNotification(data.message, 'error');
         }
@@ -174,9 +191,17 @@ window.globalAddToCart = async function(productId, variantId) {
             quantity: 1 
         });
         if (data.success) {
-            window.syncProductUI(productId, { inCart: data.added });
+            let uiState = { inCart: data.added };
+            if (data.in_wishlist !== undefined) uiState.inWishlist = data.in_wishlist;
+            window.syncProductUI(productId, uiState, variantId);
             if (data.cart_count !== undefined) window.updateCartCount(data.cart_count);
+            if (data.wishlist_count !== undefined) window.updateWishlistCount(data.wishlist_count);
             window.showNotification(data.message, 'success');
+            if (document.getElementById('product-grid-container')) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
         } else {
             window.showNotification(data.message, 'error');
             if (btn) btn.innerHTML = originalContent;
