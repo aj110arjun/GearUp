@@ -35,3 +35,11 @@ def get_item_int(dictionary, key):
         return dictionary.get(int(key))
     except (ValueError, TypeError):
         return None
+
+@register.filter
+def sub(value, arg):
+    """Subtract the arg from the value"""
+    try:
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return 0

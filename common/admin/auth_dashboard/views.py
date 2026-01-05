@@ -236,8 +236,7 @@ def dashboard(request):
         variant__isnull=False  # Only include orders with variants
     ).values(
         'product__name',
-        'variant__size',
-        'variant__color'
+        'variant__sku', # Use SKU instead of size/color
     ).annotate(
         quantity_sold=Sum('quantity'),
         total_revenue=Sum(F('unit_price') * F('quantity'))
