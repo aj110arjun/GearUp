@@ -507,7 +507,7 @@
               {{ order.product.name|truncatechars:20 }}
               {% if order.variant %}
                 <br><small class="text-xs text-gray-400">
-                  {{ order.variant.get_display_name }}
+                  {{ order.variant.size|default:"" }} {{ order.variant.color|default:"" }}
                 </small>
               {% endif %}
             </td>

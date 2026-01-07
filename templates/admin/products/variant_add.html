@@ -107,7 +107,7 @@
     </div>
 
     <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-        <form method="post" enctype="multipart/form-data" class="p-8">
+        <form method="post" class="p-8">
             {% csrf_token %}
             
             {% if form.non_field_errors %}
@@ -222,74 +222,6 @@
                         </label>
                     </div>
                 </div>
-
-                <!-- Main Image Section -->
-                <div class="pt-8 border-t border-gray-100">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                        <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm mr-3">3</span>
-                        Main Variant Image
-                    </h3>
-                    <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col md:flex-row gap-6 items-start">
-                        <div class="w-32 h-32 flex-shrink-0 bg-white rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden" id="main-image-preview">
-                            <i class="fas fa-image text-gray-300 text-2xl"></i>
-                        </div>
-                        <div class="flex-1">
-                            <label for="{{ form.main_image.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                                Upload Main Image <span class="text-red-500">*</span>
-                            </label>
-                            {{ form.main_image }}
-                            <p class="mt-2 text-xs text-gray-400">This will be the primary image for this variant. High resolution, square aspect ratio recommended.</p>
-                            {% if form.main_image.errors %}
-                                <p class="form-error-text">
-                                    <i class="fas fa-exclamation-circle text-[10px]"></i>
-                                    {{ form.main_image.errors.0 }}
-                                </p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Images Section -->
-                <div class="pt-8 border-t border-gray-100">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm mr-3">4</span>
-                            Additional Gallery Images
-                        </h3>
-                        <button type="button" id="add-image-btn" class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-all uppercase tracking-wider">
-                            <i class="fas fa-plus mr-2"></i> Add More
-                        </button>
-                    </div>
-
-                    {{ image_formset.management_form }}
-                    <div id="image-formset-container" class="space-y-4">
-                        {% for img_form in image_formset %}
-                            <div class="image-form-row p-6 bg-white border border-gray-200 rounded-2xl hover:border-indigo-200 transition-all">
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
-                                    <div class="md:col-span-1">
-                                        <div class="aspect-square rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden gallery-preview">
-                                            <i class="fas fa-image text-gray-200 text-xl"></i>
-                                        </div>
-                                    </div>
-                                    <div class="md:col-span-2 space-y-4">
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Select Image</label>
-                                            {{ img_form.image }}
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Alt Text (SEO)</label>
-                                            {{ img_form.alt_text }}
-                                        </div>
-                                    </div>
-                                    <div class="md:col-span-1">
-                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Order</label>
-                                        {{ img_form.display_order }}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
             </div>
 
             <div class="mt-12 flex items-center justify-end space-x-4 pt-8 border-t border-gray-100">
@@ -306,78 +238,4 @@
         </form>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('image-formset-container');
-        const addButton = document.getElementById('add-image-btn');
-        const totalForms = document.getElementById('id_images-TOTAL_FORMS');
-        const prefix = 'images';
-
-        // Image Preview Logic
-        function handleImagePreview(input, previewContainer) {
-            input.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewContainer.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
-                    };
-                    reader.readAsDataURL(this.files[0]);
-                }
-            });
-        }
-
-        // Init Main Image Preview
-        const mainInput = document.querySelector('input[name="main_image"]');
-        const mainPreview = document.getElementById('main-image-preview');
-        if (mainInput && mainPreview) {
-            handleImagePreview(mainInput, mainPreview);
-        }
-
-        // Init Gallery Previews
-        function initGalleryPreviews() {
-            document.querySelectorAll('.image-form-row').forEach(row => {
-                const input = row.querySelector('input[type="file"]');
-                const preview = row.querySelector('.gallery-preview');
-                if (input && preview) {
-                    handleImagePreview(input, preview);
-                }
-            });
-        }
-        initGalleryPreviews();
-
-        addButton.addEventListener('click', function() {
-            const formCount = parseInt(totalForms.value);
-            const firstForm = container.querySelector('.image-form-row');
-            const newForm = firstForm.cloneNode(true);
-
-            // Update indices
-            const newIndex = formCount;
-            newForm.innerHTML = newForm.innerHTML.replace(new RegExp(`${prefix}-0`, 'g'), `${prefix}-${newIndex}`);
-            
-            // Clear inputs
-            const inputs = newForm.querySelectorAll('input:not([type="hidden"])');
-            inputs.forEach(input => {
-                input.value = '';
-                if (input.type === 'checkbox') input.checked = false;
-            });
-
-            // Reset preview
-            const preview = newForm.querySelector('.gallery-preview');
-            if (preview) {
-                preview.innerHTML = '<i class="fas fa-image text-gray-200 text-xl"></i>';
-            }
-
-            container.appendChild(newForm);
-            totalForms.value = formCount + 1;
-            
-            // Init new preview
-            const newInput = newForm.querySelector('input[type="file"]');
-            const newPreview = newForm.querySelector('.gallery-preview');
-            handleImagePreview(newInput, newPreview);
-        });
-    });
-</script>
 {% endblock %}

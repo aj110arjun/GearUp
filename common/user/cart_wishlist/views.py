@@ -102,13 +102,6 @@ def add_to_cart(request):
     try:
         data = json.loads(request.body)
         variant_id = data.get('variant_id')
-        
-        if not variant_id:
-            return JsonResponse({
-                'success': False,
-                'message': 'Please select a variant to continue'
-            })
-            
         quantity = int(data.get('quantity', 1))
         
         # Get variant
@@ -176,12 +169,6 @@ def toggle_cart_item(request):
     try:
         data = json.loads(request.body)
         variant_id = data.get('variant_id')
-        
-        if not variant_id:
-            return JsonResponse({
-                'success': False,
-                'message': 'Invalid request: Variant selection is required.'
-            })
         
         variant = get_object_or_404(ProductVariant, id=variant_id, is_active=True, is_deleted=False)
         
