@@ -250,7 +250,6 @@
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variant Name</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
@@ -260,17 +259,8 @@
               <tbody class="bg-white divide-y divide-gray-200">
                 {% for variant in variants %}
                 <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-4 py-3 whitespace-nowrap">
-                    {% if variant.main_image %}
-                      <img class="h-10 w-10 rounded-lg object-cover border border-gray-200" src="{{ variant.main_image.url }}" alt="">
-                    {% else %}
-                      <div class="h-10 w-10 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-200">
-                        <i class="fas fa-image text-gray-400 text-xs"></i>
-                      </div>
-                    {% endif %}
-                  </td>
                   <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {{ variant.get_display_name }}
+                    {{ variant.color }}/ {{ variant.size }}
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                     ₹{{ variant.price }}
@@ -331,66 +321,40 @@
       <!-- Product Images Card -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="border-b border-gray-200 px-6 py-4">
-          <h2 class="text-lg font-semibold text-gray-900">Media Library</h2>
+          <h2 class="text-lg font-semibold text-gray-900">Product Images</h2>
         </div>
         <div class="p-6">
-          <div class="space-y-6">
-            {% if variants.exists %}
-              {% for variant in variants %}
-                {% if variant.main_image or variant.images.exists %}
-                  <div>
-                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center">
-                      <span class="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>
-                      {{ variant.sku|default:"No SKU" }} - {{ variant.get_display_name }}
-                    </h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {% if variant.main_image %}
-                        <div class="relative group aspect-square rounded-xl overflow-hidden border border-indigo-100 bg-gray-50">
-                          <img src="{{ variant.main_image.url }}" class="w-full h-full object-cover" alt="Main">
-                          <div class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded text-[8px] font-black uppercase bg-indigo-600 text-white">Main</div>
-                        </div>
-                      {% endif %}
-                      {% for img in variant.images.all %}
-                        <div class="aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
-                          <img src="{{ img.image.url }}" class="w-full h-full object-cover" alt="Gallery">
-                        </div>
-                      {% endfor %}
-                    </div>
-                  </div>
-                {% endif %}
-              {% endfor %}
-            {% elif images %}
-              <div class="grid grid-cols-2 gap-4">
-                {% for image in images %}
-                <div class="relative group">
-                  <img src="{{ image.image.url }}" 
-                       alt="{{ image.alt_text|default:product.name }}" 
-                       class="w-full h-32 object-cover rounded-lg border border-gray-200">
-                  {% if image.is_primary %}
-                  <span class="absolute top-2 left-2 inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                    Primary
-                  </span>
-                  {% endif %}
-                </div>
-                {% endfor %}
-              </div>
-            {% elif product.image %}
-              <!-- Single image field -->
-              <div class="text-center">
-                <img src="{{ product.image.url }}" 
-                     alt="{{ product.name }}" 
-                     class="w-full h-64 object-cover rounded-lg border border-gray-200">
-              </div>
-            {% else %}
-              <div class="text-center py-8">
-                <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                <h3 class="text-lg font-medium text-gray-900 mb-1">No Images</h3>
-                <p class="text-gray-500">No product images available</p>
-              </div>
-            {% endif %}
+          {% if images %}
+          <div class="grid grid-cols-2 gap-4">
+            {% for image in images %}
+            <div class="relative group">
+              <img src="{{ image.image.url }}" 
+                   alt="{{ image.alt_text|default:product.name }}" 
+                   class="w-full h-32 object-cover rounded-lg border border-gray-200">
+              {% if image.is_primary %}
+              <span class="absolute top-2 left-2 inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                Primary
+              </span>
+              {% endif %}
+            </div>
+            {% endfor %}
           </div>
+          {% elif product.image %}
+          <!-- Single image field -->
+          <div class="text-center">
+            <img src="{{ product.image.url }}" 
+                 alt="{{ product.name }}" 
+                 class="w-full h-64 object-cover rounded-lg border border-gray-200">
+          </div>
+          {% else %}
+          <div class="text-center py-8">
+            <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-1">No Images</h3>
+            <p class="text-gray-500">No product images available</p>
+          </div>
+          {% endif %}
         </div>
       </div>
 

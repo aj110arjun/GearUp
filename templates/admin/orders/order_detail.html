@@ -209,7 +209,7 @@
                                     <label class="text-xs font-medium text-gray-500">Variant</label>
                                     <p class="text-sm font-medium text-gray-900">
                                         {% if order.variant %}
-                                        {{ order.variant.get_display_name }}
+                                        {{ order.variant.size }} - {{ order.variant.color }}
                                         {% else %}
                                         Standard
                                         {% endif %}
