@@ -98,30 +98,21 @@
         const root = document.getElementById('variant-selection-root');
         
         if (!root) {
-            console.warn('[DEBUG] No variant selection root found in DOM.');
-        }
-
-        // Enable buttons if no attributes exist (simple product or variation-less product)
-        if (Object.keys(attributes_map).length === 0 && variants.length > 0) {
-            console.log('[DEBUG] Product has variants but no selection attributes. Using table/default selection.');
-            const cartBtn = document.getElementById('buy-box-cart-btn');
-            if (cartBtn && config.initialVariantId) {
-                const initial = variants.find(v => v.id === config.initialVariantId);
-                if (initial) updateProductUI(initial);
+            console.log('[DEBUG] No variant selection root found.');
+            // Enable buttons if no variants exist (simple product)
+            if (variants.length === 0) {
+                const cartBtn = document.getElementById('buy-box-cart-btn');
+                if (cartBtn) {
+                    cartBtn.disabled = false;
+                    cartBtn.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed', 'opacity-75');
+                    cartBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600', 'text-white', 'cursor-pointer');
+                    cartBtn.textContent = 'Add to Cart';
+                    // Use initialVariantId if it exists, otherwise fall back to null
+                    cartBtn.onclick = () => window.addToCart(config.initialVariantId || null); 
+                }
             }
-        } else if (variants.length === 0) {
-            // Truly simple product with no variants at all
-            const cartBtn = document.getElementById('buy-box-cart-btn');
-            if (cartBtn) {
-                cartBtn.disabled = false;
-                cartBtn.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed', 'opacity-75');
-                cartBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600', 'text-white', 'cursor-pointer');
-                cartBtn.textContent = 'Add to Cart';
-                cartBtn.onclick = () => window.addToCart(null); 
-            }
-        }
-        
-        if (root) {
+            // Don't return here - continue to auto-select initial variant if it exists
+        } else {
             // Only set up click handlers if root exists
             root.addEventListener('click', function(e) {
                 const btn = e.target.closest('.attr-val-btn');
@@ -342,10 +333,8 @@
                 if (hasAttributes) {
                     // Normal variant with attributes - trigger clicks
                     Object.entries(initial.attributes).forEach(([name, val]) => {
-                        if (root) {
-                            const btn = root.querySelector(`.attribute-group[data-attribute-name="${name}"] .attr-val-btn[data-attribute-value="${val}"]`);
-                            if (btn) btn.click();
-                        }
+                        const btn = root.querySelector(`.attribute-group[data-attribute-name="${name}"] .attr-val-btn[data-attribute-value="${val}"]`);
+                        if (btn) btn.click();
                     });
                 } else {
                     // Simple variant with no attributes - directly update UI
