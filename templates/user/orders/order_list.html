@@ -166,8 +166,8 @@
                     <div class="flex flex-col lg:flex-row lg:items-start space-y-4 lg:space-y-0 lg:space-x-6">
                         <!-- Product Image -->
                         <div class="flex-shrink-0">
-                            {% if order.product.image %}
-                            <img src="{{ order.product.image.url }}" 
+                            {% if order.product_image_url %}
+                            <img src="{{ order.product_image_url }}" 
                                  alt="{{ order.product.name }}"
                                  class="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm">
                             {% else %}

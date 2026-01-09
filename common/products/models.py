@@ -78,8 +78,7 @@ class Product(models.Model):
     description = models.TextField()
     brand = models.CharField(max_length=100)
     
-    # Image
-    image = CloudinaryField('products/', validators=[validate_image_file])
+    # Image removed from Product level
     
     # Categorization
     category = models.ForeignKey(
@@ -228,6 +227,31 @@ class Product(models.Model):
         
         distribution = self.get_rating_distribution()
         return {k: round((v / total) * 100, 1) for k, v in distribution.items()}
+    @property
+    def main_image(self):
+        """Get the primary image from the first available variant"""
+        variant = self.get_first_variant
+        if variant:
+            return variant.primary_image
+        return None
+
+    def get_product_data(self):
+        """Standardized data for product cards"""
+        variant = self.get_first_variant
+        if not variant:
+            return {
+                'product': self,
+                'price': 0,
+                'in_stock': False
+            }
+        
+        return {
+            'product': self,
+            'price': variant.get_discounted_price(),
+            'original_price': variant.price if variant.discount_percentage > 0 else None,
+            'discount_percentage': variant.discount_percentage,
+            'in_stock': variant.stock_quantity > 0,
+        }
 
 
 class ProductVariant(models.Model):
@@ -238,6 +262,9 @@ class ProductVariant(models.Model):
     # Variant attributes
     size = models.CharField(max_length=50, blank=True)
     color = models.CharField(max_length=50, blank=True)
+    
+    # Image
+    primary_image = CloudinaryField('variant_images/', validators=[validate_image_file], null=True, blank=True)
     
     # Pricing
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -308,6 +335,18 @@ class ProductVariant(models.Model):
         """Return the current active discount percentage"""
         return self.get_best_offer()
 
+    @property
+    def get_primary_image_url(self):
+        """Return the URL of the primary image or a placeholder."""
+        if self.primary_image:
+            return self.primary_image.url
+        return "https://res.cloudinary.com/dhpo5iq3m/image/upload/jic4cjtfmvgh0zubu8gt.png"
+
+    @property
+    def is_low_stock(self):
+        """Check if stock is low (between 1 and 5)"""
+        return 0 < self.stock_quantity <= 5
+
     # ADD THESE METHODS FOR TEMPLATE COMPATIBILITY
     def get_display_name(self):
         """Return display name for variant selection"""
@@ -324,12 +363,11 @@ class ProductVariant(models.Model):
 
 
 class ProductImage(models.Model):
-    """Product images"""
+    """Additional images for product variants"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = CloudinaryField('product_images/', validators=[validate_image_file])
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='additional_images', null=True, blank=True)
+    image = CloudinaryField('variant_images/', validators=[validate_image_file])
     alt_text = models.CharField(max_length=200, blank=True)
-    is_primary = models.BooleanField(default=False)
     display_order = models.IntegerField(default=0)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -339,15 +377,9 @@ class ProductImage(models.Model):
         ordering = ['display_order', 'created_at']
 
     def __str__(self):
-        return f"{self.product.name} - Image {self.display_order}"
+        return f"Image for {self.variant.product.name} - {self.variant.get_display_name()}"
 
     def save(self, *args, **kwargs):
-        # If this is set as primary, unmark others
-        if self.is_primary:
-            ProductImage.objects.filter(
-                product=self.product, 
-                is_primary=True
-            ).exclude(pk=self.pk).update(is_primary=False)
         super().save(*args, **kwargs)
 
 

@@ -161,8 +161,8 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 flex-shrink-0">
-                                        {% if product.image %}
-                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                                        {% if product.main_image %}
+                                        <img src="{{ product.main_image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
                                         {% else %}
                                         <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                                             <i class="fas fa-image"></i>

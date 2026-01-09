@@ -185,9 +185,11 @@ class Order(models.Model):
 
     @property
     def product_image_url(self):
-        """Get product image URL from relationship"""
-        if self.product.image:
-            return self.product.image.url
+        """Get product image URL from variant or product property"""
+        if self.variant and self.variant.primary_image:
+            return self.variant.primary_image.url
+        if self.product.main_image:
+            return self.product.main_image.url
         return ''
 
     @property

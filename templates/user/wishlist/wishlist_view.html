@@ -145,7 +145,7 @@
                     <!-- Product Image with Overlay -->
                     <div class="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
                       <div class="aspect-w-4 aspect-h-3">
-                        <img src="{{ item.product.image.url }}" 
+                        <img src="{{ item.product.main_image.url }}" 
                              alt="{{ item.product.name }}"
                              class="object-cover w-full h-56 transform group-hover:scale-110 transition-transform duration-500"
                              onerror="this.src='{% static 'images/placeholder.jpg' %}'">

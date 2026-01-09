@@ -306,9 +306,9 @@
                     </h2>
                     <div class="flex items-start space-x-6">
                         <div class="flex-shrink-0">
-                            {% if order.product.image %}
+                            {% if order.product_image_url %}
                             <div class="w-32 h-32 rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
-                                <img src="{{ order.product.image.url }}" 
+                                <img src="{{ order.product_image_url }}" 
                                      alt="{{ order.product.name }}"
                                      class="w-full h-full object-cover">
                             </div>
@@ -1085,5 +1085,4 @@
 </script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="{% static 'js/user/order_details.js' %}"></script>
-{% endblock %}
 {% endblock %}

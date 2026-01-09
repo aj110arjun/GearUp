@@ -348,27 +348,281 @@
         });
     };
 
+    window.selectVariant = function(variantId) {
+        console.log(`[VariantSelection] Attempting to select: ${variantId}`);
+        const v = config.variants[variantId];
+        
+        if (!v) {
+            console.error(`[VariantSelection] Error: Variant ${variantId} not found in config.`);
+            return;
+        }
+
+        // Assertion: Ensure variant has images
+        if (!v.images || v.images.length === 0 || !v.images[0]) {
+            console.error(`[VariantSelection] Error: Selected variant ${variantId} has NO images. This is a critical failure.`);
+            if (window.showNotification) window.showNotification('This variant has no images and cannot be displayed properly.', 'error');
+            return;
+        }
+
+        console.log(`[VariantSelection] Success: Variant ${variantId} selected. Images:`, v.images);
+
+        // 1. Update selection UI (cards/chips)
+        document.querySelectorAll('.variant-item, .variant-chip').forEach(item => {
+            item.classList.remove('selected-variant', 'border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+            item.classList.add('border-gray-100');
+        });
+        const selectedChip = document.querySelector(`.variant-chip[data-variant-id="${variantId}"]`);
+        if (selectedChip) {
+            selectedChip.classList.add('border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+            selectedChip.classList.remove('border-gray-100');
+        }
+
+        // 2. Update Hidden Input & Dropdown
+        const hiddenInput = document.getElementById('selected-variant-id-hidden');
+        if (hiddenInput) {
+            hiddenInput.value = variantId;
+            console.log(`[VariantSelection] Hidden input updated to: ${variantId}`);
+        }
+        
+        const dropdown = document.getElementById('variant-select-dropdown');
+        if (dropdown) {
+            dropdown.value = variantId;
+        }
+
+        // 3. Update Price Display
+        const currentPriceEl = document.getElementById('current-price');
+        const originalPriceEl = document.getElementById('original-price');
+        const discountBadge = document.getElementById('discount-badge');
+        
+        if (currentPriceEl) {
+            currentPriceEl.textContent = `₹${v.discountedPrice.toFixed(2)}`;
+            if (v.discount > 0) {
+                if (originalPriceEl) {
+                    originalPriceEl.textContent = `₹${v.price.toFixed(2)}`;
+                    originalPriceEl.classList.remove('hidden');
+                }
+                if (discountBadge) {
+                    discountBadge.textContent = `${v.discount}% OFF`;
+                    discountBadge.classList.remove('hidden');
+                }
+            } else {
+                if (originalPriceEl) originalPriceEl.classList.add('hidden');
+                if (discountBadge) discountBadge.classList.add('hidden');
+            }
+        }
+
+        // 4. Update Stock Status
+        const stockStatusEl = document.getElementById('main-stock-status');
+        if (stockStatusEl) {
+            if (v.stock > 0) {
+                stockStatusEl.innerHTML = `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        ${v.isLowStock ? `Only ${v.stock} left!` : 'In Stock'}
+                    </span>
+                `;
+            } else {
+                stockStatusEl.innerHTML = `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                        <i class="fas fa-times-circle mr-1"></i>
+                        Out of Stock
+                    </span>
+                `;
+            }
+        }
+
+        // 5. Update Variant Info Text
+        const infoEl = document.getElementById('selected-variant-info');
+        if (infoEl) {
+            const card = document.querySelector(`.variant-item[data-variant-id="${variantId}"]`);
+            if (card) {
+                const color = card.querySelector('.bg-emerald-100')?.textContent.trim() || '';
+                const size = card.querySelector('.bg-teal-100')?.textContent.trim() || '';
+                let text = 'Selected: ';
+                if (color) text += color;
+                if (color && size) text += ' / ';
+                if (size) text += size;
+                infoEl.textContent = text;
+            }
+        }
+
+        // 6. Update Button State
+        const mainBtn = document.getElementById('main-add-to-cart-btn');
+        if (mainBtn) {
+            if (v.stock > 0) {
+                mainBtn.disabled = false;
+                mainBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                // Show "In Cart" state if variant is already in cart
+                if (v.inCart) {
+                    mainBtn.classList.replace('from-emerald-600', 'from-green-600');
+                    mainBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>In Cart</span>';
+                } else {
+                    mainBtn.classList.replace('from-green-600', 'from-emerald-600');
+                    mainBtn.innerHTML = '<i class="fas fa-cart-plus"></i><span>Add to Cart</span>';
+                }
+            } else {
+                mainBtn.disabled = true;
+                mainBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                mainBtn.innerHTML = '<i class="fas fa-times-circle"></i><span>Out of Stock</span>';
+            }
+        }
+
+        // 7. Update Gallery
+        updateGallery(variantId);
+    };
+
+    function updateGallery(variantId) {
+        console.log(`[Gallery] Updating gallery for variant: ${variantId}`);
+        const v = config.variants[variantId];
+        if (!v) {
+            console.warn(`[Gallery] No config found for variant: ${variantId}`);
+            return;
+        }
+        
+        // Filter out any invalid URLs to avoid "undefined" 404 errors
+        const images = (v.images || []).filter(url => url && url !== 'undefined');
+        const gallery = document.getElementById('thumbnail-gallery');
+        const mainImg = document.getElementById('main-product-image');
+        
+        if (!gallery || !mainImg) return;
+
+        // Clear existing thumbnails
+        gallery.innerHTML = '';
+
+        if (images.length > 0) {
+            // Preload images for smoother switching - with strict validation
+            images.forEach(url => {
+                if (!url || url === 'undefined' || url === 'null') {
+                    console.warn(`[Gallery] Skipping invalid preload URL: ${url}`);
+                    return;
+                }
+                const link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'image';
+                link.href = url;
+                document.head.appendChild(link);
+            });
+
+            // Update thumbnails - with strict validation
+            images.forEach((imgUrl, index) => {
+                if (!imgUrl || imgUrl === 'undefined' || imgUrl === 'null') {
+                    console.warn(`[Gallery] Skipping invalid thumbnail URL: ${imgUrl}`);
+                    return;
+                }
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.className = `thumb-img ${index === 0 ? 'border-emerald-600' : 'border-gray-200'} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0`;
+                img.dataset.full = imgUrl;
+                img.onclick = function() {
+                    window.updateMainImage(imgUrl);
+                };
+                gallery.appendChild(img);
+            });
+
+            // Update main image to first valid image of variant
+            const firstValidImage = images.find(url => url && url !== 'undefined' && url !== 'null');
+            if (firstValidImage) {
+                window.updateMainImage(firstValidImage);
+            }
+        } else {
+            console.warn(`[Gallery] No valid images for variant: ${variantId}`);
+        }
+    }
+
+    window.updateMainImage = function(url) {
+        if (!url || url === 'undefined') {
+            console.error('[Gallery] Attempted to update main image with invalid URL:', url);
+            return;
+        }
+        
+        const mainImg = document.getElementById('main-product-image');
+        if (!mainImg) return;
+        
+        // Update all thumbnails to show which one is selected
+        document.querySelectorAll('.thumb-img').forEach(t => {
+            if (t.src === url || t.dataset.full === url) {
+                t.classList.add('border-emerald-600', 'opacity-100');
+                t.classList.remove('border-gray-200', 'opacity-50');
+            } else {
+                t.classList.remove('border-emerald-600', 'opacity-100');
+                t.classList.add('border-gray-200', 'opacity-50');
+            }
+        });
+
+        // Smooth fade transition
+        mainImg.style.transition = 'opacity 0.2s ease-in-out';
+        mainImg.style.opacity = '0';
+        
+        setTimeout(() => {
+            mainImg.src = url;
+            // Force opacity back even if onload doesn't fire (cached images)
+            setTimeout(() => {
+                mainImg.style.opacity = '1';
+                console.log(`[Gallery] Main image updated: ${url}`);
+            }, 50);
+        }, 200);
+    };
+
+    // Quantity Management
+    window.changeQty = function(delta) {
+        const input = document.getElementById('purchase-quantity');
+        if (!input) return;
+        
+        let val = parseInt(input.value) + delta;
+        const variantId = document.getElementById('selected-variant-id-hidden').value;
+        const v = config.variants[variantId];
+        
+        const maxStock = v ? Math.min(v.stock, 5) : 5;
+        
+        if (val < 1) val = 1;
+        if (val > maxStock) {
+            val = maxStock;
+            if (window.showNotification) window.showNotification(`Only ${maxStock} items available`, 'info');
+        }
+        
+        input.value = val;
+    };
+
+    window.addSelectedToCart = function() {
+        const variantId = document.getElementById('selected-variant-id-hidden').value;
+        const quantity = parseInt(document.getElementById('purchase-quantity').value);
+        
+        if (!variantId) {
+            if (window.showNotification) window.showNotification('Please select a variant', 'warning');
+            return;
+        }
+
+        console.log(`[AddToCart] Adding variant ${variantId} with quantity ${quantity}`);
+        if (window.globalAddToCart) {
+            window.globalAddToCart(config.productId, variantId, quantity);
+        } else {
+            // Fallback if globalAddToCart is not available
+            window.addToCart(variantId);
+        }
+    };
+
     // --- Gallery & Zoom ---
     function initGallery() {
         const mainImg = document.getElementById("main-product-image");
         const imageContainer = document.getElementById('image-container');
-        const thumbs = document.querySelectorAll(".thumb-img");
         
         if (!mainImg || !imageContainer) return;
 
-        thumbs.forEach(thumb => {
-            thumb.onclick = function() {
-                const url = this.dataset.full;
-                mainImg.style.opacity = '0';
-                setTimeout(() => {
-                    mainImg.src = url;
-                    mainImg.onload = () => (mainImg.style.opacity = '1');
-                }, 100);
-                
-                thumbs.forEach(t => t.classList.remove('border-blue-600'));
-                this.classList.add('border-blue-600');
-            };
-        });
+        // Auto-select a variant on page load
+        const bridgeItems = Array.from(document.querySelectorAll('.variant-item[data-has-images="true"]'));
+        
+        if (bridgeItems.length > 0) {
+            const variantId = bridgeItems[0].dataset.variantId;
+            console.log(`[Init] Page load: Auto-selecting variant ${variantId} from bridge.`);
+            window.selectVariant(variantId);
+        } else {
+            console.warn('[Init] No bridge items with images found. Checking visual chips...');
+            const firstChip = document.querySelector('.variant-chip:not(.opacity-40)');
+            if (firstChip) {
+                window.selectVariant(firstChip.dataset.variantId);
+            }
+        }
 
         imageContainer.onmouseenter = e => {
             if (window.innerWidth < 1024) return;

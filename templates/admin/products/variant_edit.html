@@ -73,7 +73,7 @@
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <form method="post" class="p-6">
+        <form method="post" class="p-6" enctype="multipart/form-data">
             {% csrf_token %}
             
             {% if form.non_field_errors %}
@@ -118,6 +118,67 @@
                             {{ form.color.errors.0 }}
                         </p>
                     {% endif %}
+                </div>
+
+                <!-- Primary Image -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.primary_image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Primary Variant Image
+                    </label>
+                    {% if variant.primary_image %}
+                        <div class="mb-2">
+                            <img src="{{ variant.primary_image.url }}" alt="Current Image" class="h-24 w-24 object-cover rounded-lg border">
+                        </div>
+                    {% endif %}
+                    {{ form.primary_image }}
+                    {% if form.primary_image.errors %}
+                        <p class="form-error-text">
+                            <i class="fas fa-exclamation-circle text-[10px]"></i>
+                            {{ form.primary_image.errors.0 }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Additional Images -->
+                <div class="md:col-span-2 pt-6 border-t border-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Additional Images</h3>
+                    <div class="bg-gray-50 rounded-2xl p-6">
+                        {{ image_formset.management_form }}
+                        <div id="image-formset-container" class="space-y-4">
+                            {% for form in image_formset %}
+                                <div class="image-form-row bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4">
+                                    {{ form.id }}
+                                    <div class="w-16 h-16 flex-shrink-0">
+                                        {% if form.instance.image %}
+                                            <img src="{{ form.instance.image.url }}" class="w-full h-full object-cover rounded shadow-sm">
+                                        {% else %}
+                                            <div class="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                                                <i class="fas fa-image text-gray-300"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1">
+                                        {{ form.image }}
+                                        {% if form.image.errors %}
+                                            <p class="text-xs text-red-500 mt-1">{{ form.image.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1">
+                                        {{ form.alt_text }}
+                                        {% if form.alt_text.errors %}
+                                            <p class="text-xs text-red-500 mt-1">{{ form.alt_text.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% if image_formset.can_delete %}
+                                        <div class="flex items-center gap-2">
+                                            {{ form.DELETE }}
+                                            <span class="text-xs text-gray-500 uppercase font-bold">Delete</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Price -->
