@@ -1,14 +1,21 @@
 from django.contrib import admin
-from .models import Category, Product, ProductVariant, ProductImage, ProductVariantImage, ProductOffer, CategoryOffer
+from .models import Category, Product, ProductVariant, ProductImage, ProductOffer, CategoryOffer
 from .forms import ProductOfferForm, CategoryOfferForm
 
-class ProductImageInline(admin.TabularInline):
+class AdditionalImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
+
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display = ('product', 'size', 'color', 'price', 'stock_quantity', 'is_active')
+    list_filter = ('product', 'color', 'size', 'is_active')
+    inlines = [AdditionalImageInline]
 
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
+    show_change_link = True # Add this so admin can easily jump to variant edit page
 
 class ProductOfferInline(admin.TabularInline):
     model = ProductOffer
@@ -19,7 +26,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'sku', 'is_active')
     list_filter = ('category', 'is_active')
     search_fields = ('name', 'sku')
-    inlines = [ProductImageInline, ProductVariantInline, ProductOfferInline]
+    inlines = [ProductVariantInline, ProductOfferInline]
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

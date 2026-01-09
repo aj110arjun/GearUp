@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 
-from common.products.views import Product
+from common.products.models import Product
 
 
 

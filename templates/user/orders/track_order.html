@@ -213,13 +213,11 @@
                     <h3 class="text-lg font-bold text-gray-900 mb-4">Product Details</h3>
                     
                     <div class="flex items-center space-x-4">
-                        {% if order.product.image %}
                         <div class="flex-shrink-0">
-                            <img src="{{ order.product.image.url }}" 
+                            <img src="{{ order.product_image_url }}" 
                                  alt="{{ order.product.name }}"
                                  class="w-20 h-20 object-cover rounded-lg">
                         </div>
-                        {% endif %}
                         
                         <div class="flex-1">
                             <h4 class="font-medium text-gray-900">{{ order.product.name }}</h4>

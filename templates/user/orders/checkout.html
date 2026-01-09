@@ -352,7 +352,7 @@
           <div class="px-6 py-4 max-h-96 overflow-y-auto">
             {% for item in cart_items %}
             <div class="flex items-center space-x-3 mb-4 pb-4 border-b border-gray-200 last:border-b-0">
-              <img src="{{ item.variant.product.image.url }}" 
+              <img src="{{ item.variant.primary_image.url }}" 
                    alt="{{ item.variant.product.name }}" 
                    class="w-16 h-16 object-cover rounded-lg border border-gray-200">
 

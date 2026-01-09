@@ -14,22 +14,13 @@ from cloudinary.models import CloudinaryField
 from PIL import Image
 
 from core.validators import validate_image_file
-from .models import Product, Category, ProductVariant, ProductImage, ProductVariantImage, ProductOffer, CategoryOffer, ProductReview
+from .models import Product, Category, ProductVariant, ProductImage, ProductOffer, CategoryOffer, ProductReview
 
 
 logger = logging.getLogger(__name__)
 
 class ProductCreateForm(forms.ModelForm):
     """Simplified form for product creation - only basic fields"""
-    image = forms.ImageField(
-        required=True,
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': 'image/*'
-        }),
-        help_text='Main product image (required)',
-        validators=[validate_image_file]
-    )
     
     class Meta:
         model = Product
@@ -77,39 +68,9 @@ class ProductCreateForm(forms.ModelForm):
         self.fields['category'].queryset = Category.objects.filter(is_active=True, is_deleted=False)
         self.fields['category'].empty_label = "Select a category"
 
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        if image and hasattr(image, 'file'):  # It's a file upload
-            # Check file size (limit to 10MB)
-            if hasattr(image, 'size') and image.size > 10 * 1024 * 1024:  # 10MB
-                raise ValidationError('Image file size cannot exceed 10MB.')
-            
-            # Check image dimensions
-            try:
-                # Seek to beginning of file
-                if hasattr(image, 'seek'):
-                    image.seek(0)
-                
-                img = Image.open(image)
-                width, height = img.size
-                
-                # Ensure minimum dimensions
-                if width < 300 or height < 300:
-                    raise ValidationError('Image dimensions should be at least 300x300 pixels.')
-                
-                # Ensure aspect ratio is reasonable
-                ratio = width / height
-                if ratio < 0.5 or ratio > 2:
-                    raise ValidationError('Image aspect ratio should be between 0.5 and 2.')
-                    
-            except Exception as e:
-                raise ValidationError('Invalid image file.')
-            
-            # Reset file pointer after reading
-            if hasattr(image, 'seek'):
-                image.seek(0)
-        
-        return image
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
 
     def clean_sku(self):
         sku = self.cleaned_data.get('sku')
@@ -143,15 +104,6 @@ class ProductCreateForm(forms.ModelForm):
 
 class ProductEditForm(forms.ModelForm):
     """Full form for product editing - includes all fields"""
-    image = forms.ImageField(
-        required=False,
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': 'image/*'
-        }),
-        help_text='Change main product image (optional)',
-        validators=[validate_image_file]
-    )
     
     class Meta:
         model = Product
@@ -262,66 +214,39 @@ class ProductEditForm(forms.ModelForm):
             raise ValidationError('Please select a category.')
         return category
 
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        if image and hasattr(image, 'file'):  # It's a file upload, not CloudinaryResource
-            # Check file size (limit to 10MB)
-            if hasattr(image, 'size') and image.size > 10 * 1024 * 1024:  # 10MB
-                raise ValidationError('Image file size cannot exceed 10MB.')
-            
-            # Check image dimensions
-            try:
-                # Seek to beginning of file
-                if hasattr(image, 'seek'):
-                    image.seek(0)
-                
-                img = Image.open(image)
-                width, height = img.size
-                
-                # Ensure minimum dimensions
-                if width < 300 or height < 300:
-                    raise ValidationError('Image dimensions should be at least 300x300 pixels.')
-                
-                # Ensure aspect ratio is reasonable
-                ratio = width / height
-                if ratio < 0.5 or ratio > 2:
-                    raise ValidationError('Image aspect ratio should be between 0.5 and 2.')
-                    
-            except Exception as e:
-                raise ValidationError(f'Invalid image file: {str(e)}')
-            
-            # Reset file pointer after reading
-            if hasattr(image, 'seek'):
-                image.seek(0)
-        
-        return image
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
 
 
 class ProductVariantForm(forms.ModelForm):
-    """Refactored form for individual product variants supporting flexible attributes"""
+    """Form for individual product variants"""
     
-    # We keep these fields in the form for UI ease, but we'll map them to the attribute system
-    size = forms.CharField(max_length=50, required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control form-control-sm',
-        'placeholder': 'e.g., M, L, XL'
-    }))
-    color = forms.CharField(max_length=50, required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control form-control-sm',
-        'placeholder': 'e.g., Red, Blue'
-    }))
-
     def __init__(self, *args, **kwargs):
         self.product = kwargs.pop('product', None)
         super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:
-            # Pre-populate size and color from attribute_values
-            self.fields['size'].initial = self.instance.size
-            self.fields['color'].initial = self.instance.color
+        # For existing instances, get the product if not already provided
+        if not self.product and self.instance and hasattr(self.instance, 'product_id') and self.instance.product_id:
+            self.product = self.instance.product
 
     class Meta:
         model = ProductVariant
-        fields = ['price', 'stock_quantity', 'main_image', 'is_active', 'sku']
+        fields = ['primary_image', 'size', 'color', 'price', 'stock_quantity', 'is_active']
         widgets = {
+            'primary_image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+            'size': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'e.g., M, L, XL',
+                'required': True
+            }),
+            'color': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'e.g., Red, Blue',
+                'required': True
+            }),
             'price': forms.NumberInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': '0.00',
@@ -329,14 +254,11 @@ class ProductVariantForm(forms.ModelForm):
                 'min': '0',
                 'required': True
             }),
+            
             'stock_quantity': forms.NumberInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': '0',
                 'min': '0'
-            }),
-            'sku': forms.TextInput(attrs={
-                'class': 'form-control form-control-sm',
-                'placeholder': 'Auto-generated if blank'
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -344,40 +266,20 @@ class ProductVariantForm(forms.ModelForm):
         }
         labels = {
             'price': 'Price (₹) *',
-            'main_image': 'Main Variant Image (Required)',
+            'compare_price': 'Compare Price (₹)',
         }
-    
-    def clean_main_image(self):
-        image = self.cleaned_data.get('main_image')
-        if not image and not (self.instance and self.instance.main_image):
-            raise ValidationError('Main variant image is required.')
-        return image
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        
-        if commit:
-            instance.save()
-            
-            # Map size and color to attribute system
-            size_val = self.cleaned_data.get('size')
-            color_val = self.cleaned_data.get('color')
-            
-            new_attrs = []
-            if size_val:
-                attr, _ = VariantAttribute.objects.get_or_create(name='Size')
-                val, _ = VariantAttributeValue.objects.get_or_create(attribute=attr, value=size_val)
-                new_attrs.append(val)
-            
-            if color_val:
-                attr, _ = VariantAttribute.objects.get_or_create(name='Color')
-                val, _ = VariantAttributeValue.objects.get_or_create(attribute=attr, value=color_val)
-                new_attrs.append(val)
-            
-            if new_attrs:
-                instance.attribute_values.set(new_attrs)
-                
-        return instance
+    def clean_size(self):
+        size = self.cleaned_data.get('size')
+        if not size or not size.strip():
+            raise ValidationError('Size is required.')
+        return size.strip()
+
+    def clean_color(self):
+        color = self.cleaned_data.get('color')
+        if not color or not color.strip():
+            raise ValidationError('Color is required.')
+        return color.strip()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -385,18 +287,22 @@ class ProductVariantForm(forms.ModelForm):
         color = cleaned_data.get('color')
         
         if self.product and size and color:
-            # Check for existing variants with same attributes
+            # Check for existing variants with same size and color (case-insensitive)
             exists = ProductVariant.objects.filter(
                 product=self.product,
+                size__iexact=size,
+                color__iexact=color,
                 is_deleted=False
             )
             
-            # This is a broad check, we should ideally check the specific attribute values
-            # but for the simple Color/Size case this works as a safety net
             if self.instance and self.instance.pk:
                 exists = exists.exclude(pk=self.instance.pk)
-            
-            # We'll refine this check if needed for more complex attributes
+                
+            if exists.exists():
+                raise ValidationError(
+                    f'A variant with size "{size}" and color "{color}" already exists for this product.'
+                )
+        
         return cleaned_data
 
     def clean_price(self):
@@ -414,6 +320,12 @@ class ProductVariantForm(forms.ModelForm):
         if stock is not None and stock < 0:
             raise ValidationError('Stock quantity cannot be negative.')
         return stock
+
+    def clean_primary_image(self):
+        image = self.cleaned_data.get('primary_image')
+        if not image and not (self.instance and self.instance.pk and self.instance.primary_image):
+            raise ValidationError('Primary image is required.')
+        return image
 
 
 class ProductImageForm(forms.ModelForm):
@@ -481,63 +393,7 @@ class ProductImageForm(forms.ModelForm):
         return image
 
 
-class ProductVariantImageForm(forms.ModelForm):
-    """Form for additional images for product variants"""
-    
-    image = forms.ImageField(
-        required=False,
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': 'image/*'
-        }),
-        validators=[validate_image_file]
-    )
-    
-    class Meta:
-        model = ProductVariantImage
-        fields = ['image', 'alt_text', 'display_order']
-        widgets = {
-            'alt_text': forms.TextInput(attrs={
-                'class': 'form-control form-control-sm',
-                'placeholder': 'Alt text'
-            }),
-            'display_order': forms.NumberInput(attrs={
-                'class': 'form-control form-control-sm',
-            }),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk and self.instance.image:
-            self.fields['image'].required = False
-
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        if image and hasattr(image, 'file'):
-            if image.size > 10 * 1024 * 1024:
-                raise ValidationError('Image file size cannot exceed 10MB.')
-            try:
-                if hasattr(image, 'seek'):
-                    image.seek(0)
-                img = Image.open(image)
-                img.verify()
-            except Exception:
-                raise ValidationError('Invalid image file.')
-            if hasattr(image, 'seek'):
-                image.seek(0)
-        return image
-
-
 # Create formsets
-ProductVariantImageFormSet = inlineformset_factory(
-    ProductVariant,
-    ProductVariantImage,
-    form=ProductVariantImageForm,
-    extra=1,
-    can_delete=True
-)
-
-
 ProductVariantFormSet = inlineformset_factory(
     Product,
     ProductVariant,
@@ -546,10 +402,13 @@ ProductVariantFormSet = inlineformset_factory(
     can_delete=True
 )
 
-ProductImageFormSet = inlineformset_factory(
-    Product,
+# ProductImageFormSet removed as images are now variant-level
+
+VariantImageFormSet = inlineformset_factory(
+    ProductVariant,
     ProductImage,
     form=ProductImageForm,
+    fk_name='variant',
     extra=1,
     can_delete=True
 )

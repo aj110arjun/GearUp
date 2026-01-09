@@ -242,21 +242,15 @@
             <td class="px-8 py-6">
               <div class="flex items-center">
                 <div class="h-14 w-14 flex-shrink-0 relative">
-                  {% with first_variant=product.get_first_variant %}
-                    {% if first_variant.main_image %}
-                      <img class="h-14 w-14 rounded-xl object-cover shadow-sm border border-gray-100 group-hover:scale-105 transition-transform duration-300" 
-                           src="{{ first_variant.main_image.url }}" 
-                           alt="{{ product.name }}">
-                    {% elif product.image %}
-                      <img class="h-14 w-14 rounded-xl object-cover shadow-sm border border-gray-100 group-hover:scale-105 transition-transform duration-300" 
-                           src="{{ product.image.url }}" 
-                           alt="{{ product.name }}">
-                    {% else %}
-                      <div class="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm">
-                        {{ product.name|first|upper }}
-                      </div>
-                    {% endif %}
-                  {% endwith %}
+                  {% if product.main_image %}
+                  <img class="h-14 w-14 rounded-xl object-cover shadow-sm border border-gray-100 group-hover:scale-105 transition-transform duration-300" 
+                       src="{{ product.main_image.url }}" 
+                       alt="{{ product.name }}">
+                  {% else %}
+                  <div class="h-14 w-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm">
+                    {{ product.name|first|upper }}
+                  </div>
+                  {% endif %}
                   {% if not product.is_active %}
                   <div class="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></div>
                   {% endif %}

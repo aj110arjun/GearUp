@@ -5,68 +5,60 @@
 }
 
 .shimmer {
-    background: linear-gradient(90deg, #f3f4f6 0%, #ffffff 50%, #f3f4f6 100%);
+    background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
     background-size: 1000px 100%;
     animation: shimmer 2s infinite;
 }
 
 .fade-in {
-    animation: fadeIn 0.4s ease-out;
+    animation: fadeIn 0.5s ease-in-out;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
+#zoom-lens {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    width: 40px;
+    height: 40px;
+}
+
+#zoom-result {
+    border: 1px solid #d4d4d4;
+    width: 300px;
+    height: 300px;
+}
+
 .image-zoom {
-    transition: transform 0.2s ease-out;
+    transition: transform 0.3s ease;
 }
 
 .thumb-img {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
 }
 
-.thumb-img:hover {
-    border-color: #059669; /* emerald-600 */
+.thumb-img.active {
+    border-color: #3b82f6;
+    transform: scale(1.05);
 }
 
-/* Custom Scrollbar Hide Utility */
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-/* Variant Item Refinements */
 .variant-item {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
 }
 
 .variant-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    border-color: #3b82f6;
+    transform: translateY(-2px);
 }
 
-.variant-item:active {
-    transform: scale(0.97);
-}
-
-/* Buy Box Sticky Positioning fix for mobile/tablet */
-@media (min-width: 1024px) {
-    .sticky-buy-box {
-        position: sticky;
-        top: 24px;
-    }
-}
-
-/* Star Rating Animation */
+/* Star Rating */
 .star-rating button {
-    transition: transform 0.15s ease-in-out;
+    transition: all 0.2s ease;
 }
 
 .star-rating button:hover {
-    transform: scale(1.15);
+    transform: scale(1.2);
 }

@@ -82,20 +82,6 @@ class CartItem(models.Model):
         return not self.variant.is_deleted and self.variant.is_active and self.variant.stock_quantity >= self.quantity
 
     @property
-    def get_available_variants(self):
-        """Return all other active, non-deleted, in-stock variants for the same product"""
-        return self.variant.product.variants.filter(
-            is_active=True, 
-            is_deleted=False, 
-            stock_quantity__gt=0
-        ).exclude(id=self.variant.id)
-
-    @property
-    def has_other_variants(self):
-        """Check if there are other available variants to switch to"""
-        return self.get_available_variants.exists()
-
-    @property
     def max_quantity(self):
         """Return the maximum allowed quantity for this item (min of 5 or stock)"""
         return min(5, self.variant.stock_quantity)

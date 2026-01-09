@@ -23,10 +23,9 @@ from .forms import (
     ProductCreateForm,
     ProductEditForm,
     ProductImageForm,
-    ProductImageFormSet,
     ProductVariantForm,
     ProductVariantFormSet,
-    ProductVariantImageFormSet,
+    VariantImageFormSet,
     CategoryForm,
     ProductOfferForm,
     CategoryOfferForm,
@@ -215,10 +214,11 @@ def product_delete(request, slug):
 @never_cache
 def product_detail(request, product_slug):
     product = get_object_or_404(
-        Product.objects.prefetch_related('images', 'variants', 'category'), 
+        Product.objects.prefetch_related('variants', 'variants__additional_images', 'category'), 
         slug=product_slug
     )
-    images = product.images.all()
+    # Get all images from all variants for a summary view
+    images = ProductImage.objects.filter(variant__product=product)
     variants = product.variants.filter(is_deleted=False)
     
     # Stock summary
@@ -251,37 +251,8 @@ def product_create(request):
             try:
                 product = form.save(commit=False)
                 
-                # Handle image upload
-                if 'image' in request.FILES:
-                    product.image = request.FILES['image']
-                
-                # Auto-generate slug if empty
-                if not product.slug:
-                    product.slug = slugify(product.name)
-                    # Ensure slug is unique
-                    base_slug = product.slug
-                    counter = 1
-                    while Product.objects.filter(slug=product.slug).exists():
-                        product.slug = f"{base_slug}-{counter}"
-                        counter += 1
-                
                 # Save the product first to get an ID
                 product.save()
-                
-                # Auto-generate SKU if empty (after saving to get ID)
-                if not product.sku:
-                    product.sku = f"GRP-{str(product.id)[:8].upper()}"
-                    product.save(update_fields=['sku'])
-                
-                # Create a primary ProductImage record from the main image
-                if product.image:
-                    ProductImage.objects.create(
-                        product=product,
-                        image=product.image,
-                        alt_text=f"{product.name} - Main Image",
-                        is_primary=True,
-                        display_order=0
-                    )
                 
                 # Success messages
                 messages.success(
@@ -330,43 +301,13 @@ def product_edit(request, slug):
     product = get_object_or_404(Product, slug=slug)
     
     if request.method == 'POST':
-        form = ProductEditForm(request.POST, request.FILES, instance=product)
-        image_formset = ProductImageFormSet(request.POST, request.FILES, instance=product)
+        form = ProductEditForm(request.POST, instance=product)
         
-        if form.is_valid() and image_formset.is_valid():
+        if form.is_valid():
             try:
                 with transaction.atomic():
                     # Save the main product form
                     product = form.save()
-                    
-                    # Handle images
-                    images = image_formset.save(commit=False)
-                    for i, image in enumerate(images):
-                        image.product = product
-                        image.save()
-                    
-                    # Delete marked images
-                    for image in image_formset.deleted_objects:
-                        # If deleting a primary image, make another one primary
-                        if image.is_primary:
-                            remaining_images = ProductImage.objects.filter(product=product).exclude(pk=image.pk)
-                            if remaining_images.exists():
-                                remaining_images.first().is_primary = True
-                                remaining_images.first().save()
-                        image.delete()
-                    
-                    # Ensure only one primary image
-                    primary_images = ProductImage.objects.filter(product=product, is_primary=True)
-                    if primary_images.count() > 1:
-                        # Keep the first one as primary, set others to False
-                        first_primary = primary_images.first()
-                        primary_images.exclude(pk=first_primary.pk).update(is_primary=False)
-                    elif primary_images.count() == 0:
-                        # If no primary image, set the first one as primary
-                        first_image = ProductImage.objects.filter(product=product).first()
-                        if first_image:
-                            first_image.is_primary = True
-                            first_image.save()
                     
                     messages.success(
                         request, 
@@ -384,13 +325,11 @@ def product_edit(request, slug):
             messages.error(request, 'Please correct the errors below.')
     else:
         form = ProductEditForm(instance=product)
-        image_formset = ProductImageFormSet(instance=product)
     
     categories = Category.objects.filter(is_active=True, is_deleted=False).order_by('name')
     
     context = {
         'form': form,
-        'image_formset': image_formset,
         'product': product,
         'variants': product.variants.filter(is_deleted=False),
         'categories': Category.objects.filter(is_active=True, is_deleted=False).order_by('name'),
@@ -403,76 +342,57 @@ def product_edit(request, slug):
 @user_passes_test(lambda u: u.is_superuser)
 @never_cache
 def add_variant_admin(request, slug):
-    """
-    Separate view to add a variant to a product.
-    """
     product = get_object_or_404(Product, slug=slug)
-    
     if request.method == 'POST':
         form = ProductVariantForm(request.POST, request.FILES, product=product)
-        image_formset = ProductVariantImageFormSet(request.POST, request.FILES)
-        
+        image_formset = VariantImageFormSet(request.POST, request.FILES)
         if form.is_valid() and image_formset.is_valid():
-            try:
-                with transaction.atomic():
-                    variant = form.save(commit=False)
-                    variant.product = product
-                    variant.save()
-                    
-                    # Save additional images
-                    images = image_formset.save(commit=False)
-                    for image in images:
-                        image.variant = variant
-                        image.save()
-                        
-                    messages.success(request, f'Variant {variant} added successfully.')
-                    return redirect('products:product_edit', slug=product.slug)
-            except Exception as e:
-                messages.error(request, f'Error adding variant: {str(e)}')
+            with transaction.atomic():
+                variant = form.save(commit=False)
+                variant.product = product
+                variant.save()
+                
+                images = image_formset.save(commit=False)
+                for img in images:
+                    img.variant = variant
+                    img.save()
+                
+                messages.success(request, f'Variant added successfully.')
+                return redirect('products:product_edit', slug=product.slug)
     else:
         form = ProductVariantForm(product=product)
-        image_formset = ProductVariantImageFormSet()
+        image_formset = VariantImageFormSet()
     
     context = {
         'product': product,
         'form': form,
         'image_formset': image_formset,
-        'title': f'Add Variant - {product.name}',
     }
     return render(request, 'admin/products/variant_add.html', context)
 
 @user_passes_test(lambda u: u.is_superuser)
 @never_cache
 def edit_variant_admin(request, variant_id):
-    """
-    Separate view to edit an existing variant.
-    """
     variant = get_object_or_404(ProductVariant, id=variant_id)
     product = variant.product
-    
     if request.method == 'POST':
         form = ProductVariantForm(request.POST, request.FILES, instance=variant)
-        image_formset = ProductVariantImageFormSet(request.POST, request.FILES, instance=variant)
-        
+        image_formset = VariantImageFormSet(request.POST, request.FILES, instance=variant)
         if form.is_valid() and image_formset.is_valid():
-            try:
-                with transaction.atomic():
-                    form.save()
-                    image_formset.save()
-                    messages.success(request, 'Variant updated successfully!')
-                    return redirect('products:product_edit', slug=product.slug)
-            except Exception as e:
-                messages.error(request, f'Error updating variant: {str(e)}')
+            with transaction.atomic():
+                form.save()
+                image_formset.save()
+                messages.success(request, 'Variant updated successfully!')
+                return redirect('products:product_edit', slug=product.slug)
     else:
         form = ProductVariantForm(instance=variant)
-        image_formset = ProductVariantImageFormSet(instance=variant)
+        image_formset = VariantImageFormSet(instance=variant)
     
     context = {
         'product': product,
         'variant': variant,
         'form': form,
         'image_formset': image_formset,
-        'title': f'Edit Variant - {variant.get_display_name()}',
     }
     return render(request, 'admin/products/variant_edit.html', context)
 
@@ -739,7 +659,7 @@ def product_list_user(request):
     products = Product.objects.filter(is_active=True, is_deleted=False, category__is_deleted=False).annotate(
         avg_rating_sort=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
         review_count_sort=Count('reviews', filter=Q(reviews__is_approved=True))
-    ).prefetch_related('variants', 'variants__images', 'category', 'images')
+    ).prefetch_related('variants', 'category')
     
     # Get filter parameters
     category_id = request.GET.get('category')
@@ -845,71 +765,27 @@ def product_detail_user(request, product_slug):
     """User-side product detail page"""
     # Prefetch the known relations
     product = get_object_or_404(
-        Product.objects.prefetch_related('variants', 'variants__images', 'images', 'category', 'reviews', 'reviews__user'),
+        Product.objects.prefetch_related('variants', 'variants__additional_images', 'category', 'reviews', 'reviews__user'),
         slug=product_slug,
         is_active=True,
         is_deleted=False
     )
 
-    # Get images
-    images_qs = product.images.all()
-
-    # Get active and non-deleted variants with prefetching
-    variants = product.variants.filter(
-        is_active=True, 
-        is_deleted=False
-    ).prefetch_related('attribute_values', 'attribute_values__attribute', 'images')
-
-    # Group attributes for selection UI
-    # This creates a dict like {'Color': ['Red', 'Blue'], 'Size': ['M', 'L']}
-    attributes = {}
-    # Structured variant data for frontend JS selection
-    variants_json_data = []
-
-    for variant in variants:
-        v_attr_map = {}
-        for val in variant.attribute_values.all():
-            attr_name = val.attribute.name
-            if attr_name not in attributes:
-                attributes[attr_name] = set()
-            attributes[attr_name].add(val.value)
-            v_attr_map[attr_name] = val.value
-
-        # Collect gallery images
-        v_gallery = [img.image.url for img in variant.images.all()]
-        if variant.main_image:
-            v_gallery.insert(0, variant.main_image.url)
-
-        variants_json_data.append({
-            'id': str(variant.id),
-            'price': float(variant.price),
-            'discounted_price': float(variant.get_discounted_price()),
-            'stock': variant.stock_quantity,
-            'attributes': v_attr_map,
-            'main_image': variant.main_image.url if variant.main_image else None,
-            'gallery': v_gallery,
-            'sku': variant.sku,
-            'in_cart': False # Will be updated below
-        })
-
-    # Convert sets to sorted lists for consistent UI rendering
-    sorted_attributes = {name: sorted(list(vals)) for name, vals in attributes.items()}
+    # Get active and non-deleted variants
+    variants = product.variants.filter(is_active=True, is_deleted=False)
 
     # Get cart variant IDs for current user
     cart_variant_ids = []
     if request.user.is_authenticated:
         try:
             cart = Cart.objects.get(user=request.user)
-            cart_variant_ids = [str(vid) for vid in cart.items.values_list('variant_id', flat=True)]
+            cart_variant_ids = list(cart.items.values_list('variant_id', flat=True))
         except Cart.DoesNotExist:
             pass
     
-    # Update in_cart status
-    for v_json in variants_json_data:
-        v_json['in_cart'] = v_json['id'] in cart_variant_ids
-        # Also update the model objects for template use
-        v_obj = next(v for v in variants if str(v.id) == v_json['id'])
-        v_obj.in_cart = v_json['in_cart']
+    # Add in_cart status to each variant
+    for variant in variants:
+        variant.in_cart = variant.id in cart_variant_ids
 
     # Get approved reviews unioned with current user's reviews (even if unapproved)
     reviews_base = product.reviews.select_related('user')
@@ -950,7 +826,7 @@ def product_detail_user(request, product_slug):
         category=product.category,
         is_active=True,
         is_deleted=False
-    ).exclude(id=product.id).prefetch_related('variants', 'variants__images', 'images')[:4]
+    ).exclude(id=product.id).prefetch_related('variants', 'variants__additional_images')[:4]
 
     # Get wishlist status
     if request.user.is_authenticated:
@@ -962,11 +838,7 @@ def product_detail_user(request, product_slug):
 
     context = {
         'product': product,
-        'images': images_qs,
         'variants': variants,
-        'available_attributes': sorted_attributes,
-        'variants_json': json.dumps(variants_json_data),
-        'available_attributes_json': json.dumps(sorted_attributes),
         'reviews': reviews,
         'review_stats': review_stats,
         'user_review': user_review,

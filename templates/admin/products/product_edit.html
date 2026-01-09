@@ -260,8 +260,8 @@
                 <table class="min-w-full divide-y divide-gray-200">
                   <thead class="bg-gray-50">
                     <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attributes</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
                       <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                       <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                       <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -271,18 +271,8 @@
                   <tbody class="bg-white divide-y divide-gray-200">
                     {% for variant in variants %}
                     <tr class="hover:bg-gray-50 transition-colors">
-                      <td class="px-4 py-4 whitespace-nowrap">
-                        <div class="h-10 w-10 flex-shrink-0">
-                          {% if variant.main_image %}
-                            <img class="h-10 w-10 rounded-lg object-cover border border-gray-200" src="{{ variant.main_image.url }}" alt="">
-                          {% else %}
-                            <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
-                              <i class="fas fa-image text-gray-400 text-xs"></i>
-                            </div>
-                          {% endif %}
-                        </div>
-                      </td>
-                      <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ variant.get_display_name }}</td>
+                      <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ variant.size|default:"N/A" }}</td>
+                      <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ variant.color|default:"N/A" }}</td>
                       <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">₹{{ variant.price }}</td>
                       <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ variant.stock_quantity }}</td>
                       <td class="px-4 py-4 whitespace-nowrap">
