@@ -339,10 +339,10 @@
             </div>
             {% endfor %}
           </div>
-          {% elif product.image %}
+          {% elif product.main_image %}
           <!-- Single image field -->
           <div class="text-center">
-            <img src="{{ product.image.url }}" 
+            <img src="{{ product.main_image.url }}" 
                  alt="{{ product.name }}" 
                  class="w-full h-64 object-cover rounded-lg border border-gray-200">
           </div>

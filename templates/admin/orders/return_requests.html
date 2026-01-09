@@ -133,10 +133,10 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                {% if order.product.image %}
+                                {% if order.product.main_image %}
                                 <div class="flex-shrink-0 h-10 w-10 mr-3">
                                     <img class="h-10 w-10 rounded-md object-cover" 
-                                         src="{{ order.product.image.url }}" 
+                                         src="{{ order.product.main_image.url }}" 
                                          alt="{{ order.product.name }}">
                                 </div>
                                 {% endif %}

@@ -124,16 +124,26 @@ def add_to_cart(request):
         added = False
         
         if existing_item:
-            # If item exists, remove it (toggle functionality)
-            existing_item.delete()
-            removed = True
-            message = 'Product removed from cart'
+            # Instead of removing, we update the quantity (Add/Update logic)
+            # This is better for product details pages
+            new_quantity = existing_item.quantity + quantity
+            
+            # Application rules: Max 5 items per variant, and don't exceed stock
+            if new_quantity > 5:
+                new_quantity = 5
+            if new_quantity > variant.stock_quantity:
+                new_quantity = variant.stock_quantity
+                
+            existing_item.quantity = new_quantity
+            existing_item.save()
+            added = True
+            message = 'Cart quantity updated'
         else:
             # Add new item to cart
             CartItem.objects.create(
                 cart=cart,
                 variant=variant,
-                quantity=min(quantity, variant.stock_quantity)
+                quantity=min(quantity, variant.stock_quantity, 5)
             )
             added = True
             message = 'Product added to cart successfully'

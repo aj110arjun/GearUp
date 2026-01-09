@@ -21,15 +21,6 @@ logger = logging.getLogger(__name__)
 
 class ProductCreateForm(forms.ModelForm):
     """Simplified form for product creation - only basic fields"""
-    image = forms.ImageField(
-        required=True,
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': 'image/*'
-        }),
-        help_text='Main product image (required)',
-        validators=[validate_image_file]
-    )
     
     class Meta:
         model = Product
@@ -77,39 +68,9 @@ class ProductCreateForm(forms.ModelForm):
         self.fields['category'].queryset = Category.objects.filter(is_active=True, is_deleted=False)
         self.fields['category'].empty_label = "Select a category"
 
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        if image and hasattr(image, 'file'):  # It's a file upload
-            # Check file size (limit to 10MB)
-            if hasattr(image, 'size') and image.size > 10 * 1024 * 1024:  # 10MB
-                raise ValidationError('Image file size cannot exceed 10MB.')
-            
-            # Check image dimensions
-            try:
-                # Seek to beginning of file
-                if hasattr(image, 'seek'):
-                    image.seek(0)
-                
-                img = Image.open(image)
-                width, height = img.size
-                
-                # Ensure minimum dimensions
-                if width < 300 or height < 300:
-                    raise ValidationError('Image dimensions should be at least 300x300 pixels.')
-                
-                # Ensure aspect ratio is reasonable
-                ratio = width / height
-                if ratio < 0.5 or ratio > 2:
-                    raise ValidationError('Image aspect ratio should be between 0.5 and 2.')
-                    
-            except Exception as e:
-                raise ValidationError('Invalid image file.')
-            
-            # Reset file pointer after reading
-            if hasattr(image, 'seek'):
-                image.seek(0)
-        
-        return image
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
 
     def clean_sku(self):
         sku = self.cleaned_data.get('sku')
@@ -143,15 +104,6 @@ class ProductCreateForm(forms.ModelForm):
 
 class ProductEditForm(forms.ModelForm):
     """Full form for product editing - includes all fields"""
-    image = forms.ImageField(
-        required=False,
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': 'image/*'
-        }),
-        help_text='Change main product image (optional)',
-        validators=[validate_image_file]
-    )
     
     class Meta:
         model = Product
@@ -262,39 +214,9 @@ class ProductEditForm(forms.ModelForm):
             raise ValidationError('Please select a category.')
         return category
 
-    def clean_image(self):
-        image = self.cleaned_data.get('image')
-        if image and hasattr(image, 'file'):  # It's a file upload, not CloudinaryResource
-            # Check file size (limit to 10MB)
-            if hasattr(image, 'size') and image.size > 10 * 1024 * 1024:  # 10MB
-                raise ValidationError('Image file size cannot exceed 10MB.')
-            
-            # Check image dimensions
-            try:
-                # Seek to beginning of file
-                if hasattr(image, 'seek'):
-                    image.seek(0)
-                
-                img = Image.open(image)
-                width, height = img.size
-                
-                # Ensure minimum dimensions
-                if width < 300 or height < 300:
-                    raise ValidationError('Image dimensions should be at least 300x300 pixels.')
-                
-                # Ensure aspect ratio is reasonable
-                ratio = width / height
-                if ratio < 0.5 or ratio > 2:
-                    raise ValidationError('Image aspect ratio should be between 0.5 and 2.')
-                    
-            except Exception as e:
-                raise ValidationError(f'Invalid image file: {str(e)}')
-            
-            # Reset file pointer after reading
-            if hasattr(image, 'seek'):
-                image.seek(0)
-        
-        return image
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
 
 
 class ProductVariantForm(forms.ModelForm):
@@ -309,8 +231,12 @@ class ProductVariantForm(forms.ModelForm):
 
     class Meta:
         model = ProductVariant
-        fields = ['size', 'color', 'price', 'stock_quantity', 'is_active']
+        fields = ['primary_image', 'size', 'color', 'price', 'stock_quantity', 'is_active']
         widgets = {
+            'primary_image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
             'size': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': 'e.g., M, L, XL',
@@ -395,6 +321,12 @@ class ProductVariantForm(forms.ModelForm):
             raise ValidationError('Stock quantity cannot be negative.')
         return stock
 
+    def clean_primary_image(self):
+        image = self.cleaned_data.get('primary_image')
+        if not image and not (self.instance and self.instance.pk and self.instance.primary_image):
+            raise ValidationError('Primary image is required.')
+        return image
+
 
 class ProductImageForm(forms.ModelForm):
     """Form for product images"""
@@ -470,10 +402,13 @@ ProductVariantFormSet = inlineformset_factory(
     can_delete=True
 )
 
-ProductImageFormSet = inlineformset_factory(
-    Product,
+# ProductImageFormSet removed as images are now variant-level
+
+VariantImageFormSet = inlineformset_factory(
+    ProductVariant,
     ProductImage,
     form=ProductImageForm,
+    fk_name='variant',
     extra=1,
     can_delete=True
 )

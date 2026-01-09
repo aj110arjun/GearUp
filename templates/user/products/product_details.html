@@ -83,7 +83,7 @@
             <div class="relative bg-white rounded-2xl overflow-hidden shadow-2xl mb-4 group" id="image-container">
               <div class="aspect-square flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-white">
                 <img id="main-product-image" 
-                     src="{% if images %}{{ images.0.image.url }}{% else %}{{ product.image.url }}{% endif %}" 
+                     src="{{ product.main_image.url }}" 
                      alt="{{ product.name }}"
                      class="max-w-full max-h-full object-contain image-zoom cursor-zoom-in">
               </div>
@@ -116,21 +116,22 @@
               </div>
             </div>
 
-            <!-- Thumbnail Images -->
-            <div class="flex gap-3 overflow-x-auto pb-2">
-              {% if images %}
-                {% for img in images %}
-                <img src="{{ img.image.url }}" 
-                     alt="{{ product.name }}"
-                     data-full="{{ img.image.url }}"
-                     class="thumb-img {% if forloop.first %}border-emerald-600{% else %}border-gray-200{% endif %} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0">
-                {% endfor %}
-              {% else %}
-                <img src="{{ product.image.url }}" 
-                     alt="{{ product.name }}"
-                     data-full="{{ product.image.url }}"
-                     class="thumb-img border-emerald-600 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg flex-shrink-0">
-              {% endif %}
+            <!-- Thumbnail Images (Injected by JS) -->
+            <div class="flex gap-3 overflow-x-auto pb-2 min-h-[80px]" id="thumbnail-gallery">
+                <!-- Gallery items will be injected by selectVariant() on load -->
+                <!-- Pre-populating the first variant's image for instant visibility -->
+                {% with first_v=variants|first %}
+                  {% if first_v and first_v.primary_image %}
+                    <img src="{{ first_v.primary_image.url }}" 
+                         onclick="window.updateMainImage('{{ first_v.primary_image.url }}')"
+                         class="thumb-img border-emerald-600 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all">
+                  {% endif %}
+                  {% for img in first_v.additional_images.all %}
+                    <img src="{{ img.image.url }}" 
+                         onclick="window.updateMainImage('{{ img.image.url }}')"
+                         class="thumb-img border-gray-200 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all opacity-50 hover:opacity-100">
+                  {% endfor %}
+                {% endwith %}
             </div>
           </div>
         </div>
@@ -152,35 +153,52 @@
             <h1 class="text-4xl font-bold text-gray-900 mb-3">{{ product.name }}</h1>
             
             <!-- Stock Status -->
-            <div class="flex items-center space-x-2 mb-4">
+            <div id="main-stock-status" class="mb-4">
               {% if product.in_stock %}
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                  </svg>
+                  <i class="fas fa-check-circle mr-1"></i>
                   In Stock
                 </span>
               {% else %}
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                  <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                  </svg>
+                  <i class="fas fa-times-circle mr-1"></i>
                   Out of Stock
                 </span>
               {% endif %}
             </div>
 
-            <!-- Price Range -->
-            {% if variants %}
-            <div class="flex items-center space-x-2">
-              <span class="text-3xl font-bold text-gray-900">
-                ₹{{ product.min_price }}
-                {% if product.min_price != product.max_price %}
-                  - ₹{{ product.max_price }}
-                {% endif %}
-              </span>
+            <!-- Price Section -->
+            <div id="main-price-display" class="flex flex-col space-y-2">
+              <div class="flex items-center space-x-3">
+                <span id="current-price" class="text-4xl font-bold text-gray-900">₹{{ product.min_price|floatformat:2 }}</span>
+                <span id="original-price" class="text-xl text-gray-400 line-through hidden"></span>
+                <span id="discount-badge" class="px-2 py-1 bg-red-500 text-white rounded-md text-xs font-bold hidden"></span>
+              </div>
+              {% if product.min_price != product.max_price %}
+                <p id="price-range" class="text-sm text-gray-500">Price Range: ₹{{ product.min_price|floatformat:2 }} - ₹{{ product.max_price|floatformat:2 }}</p>
+              {% endif %}
             </div>
-            {% endif %}
+
+            <!-- Add to Cart Form -->
+            <div class="flex flex-col space-y-4 pt-6 border-t border-gray-100">
+              <div class="flex items-center space-x-4">
+                <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden bg-white">
+                    <button type="button" onclick="changeQty(-1)" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition text-xl font-bold">-</button>
+                    <input type="number" id="purchase-quantity" value="1" min="1" max="5" class="w-12 text-center border-none focus:ring-0 font-bold bg-transparent" readonly>
+                    <button type="button" onclick="changeQty(1)" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition text-xl font-bold">+</button>
+                </div>
+                
+                <input type="hidden" id="selected-variant-id-hidden" value="{{ variants.0.id|default:'' }}">
+                
+                <button type="button" id="main-add-to-cart-btn" 
+                        onclick="addSelectedToCart()"
+                        class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-emerald-700 hover:to-teal-700 transition shadow-xl transform active:scale-95 flex items-center justify-center space-x-2">
+                    <i class="fas fa-cart-plus"></i>
+                    <span>Add to Cart</span>
+                </button>
+              </div>
+              <p id="selected-variant-info" class="text-sm font-medium text-emerald-600"></p>
+            </div>
           </div>
 
           <!-- Description -->
@@ -216,113 +234,80 @@
             </div>
           </div>
 
-          <!-- Variants Section -->
+          <!-- Variants Section (Dropdown) -->
           {% if variants %}
-          <div class="bg-white rounded-2xl p-6 shadow-xl">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <div class="bg-white rounded-2xl p-6 shadow-xl space-y-4">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center mb-0">
               <i class="fas fa-boxes text-emerald-600 mr-3"></i>
               Available Options
             </h2>
             
-            <div class="space-y-3">
-              {% for variant in variants %}
-              <div class="group relative bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border-2 border-gray-200 hover:border-blue-500 transition-all shadow-sm hover:shadow-lg variant-item" data-variant-id="{{ variant.id }}">
-                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                  
-                  <!-- Variant Info -->
-                  <div class="flex-1">
-                    <div class="flex items-center space-x-3 mb-2">
-                      {% if variant.color %}
-                      <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-semibold">
-                        <i class="fas fa-palette mr-1"></i>{{ variant.color }}
-                      </span>
-                      {% endif %}
-                      {% if variant.size %}
-                      <span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold">
-                        <i class="fas fa-ruler mr-1"></i>{{ variant.size }}
-                      </span>
-                      {% endif %}
-                      {% if variant.sku %}
-                      <span class="text-xs text-gray-500">SKU: {{ variant.sku }}</span>
-                      {% endif %}
-                    </div>
-                    
-                    <!-- Pricing -->
-                    <div class="flex items-center space-x-3">
-                      {% if variant.get_discounted_price < variant.price %}
-                        <span class="text-2xl font-bold text-gray-800 discounted-price" data-price="{{ variant.get_discounted_price }}">₹{{ variant.get_discounted_price|floatformat:2 }}</span>
-                        <span class="text-lg text-gray-400 line-through original-price">₹{{ variant.price }}</span>
-                        <span class="px-2 py-1 bg-red-500 text-white rounded-md text-xs font-bold">
-                          {{ variant.discount_percentage }}% OFF
-                        </span>
+            <div class="relative">
+              <label class="block text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">Select Variant</label>
+              
+              <!-- Visual Variant Selector (Images/Chips) -->
+              <div class="flex flex-wrap gap-3 mb-6" id="visual-variant-selector">
+                {% for variant in variants %}
+                  {% with has_images=variant.primary_image %}
+                    <button type="button" 
+                            onclick="selectVariant('{{ variant.id }}')"
+                            class="variant-chip group relative flex-shrink-0 w-16 h-16 rounded-xl border-2 transition-all p-1 {% if forloop.first %}border-emerald-500 ring-2 ring-emerald-500/20{% else %}border-gray-100 hover:border-emerald-200{% endif %} {% if not variant.stock_quantity > 0 or not has_images %}opacity-40 grayscale cursor-not-allowed{% endif %}"
+                            data-variant-id="{{ variant.id }}"
+                            title="{{ variant.get_display_name }}">
+                      {% if has_images %}
+                        <img src="{{ variant.primary_image.url }}" class="w-full h-full object-cover rounded-lg" alt="{{ variant.get_display_name }}">
                       {% else %}
-                        <span class="text-2xl font-bold text-gray-800" data-price="{{ variant.price }}">₹{{ variant.price }}</span>
-                      {% endif %}
-                    </div>
-                    
-                    <!-- Stock Indicator -->
-                    {% if variant.stock_quantity > 0 %}
-                      {% if variant.is_low_stock %}
-                        <div class="mt-2 flex items-center text-red-600 text-sm font-medium">
-                          <i class="fas fa-exclamation-triangle mr-2"></i>
-                          Only {{ variant.stock_quantity }} left in stock!
-                        </div>
-                      {% else %}
-                        <div class="mt-2 flex items-center text-green-600 text-sm font-medium">
-                          <i class="fas fa-check-circle mr-2"></i>
-                          In Stock ({{ variant.stock_quantity }} available)
+                        <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                          <i class="fas fa-box text-gray-300"></i>
                         </div>
                       {% endif %}
-                    {% else %}
-                      <div class="mt-2 flex items-center text-red-600 text-sm font-medium">
-                        <i class="fas fa-times-circle mr-2"></i>
-                        Out of Stock
-                      </div>
-                    {% endif %}
-                  </div>
-
-                  <!-- Action Buttons -->
-                  <div class="flex items-center gap-3 min-w-[200px]">
-                    {% if variant.stock_quantity > 0 %}
-                      <div class="flex-1">
-                        {% if variant.in_cart %}
-                          <!-- Show "Go to Cart" if variant is already in cart -->
-                          <a href="{% url 'shop:cart' %}"
-                             class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-teal-700 transition shadow-lg">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Go to Cart</span>
-                          </a>
-                        {% else %}
-                          <!-- Show "Add to Cart" if variant is not in cart -->
-                          <button type="button" 
-                                  onclick="addToCart('{{ variant.id }}')"
-                                  class="cart-btn w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition shadow-lg"
-                                  data-product-id="{{ product.id }}"
-                                  data-variant-id="{{ variant.id }}">
-                            <i class="fas fa-cart-plus"></i>
-                            <span>Add to Cart</span>
-                          </button>
-                        {% endif %}
-                      </div>
-                    {% else %}
-                      <button disabled 
-                              class="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed">
-                        <i class="fas fa-times-circle"></i>
-                        <span>Out of Stock</span>
-                      </button>
-                    {% endif %}
-                    
-                    <!-- Wishlist Button -->
-                    <button type="button"
-                            onclick="toggleWishlist('{{ product.id }}')"
-                            class="flex items-center justify-center w-12 h-12 border-2 border-gray-300 rounded-xl hover:border-red-300 hover:bg-red-50 transition-colors wishlist-btn"
-                            data-product-id="{{ product.id }}"
-                            title="Add to Wishlist">
-                      <i class="far fa-heart text-gray-600 hover:text-red-500"></i>
+                      
+                      {% if variant.is_low_stock and variant.stock_quantity > 0 %}
+                        <span class="absolute -top-2 -right-2 bg-amber-500 text-white text-[8px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm">!</span>
+                      {% endif %}
                     </button>
-                  </div>
-                </div>
+                  {% endwith %}
+                {% endfor %}
               </div>
+
+              <!-- Standard Dropdown (Kept for accessibility and mobile) -->
+              <select id="variant-select-dropdown" 
+                      class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-4 text-gray-800 font-semibold focus:border-emerald-500 focus:ring-0 transition-all appearance-none cursor-pointer"
+                      onchange="selectVariant(this.value)">
+                {% for variant in variants %}
+                  {% with has_images=variant.primary_image %}
+                    <option value="{{ variant.id }}" 
+                            {% if forloop.first %}selected{% endif %}
+                            data-has-images="{% if has_images %}true{% else %}false{% endif %}"
+                            {% if not variant.stock_quantity > 0 or not has_images %}disabled{% endif %}>
+                      {{ variant.get_display_name }} - ₹{{ variant.get_discounted_price|floatformat:2 }} 
+                      {% if not variant.stock_quantity > 0 %}
+                        (Out of Stock)
+                      {% elif not has_images %}
+                        (No Images Available)
+                      {% elif variant.is_low_stock %}
+                        (Only {{ variant.stock_quantity }} left!)
+                      {% endif %}
+                    </option>
+                  {% endwith %}
+                {% endfor %}
+              </select>
+              <div class="absolute right-4 bottom-4 pointer-events-none text-emerald-600">
+                <i class="fas fa-chevron-down"></i>
+              </div>
+            </div>
+
+            <!-- This container is for standard variant-item data attributes used by the selectVariant script -->
+            <div id="variant-data-bridge" class="hidden">
+              {% for v in variants %}
+                {% with has_item_images=v.primary_image %}
+                  <div class="variant-item hidden" 
+                       data-variant-id="{{ v.id }}" 
+                       data-has-images="{% if has_item_images %}true{% else %}false{% endif %}">
+                    {% if v.color %}<span class="bg-emerald-100">{{ v.color }}</span>{% endif %}
+                    {% if v.size %}<span class="bg-teal-100">{{ v.size }}</span>{% endif %}
+                  </div>
+                {% endwith %}
               {% endfor %}
             </div>
           </div>
@@ -664,6 +649,33 @@
             </div>
           {% endif %}
         </div>
+      </div>
+
+      <!-- Related Products Section -->
+      {% if related_products %}
+      <div class="mt-24">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-layer-group text-emerald-600 mr-4"></i>
+            You May Also Like
+          </h2>
+          <a href="{% url 'products:product_list_user' %}?category={{ product.category.slug }}" 
+             class="text-emerald-600 font-semibold hover:text-emerald-700 flex items-center gap-2 group">
+            View All
+            <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {% for rel_product in related_products %}
+            {% with p_data=rel_product.get_product_data %}
+              {% include "user/includes/product_card.html" with product_data=p_data %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+        </div>
 
         <!-- Load More Button -->
         {% if reviews.count > 5 %}
@@ -862,10 +874,30 @@
     updateReviewUrl: '{% url "products:update_review" 0 %}',
     voteReviewUrl: '{% url "products:vote_review" 999999 %}',
     ajaxReviewsUrl: '{% url "products:ajax_reviews" product.slug %}',
-    submitReviewUrl: '{% url "products:submit_review" product.slug %}'
+    submitReviewUrl: '{% url "products:submit_review" product.slug %}',
+    variants: {
+        {% for v in variants %}
+        '{{ v.id }}': {
+            id: '{{ v.id }}',
+            price: {{ v.price }},
+            discountedPrice: {{ v.get_discounted_price }},
+            discount: {{ v.discount_percentage }},
+            stock: {{ v.stock_quantity }},
+            inStock: {% if v.stock_quantity > 0 %}true{% else %}false{% endif %},
+            isLowStock: {% if v.is_low_stock %}true{% else %}false{% endif %},
+            inCart: {% if v.in_cart %}true{% else %}false{% endif %},
+            images: [
+                {% if v.primary_image %}'{{ v.primary_image.url }}'{% if v.additional_images.all %},{% endif %}{% endif %}
+                {% for img in v.additional_images.all %}
+                    '{{ img.image.url }}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+        },
+        {% endfor %}
+    }
   };
 </script>
 
 <!-- External Product Details Logic -->
-<script src="{% static 'js/user/product_details.js' %}"></script>
+<script src="{% static 'js/user/product_details.js' %}?v=2"></script>
 {% endblock %}

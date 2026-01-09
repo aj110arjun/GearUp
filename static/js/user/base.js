@@ -176,19 +176,26 @@ window.globalToggleWishlist = async function(productId) {
     }
 };
 
-window.globalAddToCart = async function(productId, variantId) {
+window.globalAddToCart = async function(productId, variantId, quantity = 1) {
     const btn = document.querySelector(`.cart-btn[data-variant-id="${variantId}"]`);
+    const mainBtn = document.getElementById('main-add-to-cart-btn');
     const originalContent = btn?.innerHTML;
+    const mainOriginalContent = mainBtn?.innerHTML;
+
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+    if (mainBtn && document.getElementById('selected-variant-id-hidden')?.value === variantId) {
+        mainBtn.disabled = true;
+        mainBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
     }
 
     try {
         const data = await window.globalApiPOST(window.GEAR_UP_CONFIG.addToCartUrl, { 
             product_id: productId, 
             variant_id: variantId, 
-            quantity: 1 
+            quantity: quantity 
         });
         if (data.success) {
             let uiState = { inCart: data.added };
@@ -197,6 +204,18 @@ window.globalAddToCart = async function(productId, variantId) {
             if (data.cart_count !== undefined) window.updateCartCount(data.cart_count);
             if (data.wishlist_count !== undefined) window.updateWishlistCount(data.wishlist_count);
             window.showNotification(data.message, 'success');
+            
+            // If on product details, update main button too
+            if (mainBtn && document.getElementById('selected-variant-id-hidden')?.value === variantId) {
+                if (data.added) {
+                    mainBtn.classList.replace('from-emerald-600', 'from-green-600');
+                    mainBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>In Cart</span>';
+                } else {
+                    mainBtn.classList.replace('from-green-600', 'from-emerald-600');
+                    mainBtn.innerHTML = '<i class="fas fa-cart-plus"></i><span>Add to Cart</span>';
+                }
+            }
+
             if (document.getElementById('product-grid-container')) {
                 setTimeout(() => {
                     window.location.reload();
@@ -205,14 +224,26 @@ window.globalAddToCart = async function(productId, variantId) {
         } else {
             window.showNotification(data.message, 'error');
             if (btn) btn.innerHTML = originalContent;
+            if (mainBtn) mainBtn.innerHTML = mainOriginalContent;
         }
     } catch (e) {
         window.showNotification('Connection error', 'error');
         if (btn) btn.innerHTML = originalContent;
-    } finally {
+        if (mainBtn) mainBtn.innerHTML = mainOriginalContent;
+        } finally {
         if (btn) btn.disabled = false;
+        if (mainBtn) mainBtn.disabled = false;
+        
+        // Update local config if we are on product details page
+        if (data && data.success && window.PRODUCT_DETAILS_CONFIG && window.PRODUCT_DETAILS_CONFIG.variants[variantId]) {
+            window.PRODUCT_DETAILS_CONFIG.variants[variantId].inCart = data.added;
+            console.log(`[ConfigSync] Updated inCart for variant ${variantId} to ${data.added}`);
+        }
     }
 };
+
+// Global Alias for backward compatibility
+window.addToCart = window.globalAddToCart;
 
 window.globalRemoveFromWishlist = async function(itemId, element) {
     window.showConfirmModal({

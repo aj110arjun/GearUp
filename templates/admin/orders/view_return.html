@@ -350,9 +350,9 @@
                 
                 <div class="flex items-center space-x-4 mb-8 p-5 bg-gray-50 rounded-2xl border border-gray-200 group transition-all hover:bg-white hover:shadow-lg">
                     <div class="flex-shrink-0 relative">
-                        {% if order.product.image %}
+                        {% if order.product.main_image %}
                         <div class="w-24 h-24 rounded-2xl border border-white overflow-hidden shadow-sm">
-                            <img src="{{ order.product.image.url }}" 
+                            <img src="{{ order.product.main_image.url }}" 
                                  alt="{{ order.product.name }}"
                                  class="w-full h-full object-cover transform group-hover:scale-110 transition-transform">
                         </div>

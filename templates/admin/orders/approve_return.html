@@ -13,8 +13,8 @@
         <!-- Order Summary -->
         <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div class="flex items-start space-x-4 mb-4">
-                {% if order.product.image %}
-                <img src="{{ order.product.image.url }}" 
+                {% if order.product.main_image %}
+                <img src="{{ order.product.main_image.url }}" 
                      alt="{{ order.product.name }}"
                      class="w-16 h-16 object-cover rounded-lg border border-gray-200">
                 {% endif %}
