@@ -1,4 +1,4 @@
-console.log('[ProductDetails] Script v9.0 start');
+console.log('[ProductDetails] Script v9.1 start');
 
 (function() {
     const config = window.PRODUCT_DETAILS_CONFIG || {};
@@ -346,24 +346,12 @@ console.log('[ProductDetails] Script v9.0 start');
         });
     };
 
-    window.selectVariant = function(variantId) {
-        console.log(`[VariantSelection] Attempting to select: ${variantId}`);
+    // Expose as Ext for template orchestrator
+    window._selectVariantExt = function(variantId) {
+        console.log(`[VariantSelectionExt] Full update for: ${variantId}`);
         const v = config.variants[variantId];
+        if (!v) return;
         
-        if (!v) {
-            console.error(`[VariantSelection] Error: Variant ${variantId} not found in config.`);
-            return;
-        }
-
-        // Assertion: Ensure variant has images
-        if (!v.images || v.images.length === 0 || !v.images[0]) {
-            console.error(`[VariantSelection] Error: Selected variant ${variantId} has NO images. This is a critical failure.`);
-            if (window.showNotification) window.showNotification('This variant has no images and cannot be displayed properly.', 'error');
-            return;
-        }
-
-        console.log(`[VariantSelection] Success: Variant ${variantId} selected. Images:`, v.images);
-
         // 1. Update selection UI (cards/chips)
         document.querySelectorAll('.variant-item, .variant-chip').forEach(item => {
             item.classList.remove('selected-variant', 'border-emerald-500', 'ring-2', 'ring-emerald-500/20');
@@ -375,41 +363,7 @@ console.log('[ProductDetails] Script v9.0 start');
             selectedChip.classList.remove('border-gray-100');
         }
 
-        // 2. Update Hidden Input & Dropdown
-        const hiddenInput = document.getElementById('selected-variant-id-hidden');
-        if (hiddenInput) {
-            hiddenInput.value = variantId;
-            console.log(`[VariantSelection] Hidden input updated to: ${variantId}`);
-        }
-        
-        const dropdown = document.getElementById('variant-select-dropdown');
-        if (dropdown) {
-            dropdown.value = variantId;
-        }
-
-        // 3. Update Price Display
-        const currentPriceEl = document.getElementById('current-price');
-        const originalPriceEl = document.getElementById('original-price');
-        const discountBadge = document.getElementById('discount-badge');
-        
-        if (currentPriceEl) {
-            currentPriceEl.textContent = `\u20B9${parseFloat(v.discountedPrice).toFixed(2)}`;
-            if (v.discount > 0) {
-                if (originalPriceEl) {
-                    originalPriceEl.textContent = `\u20B9${parseFloat(v.price).toFixed(2)}`;
-                    originalPriceEl.classList.remove('hidden');
-                }
-                if (discountBadge) {
-                    discountBadge.textContent = `${v.discount}% OFF`;
-                    discountBadge.classList.remove('hidden');
-                }
-            } else {
-                if (originalPriceEl) originalPriceEl.classList.add('hidden');
-                if (discountBadge) discountBadge.classList.add('hidden');
-            }
-        }
-
-        // 4. Update Stock Status
+        // 2. Update Stock Status
         const stockStatusEl = document.getElementById('main-stock-status');
         if (stockStatusEl) {
             if (v.stock > 0) {
@@ -429,7 +383,7 @@ console.log('[ProductDetails] Script v9.0 start');
             }
         }
 
-        // 5. Update Variant Info Text
+        // 3. Update Variant Info Text
         const infoEl = document.getElementById('selected-variant-info');
         if (infoEl) {
             const card = document.querySelector(`.variant-item[data-variant-id="${variantId}"]`);
@@ -444,14 +398,12 @@ console.log('[ProductDetails] Script v9.0 start');
             }
         }
 
-        // 6. Update Button State
+        // 4. Update Add to Cart Button State
         const mainBtn = document.getElementById('main-add-to-cart-btn');
         if (mainBtn) {
             if (v.stock > 0) {
                 mainBtn.disabled = false;
                 mainBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                
-                // Show "In Cart" state if variant is already in cart
                 if (v.inCart) {
                     mainBtn.classList.replace('from-emerald-600', 'from-green-600');
                     mainBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>In Cart</span>';
@@ -466,9 +418,12 @@ console.log('[ProductDetails] Script v9.0 start');
             }
         }
 
-        // 7. Update Gallery
+        // 5. Update Gallery
         updateGallery(variantId);
     };
+
+    // Provide fallback if not defined by template
+    window.selectVariant = window.selectVariant || function(vid) { window._selectVariantExt(vid); };
 
     function updateGallery(variantId) {
         console.log(`[Gallery] Updating gallery for variant: ${variantId}`);

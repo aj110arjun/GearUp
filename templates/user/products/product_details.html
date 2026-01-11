@@ -922,8 +922,23 @@
 
     // Update Price
     const priceEl = document.getElementById('current-price');
+    const origPriceEl = document.getElementById('original-price');
+    const badgeEl = document.getElementById('discount-badge');
     if (priceEl && v.discountedPrice) {
-        priceEl.textContent = '₹' + parseFloat(v.discountedPrice).toFixed(2);
+        priceEl.textContent = '\u20B9' + parseFloat(v.discountedPrice).toFixed(2);
+        if (v.discount > 0) {
+            if (origPriceEl) {
+                origPriceEl.textContent = '\u20B9' + parseFloat(v.price).toFixed(2);
+                origPriceEl.classList.remove('hidden');
+            }
+            if (badgeEl) {
+                badgeEl.textContent = v.discount + '% OFF';
+                badgeEl.classList.remove('hidden');
+            }
+        } else {
+            if (origPriceEl) origPriceEl.classList.add('hidden');
+            if (badgeEl) badgeEl.classList.add('hidden');
+        }
     }
 
     // Call external script logic if loaded
@@ -982,8 +997,8 @@
   window._pdScriptLoaded = false;
 </script>
 
-<!-- External Product Details Logic - Force update to v9.0 -->
-<script defer src="{% static 'js/user/product_details.js' %}?v=9.0.{{ product.modified_at|date:'U'|default:'20260111' }}" 
+<!-- External Product Details Logic - Force update to v9.1 -->
+<script defer src="{% static 'js/user/product_details.js' %}?v=9.1.{{ product.modified_at|date:'U'|default:'20260111' }}" 
         onload="window._pdScriptLoaded = true; console.log('[ProductDetails] External script ready');"
         onerror="console.error('[ProductDetails] Failed to load external logic')">
 </script>
