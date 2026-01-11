@@ -3,7 +3,7 @@
  */
 
 (function() {
-    // Signal that this script has loaded
+    // Signal that this script has loaded - v7.1 (Force Update)
     console.log('[ProductDetails] Script executing...');
     
     const config = window.PRODUCT_DETAILS_CONFIG || {};
