@@ -1,13 +1,6 @@
-console.log('[ProductDetails] Script execution started (v8.2)...');
-
-/**
- * Product Details logic for GearUp.
- */
+console.log('[ProductDetails] Script v9.0 start');
 
 (function() {
-    // Signal that this script has loaded
-    console.log('[ProductDetails] Entering IIFE...');
-    
     const config = window.PRODUCT_DETAILS_CONFIG || {};
     const csrftoken = window.getCookie ? window.getCookie('csrftoken') : null;
 
@@ -400,10 +393,10 @@ console.log('[ProductDetails] Script execution started (v8.2)...');
         const discountBadge = document.getElementById('discount-badge');
         
         if (currentPriceEl) {
-            currentPriceEl.textContent = `₹${v.discountedPrice.toFixed(2)}`;
+            currentPriceEl.textContent = `\u20B9${parseFloat(v.discountedPrice).toFixed(2)}`;
             if (v.discount > 0) {
                 if (originalPriceEl) {
-                    originalPriceEl.textContent = `₹${v.price.toFixed(2)}`;
+                    originalPriceEl.textContent = `\u20B9${parseFloat(v.price).toFixed(2)}`;
                     originalPriceEl.classList.remove('hidden');
                 }
                 if (discountBadge) {

@@ -895,39 +895,96 @@
     }
   };
 
-  // Action queue to store user interactions before main script loads
+  // CORE LOGIC IN TEMPLATE (Robustness for Production)
+  window.selectVariant = function(variantId) {
+    if (!variantId || variantId === 'undefined') return;
+    console.log('[ProductDetails] Selecting variant:', variantId);
+    
+    const v = window.PRODUCT_DETAILS_CONFIG.variants[variantId];
+    if (!v) return;
+
+    // Update Hidden Input
+    const hiddenInput = document.getElementById('selected-variant-id-hidden');
+    if (hiddenInput) hiddenInput.value = variantId;
+    
+    // Update Dropdown
+    const dropdown = document.getElementById('variant-select-dropdown');
+    if (dropdown) dropdown.value = variantId;
+
+    // Update Chips
+    document.querySelectorAll('.variant-chip').forEach(c => {
+        if (c.dataset.variantId === variantId) {
+            c.classList.add('border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+        } else {
+            c.classList.remove('border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+        }
+    });
+
+    // Update Price
+    const priceEl = document.getElementById('current-price');
+    if (priceEl && v.discountedPrice) {
+        priceEl.textContent = '₹' + parseFloat(v.discountedPrice).toFixed(2);
+    }
+
+    // Call external script logic if loaded
+    if (window._pdScriptLoaded && typeof window._selectVariantExt === 'function') {
+        window._selectVariantExt(variantId);
+    } else {
+        // Fallback gallery update
+        const mainImg = document.getElementById('main-product-image');
+        if (mainImg && v.images && v.images[0]) {
+            mainImg.src = v.images[0];
+        }
+    }
+  };
+
+  window.updateMainImage = function(url) {
+    if (!url || url === 'undefined' || url === 'null') {
+        console.error('[Gallery] Invalid URL provided');
+        return;
+    }
+    const mainImg = document.getElementById('main-product-image');
+    if (mainImg) {
+        mainImg.style.opacity = '0.5';
+        mainImg.src = url;
+        mainImg.onload = () => { mainImg.style.opacity = '1'; };
+    }
+  };
+
+  window.changeQty = function(delta) {
+    const input = document.getElementById('purchase-quantity');
+    if (!input) return;
+    let val = parseInt(input.value) + delta;
+    if (val < 1) val = 1;
+    if (val > 5) val = 5;
+    input.value = val;
+  };
+
+  window.addSelectedToCart = function() {
+    const variantId = document.getElementById('selected-variant-id-hidden')?.value;
+    const quantity = parseInt(document.getElementById('purchase-quantity')?.value || 1);
+    
+    if (!variantId || variantId === 'undefined') {
+        if (window.showNotification) window.showNotification('Please select a variant', 'warning');
+        return;
+    }
+
+    if (window.globalAddToCart) {
+        window.globalAddToCart('{{ product.id }}', variantId, quantity);
+    } else {
+        console.error('[Cart] globalAddToCart not found in base.js');
+        if (window.showNotification) window.showNotification('System is still loading, please wait...', 'info');
+    }
+  };
+
+  // Replay Queue
   window._pdQueue = window._pdQueue || [];
   window._pdScriptLoaded = false;
-
-  // Enhanced stub functions that queue actions for replay
-  function createQueuedStub(fnName) {
-    return function(...args) {
-      console.log(`[Stub] ${fnName} queued (script not yet ready)`);
-      window._pdQueue.push({ fn: fnName, args: args, timestamp: Date.now() });
-      
-      // Immediate UI feedback for common actions
-      if (fnName === 'addSelectedToCart' && window.showNotification) {
-          window.showNotification('Adding to cart... please wait', 'info');
-      }
-    };
-  }
-
-  // Create stub functions
-  const functionsToStub = [
-      'selectVariant', 'updateMainImage', 'changeQty', 'addSelectedToCart', 
-      'toggleWishlist', 'openReviewModal', 'closeReviewModal', 
-      'openEditReviewModal', 'closeEditReviewModal', 'confirmDeleteReview'
-  ];
-  
-  functionsToStub.forEach(fn => {
-      window[fn] = window[fn] || createQueuedStub(fn);
-  });
 </script>
 
-<!-- External Product Details Logic - Incrementing version to v8.2 for force cache refresh -->
-<script>console.log('[ProductDetails] Starting to load external script...');</script>
-<script defer src="{% static 'js/user/product_details.js' %}?v=8.2.{{ product.modified_at|date:'U'|default:'20260111' }}" 
-        onload="console.log('[ProductDetails] Script tag onload fired'); window._pdScriptLoaded = true; if (window._pdQueue && window._pdQueue.length > 0) { console.log('[ProductDetails] Replaying', window._pdQueue.length, 'queued actions'); const q = window._pdQueue; window._pdQueue = []; q.forEach(function(action) { if (typeof window[action.fn] === 'function') { console.log('[ProductDetails] Replaying:', action.fn); window[action.fn].apply(null, action.args); } else { console.error('[ProductDetails] Cannot replay:', action.fn, '- NOT A FUNCTION'); } }); }"
-        onerror="console.error('[ProductDetails] CRITICAL: Failed to load external script'); if (window.showNotification) { window.showNotification('Failed to load page functionality. Please refresh.', 'error'); }">
+<!-- External Product Details Logic - Force update to v9.0 -->
+<script defer src="{% static 'js/user/product_details.js' %}?v=9.0.{{ product.modified_at|date:'U'|default:'20260111' }}" 
+        onload="window._pdScriptLoaded = true; console.log('[ProductDetails] External script ready');"
+        onerror="console.error('[ProductDetails] Failed to load external logic')">
 </script>
 {% endblock %}
