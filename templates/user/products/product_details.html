@@ -863,6 +863,9 @@
   </div>
 </div>
 
+<!-- Preload critical JavaScript for faster loading -->
+<link rel="preload" href="{% static 'js/user/product_details.js' %}" as="script">
+
 <!-- Product Details Configuration -->
 <script>
   window.PRODUCT_DETAILS_CONFIG = {
@@ -896,51 +899,78 @@
     }
   };
 
-  // Inline stub functions to prevent ReferenceError if external script hasn't loaded yet
-  // These will be overridden by the full implementations in product_details.js
-  window.selectVariant = window.selectVariant || function(variantId) {
-    console.warn('[Stub] selectVariant called before main script loaded. Variant:', variantId);
-  };
-  
-  window.updateMainImage = window.updateMainImage || function(url) {
-    console.warn('[Stub] updateMainImage called before main script loaded. URL:', url);
-    const mainImg = document.getElementById('main-product-image');
-    if (mainImg && url) mainImg.src = url;
-  };
-  
-  window.changeQty = window.changeQty || function(delta) {
-    console.warn('[Stub] changeQty called before main script loaded. Delta:', delta);
-  };
-  
-  window.addSelectedToCart = window.addSelectedToCart || function() {
-    console.warn('[Stub] addSelectedToCart called before main script loaded');
-  };
-  
-  window.toggleWishlist = window.toggleWishlist || function(productId) {
-    console.warn('[Stub] toggleWishlist called before main script loaded. Product:', productId);
-  };
-  
-  window.openReviewModal = window.openReviewModal || function() {
-    console.warn('[Stub] openReviewModal called before main script loaded');
-  };
-  
-  window.closeReviewModal = window.closeReviewModal || function() {
-    console.warn('[Stub] closeReviewModal called before main script loaded');
-  };
-  
-  window.openEditReviewModal = window.openEditReviewModal || function(reviewId) {
-    console.warn('[Stub] openEditReviewModal called before main script loaded. Review:', reviewId);
-  };
-  
-  window.closeEditReviewModal = window.closeEditReviewModal || function() {
-    console.warn('[Stub] closeEditReviewModal called before main script loaded');
-  };
-  
-  window.confirmDeleteReview = window.confirmDeleteReview || function(form) {
-    console.warn('[Stub] confirmDeleteReview called before main script loaded');
-  };
+  // Action queue to store user interactions before main script loads
+  window._pdQueue = window._pdQueue || [];
+  window._pdScriptLoaded = false;
+
+  // Enhanced stub functions that queue actions for replay
+  function createQueuedStub(fnName) {
+    return function(...args) {
+      console.warn(`[Stub] ${fnName} called before main script loaded. Queuing action...`);
+      window._pdQueue.push({ fn: fnName, args: args, timestamp: Date.now() });
+      
+      // Show user feedback
+      if (window.showNotification && fnName === 'addSelectedToCart') {
+        window.showNotification('Loading... Please wait', 'info');
+      }
+    };
+  }
+
+  // Create stub functions that queue actions
+  window.selectVariant = window.selectVariant || createQueuedStub('selectVariant');
+  window.updateMainImage = window.updateMainImage || createQueuedStub('updateMainImage');
+  window.changeQty = window.changeQty || createQueuedStub('changeQty');
+  window.addSelectedToCart = window.addSelectedToCart || createQueuedStub('addSelectedToCart');
+  window.toggleWishlist = window.toggleWishlist || createQueuedStub('toggleWishlist');
+  window.openReviewModal = window.openReviewModal || createQueuedStub('openReviewModal');
+  window.closeReviewModal = window.closeReviewModal || createQueuedStub('closeReviewModal');
+  window.openEditReviewModal = window.openEditReviewModal || createQueuedStub('openEditReviewModal');
+  window.closeEditReviewModal = window.closeEditReviewModal || createQueuedStub('closeEditReviewModal');
+  window.confirmDeleteReview = window.confirmDeleteReview || createQueuedStub('confirmDeleteReview');
+
+  // Fallback: If script doesn't load within 5 seconds, show error
+  setTimeout(function() {
+    if (!window._pdScriptLoaded && window._pdQueue.length > 0) {
+      console.error('[ProductDetails] Main script failed to load. Queued actions:', window._pdQueue);
+      if (window.showNotification) {
+        window.showNotification('Failed to load page resources. Please refresh the page.', 'error');
+      }
+    }
+  }, 5000);
 </script>
 
-<!-- External Product Details Logic -->
-<script src="{% static 'js/user/product_details.js' %}?v=5.{{ product.modified_at|date:'U'|default:'20260111' }}"></script>
+<!-- External Product Details Logic with error handling -->
+<script>
+  (function() {
+    var script = document.createElement('script');
+    script.src = "{% static 'js/user/product_details.js' %}?v=6.{{ product.modified_at|date:'U'|default:'20260111' }}";
+    script.async = false; // Load synchronously to ensure it executes before user interactions
+    
+    script.onload = function() {
+      console.log('[ProductDetails] Main script loaded successfully');
+      window._pdScriptLoaded = true;
+      
+      // Replay queued actions
+      if (window._pdQueue && window._pdQueue.length > 0) {
+        console.log('[ProductDetails] Replaying', window._pdQueue.length, 'queued actions');
+        window._pdQueue.forEach(function(action) {
+          if (typeof window[action.fn] === 'function') {
+            console.log('[ProductDetails] Replaying:', action.fn, action.args);
+            window[action.fn].apply(null, action.args);
+          }
+        });
+        window._pdQueue = []; // Clear queue
+      }
+    };
+    
+    script.onerror = function() {
+      console.error('[ProductDetails] Failed to load main script from:', script.src);
+      if (window.showNotification) {
+        window.showNotification('Failed to load page functionality. Please refresh.', 'error');
+      }
+    };
+    
+    document.head.appendChild(script);
+  })();
+</script>
 {% endblock %}
