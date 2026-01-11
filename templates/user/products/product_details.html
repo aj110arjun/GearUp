@@ -878,11 +878,10 @@
         {% for v in variants %}
         '{{ v.id }}': {
             id: '{{ v.id }}',
-            price: {{ v.price }},
-            discountedPrice: {{ v.get_discounted_price }},
-            discount: {{ v.discount_percentage }},
-            stock: {{ v.stock_quantity }},
-            inStock: {% if v.stock_quantity > 0 %}true{% else %}false{% endif %},
+            price: {{ v.price|default:0 }},
+            discountedPrice: {{ v.get_discounted_price|default:0 }},
+            discount: {{ v.discount_percentage|default:0 }},
+            stock: {{ v.stock_quantity|default:0 }},
             isLowStock: {% if v.is_low_stock %}true{% else %}false{% endif %},
             inCart: {% if v.in_cart %}true{% else %}false{% endif %},
             images: [
@@ -903,42 +902,31 @@
   // Enhanced stub functions that queue actions for replay
   function createQueuedStub(fnName) {
     return function(...args) {
-      console.warn(`[Stub] ${fnName} called before main script loaded. Queuing action...`);
+      console.log(`[Stub] ${fnName} queued (script not yet ready)`);
       window._pdQueue.push({ fn: fnName, args: args, timestamp: Date.now() });
       
-      // Show user feedback for cart actions
-      if (window.showNotification && fnName === 'addSelectedToCart') {
-        window.showNotification('Loading... Please wait', 'info');
+      // Immediate UI feedback for common actions
+      if (fnName === 'addSelectedToCart' && window.showNotification) {
+          window.showNotification('Adding to cart... please wait', 'info');
       }
     };
   }
 
-  // Create stub functions that queue actions
-  window.selectVariant = window.selectVariant || createQueuedStub('selectVariant');
-  window.updateMainImage = window.updateMainImage || createQueuedStub('updateMainImage');
-  window.changeQty = window.changeQty || createQueuedStub('changeQty');
-  window.addSelectedToCart = window.addSelectedToCart || createQueuedStub('addSelectedToCart');
-  window.toggleWishlist = window.toggleWishlist || createQueuedStub('toggleWishlist');
-  window.openReviewModal = window.openReviewModal || createQueuedStub('openReviewModal');
-  window.closeReviewModal = window.closeReviewModal || createQueuedStub('closeReviewModal');
-  window.openEditReviewModal = window.openEditReviewModal || createQueuedStub('openEditReviewModal');
-  window.closeEditReviewModal = window.closeEditReviewModal || createQueuedStub('closeEditReviewModal');
-  window.confirmDeleteReview = window.confirmDeleteReview || createQueuedStub('confirmDeleteReview');
-
-  // Fallback: If script doesn't load within 5 seconds, show error
-  setTimeout(function() {
-    if (!window._pdScriptLoaded && window._pdQueue.length > 0) {
-      console.error('[ProductDetails] Main script failed to load. Queued actions:', window._pdQueue);
-      if (window.showNotification) {
-        window.showNotification('Failed to load page resources. Please refresh the page.', 'error');
-      }
-    }
-  }, 5000);
+  // Create stub functions
+  const functionsToStub = [
+      'selectVariant', 'updateMainImage', 'changeQty', 'addSelectedToCart', 
+      'toggleWishlist', 'openReviewModal', 'closeReviewModal', 
+      'openEditReviewModal', 'closeEditReviewModal', 'confirmDeleteReview'
+  ];
+  
+  functionsToStub.forEach(fn => {
+      window[fn] = window[fn] || createQueuedStub(fn);
+  });
 </script>
 
-<!-- External Product Details Logic - Load with defer for better performance -->
-<script defer src="{% static 'js/user/product_details.js' %}?v=7.{{ product.modified_at|date:'U'|default:'20260111' }}" 
-        onload="console.log('[ProductDetails] Script tag loaded'); window._pdScriptLoaded = true; if (window._pdQueue && window._pdQueue.length > 0) { console.log('[ProductDetails] Replaying', window._pdQueue.length, 'queued actions'); window._pdQueue.forEach(function(action) { if (typeof window[action.fn] === 'function') { console.log('[ProductDetails] Replaying:', action.fn, action.args); window[action.fn].apply(null, action.args); } }); window._pdQueue = []; }"
-        onerror="console.error('[ProductDetails] Failed to load script'); if (window.showNotification) { window.showNotification('Failed to load page functionality. Please refresh.', 'error'); }">
+<!-- External Product Details Logic - Incrementing version to v8.1 for force cache refresh -->
+<script defer src="{% static 'js/user/product_details.js' %}?v=8.1.{{ product.modified_at|date:'U'|default:'20260111' }}" 
+        onload="console.log('[ProductDetails] Script loaded successfully'); window._pdScriptLoaded = true; if (window._pdQueue && window._pdQueue.length > 0) { console.log('[ProductDetails] Replaying', window._pdQueue.length, 'queued actions'); window._pdQueue.forEach(function(action) { if (typeof window[action.fn] === 'function') { window[action.fn].apply(null, action.args); } }); window._pdQueue = []; }"
+        onerror="console.error('[ProductDetails] CRITICAL: Failed to load external script'); if (window.showNotification) { window.showNotification('Failed to load page functionality. Please refresh.', 'error'); }">
 </script>
 {% endblock %}

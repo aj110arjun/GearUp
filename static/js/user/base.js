@@ -191,8 +191,9 @@ window.globalAddToCart = async function(productId, variantId, quantity = 1) {
         mainBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
     }
 
+    let data;
     try {
-        const data = await window.globalApiPOST(window.GEAR_UP_CONFIG.addToCartUrl, { 
+        data = await window.globalApiPOST(window.GEAR_UP_CONFIG.addToCartUrl, { 
             product_id: productId, 
             variant_id: variantId, 
             quantity: quantity 
@@ -227,10 +228,11 @@ window.globalAddToCart = async function(productId, variantId, quantity = 1) {
             if (mainBtn) mainBtn.innerHTML = mainOriginalContent;
         }
     } catch (e) {
+        console.error('[AddToCart] Request Failed:', e);
         window.showNotification('Connection error', 'error');
         if (btn) btn.innerHTML = originalContent;
         if (mainBtn) mainBtn.innerHTML = mainOriginalContent;
-        } finally {
+    } finally {
         if (btn) btn.disabled = false;
         if (mainBtn) mainBtn.disabled = false;
         
