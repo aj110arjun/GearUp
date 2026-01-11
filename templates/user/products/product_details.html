@@ -896,8 +896,52 @@
         {% endfor %}
     }
   };
+
+  // Inline stub functions to prevent ReferenceError if external script hasn't loaded yet
+  // These will be overridden by the full implementations in product_details.js
+  window.selectVariant = window.selectVariant || function(variantId) {
+    console.warn('[Stub] selectVariant called before main script loaded. Variant:', variantId);
+  };
+  
+  window.updateMainImage = window.updateMainImage || function(url) {
+    console.warn('[Stub] updateMainImage called before main script loaded. URL:', url);
+    const mainImg = document.getElementById('main-product-image');
+    if (mainImg && url) mainImg.src = url;
+  };
+  
+  window.changeQty = window.changeQty || function(delta) {
+    console.warn('[Stub] changeQty called before main script loaded. Delta:', delta);
+  };
+  
+  window.addSelectedToCart = window.addSelectedToCart || function() {
+    console.warn('[Stub] addSelectedToCart called before main script loaded');
+  };
+  
+  window.toggleWishlist = window.toggleWishlist || function(productId) {
+    console.warn('[Stub] toggleWishlist called before main script loaded. Product:', productId);
+  };
+  
+  window.openReviewModal = window.openReviewModal || function() {
+    console.warn('[Stub] openReviewModal called before main script loaded');
+  };
+  
+  window.closeReviewModal = window.closeReviewModal || function() {
+    console.warn('[Stub] closeReviewModal called before main script loaded');
+  };
+  
+  window.openEditReviewModal = window.openEditReviewModal || function(reviewId) {
+    console.warn('[Stub] openEditReviewModal called before main script loaded. Review:', reviewId);
+  };
+  
+  window.closeEditReviewModal = window.closeEditReviewModal || function() {
+    console.warn('[Stub] closeEditReviewModal called before main script loaded');
+  };
+  
+  window.confirmDeleteReview = window.confirmDeleteReview || function(form) {
+    console.warn('[Stub] confirmDeleteReview called before main script loaded');
+  };
 </script>
 
 <!-- External Product Details Logic -->
-<script src="{% static 'js/user/product_details.js' %}?v=3"></script>
+<script src="{% static 'js/user/product_details.js' %}?v=4"></script>
 {% endblock %}
