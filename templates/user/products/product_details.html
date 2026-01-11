@@ -863,9 +863,6 @@
   </div>
 </div>
 
-<!-- Preload critical JavaScript for faster loading -->
-<link rel="preload" href="{% static 'js/user/product_details.js' %}" as="script">
-
 <!-- Product Details Configuration -->
 <script>
   window.PRODUCT_DETAILS_CONFIG = {
@@ -909,7 +906,7 @@
       console.warn(`[Stub] ${fnName} called before main script loaded. Queuing action...`);
       window._pdQueue.push({ fn: fnName, args: args, timestamp: Date.now() });
       
-      // Show user feedback
+      // Show user feedback for cart actions
       if (window.showNotification && fnName === 'addSelectedToCart') {
         window.showNotification('Loading... Please wait', 'info');
       }
@@ -939,38 +936,9 @@
   }, 5000);
 </script>
 
-<!-- External Product Details Logic with error handling -->
-<script>
-  (function() {
-    var script = document.createElement('script');
-    script.src = "{% static 'js/user/product_details.js' %}?v=6.{{ product.modified_at|date:'U'|default:'20260111' }}";
-    script.async = false; // Load synchronously to ensure it executes before user interactions
-    
-    script.onload = function() {
-      console.log('[ProductDetails] Main script loaded successfully');
-      window._pdScriptLoaded = true;
-      
-      // Replay queued actions
-      if (window._pdQueue && window._pdQueue.length > 0) {
-        console.log('[ProductDetails] Replaying', window._pdQueue.length, 'queued actions');
-        window._pdQueue.forEach(function(action) {
-          if (typeof window[action.fn] === 'function') {
-            console.log('[ProductDetails] Replaying:', action.fn, action.args);
-            window[action.fn].apply(null, action.args);
-          }
-        });
-        window._pdQueue = []; // Clear queue
-      }
-    };
-    
-    script.onerror = function() {
-      console.error('[ProductDetails] Failed to load main script from:', script.src);
-      if (window.showNotification) {
-        window.showNotification('Failed to load page functionality. Please refresh.', 'error');
-      }
-    };
-    
-    document.head.appendChild(script);
-  })();
+<!-- External Product Details Logic - Load with defer for better performance -->
+<script defer src="{% static 'js/user/product_details.js' %}?v=7.{{ product.modified_at|date:'U'|default:'20260111' }}" 
+        onload="console.log('[ProductDetails] Script tag loaded'); window._pdScriptLoaded = true; if (window._pdQueue && window._pdQueue.length > 0) { console.log('[ProductDetails] Replaying', window._pdQueue.length, 'queued actions'); window._pdQueue.forEach(function(action) { if (typeof window[action.fn] === 'function') { console.log('[ProductDetails] Replaying:', action.fn, action.args); window[action.fn].apply(null, action.args); } }); window._pdQueue = []; }"
+        onerror="console.error('[ProductDetails] Failed to load script'); if (window.showNotification) { window.showNotification('Failed to load page functionality. Please refresh.', 'error'); }">
 </script>
 {% endblock %}
