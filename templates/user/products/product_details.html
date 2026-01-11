@@ -924,9 +924,10 @@
   });
 </script>
 
-<!-- External Product Details Logic - Incrementing version to v8.1 for force cache refresh -->
-<script defer src="{% static 'js/user/product_details.js' %}?v=8.1.{{ product.modified_at|date:'U'|default:'20260111' }}" 
-        onload="console.log('[ProductDetails] Script loaded successfully'); window._pdScriptLoaded = true; if (window._pdQueue && window._pdQueue.length > 0) { console.log('[ProductDetails] Replaying', window._pdQueue.length, 'queued actions'); window._pdQueue.forEach(function(action) { if (typeof window[action.fn] === 'function') { window[action.fn].apply(null, action.args); } }); window._pdQueue = []; }"
+<!-- External Product Details Logic - Incrementing version to v8.2 for force cache refresh -->
+<script>console.log('[ProductDetails] Starting to load external script...');</script>
+<script defer src="{% static 'js/user/product_details.js' %}?v=8.2.{{ product.modified_at|date:'U'|default:'20260111' }}" 
+        onload="console.log('[ProductDetails] Script tag onload fired'); window._pdScriptLoaded = true; if (window._pdQueue && window._pdQueue.length > 0) { console.log('[ProductDetails] Replaying', window._pdQueue.length, 'queued actions'); const q = window._pdQueue; window._pdQueue = []; q.forEach(function(action) { if (typeof window[action.fn] === 'function') { console.log('[ProductDetails] Replaying:', action.fn); window[action.fn].apply(null, action.args); } else { console.error('[ProductDetails] Cannot replay:', action.fn, '- NOT A FUNCTION'); } }); }"
         onerror="console.error('[ProductDetails] CRITICAL: Failed to load external script'); if (window.showNotification) { window.showNotification('Failed to load page functionality. Please refresh.', 'error'); }">
 </script>
 {% endblock %}

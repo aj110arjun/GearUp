@@ -1,10 +1,12 @@
+console.log('[ProductDetails] Script execution started (v8.2)...');
+
 /**
  * Product Details logic for GearUp.
  */
 
 (function() {
-    // Signal that this script has loaded - v7.1 (Force Update)
-    console.log('[ProductDetails] Script executing...');
+    // Signal that this script has loaded
+    console.log('[ProductDetails] Entering IIFE...');
     
     const config = window.PRODUCT_DETAILS_CONFIG || {};
     const csrftoken = window.getCookie ? window.getCookie('csrftoken') : null;
@@ -497,7 +499,6 @@
             images.forEach((imgUrl, index) => {
                 const img = document.createElement('img');
                 img.src = imgUrl;
-                // Add data-full for robust matching in updateMainImage
                 img.dataset.full = imgUrl; 
                 img.className = `thumb-img ${index === 0 ? 'border-emerald-600' : 'border-gray-200 opacity-50'} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0`;
                 img.onclick = function() {
@@ -526,15 +527,25 @@
 
         // Update thumbnails highlighting
         document.querySelectorAll('.thumb-img').forEach(t => {
-            // Robust check: compare src (resolved by browser) or data-full
-            const isMatch = (t.dataset.full === url) || (t.src === url) || (new URL(t.src).pathname === new URL(url, window.location.origin).pathname);
-            
-            if (isMatch) {
-                t.classList.add('border-emerald-600', 'opacity-100');
-                t.classList.remove('border-gray-200', 'opacity-50');
-            } else {
-                t.classList.remove('border-emerald-600', 'opacity-100');
-                t.classList.add('border-gray-200', 'opacity-50');
+            try {
+                // Robust URL matching
+                const tUrl = new URL(t.src, window.location.origin).pathname;
+                const targetUrl = new URL(url, window.location.origin).pathname;
+                const isMatch = (t.dataset.full === url) || (tUrl === targetUrl);
+                
+                if (isMatch) {
+                    t.classList.add('border-emerald-600', 'opacity-100');
+                    t.classList.remove('border-gray-200', 'opacity-50');
+                } else {
+                    t.classList.remove('border-emerald-600', 'opacity-100');
+                    t.classList.add('border-gray-200', 'opacity-50');
+                }
+            } catch (e) {
+                // Fallback for weird URLs
+                if (t.src.includes(url) || url.includes(t.src)) {
+                    t.classList.add('border-emerald-600', 'opacity-100');
+                    t.classList.remove('border-gray-200', 'opacity-50');
+                }
             }
         });
 
@@ -542,11 +553,9 @@
         mainImg.style.transition = 'opacity 0.15s ease-in-out';
         mainImg.style.opacity = '0.3';
         
-        // Using a shorter timeout and direct assignment for better responsiveness
         setTimeout(() => {
             mainImg.src = url;
             mainImg.onload = () => { mainImg.style.opacity = '1'; };
-            // Fallback for cached images where onload might not fire predictably
             setTimeout(() => { mainImg.style.opacity = '1'; }, 100);
         }, 50);
     };
@@ -557,10 +566,10 @@
         if (!input) return;
         
         let val = parseInt(input.value) + delta;
-        const variantId = document.getElementById('selected-variant-id-hidden').value;
+        const hiddenId = document.getElementById('selected-variant-id-hidden');
+        const variantId = hiddenId ? hiddenId.value : '';
         const v = config.variants[variantId];
         
-        // If no variant selected or no stock info, default to 5 limit
         const maxStock = (v && v.stock !== undefined) ? Math.min(v.stock, 5) : 5;
         
         if (val < 1) val = 1;
@@ -586,9 +595,10 @@
         if (window.globalAddToCart) {
             window.globalAddToCart(config.productId, variantId, quantity);
         } else if (window.addToCart) {
-            window.addToCart(variantId);
+            window.addToCart(config.productId, variantId, quantity);
         } else {
             console.error('[AddToCart] No cart function found!');
+            if (window.showNotification) window.showNotification('Cart system offline. Please refresh.', 'error');
         }
     };
 
@@ -605,14 +615,17 @@
         
         let initialVariantId = hiddenInput?.value;
 
-        // If no hidden input value, try to find the first valid variant from bridge
         if (!initialVariantId && bridgeItems.length > 0) {
             initialVariantId = bridgeItems[0].dataset.variantId;
         }
 
         if (initialVariantId) {
             console.log(`[Init] Page load auto-select: ${initialVariantId}`);
-            window.selectVariant(initialVariantId);
+            try {
+                window.selectVariant(initialVariantId);
+            } catch (e) {
+                console.error('[Init] Failed to auto-select variant:', e);
+            }
         }
 
         // Desktop zoom effect
@@ -683,12 +696,20 @@
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    console.log('[ProductDetails] Initializing page components...');
+    try {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        console.log('[ProductDetails] Initialization logic scheduled.');
+    } catch (e) {
+        console.error('[ProductDetails] Critical error during initialization:', e);
     }
 })();
+
+console.log('[ProductDetails] Script execution finished.');
 
 // Separate function for delete confirmation as used in onclick
 window.confirmDeleteReview = function(form) {
