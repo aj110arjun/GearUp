@@ -942,5 +942,5 @@
 </script>
 
 <!-- External Product Details Logic -->
-<script src="{% static 'js/user/product_details.js' %}?v=4"></script>
+<script src="{% static 'js/user/product_details.js' %}?v=5.{{ product.modified_at|date:'U'|default:'20260111' }}"></script>
 {% endblock %}
