@@ -483,68 +483,53 @@
             return;
         }
         
-        // Filter out any invalid URLs to avoid "undefined" 404 errors
-        const images = (v.images || []).filter(url => url && url !== 'undefined');
+        const images = (v.images || []).filter(url => url && url !== 'undefined' && url !== 'null');
         const gallery = document.getElementById('thumbnail-gallery');
         const mainImg = document.getElementById('main-product-image');
         
-        if (!gallery || !mainImg) return;
+        if (!gallery || !mainImg) {
+            console.error('[Gallery] Not found: gallery or main image element');
+            return;
+        }
 
-        // Clear existing thumbnails
         gallery.innerHTML = '';
-
         if (images.length > 0) {
-            // Preload images for smoother switching - with strict validation
-            images.forEach(url => {
-                if (!url || url === 'undefined' || url === 'null') {
-                    console.warn(`[Gallery] Skipping invalid preload URL: ${url}`);
-                    return;
-                }
-                const link = document.createElement('link');
-                link.rel = 'preload';
-                link.as = 'image';
-                link.href = url;
-                document.head.appendChild(link);
-            });
-
-            // Update thumbnails - with strict validation
             images.forEach((imgUrl, index) => {
-                if (!imgUrl || imgUrl === 'undefined' || imgUrl === 'null') {
-                    console.warn(`[Gallery] Skipping invalid thumbnail URL: ${imgUrl}`);
-                    return;
-                }
                 const img = document.createElement('img');
                 img.src = imgUrl;
-                img.className = `thumb-img ${index === 0 ? 'border-emerald-600' : 'border-gray-200'} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0`;
-                img.dataset.full = imgUrl;
+                // Add data-full for robust matching in updateMainImage
+                img.dataset.full = imgUrl; 
+                img.className = `thumb-img ${index === 0 ? 'border-emerald-600' : 'border-gray-200 opacity-50'} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0`;
                 img.onclick = function() {
                     window.updateMainImage(imgUrl);
                 };
                 gallery.appendChild(img);
             });
 
-            // Update main image to first valid image of variant
-            const firstValidImage = images.find(url => url && url !== 'undefined' && url !== 'null');
+            const firstValidImage = images[0];
             if (firstValidImage) {
                 window.updateMainImage(firstValidImage);
             }
-        } else {
-            console.warn(`[Gallery] No valid images for variant: ${variantId}`);
         }
     }
 
     window.updateMainImage = function(url) {
-        if (!url || url === 'undefined') {
-            console.error('[Gallery] Attempted to update main image with invalid URL:', url);
+        if (!url || url === 'undefined' || url === 'null') {
+            console.error('[Gallery] Invalid URL provided to updateMainImage:', url);
             return;
         }
         
         const mainImg = document.getElementById('main-product-image');
         if (!mainImg) return;
         
-        // Update all thumbnails to show which one is selected
+        console.log('[Gallery] Updating main image to:', url);
+
+        // Update thumbnails highlighting
         document.querySelectorAll('.thumb-img').forEach(t => {
-            if (t.src === url || t.dataset.full === url) {
+            // Robust check: compare src (resolved by browser) or data-full
+            const isMatch = (t.dataset.full === url) || (t.src === url) || (new URL(t.src).pathname === new URL(url, window.location.origin).pathname);
+            
+            if (isMatch) {
                 t.classList.add('border-emerald-600', 'opacity-100');
                 t.classList.remove('border-gray-200', 'opacity-50');
             } else {
@@ -554,17 +539,16 @@
         });
 
         // Smooth fade transition
-        mainImg.style.transition = 'opacity 0.2s ease-in-out';
-        mainImg.style.opacity = '0';
+        mainImg.style.transition = 'opacity 0.15s ease-in-out';
+        mainImg.style.opacity = '0.3';
         
+        // Using a shorter timeout and direct assignment for better responsiveness
         setTimeout(() => {
             mainImg.src = url;
-            // Force opacity back even if onload doesn't fire (cached images)
-            setTimeout(() => {
-                mainImg.style.opacity = '1';
-                console.log(`[Gallery] Main image updated: ${url}`);
-            }, 50);
-        }, 200);
+            mainImg.onload = () => { mainImg.style.opacity = '1'; };
+            // Fallback for cached images where onload might not fire predictably
+            setTimeout(() => { mainImg.style.opacity = '1'; }, 100);
+        }, 50);
     };
 
     // Quantity Management
@@ -576,7 +560,8 @@
         const variantId = document.getElementById('selected-variant-id-hidden').value;
         const v = config.variants[variantId];
         
-        const maxStock = v ? Math.min(v.stock, 5) : 5;
+        // If no variant selected or no stock info, default to 5 limit
+        const maxStock = (v && v.stock !== undefined) ? Math.min(v.stock, 5) : 5;
         
         if (val < 1) val = 1;
         if (val > maxStock) {
@@ -588,20 +573,22 @@
     };
 
     window.addSelectedToCart = function() {
-        const variantId = document.getElementById('selected-variant-id-hidden').value;
-        const quantity = parseInt(document.getElementById('purchase-quantity').value);
+        const variantId = document.getElementById('selected-variant-id-hidden')?.value;
+        const quantityEl = document.getElementById('purchase-quantity');
+        const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
         
         if (!variantId) {
             if (window.showNotification) window.showNotification('Please select a variant', 'warning');
             return;
         }
 
-        console.log(`[AddToCart] Adding variant ${variantId} with quantity ${quantity}`);
+        console.log(`[AddToCart] Selected variant: ${variantId}, Qty: ${quantity}`);
         if (window.globalAddToCart) {
             window.globalAddToCart(config.productId, variantId, quantity);
-        } else {
-            // Fallback if globalAddToCart is not available
+        } else if (window.addToCart) {
             window.addToCart(variantId);
+        } else {
+            console.error('[AddToCart] No cart function found!');
         }
     };
 
@@ -612,25 +599,27 @@
         
         if (!mainImg || !imageContainer) return;
 
-        // Auto-select a variant on page load
-        const bridgeItems = Array.from(document.querySelectorAll('.variant-item[data-has-images="true"]'));
+        // Auto-select a variant on page load based on bridge items
+        const bridgeItems = document.querySelectorAll('.variant-item[data-has-images="true"]');
+        const hiddenInput = document.getElementById('selected-variant-id-hidden');
         
-        if (bridgeItems.length > 0) {
-            const variantId = bridgeItems[0].dataset.variantId;
-            console.log(`[Init] Page load: Auto-selecting variant ${variantId} from bridge.`);
-            window.selectVariant(variantId);
-        } else {
-            console.warn('[Init] No bridge items with images found. Checking visual chips...');
-            const firstChip = document.querySelector('.variant-chip:not(.opacity-40)');
-            if (firstChip) {
-                window.selectVariant(firstChip.dataset.variantId);
-            }
+        let initialVariantId = hiddenInput?.value;
+
+        // If no hidden input value, try to find the first valid variant from bridge
+        if (!initialVariantId && bridgeItems.length > 0) {
+            initialVariantId = bridgeItems[0].dataset.variantId;
         }
 
+        if (initialVariantId) {
+            console.log(`[Init] Page load auto-select: ${initialVariantId}`);
+            window.selectVariant(initialVariantId);
+        }
+
+        // Desktop zoom effect
         imageContainer.onmouseenter = e => {
             if (window.innerWidth < 1024) return;
             mainImg.style.transition = 'transform 0.2s ease-out';
-            mainImg.style.transform = 'scale(2.5)';
+            mainImg.style.transform = 'scale(2)';
         };
         imageContainer.onmousemove = e => {
             if (window.innerWidth < 1024) return;
