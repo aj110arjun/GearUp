@@ -3,6 +3,9 @@
  */
 
 (function() {
+    // Signal that this script has loaded
+    console.log('[ProductDetails] Script executing...');
+    
     const config = window.PRODUCT_DETAILS_CONFIG || {};
     const csrftoken = window.getCookie ? window.getCookie('csrftoken') : null;
 
