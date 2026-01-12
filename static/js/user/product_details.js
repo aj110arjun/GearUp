@@ -1,6 +1,4 @@
-/**
- * Product Details logic for GearUp.
- */
+console.log('[ProductDetails] Script v9.2 start');
 
 (function() {
     const config = window.PRODUCT_DETAILS_CONFIG || {};
@@ -348,24 +346,12 @@
         });
     };
 
-    window.selectVariant = function(variantId) {
-        console.log(`[VariantSelection] Attempting to select: ${variantId}`);
+    // Expose as Ext for template orchestrator
+    window._selectVariantExt = function(variantId) {
+        console.log(`[VariantSelectionExt] Full update for: ${variantId}`);
         const v = config.variants[variantId];
+        if (!v) return;
         
-        if (!v) {
-            console.error(`[VariantSelection] Error: Variant ${variantId} not found in config.`);
-            return;
-        }
-
-        // Assertion: Ensure variant has images
-        if (!v.images || v.images.length === 0 || !v.images[0]) {
-            console.error(`[VariantSelection] Error: Selected variant ${variantId} has NO images. This is a critical failure.`);
-            if (window.showNotification) window.showNotification('This variant has no images and cannot be displayed properly.', 'error');
-            return;
-        }
-
-        console.log(`[VariantSelection] Success: Variant ${variantId} selected. Images:`, v.images);
-
         // 1. Update selection UI (cards/chips)
         document.querySelectorAll('.variant-item, .variant-chip').forEach(item => {
             item.classList.remove('selected-variant', 'border-emerald-500', 'ring-2', 'ring-emerald-500/20');
@@ -377,41 +363,7 @@
             selectedChip.classList.remove('border-gray-100');
         }
 
-        // 2. Update Hidden Input & Dropdown
-        const hiddenInput = document.getElementById('selected-variant-id-hidden');
-        if (hiddenInput) {
-            hiddenInput.value = variantId;
-            console.log(`[VariantSelection] Hidden input updated to: ${variantId}`);
-        }
-        
-        const dropdown = document.getElementById('variant-select-dropdown');
-        if (dropdown) {
-            dropdown.value = variantId;
-        }
-
-        // 3. Update Price Display
-        const currentPriceEl = document.getElementById('current-price');
-        const originalPriceEl = document.getElementById('original-price');
-        const discountBadge = document.getElementById('discount-badge');
-        
-        if (currentPriceEl) {
-            currentPriceEl.textContent = `₹${v.discountedPrice.toFixed(2)}`;
-            if (v.discount > 0) {
-                if (originalPriceEl) {
-                    originalPriceEl.textContent = `₹${v.price.toFixed(2)}`;
-                    originalPriceEl.classList.remove('hidden');
-                }
-                if (discountBadge) {
-                    discountBadge.textContent = `${v.discount}% OFF`;
-                    discountBadge.classList.remove('hidden');
-                }
-            } else {
-                if (originalPriceEl) originalPriceEl.classList.add('hidden');
-                if (discountBadge) discountBadge.classList.add('hidden');
-            }
-        }
-
-        // 4. Update Stock Status
+        // 2. Update Stock Status
         const stockStatusEl = document.getElementById('main-stock-status');
         if (stockStatusEl) {
             if (v.stock > 0) {
@@ -431,7 +383,7 @@
             }
         }
 
-        // 5. Update Variant Info Text
+        // 3. Update Variant Info Text
         const infoEl = document.getElementById('selected-variant-info');
         if (infoEl) {
             const card = document.querySelector(`.variant-item[data-variant-id="${variantId}"]`);
@@ -446,14 +398,12 @@
             }
         }
 
-        // 6. Update Button State
+        // 4. Update Add to Cart Button State
         const mainBtn = document.getElementById('main-add-to-cart-btn');
         if (mainBtn) {
             if (v.stock > 0) {
                 mainBtn.disabled = false;
                 mainBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                
-                // Show "In Cart" state if variant is already in cart
                 if (v.inCart) {
                     mainBtn.classList.replace('from-emerald-600', 'from-green-600');
                     mainBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>In Cart</span>';
@@ -468,9 +418,12 @@
             }
         }
 
-        // 7. Update Gallery
+        // 5. Update Gallery
         updateGallery(variantId);
     };
+
+    // Provide fallback if not defined by template
+    window.selectVariant = window.selectVariant || function(vid) { window._selectVariantExt(vid); };
 
     function updateGallery(variantId) {
         console.log(`[Gallery] Updating gallery for variant: ${variantId}`);
@@ -480,88 +433,99 @@
             return;
         }
         
-        // Filter out any invalid URLs to avoid "undefined" 404 errors
-        const images = (v.images || []).filter(url => url && url !== 'undefined');
+        const images = (v.images || []).filter(url => {
+            return typeof url === 'string' && url.length > 0 && url !== 'undefined' && url !== 'null' && !url.includes('/undefined');
+        });
         const gallery = document.getElementById('thumbnail-gallery');
         const mainImg = document.getElementById('main-product-image');
         
-        if (!gallery || !mainImg) return;
+        if (!gallery || !mainImg) {
+            console.error('[Gallery] Not found: gallery or main image element');
+            return;
+        }
 
-        // Clear existing thumbnails
         gallery.innerHTML = '';
-
         if (images.length > 0) {
-            // Preload images for smoother switching - with strict validation
-            images.forEach(url => {
-                if (!url || url === 'undefined' || url === 'null') {
-                    console.warn(`[Gallery] Skipping invalid preload URL: ${url}`);
-                    return;
-                }
-                const link = document.createElement('link');
-                link.rel = 'preload';
-                link.as = 'image';
-                link.href = url;
-                document.head.appendChild(link);
-            });
-
-            // Update thumbnails - with strict validation
             images.forEach((imgUrl, index) => {
-                if (!imgUrl || imgUrl === 'undefined' || imgUrl === 'null') {
-                    console.warn(`[Gallery] Skipping invalid thumbnail URL: ${imgUrl}`);
-                    return;
-                }
                 const img = document.createElement('img');
                 img.src = imgUrl;
-                img.className = `thumb-img ${index === 0 ? 'border-emerald-600' : 'border-gray-200'} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0`;
-                img.dataset.full = imgUrl;
+                img.dataset.full = imgUrl; 
+                img.className = `thumb-img ${index === 0 ? 'border-emerald-600' : 'border-gray-200 opacity-50'} border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all hover:shadow-lg hover:scale-105 flex-shrink-0`;
                 img.onclick = function() {
                     window.updateMainImage(imgUrl);
                 };
                 gallery.appendChild(img);
             });
 
-            // Update main image to first valid image of variant
-            const firstValidImage = images.find(url => url && url !== 'undefined' && url !== 'null');
+            const firstValidImage = images[0];
             if (firstValidImage) {
                 window.updateMainImage(firstValidImage);
             }
-        } else {
-            console.warn(`[Gallery] No valid images for variant: ${variantId}`);
         }
     }
 
     window.updateMainImage = function(url) {
-        if (!url || url === 'undefined') {
-            console.error('[Gallery] Attempted to update main image with invalid URL:', url);
+        if (!url || typeof url !== 'string' || url === 'undefined' || url === 'null' || url.includes('/undefined')) {
+            console.error('[Gallery] Invalid URL blocked:', url);
             return;
         }
         
         const mainImg = document.getElementById('main-product-image');
         if (!mainImg) return;
         
-        // Update all thumbnails to show which one is selected
+        console.log('[Gallery] Transitioning to:', url.substring(0, 50) + '...');
+
+        // 1. Update thumbnails highlighting
         document.querySelectorAll('.thumb-img').forEach(t => {
-            if (t.src === url || t.dataset.full === url) {
-                t.classList.add('border-emerald-600', 'opacity-100');
-                t.classList.remove('border-gray-200', 'opacity-50');
-            } else {
-                t.classList.remove('border-emerald-600', 'opacity-100');
-                t.classList.add('border-gray-200', 'opacity-50');
+            try {
+                const tUrl = new URL(t.src, window.location.origin).pathname;
+                const targetUrl = new URL(url, window.location.origin).pathname;
+                const isMatch = (t.dataset.full === url) || (tUrl === targetUrl);
+                
+                if (isMatch) {
+                    t.classList.add('border-emerald-600', 'opacity-100');
+                    t.classList.remove('border-gray-200', 'opacity-50');
+                } else {
+                    t.classList.remove('border-emerald-600', 'opacity-100');
+                    t.classList.add('border-gray-200', 'opacity-50');
+                }
+            } catch (e) {
+                if (t.src && (t.src.includes(url) || url.includes(t.src))) {
+                    t.classList.add('border-emerald-600', 'opacity-100');
+                    t.classList.remove('border-gray-200', 'opacity-50');
+                }
             }
         });
 
-        // Smooth fade transition
+        // 2. Clear previous state
         mainImg.style.transition = 'opacity 0.2s ease-in-out';
-        mainImg.style.opacity = '0';
+        mainImg.style.opacity = '0.3';
         
+        // 3. Set up and trigger load - Set ONLOAD BEFORE SRC
+        const loadTimeout = setTimeout(() => {
+            if (mainImg.style.opacity === '0.3') {
+                mainImg.style.opacity = '1';
+                console.warn('[Gallery] Loading timeout fallback triggered');
+            }
+        }, 1500); // Wait longer for Cloudinary in production
+
+        mainImg.onload = () => {
+            clearTimeout(loadTimeout);
+            mainImg.style.opacity = '1';
+            console.log('[Gallery] Main image loaded successfully');
+        };
+
+        mainImg.onerror = () => {
+            clearTimeout(loadTimeout);
+            mainImg.style.opacity = '1';
+            console.error('[Gallery] Error loading main image:', url);
+            if (window.showNotification) window.showNotification('Failed to load image', 'error');
+        };
+
+        // Delay src change slightly to ensure opacity transition is visible
         setTimeout(() => {
             mainImg.src = url;
-            // Force opacity back even if onload doesn't fire (cached images)
-            setTimeout(() => {
-                mainImg.style.opacity = '1';
-                console.log(`[Gallery] Main image updated: ${url}`);
-            }, 50);
-        }, 200);
+        }, 50);
     };
 
     // Quantity Management
@@ -570,10 +534,11 @@
         if (!input) return;
         
         let val = parseInt(input.value) + delta;
-        const variantId = document.getElementById('selected-variant-id-hidden').value;
+        const hiddenId = document.getElementById('selected-variant-id-hidden');
+        const variantId = hiddenId ? hiddenId.value : '';
         const v = config.variants[variantId];
         
-        const maxStock = v ? Math.min(v.stock, 5) : 5;
+        const maxStock = (v && v.stock !== undefined) ? Math.min(v.stock, 5) : 5;
         
         if (val < 1) val = 1;
         if (val > maxStock) {
@@ -585,20 +550,23 @@
     };
 
     window.addSelectedToCart = function() {
-        const variantId = document.getElementById('selected-variant-id-hidden').value;
-        const quantity = parseInt(document.getElementById('purchase-quantity').value);
+        const variantId = document.getElementById('selected-variant-id-hidden')?.value;
+        const quantityEl = document.getElementById('purchase-quantity');
+        const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
         
         if (!variantId) {
             if (window.showNotification) window.showNotification('Please select a variant', 'warning');
             return;
         }
 
-        console.log(`[AddToCart] Adding variant ${variantId} with quantity ${quantity}`);
+        console.log(`[AddToCart] Selected variant: ${variantId}, Qty: ${quantity}`);
         if (window.globalAddToCart) {
             window.globalAddToCart(config.productId, variantId, quantity);
+        } else if (window.addToCart) {
+            window.addToCart(config.productId, variantId, quantity);
         } else {
-            // Fallback if globalAddToCart is not available
-            window.addToCart(variantId);
+            console.error('[AddToCart] No cart function found!');
+            if (window.showNotification) window.showNotification('Cart system offline. Please refresh.', 'error');
         }
     };
 
@@ -609,25 +577,30 @@
         
         if (!mainImg || !imageContainer) return;
 
-        // Auto-select a variant on page load
-        const bridgeItems = Array.from(document.querySelectorAll('.variant-item[data-has-images="true"]'));
+        // Auto-select a variant on page load based on bridge items
+        const bridgeItems = document.querySelectorAll('.variant-item[data-has-images="true"]');
+        const hiddenInput = document.getElementById('selected-variant-id-hidden');
         
-        if (bridgeItems.length > 0) {
-            const variantId = bridgeItems[0].dataset.variantId;
-            console.log(`[Init] Page load: Auto-selecting variant ${variantId} from bridge.`);
-            window.selectVariant(variantId);
-        } else {
-            console.warn('[Init] No bridge items with images found. Checking visual chips...');
-            const firstChip = document.querySelector('.variant-chip:not(.opacity-40)');
-            if (firstChip) {
-                window.selectVariant(firstChip.dataset.variantId);
+        let initialVariantId = hiddenInput?.value;
+
+        if (!initialVariantId && bridgeItems.length > 0) {
+            initialVariantId = bridgeItems[0].dataset.variantId;
+        }
+
+        if (initialVariantId) {
+            console.log(`[Init] Page load auto-select: ${initialVariantId}`);
+            try {
+                window.selectVariant(initialVariantId);
+            } catch (e) {
+                console.error('[Init] Failed to auto-select variant:', e);
             }
         }
 
+        // Desktop zoom effect
         imageContainer.onmouseenter = e => {
             if (window.innerWidth < 1024) return;
             mainImg.style.transition = 'transform 0.2s ease-out';
-            mainImg.style.transform = 'scale(2.5)';
+            mainImg.style.transform = 'scale(2)';
         };
         imageContainer.onmousemove = e => {
             if (window.innerWidth < 1024) return;
@@ -691,12 +664,20 @@
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    console.log('[ProductDetails] Initializing page components...');
+    try {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        console.log('[ProductDetails] Initialization logic scheduled.');
+    } catch (e) {
+        console.error('[ProductDetails] Critical error during initialization:', e);
     }
 })();
+
+console.log('[ProductDetails] Script execution finished.');
 
 // Separate function for delete confirmation as used in onclick
 window.confirmDeleteReview = function(form) {

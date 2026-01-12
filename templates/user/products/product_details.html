@@ -37,7 +37,6 @@
 {% endblock breadcrumbs %}
 {% block content %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link href="https://upload-widget.cloudinary.com/global/all.js" rel="preload" as="script">
 
 <link rel="stylesheet" href="{% static 'css/user/product_details.css' %}">
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
@@ -121,15 +120,17 @@
                 <!-- Gallery items will be injected by selectVariant() on load -->
                 <!-- Pre-populating the first variant's image for instant visibility -->
                 {% with first_v=variants|first %}
-                  {% if first_v and first_v.primary_image %}
+                  {% if first_v and first_v.primary_image and first_v.primary_image.url %}
                     <img src="{{ first_v.primary_image.url }}" 
                          onclick="window.updateMainImage('{{ first_v.primary_image.url }}')"
                          class="thumb-img border-emerald-600 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all">
                   {% endif %}
                   {% for img in first_v.additional_images.all %}
-                    <img src="{{ img.image.url }}" 
-                         onclick="window.updateMainImage('{{ img.image.url }}')"
-                         class="thumb-img border-gray-200 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all opacity-50 hover:opacity-100">
+                    {% if img.image and img.image.url %}
+                      <img src="{{ img.image.url }}" 
+                           onclick="window.updateMainImage('{{ img.image.url }}')"
+                           class="thumb-img border-gray-200 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all opacity-50 hover:opacity-100">
+                    {% endif %}
                   {% endfor %}
                 {% endwith %}
             </div>
@@ -182,12 +183,6 @@
             <!-- Add to Cart Form -->
             <div class="flex flex-col space-y-4 pt-6 border-t border-gray-100">
               <div class="flex items-center space-x-4">
-                <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden bg-white">
-                    <button type="button" onclick="changeQty(-1)" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition text-xl font-bold">-</button>
-                    <input type="number" id="purchase-quantity" value="1" min="1" max="5" class="w-12 text-center border-none focus:ring-0 font-bold bg-transparent" readonly>
-                    <button type="button" onclick="changeQty(1)" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition text-xl font-bold">+</button>
-                </div>
-                
                 <input type="hidden" id="selected-variant-id-hidden" value="{{ variants.0.id|default:'' }}">
                 
                 <button type="button" id="main-add-to-cart-btn" 
@@ -879,25 +874,128 @@
         {% for v in variants %}
         '{{ v.id }}': {
             id: '{{ v.id }}',
-            price: {{ v.price }},
-            discountedPrice: {{ v.get_discounted_price }},
-            discount: {{ v.discount_percentage }},
-            stock: {{ v.stock_quantity }},
-            inStock: {% if v.stock_quantity > 0 %}true{% else %}false{% endif %},
+            price: {{ v.price|default:0 }},
+            discountedPrice: {{ v.get_discounted_price|default:0 }},
+            discount: {{ v.discount_percentage|default:0 }},
+            stock: {{ v.stock_quantity|default:0 }},
             isLowStock: {% if v.is_low_stock %}true{% else %}false{% endif %},
             inCart: {% if v.in_cart %}true{% else %}false{% endif %},
             images: [
-                {% if v.primary_image %}'{{ v.primary_image.url }}'{% if v.additional_images.all %},{% endif %}{% endif %}
+                {% if v.primary_image and v.primary_image.url %}'{{ v.primary_image.url }}'{% if v.additional_images.all %},{% endif %}{% endif %}
                 {% for img in v.additional_images.all %}
-                    '{{ img.image.url }}'{% if not forloop.last %},{% endif %}
+                    {% if img.image and img.image.url %}'{{ img.image.url }}'{% if not forloop.last %},{% endif %}{% endif %}
                 {% endfor %}
-            ]
+            ].filter(u => u && u !== 'undefined' && u !== 'null' && !u.includes('/undefined'))
         },
         {% endfor %}
     }
   };
+
+  // CORE LOGIC IN TEMPLATE (Robustness for Production)
+  window.selectVariant = function(variantId) {
+    if (!variantId || variantId === 'undefined') return;
+    console.log('[ProductDetails] Selecting variant:', variantId);
+    
+    const v = window.PRODUCT_DETAILS_CONFIG.variants[variantId];
+    if (!v) return;
+
+    // Update Hidden Input
+    const hiddenInput = document.getElementById('selected-variant-id-hidden');
+    if (hiddenInput) hiddenInput.value = variantId;
+    
+    // Update Dropdown
+    const dropdown = document.getElementById('variant-select-dropdown');
+    if (dropdown) dropdown.value = variantId;
+
+    // Update Chips
+    document.querySelectorAll('.variant-chip').forEach(c => {
+        if (c.dataset.variantId === variantId) {
+            c.classList.add('border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+        } else {
+            c.classList.remove('border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+        }
+    });
+
+    // Update Price
+    const priceEl = document.getElementById('current-price');
+    const origPriceEl = document.getElementById('original-price');
+    const badgeEl = document.getElementById('discount-badge');
+    if (priceEl && v.discountedPrice) {
+        priceEl.textContent = '\u20B9' + parseFloat(v.discountedPrice).toFixed(2);
+        if (v.discount > 0) {
+            if (origPriceEl) {
+                origPriceEl.textContent = '\u20B9' + parseFloat(v.price).toFixed(2);
+                origPriceEl.classList.remove('hidden');
+            }
+            if (badgeEl) {
+                badgeEl.textContent = v.discount + '% OFF';
+                badgeEl.classList.remove('hidden');
+            }
+        } else {
+            if (origPriceEl) origPriceEl.classList.add('hidden');
+            if (badgeEl) badgeEl.classList.add('hidden');
+        }
+    }
+
+    // Call external script logic if loaded
+    if (window._pdScriptLoaded && typeof window._selectVariantExt === 'function') {
+        window._selectVariantExt(variantId);
+    } else {
+        // Fallback gallery update
+        const mainImg = document.getElementById('main-product-image');
+        if (mainImg && v.images && v.images[0]) {
+            mainImg.src = v.images[0];
+        }
+    }
+  };
+
+  window.updateMainImage = function(url) {
+    if (!url || typeof url !== 'string' || url === 'undefined' || url === 'null' || url.includes('/undefined')) {
+        console.error('[Gallery Fallback] Invalid URL blocked:', url);
+        return;
+    }
+    const mainImg = document.getElementById('main-product-image');
+    if (mainImg) {
+        mainImg.style.opacity = '0.5';
+        mainImg.onload = () => { mainImg.style.opacity = '1'; };
+        mainImg.src = url;
+    }
+  };
+
+  window.changeQty = function(delta) {
+    const input = document.getElementById('purchase-quantity');
+    if (!input) return;
+    let val = parseInt(input.value) + delta;
+    if (val < 1) val = 1;
+    if (val > 5) val = 5;
+    input.value = val;
+  };
+
+  window.addSelectedToCart = function() {
+    const variantId = document.getElementById('selected-variant-id-hidden')?.value;
+    const quantity = parseInt(document.getElementById('purchase-quantity')?.value || 1);
+    
+    if (!variantId || variantId === 'undefined') {
+        if (window.showNotification) window.showNotification('Please select a variant', 'warning');
+        return;
+    }
+
+    if (window.globalAddToCart) {
+        window.globalAddToCart('{{ product.id }}', variantId, quantity);
+    } else {
+        console.error('[Cart] globalAddToCart not found in base.js');
+        if (window.showNotification) window.showNotification('System is still loading, please wait...', 'info');
+    }
+  };
+
+  // Replay Queue
+  window._pdQueue = window._pdQueue || [];
+  window._pdScriptLoaded = false;
 </script>
 
-<!-- External Product Details Logic -->
-<script src="{% static 'js/user/product_details.js' %}?v=2"></script>
+<!-- External Product Details Logic - Force update to v9.2 -->
+<script defer src="{% static 'js/user/product_details.js' %}?v=9.2.{{ product.modified_at|date:'U'|default:'20260112' }}" 
+        onload="window._pdScriptLoaded = true; console.log('[ProductDetails] External script ready');"
+        onerror="console.error('[ProductDetails] Failed to load external logic')">
+</script>
 {% endblock %}
