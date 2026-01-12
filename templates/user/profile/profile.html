@@ -141,6 +141,31 @@
     width: 6px;
     height: 6px;
   }
+  .form-error-text {
+    color: #ef4444;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    display: none;
+    align-items: center;
+    font-weight: 500;
+  }
+  .form-error-text.show {
+    display: flex;
+  }
+  .form-error-text i {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+  }
+  /* Force override any residual or cached red borders */
+  .form-input {
+    border-color: #d1d5db !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+  }
+  .form-input:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+  }
 </style>
 
 <!-- Image Cropping Modal -->
@@ -320,7 +345,7 @@
             {% endif %}
 
             <!-- Fix: Form should point to profile_edit URL -->
-            <form method="POST" action="{% url 'user_auth:profile_edit' %}" enctype="multipart/form-data" class="space-y-8" id="profileForm">
+            <form method="POST" action="{% url 'user_auth:profile_edit' %}" enctype="multipart/form-data" class="space-y-8" id="profileForm" novalidate>
               {% csrf_token %}
               
               <!-- Profile Picture Section -->
@@ -388,16 +413,20 @@
                 <div>
                   <label for="id_first_name" class="block text-sm font-semibold text-gray-700 mb-3">
                     <i class="fas fa-user text-emerald-500 mr-2"></i>
-                    First Name
+                    First Name <span class="text-red-500">*</span>
                   </label>
                   <input type="text" 
                          name="first_name" 
                          id="id_first_name" 
-                         value="{{ form.first_name.value|default:user.first_name|default:'' }}"
+                         value="{{ form.first_name.value|default:'' }}"
                          class="form-input"
                          placeholder="Enter your first name">
+                  <div id="first_name_error" class="form-error-text space-x-1">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="error-msg"></span>
+                  </div>
                   {% if form.first_name.errors %}
-                    <div class="form-error-text space-x-1">
+                    <div class="form-error-text show space-x-1" id="first_name_backend_error">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.first_name.errors.0 }}</span>
                     </div>
@@ -407,16 +436,20 @@
                 <div>
                   <label for="id_last_name" class="block text-sm font-semibold text-gray-700 mb-3">
                     <i class="fas fa-user text-emerald-500 mr-2"></i>
-                    Last Name
+                    Last Name <span class="text-red-500">*</span>
                   </label>
                   <input type="text" 
                          name="last_name" 
                          id="id_last_name" 
-                         value="{{ form.last_name.value|default:user.last_name|default:'' }}"
+                         value="{{ form.last_name.value|default:'' }}"
                          class="form-input"
                          placeholder="Enter your last name">
+                  <div id="last_name_error" class="form-error-text space-x-1">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="error-msg"></span>
+                  </div>
                   {% if form.last_name.errors %}
-                    <div class="form-error-text space-x-1">
+                    <div class="form-error-text show space-x-1" id="last_name_backend_error">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.last_name.errors.0 }}</span>
                     </div>
@@ -496,15 +529,15 @@
                   <input type="text" 
                          name="phone_number" 
                          id="id_phone_number" 
-                         value="{{ form.phone_number.value|default:user.phone_number|default:'' }}"
+                         value="{{ form.phone_number.value|default:'' }}"
                          class="form-input"
                          placeholder="Enter your phone number">
-                  <div id="phone_number_error" class="form-error-text space-x-1 hidden">
+                  <div id="phone_number_error" class="form-error-text space-x-1">
                     <i class="fas fa-exclamation-circle"></i>
                     <span class="error-msg"></span>
                   </div>
                   {% if form.phone_number.errors %}
-                    <div class="form-error-text space-x-1">
+                    <div class="form-error-text show space-x-1" id="phone_number_backend_error">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.phone_number.errors.0 }}</span>
                     </div>
@@ -519,15 +552,15 @@
                   <input type="text" 
                          name="location" 
                          id="id_location" 
-                         value="{{ form.location.value|default:user.location|default:'' }}"
+                         value="{{ form.location.value|default:'' }}"
                          class="form-input"
                          placeholder="Your city or country">
-                  <div id="location_error" class="form-error-text space-x-1 hidden">
+                  <div id="location_error" class="form-error-text space-x-1">
                     <i class="fas fa-exclamation-circle"></i>
                     <span class="error-msg"></span>
                   </div>
                   {% if form.location.errors %}
-                    <div class="form-error-text space-x-1">
+                    <div class="form-error-text show space-x-1" id="location_backend_error">
                       <i class="fas fa-exclamation-circle"></i>
                       <span>{{ form.location.errors.0 }}</span>
                     </div>
@@ -1054,37 +1087,65 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.getElementById('profileForm')?.addEventListener('submit', function(e) {
+  const firstNameInput = document.getElementById('id_first_name');
+  const lastNameInput = document.getElementById('id_last_name');
   const phoneInput = document.getElementById('id_phone_number');
   const locationInput = document.getElementById('id_location');
+  
+  const firstNameError = document.getElementById('first_name_error');
+  const lastNameError = document.getElementById('last_name_error');
   const phoneError = document.getElementById('phone_number_error');
   const locationError = document.getElementById('location_error');
+
+  // Clear previous errors
+  [firstNameError, lastNameError, phoneError, locationError].forEach(err => err?.classList.remove('show'));
+  [firstNameInput, lastNameInput, phoneInput, locationInput].forEach(inp => inp?.classList.remove('error-border'));
+  document.querySelectorAll('[id$="_backend_error"]').forEach(err => err.classList.remove('show'));
   
   let isValid = true;
-  
-  // Clear previous errors
-  phoneError.classList.add('hidden');
-  locationError.classList.add('hidden');
-  phoneInput.classList.remove('border-red-500');
-  locationInput.classList.remove('border-red-500');
-  
-  // Phone validation
+
+  // First Name validation
+  const firstNameValue = firstNameInput.value.trim();
+  if (!firstNameValue) {
+    firstNameError.querySelector('.error-msg').textContent = 'First name is required.';
+    firstNameError.classList.add('show');
+    isValid = false;
+  } else if (!/^[a-zA-Z0-9\s]+$/.test(firstNameValue)) {
+    firstNameError.querySelector('.error-msg').textContent = 'First name should only contain letters, numbers, and spaces.';
+    firstNameError.classList.add('show');
+    isValid = false;
+  }
+
+  // Last Name validation
+  const lastNameValue = lastNameInput.value.trim();
+  if (!lastNameValue) {
+    lastNameError.querySelector('.error-msg').textContent = 'Last name is required.';
+    lastNameError.classList.add('show');
+    isValid = false;
+  } else if (!/^[a-zA-Z0-9\s]+$/.test(lastNameValue)) {
+    lastNameError.querySelector('.error-msg').textContent = 'Last name should only contain letters, numbers, and spaces.';
+    lastNameError.classList.add('show');
+    isValid = false;
+  }
+
+  // Phone validation (Optional)
   const phoneValue = phoneInput.value.trim();
-  if (phoneValue) {
-    if (!/^\d{10}$/.test(phoneValue)) {
-      phoneError.querySelector('.error-msg').textContent = 'Phone number must be exactly 10 digits.';
-      phoneError.classList.remove('hidden');
-      phoneInput.classList.add('border-red-500');
-      isValid = false;
-    }
+  if (phoneValue && !/^[6-9]\d{9}$/.test(phoneValue)) {
+    phoneError.querySelector('.error-msg').textContent = 'Phone number must be 10 digits starting with 6, 7, 8, or 9.';
+    phoneError.classList.add('show');
+    isValid = false;
   }
   
-  // Location validation
+  // Location validation (Optional)
   const locationValue = locationInput.value.trim();
   if (locationValue) {
     if (locationValue.length < 3) {
       locationError.querySelector('.error-msg').textContent = 'Location must be at least 3 characters long.';
-      locationError.classList.remove('hidden');
-      locationInput.classList.add('border-red-500');
+      locationError.classList.add('show');
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9\s,.-]+$/.test(locationValue)) {
+      locationError.querySelector('.error-msg').textContent = 'Location contains invalid characters.';
+      locationError.classList.add('show');
       isValid = false;
     }
   }
@@ -1092,7 +1153,7 @@ document.getElementById('profileForm')?.addEventListener('submit', function(e) {
   if (!isValid) {
     e.preventDefault();
     // Scroll to the first error
-    const firstError = document.querySelector('.form-error-text:not(.hidden)');
+    const firstError = document.querySelector('.form-error-text.show');
     if (firstError) {
       firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -1105,6 +1166,31 @@ document.getElementById('profileForm')?.addEventListener('submit', function(e) {
     <i class="fas fa-spinner fa-spin"></i>
     <span>Saving Changes...</span>
   `;
+});
+
+// Clear errors when user starts interacting
+['id_first_name', 'id_last_name', 'id_phone_number', 'id_location'].forEach(id => {
+  const input = document.getElementById(id);
+  if (input) {
+    ['input', 'change', 'blur'].forEach(eventType => {
+      input.addEventListener(eventType, function() {
+        const baseId = id.replace('id_', '');
+        const errorDiv = document.getElementById(baseId + '_error');
+        const backendErrorDiv = document.getElementById(baseId + '_backend_error');
+        if (errorDiv) errorDiv.classList.remove('show');
+        if (backendErrorDiv) backendErrorDiv.classList.remove('show');
+      });
+    });
+  }
+});
+
+// Final safety: Remove any residual error states on full page load
+window.addEventListener('load', function() {
+  document.querySelectorAll('.form-error-text').forEach(err => {
+    if (!err.id.includes('backend')) {
+      err.classList.remove('show');
+    }
+  });
 });
 </script>
 {% endblock %}
