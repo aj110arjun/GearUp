@@ -1,4 +1,4 @@
-console.log('[ProductDetails] Script v9.1 start');
+console.log('[ProductDetails] Script v9.2 start');
 
 (function() {
     const config = window.PRODUCT_DETAILS_CONFIG || {};

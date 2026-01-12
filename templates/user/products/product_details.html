@@ -120,15 +120,17 @@
                 <!-- Gallery items will be injected by selectVariant() on load -->
                 <!-- Pre-populating the first variant's image for instant visibility -->
                 {% with first_v=variants|first %}
-                  {% if first_v and first_v.primary_image %}
+                  {% if first_v and first_v.primary_image and first_v.primary_image.url %}
                     <img src="{{ first_v.primary_image.url }}" 
                          onclick="window.updateMainImage('{{ first_v.primary_image.url }}')"
                          class="thumb-img border-emerald-600 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all">
                   {% endif %}
                   {% for img in first_v.additional_images.all %}
-                    <img src="{{ img.image.url }}" 
-                         onclick="window.updateMainImage('{{ img.image.url }}')"
-                         class="thumb-img border-gray-200 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all opacity-50 hover:opacity-100">
+                    {% if img.image and img.image.url %}
+                      <img src="{{ img.image.url }}" 
+                           onclick="window.updateMainImage('{{ img.image.url }}')"
+                           class="thumb-img border-gray-200 border-3 rounded-xl cursor-pointer h-20 w-20 object-cover transition-all opacity-50 hover:opacity-100">
+                    {% endif %}
                   {% endfor %}
                 {% endwith %}
             </div>
@@ -889,7 +891,7 @@
                 {% for img in v.additional_images.all %}
                     {% if img.image and img.image.url %}'{{ img.image.url }}'{% if not forloop.last %},{% endif %}{% endif %}
                 {% endfor %}
-            ].filter(u => u && u !== 'undefined' && u !== 'null')
+            ].filter(u => u && u !== 'undefined' && u !== 'null' && !u.includes('/undefined'))
         },
         {% endfor %}
     }
@@ -997,8 +999,8 @@
   window._pdScriptLoaded = false;
 </script>
 
-<!-- External Product Details Logic - Force update to v9.1 -->
-<script defer src="{% static 'js/user/product_details.js' %}?v=9.1.{{ product.modified_at|date:'U'|default:'20260111' }}" 
+<!-- External Product Details Logic - Force update to v9.2 -->
+<script defer src="{% static 'js/user/product_details.js' %}?v=9.2.{{ product.modified_at|date:'U'|default:'20260112' }}" 
         onload="window._pdScriptLoaded = true; console.log('[ProductDetails] External script ready');"
         onerror="console.error('[ProductDetails] Failed to load external logic')">
 </script>
