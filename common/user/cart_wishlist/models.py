@@ -23,21 +23,22 @@ class Cart(models.Model):
 
     @property
     def total_items(self):
-        return sum(item.quantity for item in self.items.all())
+        return sum(item.quantity for item in self.items.filter(variant__is_deleted=False, variant__product__is_deleted=False))
 
     @property
     def subtotal(self):
-        return sum(item.total_price for item in self.items.all())
+        return sum(item.total_price for item in self.items.filter(variant__is_deleted=False, variant__product__is_deleted=False))
 
     @property
     def total_discount(self):
-        # Calculate total discount
-        return sum(item.total_discount for item in self.items.all())
+        # Calculate total discount for non-deleted items
+        return sum(item.total_discount for item in self.items.filter(variant__is_deleted=False, variant__product__is_deleted=False))
 
     @property
     def shipping_cost(self):
-        # ₹20 per item in the cart
-        return self.items.count() * 20
+        # ₹20 per valid item in the cart
+        valid_items_count = self.items.filter(variant__is_deleted=False, variant__product__is_deleted=False).count()
+        return valid_items_count * 20
 
     @property
     def final_total(self):
@@ -79,7 +80,10 @@ class CartItem(models.Model):
 
     @property
     def is_available(self):
-        return not self.variant.is_deleted and self.variant.is_active and self.variant.stock_quantity >= self.quantity
+        return (not self.variant.is_deleted and 
+                not self.variant.product.is_deleted and 
+                self.variant.is_active and 
+                self.variant.stock_quantity >= self.quantity)
 
     @property
     def max_quantity(self):
@@ -105,7 +109,7 @@ class Wishlist(models.Model):
 
     @property
     def total_items(self):
-        return self.items.count()
+        return self.items.filter(product__is_deleted=False).count()
     
     def add_product(self, product):
         """Add product to wishlist"""
