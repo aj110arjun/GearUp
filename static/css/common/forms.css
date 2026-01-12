@@ -3,27 +3,7 @@
     transition: all 0.2s ease;
 }
 
-/* Custom Form Error Styles */
-.form-error-text {
-    color: #dc2626;
-    font-size: 0.75rem;
-    font-weight: 500;
-    margin-top: 0.375rem;
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    animation: fadeInError 0.3s ease-out;
-}
 
-.field-error {
-    border-color: #ef4444 !important;
-    background-color: #fffafb !important;
-}
-
-.field-error:focus {
-    border-color: #dc2626 !important;
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
-}
 
 @keyframes fadeInError {
     from { opacity: 0; transform: translateY(-4px); }

@@ -162,14 +162,31 @@ class ProfileUpdateForm(UserChangeForm):
             'bio': forms.Textarea(attrs={'rows': 4}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['phone_number'].required = False
+        self.fields['location'].required = False
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
+
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get('first_name')
+        if first_name and not re.match(r'^[a-zA-Z0-9\s]+$', first_name):
+            raise ValidationError("First name should only contain letters, numbers, and spaces.")
+        return first_name.strip() if first_name else first_name
+    
+    def clean_last_name(self):
+        last_name = self.cleaned_data.get('last_name')
+        if last_name and not re.match(r'^[a-zA-Z0-9\s]+$', last_name):
+            raise ValidationError("Last name should only contain letters, numbers, and spaces.")
+        return last_name.strip() if last_name else last_name
+
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number')
         if phone_number:
-            # Remove any whitespace
             phone_number = phone_number.strip()
-            # Check if it's exactly 10 digits
-            if not re.match(r'^\d{10}$', phone_number):
-                raise ValidationError("Phone number must be exactly 10 digits.")
+            if not re.match(r'^[6-9]\d{9}$', phone_number):
+                raise ValidationError("Phone number must be 10 digits starting with 6, 7, 8, or 9.")
         return phone_number
 
     def clean_location(self):
@@ -178,6 +195,8 @@ class ProfileUpdateForm(UserChangeForm):
             location = location.strip()
             if len(location) < 3:
                 raise ValidationError("Location must be at least 3 characters long.")
+            if not re.match(r'^[a-zA-Z\s,.-]+$', location):
+                raise ValidationError("Location should only contain letters, spaces, and basic punctuation.")
         return location
     
     # def __init__(self, *args, **kwargs):
