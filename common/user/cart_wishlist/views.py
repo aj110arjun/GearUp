@@ -44,21 +44,43 @@ def cart_view(request):
     """View to display shopping cart and automatically move out-of-stock items to wishlist"""
     cart = get_or_create_cart(request.user)
     
-    cart_items = cart.items.select_related('variant__product').prefetch_related('variant__product__variants').all()
-    out_of_stock_moved = 0
+    cart_items = cart.items.filter(
+        variant__is_deleted=False, 
+        variant__product__is_deleted=False
+    ).select_related('variant__product').prefetch_related('variant__product__variants')
     
-    # Check for out-of-stock items and move them to wishlist
-    for item in list(cart_items):
-        if item.variant.stock_quantity < 1 or item.variant.is_deleted:
+    out_of_stock_moved = 0
+    deleted_removed = 0
+    
+    # Check for out-of-stock or deleted items
+    # We use all() items to find those that need cleanup
+    all_current_items = cart.items.select_related('variant__product').all()
+    
+    for item in list(all_current_items):
+        # 1. If product itself is deleted, remove entirely
+        if item.variant.product.is_deleted:
+            item.delete()
+            deleted_removed += 1
+            continue
+            
+        # 2. If variant is deleted or out of stock, move product to wishlist
+        if item.variant.is_deleted or item.variant.stock_quantity < 1:
             product = item.variant.product
             wishlist = get_or_create_wishlist(request.user)
             WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
-            CartItem.objects.filter(cart=cart, variant__product=product).delete()
+            item.delete()
             out_of_stock_moved += 1
             
-    if out_of_stock_moved > 0:
-        messages.info(request, f'{out_of_stock_moved} item(s) were moved to your wishlist as they were unavailable or out of stock.')
-        cart_items = cart.items.select_related('variant__product').prefetch_related('variant__product__variants').all()
+    if out_of_stock_moved > 0 or deleted_removed > 0:
+        if out_of_stock_moved > 0:
+            messages.info(request, f'{out_of_stock_moved} item(s) were moved to your wishlist as they were out of stock.')
+        if deleted_removed > 0:
+            messages.warning(request, f'{deleted_removed} item(s) were removed as they are no longer available.')
+            
+        cart_items = cart.items.filter(
+            variant__is_deleted=False, 
+            variant__product__is_deleted=False
+        ).select_related('variant__product').prefetch_related('variant__product__variants')
         cart.refresh_from_db()
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.GET.get('ajax') == 'true':
@@ -544,10 +566,10 @@ def move_all_to_wishlist(request):
 @login_required
 def wishlist_view(request):
     wishlist = get_or_create_wishlist(request.user)
-    wishlist_items = wishlist.items.select_related('product').prefetch_related('product__variants').annotate(
+    wishlist_items = wishlist.items.filter(product__is_deleted=False).select_related('product').prefetch_related('product__variants').annotate(
         avg_rating_sort=Avg('product__reviews__rating', filter=Q(product__reviews__is_approved=True)),
         review_count_sort=Count('product__reviews', filter=Q(product__reviews__is_approved=True))
-    ).all()
+    )
     
     # Enrich the product objects with the annotated values for the properties to use
     for item in wishlist_items:
@@ -569,7 +591,7 @@ def toggle_wishlist(request):
         data = json.loads(request.body)
         product_id = data.get('product_id')
         
-        product = get_object_or_404(Product, id=product_id, is_active=True)
+        product = get_object_or_404(Product, id=product_id, is_active=True, is_deleted=False)
         wishlist = get_or_create_wishlist(request.user)
         
         existing_item = WishlistItem.objects.filter(wishlist=wishlist, product=product).first()
@@ -614,7 +636,7 @@ def toggle_wishlist(request):
 @transaction.atomic
 def add_to_wishlist(request, product_id):
     try:
-        product = get_object_or_404(Product, id=product_id, is_active=True)
+        product = get_object_or_404(Product, id=product_id, is_active=True, is_deleted=False)
         wishlist = get_or_create_wishlist(request.user)
         
         wishlist_item, created = WishlistItem.objects.get_or_create(
