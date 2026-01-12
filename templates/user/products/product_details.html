@@ -885,11 +885,11 @@
             isLowStock: {% if v.is_low_stock %}true{% else %}false{% endif %},
             inCart: {% if v.in_cart %}true{% else %}false{% endif %},
             images: [
-                {% if v.primary_image %}'{{ v.primary_image.url }}'{% if v.additional_images.all %},{% endif %}{% endif %}
+                {% if v.primary_image and v.primary_image.url %}'{{ v.primary_image.url }}'{% if v.additional_images.all %},{% endif %}{% endif %}
                 {% for img in v.additional_images.all %}
-                    '{{ img.image.url }}'{% if not forloop.last %},{% endif %}
+                    {% if img.image and img.image.url %}'{{ img.image.url }}'{% if not forloop.last %},{% endif %}{% endif %}
                 {% endfor %}
-            ]
+            ].filter(u => u && u !== 'undefined' && u !== 'null')
         },
         {% endfor %}
     }
@@ -954,15 +954,15 @@
   };
 
   window.updateMainImage = function(url) {
-    if (!url || url === 'undefined' || url === 'null') {
-        console.error('[Gallery] Invalid URL provided');
+    if (!url || typeof url !== 'string' || url === 'undefined' || url === 'null' || url.includes('/undefined')) {
+        console.error('[Gallery Fallback] Invalid URL blocked:', url);
         return;
     }
     const mainImg = document.getElementById('main-product-image');
     if (mainImg) {
         mainImg.style.opacity = '0.5';
-        mainImg.src = url;
         mainImg.onload = () => { mainImg.style.opacity = '1'; };
+        mainImg.src = url;
     }
   };
 

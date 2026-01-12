@@ -433,7 +433,9 @@ console.log('[ProductDetails] Script v9.1 start');
             return;
         }
         
-        const images = (v.images || []).filter(url => url && url !== 'undefined' && url !== 'null');
+        const images = (v.images || []).filter(url => {
+            return typeof url === 'string' && url.length > 0 && url !== 'undefined' && url !== 'null' && !url.includes('/undefined');
+        });
         const gallery = document.getElementById('thumbnail-gallery');
         const mainImg = document.getElementById('main-product-image');
         
@@ -463,20 +465,19 @@ console.log('[ProductDetails] Script v9.1 start');
     }
 
     window.updateMainImage = function(url) {
-        if (!url || url === 'undefined' || url === 'null') {
-            console.error('[Gallery] Invalid URL provided to updateMainImage:', url);
+        if (!url || typeof url !== 'string' || url === 'undefined' || url === 'null' || url.includes('/undefined')) {
+            console.error('[Gallery] Invalid URL blocked:', url);
             return;
         }
         
         const mainImg = document.getElementById('main-product-image');
         if (!mainImg) return;
         
-        console.log('[Gallery] Updating main image to:', url);
+        console.log('[Gallery] Transitioning to:', url.substring(0, 50) + '...');
 
-        // Update thumbnails highlighting
+        // 1. Update thumbnails highlighting
         document.querySelectorAll('.thumb-img').forEach(t => {
             try {
-                // Robust URL matching
                 const tUrl = new URL(t.src, window.location.origin).pathname;
                 const targetUrl = new URL(url, window.location.origin).pathname;
                 const isMatch = (t.dataset.full === url) || (tUrl === targetUrl);
@@ -489,22 +490,41 @@ console.log('[ProductDetails] Script v9.1 start');
                     t.classList.add('border-gray-200', 'opacity-50');
                 }
             } catch (e) {
-                // Fallback for weird URLs
-                if (t.src.includes(url) || url.includes(t.src)) {
+                if (t.src && (t.src.includes(url) || url.includes(t.src))) {
                     t.classList.add('border-emerald-600', 'opacity-100');
                     t.classList.remove('border-gray-200', 'opacity-50');
                 }
             }
         });
 
-        // Smooth fade transition
-        mainImg.style.transition = 'opacity 0.15s ease-in-out';
+        // 2. Clear previous state
+        mainImg.style.transition = 'opacity 0.2s ease-in-out';
         mainImg.style.opacity = '0.3';
         
+        // 3. Set up and trigger load - Set ONLOAD BEFORE SRC
+        const loadTimeout = setTimeout(() => {
+            if (mainImg.style.opacity === '0.3') {
+                mainImg.style.opacity = '1';
+                console.warn('[Gallery] Loading timeout fallback triggered');
+            }
+        }, 1500); // Wait longer for Cloudinary in production
+
+        mainImg.onload = () => {
+            clearTimeout(loadTimeout);
+            mainImg.style.opacity = '1';
+            console.log('[Gallery] Main image loaded successfully');
+        };
+
+        mainImg.onerror = () => {
+            clearTimeout(loadTimeout);
+            mainImg.style.opacity = '1';
+            console.error('[Gallery] Error loading main image:', url);
+            if (window.showNotification) window.showNotification('Failed to load image', 'error');
+        };
+
+        // Delay src change slightly to ensure opacity transition is visible
         setTimeout(() => {
             mainImg.src = url;
-            mainImg.onload = () => { mainImg.style.opacity = '1'; };
-            setTimeout(() => { mainImg.style.opacity = '1'; }, 100);
         }, 50);
     };
 
