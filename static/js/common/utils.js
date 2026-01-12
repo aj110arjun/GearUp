@@ -32,17 +32,8 @@ window.globalApiPOST = async function(url, data = {}) {
 
 // Initialize common behaviors
 document.addEventListener('DOMContentLoaded', () => {
-    // Disable browser validation globally
+    // Global form behaviors
     document.querySelectorAll('form').forEach(form => {
         form.setAttribute('novalidate', 'true');
-    });
-
-    // Highlight fields with errors
-    document.querySelectorAll('.form-error-text').forEach(errorMsg => {
-        const container = errorMsg.parentElement;
-        const input = container.querySelector('input, select, textarea');
-        if (input) {
-            input.classList.add('field-error');
-        }
     });
 });
