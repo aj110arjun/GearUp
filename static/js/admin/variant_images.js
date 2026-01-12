@@ -3,6 +3,9 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    const VERSION = '1.2.2';
+    console.log('GearUp Variant Media Manager v' + VERSION + ' initialized');
+
     // Cropper.js variables
     let cropper = null;
     let currentImageInputId = null;
@@ -23,37 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.showSnackbar) {
             window.showSnackbar(message, type);
         } else {
-            alert(message);
-        }
-    }
-
-    // --- Image Preview Handler ---
-    
-    function handleImagePreview(input, previewId, containerId) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                const preview = document.getElementById(previewId);
-                const container = document.getElementById(containerId);
-                
-                if (preview) {
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                }
-                
-                if (container) {
-                    container.classList.remove('no-image');
-                    container.classList.add('has-image');
-                }
-
-                // Show crop button if it exists
-                const cropBtn = input.closest('.image-upload-wrapper').querySelector('.crop-btn');
-                if (cropBtn) cropBtn.classList.remove('hidden');
-            };
-            
-            reader.readAsDataURL(file);
+            console.log(`[${type}] ${message}`);
         }
     }
 
@@ -68,16 +41,30 @@ document.addEventListener('DOMContentLoaded', function() {
             originalImageBlob = input.files[0];
         }
 
-        cropImage.src = imageSrc;
-        cropModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        
         if (cropper) cropper.destroy();
         
+        // Treat as cross-origin if it's not a data URL
+        if (!imageSrc.startsWith('data:')) {
+            cropImage.crossOrigin = 'anonymous';
+            if (imageSrc.includes('http') || imageSrc.includes('cloudinary')) {
+                const separator = imageSrc.includes('?') ? '&' : '?';
+                cropImage.src = imageSrc + separator + 'crop_ts=' + Date.now();
+            } else {
+                cropImage.src = imageSrc;
+            }
+        } else {
+            cropImage.crossOrigin = null;
+            cropImage.src = imageSrc;
+        }
+
+        cropModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
         cropper = new Cropper(cropImage, {
             aspectRatio: 1,
             viewMode: 1,
             autoCropArea: 0.8,
+            checkCrossOrigin: true,
             responsive: true,
             restore: false,
             guides: true,
@@ -86,6 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
             cropBoxMovable: true,
             cropBoxResizable: true,
             toggleDragModeOnDblclick: false,
+            ready() {
+                console.log('Cropper ready');
+            }
         });
         
         updateAspectRatio();
@@ -97,7 +87,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (ratio === 'free') {
             cropper.setAspectRatio(NaN);
         } else {
-            cropper.setAspectRatio(parseFloat(eval(ratio)));
+            let finalRatio;
+            if (ratio.includes('/')) {
+                const parts = ratio.split('/');
+                finalRatio = parseFloat(parts[0]) / parseFloat(parts[1]);
+            } else {
+                finalRatio = parseFloat(ratio);
+            }
+            cropper.setAspectRatio(finalRatio);
         }
     }
 
@@ -130,6 +127,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     imageSmoothingQuality: 'high',
                 });
                 
+                if (!canvas) {
+                    showSnackbar('Could not create crop. Try a different image.', 'error');
+                    return;
+                }
+
                 canvas.toBlob(function(blob) {
                     if (!blob) {
                         showSnackbar('Failed to crop image.', 'error');
@@ -146,7 +148,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             dataTransfer.items.add(file);
                             imageInput.files = dataTransfer.files;
                             
-                            // Trigger change to update preview
                             const event = new Event('change', { bubbles: true });
                             imageInput.dispatchEvent(event);
                         }
@@ -188,6 +189,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const removeBtn = element.querySelector('.remove-image-btn');
         const uploadBox = element.querySelector('.upload-box');
 
+        // Consolidate Click Handling: Box triggers Input
+        if (uploadBox && fileInput) {
+            uploadBox.style.cursor = 'pointer';
+            uploadBox.addEventListener('click', function(e) {
+                // If the element is marked for delete, clicking it should unmark it first
+                if (element.classList.contains('marked-for-delete')) {
+                    const removeBtn = element.querySelector('.remove-image-btn');
+                    if (removeBtn) removeBtn.click(); // Trigger the removal toggle logic
+                    return;
+                }
+
+                // Only click if we didn't click an action button
+                if (!e.target.closest('.action-btn')) {
+                    fileInput.click();
+                }
+            });
+        }
+
         if (fileInput) {
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
@@ -203,6 +222,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (cropBtn) {
                             cropBtn.classList.remove('hidden');
                         }
+                        if (removeBtn) {
+                            removeBtn.classList.remove('hidden');
+                        }
                     };
                     reader.readAsDataURL(this.files[0]);
                 }
@@ -212,12 +234,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (cropBtn) {
             cropBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 if (fileInput && fileInput.files && fileInput.files[0]) {
                     const reader = new FileReader();
                     reader.onload = (e) => openCropModal(e.target.result, fileInput.id);
                     reader.readAsDataURL(fileInput.files[0]);
                 } else if (previewImg && previewImg.src && !previewImg.src.includes('placeholder')) {
-                    // Handle existing images if needed (might need different logic for cross-origin)
                     openCropModal(previewImg.src, fileInput.id);
                 }
             });
@@ -226,14 +248,47 @@ document.addEventListener('DOMContentLoaded', function() {
         if (removeBtn) {
             removeBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
+                
+                // Detection logic: Primary vs Gallery
+                const isPrimary = element.id === 'primary-upload-box' || element.querySelector('#primary-upload-box');
+                
+                if (isPrimary) {
+                    // For Primary: Toggle "Clear" intent
+                    const isMarked = element.classList.toggle('marked-for-delete');
+                    
+                    if (isMarked) {
+                        showSnackbar('Marked cover for removal.', 'info');
+                        // We still empty the input so it's not sent if intended to clear
+                        // But we might want to store the old value if undoing is needed
+                        // For simplicity, primary clear is usually immediate in many UIs,
+                        // but here we mark it visually.
+                    } else {
+                        showSnackbar('Cover removal cancelled.', 'success');
+                    }
+                    return;
+                }
+
+                // Gallery image removal: Toggle "Marked for Delete"
                 const deleteCheckbox = element.querySelector('input[type="checkbox"][name$="-DELETE"]');
                 if (deleteCheckbox) {
-                    deleteCheckbox.checked = true;
-                    element.classList.add('hidden');
-                    showSnackbar('Image removed.', 'info');
+                    const isCurrentlyMarked = element.classList.contains('marked-for-delete');
+                    
+                    if (!isCurrentlyMarked) {
+                        // Mark it
+                        element.classList.add('marked-for-delete');
+                        deleteCheckbox.checked = true;
+                        showSnackbar('Marked for deletion.', 'info');
+                    } else {
+                        // Unmark it
+                        element.classList.remove('marked-for-delete');
+                        deleteCheckbox.checked = false;
+                        showSnackbar('Deletion cancelled.', 'success');
+                    }
                 } else {
-                    element.remove();
-                    // Update total forms? Usually not strictly necessary for simple remove before save
+                    // It's a newly added form that hasn't been saved yet
+                    element.classList.add('removing');
+                    setTimeout(() => element.remove(), 200);
                 }
             });
         }
@@ -241,34 +296,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Drag and Drop
         if (uploadBox && fileInput) {
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadBox.addEventListener(eventName, preventDefaults, false);
+                uploadBox.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
             });
 
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadBox.addEventListener(eventName, () => uploadBox.classList.add('drag-over'), false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadBox.addEventListener(eventName, () => uploadBox.classList.remove('drag-over'), false);
-            });
-
+            uploadBox.addEventListener('dragenter', () => uploadBox.classList.add('drag-over'), false);
+            uploadBox.addEventListener('dragover', () => uploadBox.classList.add('drag-over'), false);
+            uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('drag-over'), false);
             uploadBox.addEventListener('drop', function(e) {
+                uploadBox.classList.remove('drag-over');
                 const dt = e.dataTransfer;
-                const files = dt.files;
-                fileInput.files = files;
-                
-                const event = new Event('change', { bubbles: true });
-                fileInput.dispatchEvent(event);
+                if (dt.files && dt.files.length) {
+                    fileInput.files = dt.files;
+                    const event = new Event('change', { bubbles: true });
+                    fileInput.dispatchEvent(event);
+                }
             });
         }
     }
 
-    // Initialize existing interactions
+    // Initialize
     document.querySelectorAll('.image-interaction-wrapper').forEach(wrapper => {
         initImageInteraction(wrapper);
     });

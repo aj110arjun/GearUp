@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-<link rel="stylesheet" href="{% static 'css/admin/variant_images.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/variant_images.css' %}?v=1.2.2">
 <style>
     /* Modern Form Styling overrides */
     .form-control {
@@ -60,7 +60,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto py-8 px-4">
+<div class="max-w-7xl mx-auto py-8 px-4">
     <!-- Breadcrumbs & Header -->
     <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -74,48 +74,54 @@
                 </ol>
             </nav>
             <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Edit Variant</h1>
-            <p class="text-gray-500 mt-1">Update variant details and manage images for <span class="font-semibold text-indigo-600">{{ product.name }}</span></p>
+            <p class="text-gray-500 mt-1">Refine variant details and gallery for <span class="font-semibold text-indigo-600">{{ product.name }}</span></p>
         </div>
-        <a href="{% url 'products:product_edit' product.slug %}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Cancel
-        </a>
+        <div class="flex items-center gap-3">
+             <a href="{% url 'products:product_edit' product.slug %}" class="px-6 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
+                Cancel
+            </a>
+            <button type="submit" form="variant-form" class="px-8 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                Update Variant
+            </button>
+        </div>
     </div>
 
     <!-- Main Edit Variant Form -->
     <form method="post" enctype="multipart/form-data" id="variant-form" novalidate>
         {% csrf_token %}
         
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column: Primary Image & Basic Options -->
-            <div class="lg:col-span-1 space-y-8">
-                <!-- Primary Image Section -->
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Primary Image</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Col 1: Primary Image (1/4) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-star text-xs"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900">Cover</h3>
+                    </div>
+                    
                     <div class="image-interaction-wrapper">
-                        <div class="upload-box group {% if variant.primary_image %}has-image{% endif %}" id="primary-upload-box" onclick="document.getElementById('{{ form.primary_image.id_for_label }}').click()">
+                        <div class="upload-box group aspect-square rounded-[1.5rem] {% if variant.primary_image %}has-image{% endif %}" id="primary-upload-box">
                             {% if variant.primary_image %}
-                                <img id="primary-preview" src="{{ variant.primary_image.url }}" class="preview-image-el" alt="Primary Preview">
+                                <img id="primary-preview" src="{{ variant.primary_image.url }}" class="preview-image-el" alt="Primary Preview" crossorigin="anonymous">
                             {% else %}
-                                <img id="primary-preview" src="" class="preview-image-el hidden" alt="Primary Preview">
+                                <img id="primary-preview" src="" class="preview-image-el hidden" alt="Primary Preview" crossorigin="anonymous">
                             {% endif %}
                             
-                            <div class="upload-prompt flex flex-col items-center">
-                                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-3">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                    </svg>
+                            <div class="upload-prompt flex flex-col items-center p-4 text-center">
+                                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-3">
+                                    <i class="fas fa-image"></i>
                                 </div>
-                                <span class="font-semibold text-sm">Change Image</span>
+                                <span class="text-xs font-bold text-gray-900">Main Photo</span>
                             </div>
                             
                             <div class="image-actions">
-                                <button type="button" class="action-btn crop-btn {% if not variant.primary_image %}hidden{% endif %}" title="Crop Image">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                    </svg>
+                                <button type="button" class="action-btn crop-btn {% if not variant.primary_image %}hidden{% endif %}" title="Crop">
+                                    <i class="fas fa-crop-alt"></i>
+                                </button>
+                                <button type="button" class="action-btn remove-image-btn btn-danger {% if not variant.primary_image %}hidden{% endif %}" title="Remove">
+                                    <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
                         </div>
@@ -123,66 +129,91 @@
                             {{ form.primary_image }}
                         </div>
                         {% if form.primary_image.errors %}
-                            <p class="form-error-text">{{ form.primary_image.errors.0 }}</p>
+                            <p class="form-error-text text-center mt-2">{{ form.primary_image.errors.0 }}</p>
                         {% endif %}
                     </div>
-                </div>
-
-                <!-- Attributes Section -->
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 space-y-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Variant Attributes</h3>
-                    
-                    <div>
-                        <label for="{{ form.size.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Size</label>
-                        {{ form.size }}
-                    </div>
-
-                    <div>
-                        <label for="{{ form.color.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Color</label>
-                        {{ form.color }}
-                    </div>
+                    <p class="text-[10px] text-gray-400 mt-4 text-center uppercase tracking-widest font-bold">Standard Catalog View</p>
                 </div>
             </div>
 
-            <!-- Right Column: Additional Images & Details -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- Additional Images Section -->
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-bold text-gray-900">Additional Images</h3>
-                        <button type="button" id="add-image-formset-btn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all">
-                            Add Image
+            <!-- Col 2: Settings (3/4) -->
+            <div class="lg:col-span-3 space-y-8">
+                <!-- Configuration Card -->
+                <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                                <i class="fas fa-sliders-h"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Variant Details</h3>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Status</span>
+                            {{ form.is_active }}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="md:col-span-1">
+                            <label for="{{ form.size.id_for_label }}" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Size</label>
+                            {{ form.size }}
+                        </div>
+
+                        <div class="md:col-span-1">
+                            <label for="{{ form.color.id_for_label }}" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Color</label>
+                            {{ form.color }}
+                        </div>
+
+                        <div class="md:col-span-1">
+                            <label for="{{ form.price.id_for_label }}" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Price (INR)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                                <input type="number" name="{{ form.price.name }}" id="{{ form.price.id_for_label }}" value="{{ form.price.value }}" class="form-control pl-8 h-11" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-1">
+                            <label for="{{ form.stock_quantity.id_for_label }}" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Stock</label>
+                            {{ form.stock_quantity }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gallery Card -->
+                <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                <i class="fas fa-images text-indigo-600"></i>
+                                Additional Gallery
+                            </h3>
+                            <p class="text-sm text-gray-400 mt-1">Manage angle shots and secondary views</p>
+                        </div>
+                        <button type="button" id="add-image-formset-btn" class="inline-flex items-center px-5 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-100 transition-all">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Shot
                         </button>
                     </div>
 
                     {{ image_formset.management_form }}
-                    <div id="image-formset-container" class="image-grid">
+                    <div id="image-formset-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {% for form in image_formset %}
-                            <div class="image-interaction-wrapper image-form-row">
-                                <div class="upload-box group relative {% if form.instance.image %}has-image{% endif %}" onclick="this.nextElementSibling.querySelector('input[type=file]').click()">
+                            <div class="image-interaction-wrapper image-form-row image-card group">
+                                <div class="upload-box group relative rounded-xl overflow-hidden {% if form.instance.image %}has-image{% endif %}">
                                     {% if form.instance.image %}
-                                        <img src="{{ form.instance.image.url }}" class="preview-image-el" alt="Preview">
+                                        <img src="{{ form.instance.image.url }}" class="preview-image-el" alt="Preview" crossorigin="anonymous">
                                     {% else %}
-                                        <img src="" class="preview-image-el hidden" alt="Preview">
+                                        <img src="" class="preview-image-el hidden" alt="Preview" crossorigin="anonymous">
                                     {% endif %}
                                     <div class="upload-prompt flex flex-col items-center">
-                                        <div class="w-10 h-10 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mb-2">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                            </svg>
-                                        </div>
-                                        <span class="text-xs font-medium text-gray-500">Upload</span>
+                                        <i class="fas fa-plus text-gray-300"></i>
                                     </div>
                                     <div class="image-actions">
-                                        <button type="button" class="action-btn crop-btn {% if not form.instance.image %}hidden{% endif %}" title="Crop">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                            </svg>
+                                        <button type="button" class="action-btn !w-8 !h-8 crop-btn {% if not form.instance.image %}hidden{% endif %}" title="Crop">
+                                            <i class="fas fa-crop-alt text-[10px]"></i>
                                         </button>
-                                        <button type="button" class="action-btn remove-image-btn btn-danger" title="Remove">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
+                                        <button type="button" class="action-btn !w-8 !h-8 remove-image-btn btn-danger" title="Remove">
+                                            <i class="fas fa-trash-alt text-[10px]"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -191,79 +222,39 @@
                                     {{ form.id }}
                                     {{ form.DELETE }}
                                 </div>
-                                <div class="mt-2">
+                                <div class="mt-3">
                                     {{ form.alt_text }}
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
-                    
-                    <template id="empty-form-template">
-                        <div class="image-interaction-wrapper image-form-row animate-fadeIn">
-                            <div class="upload-box group relative" onclick="this.nextElementSibling.querySelector('input[type=file]').click()">
-                                <img src="" class="preview-image-el hidden" alt="Preview">
-                                <div class="upload-prompt flex flex-col items-center">
-                                    <div class="w-10 h-10 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mb-2">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                        </svg>
-                                    </div>
-                                    <span class="text-xs font-medium text-gray-500">Upload</span>
-                                </div>
-                                <div class="image-actions">
-                                    <button type="button" class="action-btn crop-btn hidden" title="Crop">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                        </svg>
-                                    </button>
-                                    <button type="button" class="action-btn remove-image-btn btn-danger" title="Remove">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="hidden">
-                                {{ image_formset.empty_form.image }}
-                                {{ image_formset.empty_form.DELETE }}
-                            </div>
-                            <div class="mt-2">
-                                {{ image_formset.empty_form.alt_text }}
-                            </div>
-                        </div>
-                    </template>
                 </div>
 
-                <!-- Pricing & Inventory -->
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-8">
-                    <h3 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-4">Inventory & Pricing</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <label for="{{ form.price.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Price (INR)</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
-                                <input type="number" name="{{ form.price.name }}" id="{{ form.price.id_for_label }}" value="{{ form.price.value }}" class="form-control pl-8" step="0.01">
+                <template id="empty-form-template">
+                    <div class="image-interaction-wrapper image-form-row image-card group animate-fadeIn">
+                        <div class="upload-box group relative rounded-xl overflow-hidden">
+                            <img src="" class="preview-image-el hidden" alt="Preview" crossorigin="anonymous">
+                            <div class="upload-prompt flex flex-col items-center">
+                                <i class="fas fa-plus text-gray-300"></i>
+                            </div>
+                            <div class="image-actions">
+                                <button type="button" class="action-btn !w-8 !h-8 crop-btn hidden" title="Crop">
+                                    <i class="fas fa-crop-alt text-[10px]"></i>
+                                </button>
+                                <button type="button" class="action-btn !w-8 !h-8 remove-image-btn btn-danger" title="Remove">
+                                    <i class="fas fa-times text-[10px]"></i>
+                                </button>
                             </div>
                         </div>
-                        <div>
-                            <label for="{{ form.stock_quantity.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">Stock Balance</label>
-                            {{ form.stock_quantity }}
+                        <div class="hidden">
+                            {{ image_formset.empty_form.image }}
+                            {{ image_formset.empty_form.DELETE }}
+                        </div>
+                        <div class="mt-3">
+                            {{ image_formset.empty_form.alt_text }}
                         </div>
                     </div>
-                    <div class="status-card flex items-center">
-                        {{ form.is_active }}
-                        <label for="{{ form.is_active.id_for_label }}" class="ml-4 flex flex-col">
-                            <span class="text-sm font-bold text-gray-900">Active Status</span>
-                            <span class="text-xs text-gray-500">Enable/disable this variant for customers.</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex items-center justify-end gap-4 pb-8">
-                    <a href="{% url 'products:product_edit' product.slug %}" class="px-8 py-3 rounded-2xl border border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition-all text-sm uppercase">Cancel</a>
-                    <button type="submit" class="px-10 py-3 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all text-sm uppercase">Update Variant</button>
-                </div>
+                </template>
             </div>
         </div>
     </form>
@@ -304,5 +295,5 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-<script src="{% static 'js/admin/variant_images.js' %}"></script>
+<script src="{% static 'js/admin/variant_images.js' %}?v=1.2.2"></script>
 {% endblock %}

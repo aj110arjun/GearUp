@@ -72,10 +72,18 @@ def home(request):
 
 def custom_404_view(request, exception):
     """
-    Custom 404 error handler
+    Custom 404 error handler with separate logic for Admin and Customer
     """
-    # Check if the request is for the admin portal
-    if request.path.startswith('/admin/') or request.path.startswith('/django-admin/'):
+    path = request.path
+    
+    # Check if the request is for any admin-related path
+    is_admin = (
+        path.startswith('/admin/') or 
+        path.startswith('/django-admin/') or 
+        path.startswith('/transactions/')
+    )
+    
+    if is_admin:
         return render(request, 'admin/404_admin.html', status=404)
     
     # Default to customer 404 page
