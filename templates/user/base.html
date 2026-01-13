@@ -136,15 +136,15 @@
             </a>
           </li>
           <li>
-            <a href="" 
-               class="flex items-center gap-3 px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if request.path == '/products/list/' %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
+            <a href="{% url 'products:product_list_user' %}" 
+               class="flex items-center gap-3 px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if '/products/' in request.path %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
               <i class="fas fa-store w-5"></i>
               <span>Shop</span>
             </a>
           </li>
           <li>
-            <a href="" 
-               class="flex items-center justify-between px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if request.path == '/cart/list/' %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
+            <a href="{% url 'shop:cart' %}" 
+               class="flex items-center justify-between px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if '/cart/' in request.path %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
               <div class="flex items-center gap-3">
                 <i class="fas fa-shopping-cart w-5"></i>
                 <span>Cart</span>
@@ -152,8 +152,8 @@
             </a>
           </li>
           <li>
-            <a href="" 
-               class="flex items-center gap-3 px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if request.path == '/wishlist/list/' %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
+            <a href="{% url 'shop:wishlist' %}" 
+               class="flex items-center gap-3 px-6 py-4 hover:bg-emerald-50 hover:text-emerald-600 transition-colors {% if '/wishlist/' in request.path %}bg-emerald-50 text-emerald-600 font-semibold{% endif %}">
               <i class="fas fa-heart w-5"></i>
               <span>Wishlist</span>
             </a>
@@ -166,7 +166,7 @@
             </a>
         </li>
           <li>
-            <a href="" 
+            <a href="{% url 'user_auth:profile' %}" 
                class="flex items-center gap-3 px-6 py-4 bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors">
               <i class="fas fa-user w-5"></i>
               <span>My Account</span>
