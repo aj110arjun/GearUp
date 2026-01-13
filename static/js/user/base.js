@@ -161,11 +161,6 @@ window.globalToggleWishlist = async function(productId) {
             if (data.wishlist_count !== undefined) window.updateWishlistCount(data.wishlist_count);
             if (data.cart_count !== undefined) window.updateCartCount(data.cart_count);
             window.showNotification(data.message, 'success');
-            if (document.getElementById('product-grid-container')) {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500);
-            }
         } else {
             window.showNotification(data.message, 'error');
         }
@@ -215,12 +210,6 @@ window.globalAddToCart = async function(productId, variantId, quantity = 1) {
                     mainBtn.classList.replace('from-green-600', 'from-emerald-600');
                     mainBtn.innerHTML = '<i class="fas fa-cart-plus"></i><span>Add to Cart</span>';
                 }
-            }
-
-            if (document.getElementById('product-grid-container')) {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500);
             }
         } else {
             window.showNotification(data.message, 'error');
