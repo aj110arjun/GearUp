@@ -32,16 +32,33 @@
             {% if product_offers %}
                 <div class="space-y-4">
                     {% for offer in product_offers %}
-                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow relative overflow-hidden">
-                        {% if offer.is_valid %}
-                            <div class="absolute top-0 right-0 bg-green-500 w-2 h-full"></div>
-                        {% else %}
-                            <div class="absolute top-0 right-0 bg-red-500 w-2 h-full"></div>
-                        {% endif %}
-                        
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
-                                <h4 class="font-bold text-gray-800">{{ offer.name }}</h4>
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h4 class="font-bold text-gray-800">{{ offer.name }}</h4>
+                                    {% load tz %}
+                                    {% now "U" as current_timestamp %}
+                                    {% if offer.is_active %}
+                                        {% if offer.end_date|date:"U" < current_timestamp %}
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+                                                <i class="fas fa-times-circle mr-1"></i> Expired
+                                            </span>
+                                        {% elif offer.start_date|date:"U" > current_timestamp %}
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                                <i class="fas fa-clock mr-1"></i> Upcoming
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                <i class="fas fa-check-circle mr-1"></i> Active
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800 border border-gray-300">
+                                            <i class="fas fa-ban mr-1"></i> Blocked
+                                        </span>
+                                    {% endif %}
+                                </div>
                                 <p class="text-sm text-gray-600 mt-1">
                                     Product: <span class="font-medium text-blue-600">{{ offer.product.name }}</span>
                                 </p>
@@ -51,7 +68,7 @@
                                     </span>
                                     <span>
                                         <i class="far fa-calendar-alt mr-1"></i>
-                                        {{ offer.end_date|date:"d/m/Y" }}
+                                        {{ offer.start_date|date:"d/m/Y" }} - {{ offer.end_date|date:"d/m/Y" }}
                                     </span>
                                 </div>
                             </div>
@@ -85,16 +102,33 @@
             {% if category_offers %}
                 <div class="space-y-4">
                     {% for offer in category_offers %}
-                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow relative overflow-hidden">
-                        {% if offer.is_valid %}
-                            <div class="absolute top-0 right-0 bg-green-500 w-2 h-full"></div>
-                        {% else %}
-                            <div class="absolute top-0 right-0 bg-red-500 w-2 h-full"></div>
-                        {% endif %}
-                        
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
-                                <h4 class="font-bold text-gray-800">{{ offer.name }}</h4>
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h4 class="font-bold text-gray-800">{{ offer.name }}</h4>
+                                    {% load tz %}
+                                    {% now "U" as current_timestamp %}
+                                    {% if offer.is_active %}
+                                        {% if offer.end_date|date:"U" < current_timestamp %}
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+                                                <i class="fas fa-times-circle mr-1"></i> Expired
+                                            </span>
+                                        {% elif offer.start_date|date:"U" > current_timestamp %}
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                                <i class="fas fa-clock mr-1"></i> Upcoming
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                <i class="fas fa-check-circle mr-1"></i> Active
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800 border border-gray-300">
+                                            <i class="fas fa-ban mr-1"></i> Blocked
+                                        </span>
+                                    {% endif %}
+                                </div>
                                 <p class="text-sm text-gray-600 mt-1">
                                     Category: <span class="font-medium text-indigo-600">{{ offer.category.name }}</span>
                                 </p>
@@ -104,7 +138,7 @@
                                     </span>
                                     <span>
                                         <i class="far fa-calendar-alt mr-1"></i>
-                                        {{ offer.end_date|date:"d/m/Y" }}
+                                        {{ offer.start_date|date:"d/m/Y" }} - {{ offer.end_date|date:"d/m/Y" }}
                                     </span>
                                 </div>
                             </div>
