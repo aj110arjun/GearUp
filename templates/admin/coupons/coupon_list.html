@@ -106,7 +106,7 @@
                         class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                     <option value="">All Status</option>
                     <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
-                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Blocked</option>
                     <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Expired</option>
                     <option value="upcoming" {% if status_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
                 </select>
@@ -176,21 +176,21 @@
                             {% now "U" as current_timestamp %}
                             {% if coupon.is_active %}
                                 {% if coupon.valid_until|date:"U" < current_timestamp %}
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
-                                        <i class="fas fa-times-circle mr-1"></i> Expired
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-red-100 text-red-800 border border-red-200">
+                                        <i class="fas fa-times-circle mr-1.5"></i> Expired
                                     </span>
                                 {% elif coupon.valid_from|date:"U" > current_timestamp %}
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
-                                        <i class="fas fa-clock mr-1"></i> Upcoming
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                        <i class="fas fa-clock mr-1.5"></i> Upcoming
                                     </span>
                                 {% else %}
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-800">
-                                        <i class="fas fa-check-circle mr-1"></i> Active
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        <i class="fas fa-check-circle mr-1.5"></i> Active
                                     </span>
                                 {% endif %}
                             {% else %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
-                                    <i class="fas fa-pause-circle mr-1"></i> Inactive
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-gray-100 text-gray-800 border border-gray-300">
+                                    <i class="fas fa-ban mr-1.5"></i> Blocked
                                 </span>
                             {% endif %}
                         </td>
