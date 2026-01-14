@@ -136,6 +136,8 @@
 
 .form-error-text.text-center {
     justify-content: center;
+    justify-content: center;
+    gap: 0.25rem;
 }
 
 .form-error-text.hidden {
