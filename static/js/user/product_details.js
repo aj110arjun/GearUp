@@ -346,24 +346,58 @@ console.log('[ProductDetails] Script v9.2 start');
         });
     };
 
-    // Expose as Ext for template orchestrator
-    window._selectVariantExt = function(variantId) {
-        console.log(`[VariantSelectionExt] Full update for: ${variantId}`);
-        const v = config.variants[variantId];
-        if (!v) return;
+    // --- Variant Selection Logic ---
+    window.selectVariant = function(variantId) {
+        if (!variantId || variantId === 'undefined') return;
+        console.log('[VariantSelection] Updating UI for:', variantId);
         
-        // 1. Update selection UI (cards/chips)
-        document.querySelectorAll('.variant-item, .variant-chip').forEach(item => {
-            item.classList.remove('selected-variant', 'border-emerald-500', 'ring-2', 'ring-emerald-500/20');
-            item.classList.add('border-gray-100');
-        });
-        const selectedChip = document.querySelector(`.variant-chip[data-variant-id="${variantId}"]`);
-        if (selectedChip) {
-            selectedChip.classList.add('border-emerald-500', 'ring-2', 'ring-emerald-500/20');
-            selectedChip.classList.remove('border-gray-100');
+        const v = config.variants[variantId];
+        if (!v) {
+            console.warn('[VariantSelection] No data for variant:', variantId);
+            return;
         }
 
-        // 2. Update Stock Status
+        // 1. Update Hidden Inputs & Dropdowns
+        const hiddenInput = document.getElementById('selected-variant-id-hidden');
+        if (hiddenInput) hiddenInput.value = variantId;
+        
+        const dropdown = document.getElementById('variant-select-dropdown');
+        if (dropdown) dropdown.value = variantId;
+
+        // 2. Update Selection UI (chips/items)
+        document.querySelectorAll('.variant-chip, .variant-item').forEach(item => {
+            if (item.dataset.variantId === variantId) {
+                item.classList.add('selected-variant', 'border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+                item.classList.remove('border-gray-100');
+            } else {
+                item.classList.remove('selected-variant', 'border-emerald-500', 'ring-2', 'ring-emerald-500/20');
+                item.classList.add('border-gray-100');
+            }
+        });
+
+        // 3. Update Price Display
+        const priceEl = document.getElementById('current-price');
+        const origPriceEl = document.getElementById('original-price');
+        const badgeEl = document.getElementById('discount-badge');
+        
+        if (priceEl && v.discountedPrice !== undefined) {
+            priceEl.textContent = '\u20B9' + parseFloat(v.discountedPrice).toFixed(2);
+            if (v.discount > 0) {
+                if (origPriceEl) {
+                    origPriceEl.textContent = '\u20B9' + parseFloat(v.price).toFixed(2);
+                    origPriceEl.classList.remove('hidden');
+                }
+                if (badgeEl) {
+                    badgeEl.textContent = v.discount + '% OFF';
+                    badgeEl.classList.remove('hidden');
+                }
+            } else {
+                if (origPriceEl) origPriceEl.classList.add('hidden');
+                if (badgeEl) badgeEl.classList.add('hidden');
+            }
+        }
+
+        // 4. Update Stock Status Label
         const stockStatusEl = document.getElementById('main-stock-status');
         if (stockStatusEl) {
             if (v.stock > 0) {
@@ -383,7 +417,30 @@ console.log('[ProductDetails] Script v9.2 start');
             }
         }
 
-        // 3. Update Variant Info Text
+        // 5. Update Add to Cart Button State
+        const mainBtn = document.getElementById('main-add-to-cart-btn');
+        if (mainBtn) {
+            if (v.stock > 0) {
+                mainBtn.disabled = false;
+                mainBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                if (v.inCart) {
+                    mainBtn.classList.add('bg-green-600');
+                    mainBtn.classList.remove('from-emerald-600', 'to-teal-600');
+                    mainBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>In Cart</span>';
+                } else {
+                    mainBtn.classList.add('from-emerald-600', 'to-teal-600');
+                    mainBtn.classList.remove('bg-green-600');
+                    mainBtn.innerHTML = '<i class="fas fa-cart-plus"></i><span>Add to Cart</span>';
+                }
+            } else {
+                mainBtn.disabled = true;
+                mainBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                mainBtn.classList.remove('bg-green-600', 'from-emerald-600', 'to-teal-600');
+                mainBtn.innerHTML = '<i class="fas fa-times-circle"></i><span>Out of Stock</span>';
+            }
+        }
+
+        // 6. Update Variant Info Text for Accessibility
         const infoEl = document.getElementById('selected-variant-info');
         if (infoEl) {
             const card = document.querySelector(`.variant-item[data-variant-id="${variantId}"]`);
@@ -398,32 +455,9 @@ console.log('[ProductDetails] Script v9.2 start');
             }
         }
 
-        // 4. Update Add to Cart Button State
-        const mainBtn = document.getElementById('main-add-to-cart-btn');
-        if (mainBtn) {
-            if (v.stock > 0) {
-                mainBtn.disabled = false;
-                mainBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                if (v.inCart) {
-                    mainBtn.classList.replace('from-emerald-600', 'from-green-600');
-                    mainBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>In Cart</span>';
-                } else {
-                    mainBtn.classList.replace('from-green-600', 'from-emerald-600');
-                    mainBtn.innerHTML = '<i class="fas fa-cart-plus"></i><span>Add to Cart</span>';
-                }
-            } else {
-                mainBtn.disabled = true;
-                mainBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                mainBtn.innerHTML = '<i class="fas fa-times-circle"></i><span>Out of Stock</span>';
-            }
-        }
-
-        // 5. Update Gallery
+        // 7. Refresh Image Gallery
         updateGallery(variantId);
     };
-
-    // Provide fallback if not defined by template
-    window.selectVariant = window.selectVariant || function(vid) { window._selectVariantExt(vid); };
 
     function updateGallery(variantId) {
         console.log(`[Gallery] Updating gallery for variant: ${variantId}`);
@@ -577,25 +611,6 @@ console.log('[ProductDetails] Script v9.2 start');
         
         if (!mainImg || !imageContainer) return;
 
-        // Auto-select a variant on page load based on bridge items
-        const bridgeItems = document.querySelectorAll('.variant-item[data-has-images="true"]');
-        const hiddenInput = document.getElementById('selected-variant-id-hidden');
-        
-        let initialVariantId = hiddenInput?.value;
-
-        if (!initialVariantId && bridgeItems.length > 0) {
-            initialVariantId = bridgeItems[0].dataset.variantId;
-        }
-
-        if (initialVariantId) {
-            console.log(`[Init] Page load auto-select: ${initialVariantId}`);
-            try {
-                window.selectVariant(initialVariantId);
-            } catch (e) {
-                console.error('[Init] Failed to auto-select variant:', e);
-            }
-        }
-
         // Desktop zoom effect
         imageContainer.onmouseenter = e => {
             if (window.innerWidth < 1024) return;
@@ -612,6 +627,15 @@ console.log('[ProductDetails] Script v9.2 start');
         imageContainer.onmouseleave = () => {
             mainImg.style.transform = 'scale(1)';
         };
+
+        // Auto-select initial variant after a short delay to ensure everything is settled
+        setTimeout(() => {
+            const hiddenId = document.getElementById('selected-variant-id-hidden')?.value;
+            if (hiddenId) {
+                console.log('[Gallery] Initializing with variant:', hiddenId);
+                window.selectVariant(hiddenId);
+            }
+        }, 100);
     }
 
     // --- Page Initialization ---

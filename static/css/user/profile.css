@@ -1,0 +1,148 @@
+/* Profile Specific Styles */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  color: #111827;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.readonly-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  color: #4b5563;
+  cursor: not-allowed;
+  font-size: 1rem;
+}
+
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.1), 0 5px 10px -5px rgba(16, 185, 129, 0.04);
+}
+
+/* Social media link styles */
+.social-link {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.social-link:hover {
+  transform: translateY(-2px);
+}
+
+.social-link.active {
+  border-color: currentColor;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Cropper.js custom styles */
+.cropper-view-box,
+.cropper-face {
+  border-radius: 50%;
+}
+
+.cropper-view-box {
+  outline: 2px solid #10b981;
+  outline-color: rgba(16, 185, 129, 0.75);
+}
+
+.cropper-line {
+  background-color: #10b981;
+}
+
+.cropper-point {
+  background-color: #10b981;
+  width: 8px;
+  height: 8px;
+}
+
+.cropper-point.point-se {
+  bottom: -4px;
+  right: -4px;
+}
+
+.cropper-point.point-sw {
+  bottom: -4px;
+  left: -4px;
+}
+
+.cropper-point.point-nw {
+  top: -4px;
+  left: -4px;
+}
+
+.cropper-point.point-ne {
+  top: -4px;
+  right: -4px;
+}
+
+.cropper-point.point-e,
+.cropper-point.point-w,
+.cropper-point.point-s,
+.cropper-point.point-n {
+  width: 6px;
+  height: 6px;
+}
+
+.form-error-text {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  display: none;
+  align-items: center;
+  justify-content: flex-start;
+  font-weight: 500;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+}
+
+.form-error-text.show {
+  display: flex;
+}
+
+.form-error-text i {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+/* Force override any residual or cached red borders */
+.form-input {
+  border-color: #d1d5db !important;
+  background-color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.form-input:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+}
