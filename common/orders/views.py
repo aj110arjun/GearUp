@@ -1952,65 +1952,24 @@ def coupon_list(request):
 @never_cache
 def coupon_create(request):
     """Create a new coupon"""
-    from .models import Coupon
+    from .forms import CouponForm
     
     if request.method == 'POST':
-        try:
-            from datetime import datetime, time
-            
-            # Parse and validate dates
-            valid_from_str = request.POST.get('valid_from')
-            valid_until_str = request.POST.get('valid_until')
-            
-            if not valid_from_str or not valid_until_str:
-                messages.error(request, 'Both validity dates are required.')
-                return redirect('orders:coupon_create')
-            
-            # Parse dates (they come as 'YYYY-MM-DD' from date input)
-            valid_from_date = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
-            valid_until_date = datetime.strptime(valid_until_str, '%Y-%m-%d').date()
-            
-            # Validate date range
-            if valid_until_date < valid_from_date:
-                messages.error(request, 'End date cannot be before start date.')
-                return redirect('orders:coupon_create')
-            
-            # Convert to datetime with start/end of day
-            valid_from = datetime.combine(valid_from_date, time.min)  # 00:00:00
-            valid_until = datetime.combine(valid_until_date, time.max)  # 23:59:59
-            
-            # Make timezone-aware if USE_TZ is True
-            if timezone.is_naive(valid_from):
-                valid_from = timezone.make_aware(valid_from)
-            if timezone.is_naive(valid_until):
-                valid_until = timezone.make_aware(valid_until)
-            
-            coupon = Coupon(
-                code=request.POST.get('code').strip().upper(),
-                description=request.POST.get('description', '').strip(),
-                discount_percentage=request.POST.get('discount_percentage'),
-                max_uses=request.POST.get('max_uses', 0),
-                max_uses_per_user=request.POST.get('max_uses_per_user', 1),
-                minimum_order_amount=request.POST.get('minimum_order_amount', 0),
-                max_discount_amount=request.POST.get('max_discount_amount') or None,
-                valid_from=valid_from,
-                valid_until=valid_until,
-                is_active=request.POST.get('is_active') == 'on',
-                created_by=request.user
-            )
+        form = CouponForm(request.POST)
+        if form.is_valid():
+            coupon = form.save(commit=False)
+            coupon.created_by = request.user
             coupon.save()
-            
             messages.success(request, f'Coupon "{coupon.code}" created successfully!')
             return redirect('orders:coupon_list')
-            
-        except ValueError as e:
-            messages.error(request, f'Invalid date format: {str(e)}')
-        except Exception as e:
-            messages.error(request, f'Error creating coupon: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CouponForm()
     
     context = {
         'title': 'Create New Coupon',
-        'now': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+        'form': form,
     }
     
     return render(request, 'admin/coupons/coupon_form.html', context)
@@ -2021,64 +1980,25 @@ def coupon_create(request):
 def coupon_edit(request, coupon_id):
     """Edit an existing coupon"""
     from .models import Coupon
+    from .forms import CouponForm
     
     coupon = get_object_or_404(Coupon, id=coupon_id)
     
     if request.method == 'POST':
-        try:
-            from datetime import datetime, time
-            
-            # Parse and validate dates
-            valid_from_str = request.POST.get('valid_from')
-            valid_until_str = request.POST.get('valid_until')
-            
-            if not valid_from_str or not valid_until_str:
-                messages.error(request, 'Both validity dates are required.')
-                return redirect('orders:coupon_edit', coupon_id=coupon.id)
-            
-            # Parse dates (they come as 'YYYY-MM-DD' from date input)
-            valid_from_date = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
-            valid_until_date = datetime.strptime(valid_until_str, '%Y-%m-%d').date()
-            
-            # Validate date range
-            if valid_until_date < valid_from_date:
-                messages.error(request, 'End date cannot be before start date.')
-                return redirect('orders:coupon_edit', coupon_id=coupon.id)
-            
-            # Convert to datetime with start/end of day
-            valid_from = datetime.combine(valid_from_date, time.min)  # 00:00:00
-            valid_until = datetime.combine(valid_until_date, time.max)  # 23:59:59
-            
-            # Make timezone-aware if USE_TZ is True
-            if timezone.is_naive(valid_from):
-                valid_from = timezone.make_aware(valid_from)
-            if timezone.is_naive(valid_until):
-                valid_until = timezone.make_aware(valid_until)
-            
-            coupon.code = request.POST.get('code').strip().upper()
-            coupon.description = request.POST.get('description', '').strip()
-            coupon.discount_percentage = request.POST.get('discount_percentage')
-            coupon.max_uses = request.POST.get('max_uses', 0)
-            coupon.max_uses_per_user = request.POST.get('max_uses_per_user', 1)
-            coupon.minimum_order_amount = request.POST.get('minimum_order_amount', 0)
-            coupon.max_discount_amount = request.POST.get('max_discount_amount') or None
-            coupon.valid_from = valid_from
-            coupon.valid_until = valid_until
-            coupon.is_active = request.POST.get('is_active') == 'on'
-            coupon.save()
-            
+        form = CouponForm(request.POST, instance=coupon)
+        if form.is_valid():
+            form.save()
             messages.success(request, f'Coupon "{coupon.code}" updated successfully!')
             return redirect('orders:coupon_list')
-            
-        except ValueError as e:
-            messages.error(request, f'Invalid date format: {str(e)}')
-        except Exception as e:
-            messages.error(request, f'Error updating coupon: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CouponForm(instance=coupon)
     
     context = {
         'title': 'Edit Coupon',
         'coupon': coupon,
-        'now': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+        'form': form,
     }
     
     return render(request, 'admin/coupons/coupon_form.html', context)

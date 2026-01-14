@@ -210,6 +210,32 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fileInput) {
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    const validExtensions = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+                    const errorContainer = element.querySelector('.form-error-text');
+
+                    if (!validExtensions.includes(file.type)) {
+                        showSnackbar('Unsupported file type. Please upload a JPG, PNG, WEBP, or GIF image.', 'error');
+                        if (errorContainer) {
+                            const msgSpan = errorContainer.querySelector('.error-msg');
+                            if (msgSpan) {
+                                msgSpan.textContent = 'Unsupported file type.';
+                            } else {
+                                errorContainer.textContent = 'Unsupported file type.';
+                            }
+                            errorContainer.classList.remove('hidden');
+                        }
+                        this.value = ''; // Clear the input
+                        return;
+                    }
+
+                    // Clear error if valid
+                    if (errorContainer) {
+                        const msgSpan = errorContainer.querySelector('.error-msg');
+                        if (msgSpan) msgSpan.textContent = '';
+                        errorContainer.classList.add('hidden');
+                    }
+
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         if (previewImg) {
@@ -226,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             removeBtn.classList.remove('hidden');
                         }
                     };
-                    reader.readAsDataURL(this.files[0]);
+                    reader.readAsDataURL(file);
                 }
             });
         }
@@ -309,6 +335,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 uploadBox.classList.remove('drag-over');
                 const dt = e.dataTransfer;
                 if (dt.files && dt.files.length) {
+                    const file = dt.files[0];
+                    const validExtensions = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+                    const errorContainer = element.querySelector('.form-error-text');
+
+                    if (!validExtensions.includes(file.type)) {
+                        showSnackbar('Unsupported file type. Please upload a JPG, PNG, WEBP, or GIF image.', 'error');
+                        if (errorContainer) {
+                            const msgSpan = errorContainer.querySelector('.error-msg');
+                            if (msgSpan) {
+                                msgSpan.textContent = 'Unsupported file type.';
+                            } else {
+                                errorContainer.textContent = 'Unsupported file type.';
+                            }
+                            errorContainer.classList.remove('hidden');
+                        }
+                        return;
+                    }
+
+                    // Clear error if valid
+                    if (errorContainer) {
+                        const msgSpan = errorContainer.querySelector('.error-msg');
+                        if (msgSpan) msgSpan.textContent = '';
+                        errorContainer.classList.add('hidden');
+                    }
+
                     fileInput.files = dt.files;
                     const event = new Event('change', { bubbles: true });
                     fileInput.dispatchEvent(event);

@@ -126,7 +126,20 @@
 .form-error-text {
     color: #ef4444;
     font-size: 0.75rem;
-    margin-top: 0.25rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.25rem;
+}
+
+.form-error-text.text-center {
+    justify-content: center;
+}
+
+.form-error-text.hidden {
+    display: none;
 }
 /* Animations */
 @keyframes fadeIn {

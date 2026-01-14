@@ -9,13 +9,13 @@
     <div class="flex justify-between items-center mb-8">
         <div>
             <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <i class="fas fa-tags text-emerald-600"></i>
+                <i class="fas fa-tags text-indigo-600"></i>
                 Coupon Management
             </h2>
             <p class="text-gray-600 mt-2">Manage discount coupons and promotional codes</p>
         </div>
         <a href="{% url 'auth_dashboard:coupon_create' %}" 
-           class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 shadow-lg">
+           class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 shadow-lg">
             <i class="fas fa-plus"></i>
             Create New Coupon
         </a>
@@ -50,10 +50,10 @@
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <!-- Total Coupons -->
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-gradient-to-br from-indigo-600 to-blue-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">Total Coupons</p>
+                    <p class="text-indigo-50 text-sm font-medium uppercase tracking-wide">Total Coupons</p>
                     <p class="text-4xl font-bold mt-2">{{ total_coupons }}</p>
                 </div>
                 <div class="bg-white bg-opacity-20 rounded-full p-4">
@@ -63,10 +63,10 @@
         </div>
 
         <!-- Active Coupons -->
-        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-emerald-100 text-sm font-medium uppercase tracking-wide">Active Coupons</p>
+                    <p class="text-indigo-100 text-sm font-medium uppercase tracking-wide">Active Coupons</p>
                     <p class="text-4xl font-bold mt-2">{{ active_coupons }}</p>
                 </div>
                 <div class="bg-white bg-opacity-20 rounded-full p-4">
@@ -76,10 +76,10 @@
         </div>
 
         <!-- Expired Coupons -->
-        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-red-100 text-sm font-medium uppercase tracking-wide">Expired Coupons</p>
+                    <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">Expired Coupons</p>
                     <p class="text-4xl font-bold mt-2">{{ expired_coupons }}</p>
                 </div>
                 <div class="bg-white bg-opacity-20 rounded-full p-4">
@@ -98,12 +98,12 @@
             <form method="get" class="flex flex-wrap gap-4">
                 <input type="text" 
                        name="search" 
-                       class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" 
+                       class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
                        placeholder="Search coupons..." 
                        value="{{ search_query }}">
                 
                 <select name="status" 
-                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                     <option value="">All Status</option>
                     <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
                     <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Blocked</option>
@@ -112,7 +112,7 @@
                 </select>
                 
                 <button type="submit" 
-                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2">
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2">
                     <i class="fas fa-search"></i>
                     Search
                 </button>
@@ -148,14 +148,14 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4">
                             <div>
-                                <p class="font-bold text-emerald-600 text-lg">{{ coupon.code }}</p>
+                                <p class="font-bold text-indigo-600 text-lg">{{ coupon.code }}</p>
                                 {% if coupon.description %}
                                 <p class="text-sm text-gray-500 mt-1">{{ coupon.description|truncatewords:10 }}</p>
                                 {% endif %}
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-800">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-800">
                                 {{ coupon.discount_percentage }}% OFF
                             </span>
                             {% if coupon.max_discount_amount %}
@@ -184,7 +184,7 @@
                                         <i class="fas fa-clock mr-1.5"></i> Upcoming
                                     </span>
                                 {% else %}
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
                                         <i class="fas fa-check-circle mr-1.5"></i> Active
                                     </span>
                                 {% endif %}
@@ -204,7 +204,7 @@
                                 <form method="post" action="{% url 'auth_dashboard:coupon_toggle_active' coupon.id %}" class="inline">
                                     {% csrf_token %}
                                     <button type="submit" 
-                                            class="{% if coupon.is_active %}bg-yellow-500 hover:bg-yellow-600{% else %}bg-emerald-500 hover:bg-emerald-600{% endif %} text-white p-2 rounded-lg transition-colors" 
+                                            class="{% if coupon.is_active %}bg-yellow-500 hover:bg-yellow-600{% else %}bg-indigo-500 hover:bg-indigo-600{% endif %} text-white p-2 rounded-lg transition-colors" 
                                             title="{% if coupon.is_active %}Deactivate{% else %}Activate{% endif %}">
                                         <i class="fas fa-{% if coupon.is_active %}pause{% else %}play{% endif %}"></i>
                                     </button>
@@ -249,7 +249,7 @@
                     {% for num in page_obj.paginator.page_range %}
                     <li>
                         <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
-                           class="px-4 py-2 {% if page_obj.number == num %}bg-emerald-600 text-white{% else %}bg-white border border-gray-300 hover:bg-gray-50{% endif %} rounded-lg transition-colors">
+                           class="px-4 py-2 {% if page_obj.number == num %}bg-indigo-600 text-white{% else %}bg-white border border-gray-300 hover:bg-gray-50{% endif %} rounded-lg transition-colors">
                             {{ num }}
                         </a>
                     </li>
@@ -267,15 +267,6 @@
             </nav>
         </div>
         {% endif %}
-    </div>
-
-    <!-- Quick Link to Usage History -->
-    <div class="text-center mt-8">
-        <a href="{% url 'auth_dashboard:coupon_usage_list' %}" 
-           class="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-semibold transition-all shadow-lg">
-            <i class="fas fa-history"></i>
-            View Coupon Usage History
-        </a>
     </div>
 </div>
 {% endblock %}
