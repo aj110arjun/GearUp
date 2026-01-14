@@ -2,6 +2,50 @@
 {% load static %}
 
 {% block title %}Transaction Details - GearUp Wallet{% endblock %}
+{% block breadcrumbs %}
+<div class="breadcrumb py-3 no-print">
+    <div class="container mx-auto px-4 lg:px-6">
+        <nav aria-label="Breadcrumb" class="flex">
+            <ol class="flex items-center space-x-2 md:space-x-3">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'user_home:home' %}" class="inline-flex items-center text-gray-600 hover:text-emerald-600 transition-colors duration-200">
+                        <i class="fas fa-home mr-1.5 text-sm"></i>
+                        <span class="text-sm font-medium">Home</span>
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'wallet:wallet_dashboard' %}" class="inline-flex items-center text-gray-600 hover:text-emerald-600 transition-colors duration-200">
+                        <span class="text-sm font-medium">Wallet</span>
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'wallet:transaction_history' %}" class="inline-flex items-center text-gray-600 hover:text-emerald-600 transition-colors duration-200">
+                        <span class="text-sm font-medium">Transaction History</span>
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <svg class="w-4 h-4 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li class="breadcrumb-item" aria-current="page">
+                    <span class="text-sm font-semibold text-emerald-600">Transaction Details</span>
+                </li>
+            </ol>
+        </nav>
+    </div>
+</div>
+{% endblock breadcrumbs %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -9,23 +53,19 @@
         <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8">
             <div>
-                <a href="{% url 'wallet:transaction_history' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 mb-4">
+                <a href="{% url 'wallet:transaction_history' %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 mb-4 no-print">
                     <i class="fas fa-arrow-left"></i>
                     Back to History
                 </a>
                 <h1 class="text-3xl font-bold text-gray-800">Transaction Details</h1>
-                <p class="text-gray-600 mt-2">Complete information about your transaction</p>
+                <p class="text-gray-600 mt-2 no-print">Complete information about your transaction</p>
             </div>
             
             <!-- Action Buttons -->
             <div class="flex gap-3 mt-4 md:mt-0">
-                <a href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-print"></i>
-                    Print
-                </a>
-                <a href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-download"></i>
-                    Download
+                <a href="{% url 'wallet:download_transaction_receipt' transaction.transaction_id %}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                    <i class="fas fa-file-pdf"></i>
+                    Download PDF
                 </a>
             </div>
         </div>
@@ -172,7 +212,7 @@
             </div>
 
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="space-y-6 no-print">
                 <!-- Help Card -->
                 <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6">
                     <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -269,16 +309,5 @@
     function printReceipt() {
         window.print();
     }
-    
-    // Add print event listener to print button
-    document.addEventListener('DOMContentLoaded', function() {
-        const printBtn = document.querySelector('a[href="#"]:has(.fa-print)');
-        if (printBtn) {
-            printBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                printReceipt();
-            });
-        }
-    });
 </script>
 {% endblock %}

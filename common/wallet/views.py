@@ -12,6 +12,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from decimal import Decimal
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML, CSS
+from django.utils import timezone
 
 # Initialize Razorpay client
 try:
@@ -129,6 +133,35 @@ def transaction_detail(request, transaction_id):
         'related_transactions': related_transactions,
     }
     return render(request, 'user/wallet/transaction_detail.html', context)
+
+@login_required
+def download_transaction_receipt(request, transaction_id):
+    """Generate and download transaction receipt as PDF"""
+    transaction = get_object_or_404(
+        Transaction, 
+        transaction_id=transaction_id,
+        wallet__user=request.user
+    )
+    
+    context = {
+        'transaction': transaction,
+        'user': request.user,
+        'now': timezone.now(),
+    }
+    
+    # Render the template to string
+    html_string = render_to_string('user/wallet/transaction_receipt_pdf.html', context)
+    
+    # Create a PDF
+    html = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
+    pdf_file = html.write_pdf()
+    
+    # Prepare the response
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    filename = f'receipt_{transaction.transaction_id}_{timezone.now().strftime("%Y%m%d")}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
 
 @login_required
 @require_http_methods(["POST"])
