@@ -90,6 +90,17 @@
     <form method="post" enctype="multipart/form-data" id="variant-form" novalidate>
         {% csrf_token %}
         
+        {% if form.non_field_errors or image_formset.non_form_errors %}
+            <div class="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm">
+                {% for error in form.non_field_errors %}
+                    <p class="flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i> {{ error }}</p>
+                {% endfor %}
+                {% for error in image_formset.non_form_errors %}
+                    <p class="flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i> {{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <!-- Col 1: Primary Image (1/4) -->
             <div class="lg:col-span-1">
@@ -128,6 +139,12 @@
                         <div class="hidden">
                             {{ form.primary_image }}
                         </div>
+                        <div class="form-error-text mt-2 text-center {% if not form.primary_image.errors %}hidden{% endif %}">
+                            <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i>
+                            <span class="error-msg">
+                                {% if form.primary_image.errors %}{{ form.primary_image.errors.0 }}{% endif %}
+                            </span>
+                        </div>
                         <div id="primary_image_error" class="form-error-text mt-2 text-center hidden">
                             <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i>
                             <span class="error-msg"></span>
@@ -157,6 +174,11 @@
                         <div class="flex items-center gap-4">
                             <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Status</span>
                             {{ form.is_active }}
+                            {% if form.is_active.errors %}
+                                <p class="form-error-text mt-1 text-red-500">
+                                    {{ form.is_active.errors.0 }}
+                                </p>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -164,24 +186,48 @@
                         <div class="md:col-span-1">
                             <label for="{{ form.size.id_for_label }}" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Size</label>
                             {{ form.size }}
+                            {% if form.size.errors %}
+                                <p class="form-error-text mt-2 text-red-500">
+                                    <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i>
+                                    {{ form.size.errors.0 }}
+                                </p>
+                            {% endif %}
                         </div>
 
                         <div class="md:col-span-1">
                             <label for="{{ form.color.id_for_label }}" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Color</label>
                             {{ form.color }}
+                            {% if form.color.errors %}
+                                <p class="form-error-text mt-2 text-red-500">
+                                    <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i>
+                                    {{ form.color.errors.0 }}
+                                </p>
+                            {% endif %}
                         </div>
 
                         <div class="md:col-span-1">
                             <label for="{{ form.price.id_for_label }}" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Price (INR)</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
-                                <input type="number" name="{{ form.price.name }}" id="{{ form.price.id_for_label }}" value="{{ form.price.value }}" class="form-control pl-8 h-11" step="0.01">
+                                <input type="number" name="{{ form.price.name }}" id="{{ form.price.id_for_label }}" value="{{ form.price.value }}" class="form-control !pl-8 h-11" step="0.01">
                             </div>
+                            {% if form.price.errors %}
+                                <p class="form-error-text mt-2 text-red-500">
+                                    <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i>
+                                    {{ form.price.errors.0 }}
+                                </p>
+                            {% endif %}
                         </div>
 
                         <div class="md:col-span-1">
                             <label for="{{ form.stock_quantity.id_for_label }}" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Stock</label>
                             {{ form.stock_quantity }}
+                            {% if form.stock_quantity.errors %}
+                                <p class="form-error-text mt-2 text-red-500">
+                                    <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i>
+                                    {{ form.stock_quantity.errors.0 }}
+                                </p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -229,12 +275,22 @@
                                     {{ form.id }}
                                     {{ form.DELETE }}
                                 </div>
+                                <div class="form-error-text mt-2 text-center {% if not form.image.errors %}hidden{% endif %}">
+                                    <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i>
+                                    <span class="error-msg">
+                                        {% if form.image.errors %}{{ form.image.errors.0 }}{% endif %}
+                                    </span>
                                 <div class="form-error-text mt-2 text-center hidden">
                                     <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i>
                                     <span class="error-msg"></span>
                                 </div>
                                 <div class="mt-3">
                                     {{ form.alt_text }}
+                                    {% if form.alt_text.errors %}
+                                        <p class="form-error-text mt-1 text-red-500">
+                                            {{ form.alt_text.errors.0 }}
+                                        </p>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endfor %}

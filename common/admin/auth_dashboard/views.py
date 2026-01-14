@@ -560,34 +560,24 @@ def coupon_list(request):
 @never_cache
 def coupon_create(request):
     """Create a new coupon"""
-    from common.orders.models import Coupon
+    from common.orders.forms import CouponForm
     
     if request.method == 'POST':
-        try:
-            coupon = Coupon(
-                code=request.POST.get('code').strip().upper(),
-                description=request.POST.get('description', '').strip(),
-                discount_percentage=request.POST.get('discount_percentage'),
-                max_uses=request.POST.get('max_uses', 0),
-                max_uses_per_user=request.POST.get('max_uses_per_user', 1),
-                minimum_order_amount=request.POST.get('minimum_order_amount', 0),
-                max_discount_amount=request.POST.get('max_discount_amount') or None,
-                valid_from=request.POST.get('valid_from'),
-                valid_until=request.POST.get('valid_until'),
-                is_active=request.POST.get('is_active') == 'on',
-                created_by=request.user
-            )
+        form = CouponForm(request.POST)
+        if form.is_valid():
+            coupon = form.save(commit=False)
+            coupon.created_by = request.user
             coupon.save()
-            
             messages.success(request, f'Coupon "{coupon.code}" created successfully!')
             return redirect('auth_dashboard:coupon_list')
-            
-        except Exception as e:
-            messages.error(request, f'Error creating coupon: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CouponForm()
     
     context = {
         'title': 'Create New Coupon',
-        'now': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+        'form': form,
     }
     
     return render(request, 'admin/coupons/coupon_form.html', context)
@@ -598,33 +588,25 @@ def coupon_create(request):
 def coupon_edit(request, coupon_id):
     """Edit an existing coupon"""
     from common.orders.models import Coupon
+    from common.orders.forms import CouponForm
     
     coupon = get_object_or_404(Coupon, id=coupon_id)
     
     if request.method == 'POST':
-        try:
-            coupon.code = request.POST.get('code').strip().upper()
-            coupon.description = request.POST.get('description', '').strip()
-            coupon.discount_percentage = request.POST.get('discount_percentage')
-            coupon.max_uses = request.POST.get('max_uses', 0)
-            coupon.max_uses_per_user = request.POST.get('max_uses_per_user', 1)
-            coupon.minimum_order_amount = request.POST.get('minimum_order_amount', 0)
-            coupon.max_discount_amount = request.POST.get('max_discount_amount') or None
-            coupon.valid_from = request.POST.get('valid_from')
-            coupon.valid_until = request.POST.get('valid_until')
-            coupon.is_active = request.POST.get('is_active') == 'on'
-            coupon.save()
-            
+        form = CouponForm(request.POST, instance=coupon)
+        if form.is_valid():
+            form.save()
             messages.success(request, f'Coupon "{coupon.code}" updated successfully!')
             return redirect('auth_dashboard:coupon_list')
-            
-        except Exception as e:
-            messages.error(request, f'Error updating coupon: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CouponForm(instance=coupon)
     
     context = {
         'title': 'Edit Coupon',
         'coupon': coupon,
-        'now': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+        'form': form,
     }
     
     return render(request, 'admin/coupons/coupon_form.html', context)
