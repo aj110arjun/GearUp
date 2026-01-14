@@ -8,7 +8,7 @@
     <div class="flex justify-between items-center mb-8">
         <div>
             <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <i class="fas fa-history text-purple-600"></i>
+                <i class="fas fa-history text-indigo-600"></i>
                 Coupon Usage History
             </h2>
             <p class="text-gray-600 mt-2">Track all coupon applications and discounts</p>
@@ -23,51 +23,51 @@
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <!-- Total Usages -->
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-[1.02] transition-all duration-300">
+        <div class="bg-gradient-to-br from-indigo-600 to-blue-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-[1.02] transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-purple-100 text-xs font-semibold uppercase tracking-wider">Total Applications</p>
+                    <p class="text-indigo-50 text-xs font-semibold uppercase tracking-wider">Total Applications</p>
                     <p class="text-4xl font-extrabold mt-2">{{ total_usages }}</p>
                 </div>
                 <div class="bg-white/20 backdrop-blur-md rounded-2xl p-4">
                     <i class="fas fa-ticket-alt text-3xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-purple-100 text-sm">
+            <div class="mt-4 flex items-center text-indigo-50 text-sm">
                 <i class="fas fa-arrow-up mr-2 text-xs"></i>
                 <span>Cumulative usage count</span>
             </div>
         </div>
 
         <!-- Total Savings -->
-        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-[1.02] transition-all duration-300">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-[1.02] transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-emerald-100 text-xs font-semibold uppercase tracking-wider">Total Savings Given</p>
+                    <p class="text-blue-100 text-xs font-semibold uppercase tracking-wider">Total Savings Given</p>
                     <p class="text-4xl font-extrabold mt-2">₹{{ total_savings|floatformat:2 }}</p>
                 </div>
                 <div class="bg-white/20 backdrop-blur-md rounded-2xl p-4">
                     <i class="fas fa-wallet text-3xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-emerald-100 text-sm">
+            <div class="mt-4 flex items-center text-blue-100 text-sm">
                 <i class="fas fa-tag mr-2 text-xs"></i>
                 <span>Total discount value</span>
             </div>
         </div>
 
         <!-- Unique Beneficiaries -->
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-[1.02] transition-all duration-300">
+        <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white transform hover:scale-[1.02] transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-blue-100 text-xs font-semibold uppercase tracking-wider">Unique Beneficiaries</p>
+                    <p class="text-indigo-100 text-xs font-semibold uppercase tracking-wider">Unique Beneficiaries</p>
                     <p class="text-4xl font-extrabold mt-2">{{ unique_users }}</p>
                 </div>
                 <div class="bg-white/20 backdrop-blur-md rounded-2xl p-4">
                     <i class="fas fa-users text-3xl"></i>
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-blue-100 text-sm">
+            <div class="mt-4 flex items-center text-indigo-100 text-sm">
                 <i class="fas fa-heart mr-2 text-xs"></i>
                 <span>Impacted customers</span>
             </div>
@@ -78,11 +78,11 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-hidden hover:shadow-md transition-shadow">
         <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
             <h3 class="text-sm font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
-                <i class="fas fa-filter text-purple-500"></i>
+                <i class="fas fa-filter text-indigo-500"></i>
                 Search & Filter Usages
             </h3>
             {% if coupon_filter %}
-            <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
+            <span class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
                 Active Filter: "{{ coupon_filter }}"
             </span>
             {% endif %}
@@ -93,14 +93,14 @@
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <input type="text" 
                            name="coupon" 
-                           class="w-full pl-11 pr-4 py-3 bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all outline-none text-gray-700" 
+                           class="w-full pl-11 pr-4 py-3 bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none text-gray-700" 
                            placeholder="Filter by specific coupon code (e.g. SUMMER2024)..." 
                            value="{{ coupon_filter }}">
                 </div>
                 
                 <div class="flex gap-2">
                     <button type="submit" 
-                            class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-200 active:scale-95">
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 active:scale-95">
                         <i class="fas fa-bolt"></i>
                         Update View
                     </button>
@@ -119,7 +119,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
         <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white">
             <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
-                <i class="fas fa-stream text-purple-500"></i>
+                <i class="fas fa-stream text-indigo-500"></i>
                 Detailed Usage Log
             </h3>
         </div>
@@ -136,10 +136,10 @@
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     {% for usage in usages %}
-                    <tr class="group hover:bg-purple-50/30 transition-colors">
+                    <tr class="group hover:bg-indigo-50/30 transition-colors">
                         <td class="px-6 py-5">
                             <div class="flex items-center gap-3">
-                                <span class="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg font-black font-mono tracking-tight text-base shadow-sm border border-purple-200">
+                                <span class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg font-black font-mono tracking-tight text-base shadow-sm border border-indigo-200">
                                     {{ usage.coupon.code }}
                                 </span>
                             </div>
@@ -152,7 +152,7 @@
                         </td>
                         <td class="px-6 py-5">
                             {% if usage.order %}
-                                <a href="{% url 'orders:admin_order_detail' usage.order.order_id %}" class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-bold hover:underline decoration-2 transition-all">
+                                <a href="{% url 'orders:admin_order_detail' usage.order.order_id %}" class="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-bold hover:underline decoration-2 transition-all">
                                     <i class="fas fa-external-link-alt text-xs opacity-50"></i>
                                     #{{ usage.order.order_number }}
                                 </a>
@@ -161,7 +161,7 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-5 text-right">
-                            <span class="text-emerald-700 font-black text-lg">
+                            <span class="text-indigo-700 font-black text-lg">
                                 ₹{{ usage.discount_amount|floatformat:2 }}
                             </span>
                         </td>
@@ -197,7 +197,7 @@
                     {% if page_obj.has_previous %}
                     <li>
                         <a href="?page={{ page_obj.previous_page_number }}{% if coupon_filter %}&coupon={{ coupon_filter }}{% endif %}" 
-                           class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-white hover:border-purple-500 hover:text-purple-600 transition-all shadow-sm">
+                           class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-white hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm">
                             <i class="fas fa-chevron-left"></i>
                         </a>
                     </li>
@@ -207,7 +207,7 @@
                         {% if num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                         <li>
                             <a href="?page={{ num }}{% if coupon_filter %}&coupon={{ coupon_filter }}{% endif %}" 
-                               class="w-10 h-10 flex items-center justify-center {% if page_obj.number == num %}bg-purple-600 text-white shadow-lg shadow-purple-200 border-purple-600{% else %}bg-white border border-gray-200 text-gray-600 hover:border-purple-500 hover:text-purple-600{% endif %} rounded-xl transition-all font-bold">
+                               class="w-10 h-10 flex items-center justify-center {% if page_obj.number == num %}bg-indigo-600 text-white shadow-lg shadow-indigo-200 border-indigo-600{% else %}bg-white border border-gray-200 text-gray-600 hover:border-indigo-500 hover:text-indigo-600{% endif %} rounded-xl transition-all font-bold">
                                 {{ num }}
                             </a>
                         </li>
@@ -217,7 +217,7 @@
                     {% if page_obj.has_next %}
                     <li>
                         <a href="?page={{ page_obj.next_page_number }}{% if coupon_filter %}&coupon={{ coupon_filter }}{% endif %}" 
-                           class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-white hover:border-purple-500 hover:text-purple-600 transition-all shadow-sm">
+                           class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-white hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm">
                             <i class="fas fa-chevron-right"></i>
                         </a>
                     </li>

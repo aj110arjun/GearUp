@@ -65,7 +65,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Address Type</label>
                         {{ form.address_type }}
                         {% if form.address_type.errors %}
-                        <p class="form-error-text"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.address_type.errors.0 }}</p>
+                        <p class="form-error-text text-red-500"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.address_type.errors.0 }}</p>
                         {% endif %}
                     </div>
 
@@ -74,7 +74,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                         {{ form.full_name }}
                         {% if form.full_name.errors %}
-                        <p class="form-error-text"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.full_name.errors.0 }}</p>
+                        <p class="form-error-text text-red-500"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.full_name.errors.0 }}</p>
                         {% endif %}
                     </div>
 
@@ -83,7 +83,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                         {{ form.phone_number }}
                         {% if form.phone_number.errors %}
-                        <p class="form-error-text"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.phone_number.errors.0 }}</p>
+                        <p class="form-error-text text-red-500"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.phone_number.errors.0 }}</p>
                         {% endif %}
                     </div>
 
@@ -92,7 +92,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 1</label>
                         {{ form.address_line1 }}
                         {% if form.address_line1.errors %}
-                        <p class="form-error-text"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.address_line1.errors.0 }}</p>
+                        <p class="form-error-text text-red-500"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.address_line1.errors.0 }}</p>
                         {% endif %}
                     </div>
 
@@ -108,21 +108,21 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
                             {{ form.city }}
                             {% if form.city.errors %}
-                            <p class="form-error-text"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.city.errors.0 }}</p>
+                            <p class="form-error-text text-red-500"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.city.errors.0 }}</p>
                             {% endif %}
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
                             {{ form.state }}
                             {% if form.state.errors %}
-                            <p class="form-error-text"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.state.errors.0 }}</p>
+                            <p class="form-error-text text-red-500"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.state.errors.0 }}</p>
                             {% endif %}
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
                             {{ form.zip_code }}
                             {% if form.zip_code.errors %}
-                            <p class="form-error-text"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.zip_code.errors.0 }}</p>
+                            <p class="form-error-text text-red-500"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.zip_code.errors.0 }}</p>
                             {% endif %}
                         </div>
                     </div>
@@ -132,7 +132,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
                         {{ form.country }}
                         {% if form.country.errors %}
-                        <p class="form-error-text"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.country.errors.0 }}</p>
+                        <p class="form-error-text text-red-500"><i class="fas fa-exclamation-circle text-[10px]"></i> {{ form.country.errors.0 }}</p>
                         {% endif %}
                     </div>
 
