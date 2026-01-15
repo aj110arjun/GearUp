@@ -35,11 +35,6 @@ def address_create(request):
         if form.is_valid():
             address = form.save(commit=False)
             address.user = request.user
-            
-            # If this is the first address, set it as default
-            if not Address.objects.filter(user=request.user, is_active=True).exists():
-                address.is_default = True
-            
             address.save()
             messages.success(request, 'Address added successfully!')
             
@@ -48,7 +43,9 @@ def address_create(request):
                 return redirect(next_url)
             return redirect('address:address_list')
     else:
-        form = AddressForm()
+        # Check if user has any active addresses to set initial default checkbox
+        has_addresses = Address.objects.filter(user=request.user, is_active=True).exists()
+        form = AddressForm(initial={'is_default': not has_addresses})
     
     context = {
         'form': form,

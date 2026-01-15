@@ -38,6 +38,12 @@ class Address(models.Model):
         return f"{self.full_name} - {self.city}"
 
     def save(self, *args, **kwargs):
+        # If this is the first active address for this user, make it default
+        if not self.pk: # Only for new addresses
+            if not Address.objects.filter(user=self.user, is_active=True).exists():
+                self.is_default = True
+                
         if self.is_default:
-            Address.objects.filter(user=self.user, is_default=True).update(is_default=False)
+            # Set other active addresses for this user to not default
+            Address.objects.filter(user=self.user, is_default=True).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)
