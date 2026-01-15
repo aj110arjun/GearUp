@@ -96,6 +96,42 @@ document.addEventListener('DOMContentLoaded', function () {
             this.form.submit();
         });
     }
+
+    // Custom Report Form Validation
+    const reportForm = document.getElementById('customReportForm');
+    if (reportForm) {
+        reportForm.addEventListener('submit', function(e) {
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            
+            if (!startDateInput || !endDateInput) return;
+
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const today = new Date();
+            today.setHours(23, 59, 59, 999); // Allow today
+
+            // 1. Check if dates are in the future
+            if (startDate > today) {
+                e.preventDefault();
+                window.showSnackbar('Start date cannot be in the future', 'error');
+                return;
+            }
+
+            if (endDate > today) {
+                e.preventDefault();
+                window.showSnackbar('End date cannot be in the future', 'error');
+                return;
+            }
+
+            // 2. Check if start date is after end date
+            if (startDate > endDate) {
+                e.preventDefault();
+                window.showSnackbar('Start date must be before or equal to end date', 'error');
+                return;
+            }
+        });
+    }
 });
 
 // Report Modal Functions (Globally accessible)
