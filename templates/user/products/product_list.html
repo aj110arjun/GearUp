@@ -71,7 +71,10 @@
           <input type="text" name="q" id="search-input"
                  value="{{ filters.search|default:'' }}"
                  placeholder="Search products, brands, categories..."
-                 class="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:bg-white focus:border-emerald-500 transition-all text-sm font-medium">
+                 class="block w-full pl-11 pr-10 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:bg-white focus:border-emerald-500 transition-all text-sm font-medium">
+          <button type="button" id="clear-btn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-emerald-500 transition-colors hidden">
+            <i class="fas fa-times-circle"></i>
+          </button>
         </div>
       </div>
 
