@@ -397,8 +397,20 @@
                     </div>
                     <div class="flex justify-between items-center py-2">
                         <span class="text-gray-600">Shipping</span>
-                        <span class="font-medium text-emerald-600">FREE</span>
+                        <span class="font-medium text-gray-900">
+                            {% if order.shipping_cost > 0 %}
+                            ₹{{ order.shipping_cost }}
+                            {% else %}
+                            <span class="text-emerald-600">FREE</span>
+                            {% endif %}
+                        </span>
                     </div>
+                    {% if order.coupon_discount > 0 %}
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-600">Coupon Discount</span>
+                        <span class="font-medium text-rose-600">- ₹{{ order.coupon_discount }}</span>
+                    </div>
+                    {% endif %}
                     <div class="border-t border-gray-200 pt-4 mt-2">
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-bold text-gray-900">Total Amount</span>
