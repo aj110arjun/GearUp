@@ -304,26 +304,46 @@ def download_sales_report(request):
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
     
+    today = timezone.now()
+    
     if start_date_str:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
             start_date = timezone.make_aware(start_date)
         except:
-            start_date = timezone.now() - timedelta(days=30)
+            start_date = today - timedelta(days=30)
     else:
-        start_date = timezone.now() - timedelta(days=30)
+        start_date = today - timedelta(days=30)
     
     if end_date_str:
         try:
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
             end_date = timezone.make_aware(end_date)
         except:
-            end_date = timezone.now()
+            end_date = today
     else:
-        end_date = timezone.now()
+        end_date = today
     
     # Ensure end_date is at end of day
-    end_date = end_date.replace(hour=23, minute=59, second=59)
+    end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    # Backend Validation
+    if start_date > today:
+        messages.error(request, "Start date cannot be in the future.")
+        return redirect('auth_dashboard:dashboard')
+    
+    if end_date.date() > today.date() and end_date > today:
+         # Small buffer for today's end_date is already handled by microsecond
+         pass
+
+    if start_date > end_date:
+        messages.error(request, "Start date must be before or equal to end date.")
+        return redirect('auth_dashboard:dashboard')
+    
+    # Check if end date is in the future (comparing dates)
+    if end_date.date() > today.date():
+        messages.error(request, "End date cannot be in the future.")
+        return redirect('auth_dashboard:dashboard')
     
     # Generate and return report
     return generate_report_response(report_format, start_date, end_date, report_type)
