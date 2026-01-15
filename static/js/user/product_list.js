@@ -35,7 +35,8 @@
         clearBtn.addEventListener('click', function() {
             input.value = '';
             toggleClearBtn();
-            input.focus();
+            const form = input.closest('form');
+            if (form) form.submit();
         });
         toggleClearBtn();
     }
