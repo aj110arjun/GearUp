@@ -243,7 +243,7 @@ window.globalRemoveFromWishlist = async function(itemId, element) {
         onConfirm: async () => {
             if (element) element.style.opacity = '0.5';
             const url = window.GEAR_UP_CONFIG.removeWishlistUrl.replace('00000000-0000-0000-0000-000000000000', itemId);
-            const data = await window.globalApiPOST(url);
+            const data = await window.globalApiPOST(url, {}, { showLoader: true });
             if (data.success) {
                 if (element) {
                     element.style.transition = 'all 0.3s';
@@ -267,7 +267,7 @@ window.globalMoveToCart = async function(itemId, element, variantId = null) {
     if (element) element.style.opacity = '0.5';
     const url = window.GEAR_UP_CONFIG.moveToCartUrl.replace('00000000-0000-0000-0000-000000000000', itemId);
     const body = variantId ? { variant_id: variantId } : {};
-    const data = await window.globalApiPOST(url, body);
+    const data = await window.globalApiPOST(url, body, { showLoader: true });
     if (data.success) {
         if (element) {
             element.style.transition = 'all 0.3s';
@@ -292,7 +292,7 @@ window.globalClearWishlist = async function() {
         message: 'Are you sure you want to remove ALL items from your wishlist?',
         confirmText: 'Clear All',
         onConfirm: async () => {
-            const data = await window.globalApiPOST(window.GEAR_UP_CONFIG.clearWishlistUrl);
+            const data = await window.globalApiPOST(window.GEAR_UP_CONFIG.clearWishlistUrl, {}, { showLoader: true });
             if (data.success) {
                 window.updateWishlistCount(0);
                 location.reload();
@@ -307,7 +307,7 @@ window.globalMoveAllToCart = async function() {
         message: 'Move all available items from your wishlist to your cart?',
         variant: 'success',
         onConfirm: async () => {
-            const data = await window.globalApiPOST(window.GEAR_UP_CONFIG.moveAllToCartUrl);
+            const data = await window.globalApiPOST(window.GEAR_UP_CONFIG.moveAllToCartUrl, {}, { showLoader: true });
             if (data.success) {
                 location.reload();
             }
