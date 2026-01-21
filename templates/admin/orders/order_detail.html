@@ -252,6 +252,68 @@
                 </div>
                 {% endif %}
 
+                <!-- Return Details -->
+                {% if order.return_requested_at %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h5 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-undo mr-2 text-orange-500"></i>
+                        Return Details
+                    </h5>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4 bg-orange-50 p-4 rounded-lg">
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Return Reason</label>
+                                <p class="text-sm font-semibold text-gray-900">{{ order.get_return_reason_display }}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Requested On</label>
+                                <p class="text-sm font-medium text-gray-900">{{ order.return_requested_at|date:"d/m/Y h:i A" }}</p>
+                            </div>
+                        </div>
+
+                        {% if order.return_description %}
+                        <div>
+                            <label class="text-xs font-medium text-gray-500">Description</label>
+                            <p class="text-sm text-gray-700 mt-1 italic">"{{ order.return_description }}"</p>
+                        </div>
+                        {% endif %}
+
+                        {% if order.return_images %}
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 block mb-2">Uploaded Images</label>
+                            <div class="flex flex-wrap gap-2">
+                                {% for image_url in order.return_images %}
+                                <a href="{{ image_url }}" target="_blank" class="block">
+                                    <img src="{{ image_url }}" alt="Return image" class="h-20 w-20 object-cover rounded-lg border border-gray-200 hover:opacity-75 transition-opacity">
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if order.return_approved_at %}
+                        <div class="pt-4 border-t border-gray-100 flex items-center text-green-600">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <span class="text-sm font-medium">Approved on {{ order.return_approved_at|date:"d/m/Y h:i A" }}</span>
+                        </div>
+                        {% elif order.return_rejected_at %}
+                        <div class="pt-4 border-t border-gray-100">
+                            <div class="flex items-center text-red-600 mb-2">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                <span class="text-sm font-medium">Rejected on {{ order.return_rejected_at|date:"d/m/Y h:i A" }}</span>
+                            </div>
+                            {% if order.return_rejection_reason %}
+                            <div class="p-3 bg-red-50 rounded-lg text-sm text-red-800">
+                                <span class="font-bold">Reason:</span> {{ order.return_rejection_reason }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Order Timeline -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h5 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
@@ -343,6 +405,16 @@
                             <span class="text-gray-600">Shipping</span>
                             <span class="font-medium">₹{{ order.shipping_cost|intcomma }}</span>
                         </div>
+                        
+                        {% if order.coupon_discount > 0 %}
+                        <div class="flex justify-between text-emerald-600">
+                            <span class="flex items-center">
+                                <i class="fas fa-tag mr-1 text-xs"></i>
+                                Coupon Discount {% if order.coupon_code %}({{ order.coupon_code }}){% endif %}
+                            </span>
+                            <span class="font-medium">- ₹{{ order.coupon_discount|intcomma }}</span>
+                        </div>
+                        {% endif %}
                         
                         <hr class="my-2">
                         
@@ -488,6 +560,35 @@
                         </button>
                         {% endif %}
                         
+                        <!-- Return Actions -->
+                        {% if order.order_status == 'return_requested' %}
+                        <div class="space-y-2 pt-2 border-t border-gray-100">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Return Management</p>
+                            <a href="{% url 'orders:admin_approve_return' order.order_id %}"
+                               class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm flex items-center justify-center gap-2">
+                                <i class="fas fa-check"></i>
+                                Approve Return
+                            </a>
+                            <a href="{% url 'orders:admin_reject_return' order.order_id %}"
+                               class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm flex items-center justify-center gap-2">
+                                <i class="fas fa-times"></i>
+                                Reject Return
+                            </a>
+                        </div>
+                        {% elif order.order_status == 'return_approved' %}
+                        <div class="space-y-2 pt-2 border-t border-gray-100">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Return Management</p>
+                            <form method="post" action="{% url 'orders:admin_complete_return' order.order_id %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm flex items-center justify-center gap-2">
+                                    <i class="fas fa-check-double"></i>
+                                    Complete Return
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+
                         <!-- Send Email -->
                         <button onclick="sendEmailNotification('{{ order.id }}')"
                                 class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm flex items-center justify-center gap-2">

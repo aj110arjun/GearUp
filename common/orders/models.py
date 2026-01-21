@@ -358,17 +358,41 @@ class Coupon(models.Model):
         self.code = self.code.upper()
         super().save(*args, **kwargs)
     
+    def clean(self):
+        """
+        Model-level validation
+        """
+        if self.valid_from and self.valid_until and self.valid_until <= self.valid_from:
+            raise ValidationError({
+                'valid_until': 'Valid until date must be after valid from date.'
+            })
+        
+        if self.discount_percentage:
+            if self.discount_percentage < 10:
+                raise ValidationError({
+                    'discount_percentage': 'Discount percentage must be at least 10%.'
+                })
+            if self.discount_percentage > 90:
+                raise ValidationError({
+                    'discount_percentage': 'Discount percentage cannot exceed 90%.'
+                })
+
+        if self.max_discount_amount is not None and self.max_discount_amount <= 0:
+            raise ValidationError({
+                'max_discount_amount': 'Maximum discount amount must be greater than 0.'
+            })
+
     def is_valid(self):
         """Check if coupon is currently valid"""
         now = timezone.now()
         
         # Check if active
         if not self.is_active:
-            return False, "This coupon is not active"
+            return False, "This coupon is currently deactivated"
         
         # Check validity period
         if now < self.valid_from:
-            return False, "This coupon is not yet valid"
+            return False, f"This coupon will be valid from {self.valid_from.strftime('%B %d, %Y')}"
         
         if now > self.valid_until:
             return False, "This coupon has expired"

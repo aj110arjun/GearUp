@@ -795,6 +795,22 @@
                                             <strong>Description:</strong> {{ order.return_description }}
                                         </p>
                                         {% endif %}
+                                        
+                                        {% if order.return_images %}
+                                        <div class="mt-4">
+                                            <p class="text-sm font-medium text-orange-800 mb-2">Uploaded Evidence</p>
+                                            <div class="flex flex-wrap gap-2">
+                                                {% for image_url in order.return_images %}
+                                                <a href="{{ image_url }}" target="_blank" class="block group">
+                                                    <div class="relative h-20 w-20 rounded-lg overflow-hidden border border-orange-200 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:border-orange-300">
+                                                        <img src="{{ image_url }}" alt="Return evidence" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110">
+                                                        <div class="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                                                    </div>
+                                                </a>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 {% endif %}

@@ -665,6 +665,8 @@ def product_list_user(request):
     category_id = request.GET.get('category')
     search_query = request.GET.get('q')
     sort_by = request.GET.get('sort', '')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
     
     # Apply filters
     if category_id and category_id != '':
@@ -680,6 +682,18 @@ def product_list_user(request):
             Q(brand__icontains=search_query) |
             Q(category__name__icontains=search_query)
         )
+
+    if min_price:
+        try:
+            products = products.filter(variants__price__gte=float(min_price), variants__is_active=True, variants__is_deleted=False)
+        except (ValueError, TypeError):
+            pass
+
+    if max_price:
+        try:
+            products = products.filter(variants__price__lte=float(max_price), variants__is_active=True, variants__is_deleted=False)
+        except (ValueError, TypeError):
+            pass
     
     # Remove duplicates
     products = products.distinct()
@@ -746,6 +760,8 @@ def product_list_user(request):
         'search': search_query or '',
         'category': category_id or '',
         'sort': sort_by or '',
+        'min_price': min_price or '',
+        'max_price': max_price or '',
     }
     
     context = {

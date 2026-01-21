@@ -1,5 +1,6 @@
 {% extends "user/base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}My Wishlist - GearUp{% endblock %}
 
@@ -264,19 +265,25 @@
                       <div class="mb-5">
                         {% with first_variant=item.product.get_first_variant %}
                         {% if first_variant %}
-                      {% if first_variant.compare_price and first_variant.compare_price > first_variant.price %}
-                            <div class="flex flex-col">
-                              <span class="text-sm text-gray-400 line-through">₹{{ first_variant.compare_price }}</span>
-                              <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded">
-                                Save ₹{{ first_variant.compare_price|add:"-"|add:first_variant.price }}
-                              </span>
-                            </div>
+                          <div class="flex items-end gap-2 mb-1">
+                            <span class="text-2xl font-black text-gray-900 font-secondary">₹{{ first_variant.get_discounted_price|floatformat:0|intcomma }}</span>
+                            {% if first_variant.get_best_offer > 0 %}
+                            <span class="text-sm font-bold text-gray-400 line-through mb-1">₹{{ first_variant.price|floatformat:0|intcomma }}</span>
                             {% endif %}
+                          </div>
+                          {% if first_variant.get_best_offer > 0 %}
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-emerald-600 bg-emerald-100/50 px-2 py-1 rounded-lg">
+                              <i class="fas fa-tag mr-1"></i>{{ first_variant.get_best_offer }}% OFF
+                            </span>
+                            <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Great Deal!</span>
+                          </div>
+                          {% endif %}
                         {% else %}
-                          <span class="text-gray-400">Price not available</span>
+                          <span class="text-gray-400 italic">Configuration unavailable</span>
                         {% endif %}
                         {% endwith %}
-                        
+
                         <!-- Hidden Variant Data -->
                         <div id="variants-data-{{ item.id }}" class="hidden">
                             {% for v in item.product.variants.all %}

@@ -39,7 +39,7 @@
 
         <!-- Form Card -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <form method="post">
+            <form method="post" novalidate>
                 {% csrf_token %}
                 
                 {% if form.non_field_errors %}
@@ -142,10 +142,10 @@
                                        name="discount_percentage" 
                                        value="{{ form.discount_percentage.value|default:'' }}"
                                        step="0.01"
-                                       min="0"
-                                       max="100"
+                                       min="10"
+                                       max="90"
                                        required
-                                       placeholder="10.00">
+                                       placeholder="15.00">
                                 <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">%</span>
                             </div>
                             {% if form.discount_percentage.errors %}
@@ -273,7 +273,6 @@
                                    id="valid_from" 
                                    name="valid_from" 
                                    value="{{ form.valid_from.value|date:'Y-m-d\TH:i'|default:'' }}"
-                                   min="{% now 'Y-m-d\TH:i' %}"
                                    required
                                    onchange="updateMinEndDate()">
                             {% if form.valid_from.errors %}
@@ -282,7 +281,7 @@
                                     {{ form.valid_from.errors.0 }}
                                 </p>
                             {% endif %}
-                            <p class="text-xs text-gray-500 mt-1">Coupon will be valid from 00:00 on this date</p>
+                            <p class="text-xs text-gray-500 mt-1">Coupon will be valid from this date/time</p>
                         </div>
                         <div>
                             <label for="valid_until" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -293,7 +292,6 @@
                                    id="valid_until" 
                                    name="valid_until" 
                                    value="{{ form.valid_until.value|date:'Y-m-d\TH:i'|default:'' }}"
-                                   min="{% now 'Y-m-d\TH:i' %}"
                                    required>
                             {% if form.valid_until.errors %}
                                 <p class="form-error-text">

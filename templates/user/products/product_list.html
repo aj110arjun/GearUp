@@ -43,7 +43,7 @@
         <p class="text-gray-500 font-medium">Discover <strong>{{ products.paginator.count }}</strong> professional survival essentials</p>
       </div>
       <div class="flex items-center gap-2">
-        {% if filters.search or filters.category or filters.sort %}
+        {% if filters.search or filters.category or filters.sort or filters.min_price or filters.max_price %}
         <a href="{% url 'products:product_list_user' %}" class="px-5 py-2.5 bg-gray-50 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all flex items-center gap-2 border border-gray-200">
            <i class="fas fa-rotate-left text-xs"></i> Reset
         </a>
@@ -54,7 +54,7 @@
     <!-- Enhanced Filter Form -->
     <form method="get" id="filter-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-end">
       <!-- Search Keywords -->
-      <div class="lg:col-span-5">
+      <div class="lg:col-span-4">
         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2.5 ml-1">Search Keywords</label>
         <div class="relative group">
           <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -71,7 +71,7 @@
       </div>
 
       <!-- Category Selector -->
-      <div class="lg:col-span-3">
+      <div class="lg:col-span-2">
         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2.5 ml-1">Browse Category</label>
         <select name="category" 
                 class="block w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:bg-white focus:border-emerald-500 transition-all text-sm font-bold text-gray-700 cursor-pointer">
@@ -80,6 +80,24 @@
           <option value="{{ cat.id }}" {% if filters.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
           {% endfor %}
         </select>
+      </div>
+
+      <!-- Price Range -->
+      <div class="lg:col-span-2">
+        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2.5 ml-1">Price Range (₹)</label>
+        <div class="flex items-center gap-2">
+          <input type="number" name="min_price" 
+                 value="{{ filters.min_price|default:'' }}"
+                 placeholder="Min"
+                 min="0"
+                 class="block w-full px-3 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:bg-white focus:border-emerald-500 transition-all text-xs font-bold text-gray-700">
+          <span class="text-gray-300 font-bold">-</span>
+          <input type="number" name="max_price" 
+                 value="{{ filters.max_price|default:'' }}"
+                 placeholder="Max"
+                 min="0"
+                 class="block w-full px-3 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:bg-white focus:border-emerald-500 transition-all text-xs font-bold text-gray-700">
+        </div>
       </div>
 
       <!-- Sorting -->

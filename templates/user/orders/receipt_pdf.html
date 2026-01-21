@@ -135,6 +135,12 @@
             <td>Shipping</td>
             <td class="text-right">₹{{ order.shipping_cost }}</td>
         </tr>
+        {% if order.coupon_discount > 0 %}
+        <tr>
+            <td>Discount {% if order.coupon_code %}({{ order.coupon_code }}){% endif %}</td>
+            <td class="text-right">- ₹{{ order.coupon_discount }}</td>
+        </tr>
+        {% endif %}
         {% if order.payment_status == 'refunded' %}
         <tr>
             <td>Refund</td>

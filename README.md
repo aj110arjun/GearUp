@@ -49,60 +49,6 @@ Create a Virtual Enviornment
   pip install -r requirements.txt
 ```
 
-
-
-
-
-
-
-
- ## 🔐 Enviornment Variables
-
- `SECRET_KEY`
-
-  `DEBUG`
-  
-  `ALLOWED_HOSTS`
-  
-  `RAZORPAY_KEY_ID`
-  
-  `RAZORPAY_KEY_SECRET`
-  
-  `EMAIL_BACKEND`
-  
-  `EMAIL_HOST`
-  
-  `EMAIL_PORT`
-  
-  `EMAIL_USE_TLS`
-  
-  `EMAIL_HOST_USER`
-  
-  `EMAIL_HOST_PASSWORD`
-  
-  `DEFAULT_FROM_EMAIL`
-  
-  `CLOUD_NAME`
-  
-  `API_KEY`
-  
-  `API_SECRET`
-  
-  `GOOGLE_CLIENT_ID`
-  
-  `GOOGLE_CLIENT_SECRET`
-  
-  `NAME`
-  
-  `PASSWORD`
-  
-  `USER_DB`
-
-
-
-
-
-
 ## Setup
 
 Clone the project

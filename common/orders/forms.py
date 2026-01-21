@@ -225,7 +225,9 @@ class CouponForm(forms.ModelForm):
         if not code:
             raise forms.ValidationError("Coupon code is required.")
         
-        # Check uniqueness manually if needed, although models handle it
+        if any(not c.isalnum() for c in code):
+            raise forms.ValidationError("Coupon code should only contain letters and numbers.")
+
         query = Coupon.objects.filter(code=code)
         if self.instance.pk:
             query = query.exclude(pk=self.instance.pk)
@@ -234,12 +236,50 @@ class CouponForm(forms.ModelForm):
             
         return code
 
+    def clean_discount_percentage(self):
+        discount = self.cleaned_data.get('discount_percentage')
+        if discount is not None:
+            if discount < 10:
+                raise forms.ValidationError("Discount percentage must be at least 10%.")
+            if discount > 90:
+                raise forms.ValidationError("Discount percentage cannot exceed 90%.")
+        return discount
+
+    def clean_minimum_order_amount(self):
+        amount = self.cleaned_data.get('minimum_order_amount')
+        if amount is not None and amount < 0:
+            raise forms.ValidationError("Minimum order amount cannot be negative.")
+        return amount
+
+    def clean_max_discount_amount(self):
+        amount = self.cleaned_data.get('max_discount_amount')
+        if amount is not None and amount <= 0:
+            raise forms.ValidationError("Maximum discount amount must be greater than 0 if specified.")
+        return amount
+
+    def clean_max_uses(self):
+        uses = self.cleaned_data.get('max_uses')
+        if uses is not None and uses < 0:
+            raise forms.ValidationError("Maximum uses cannot be negative.")
+        return uses
+
+    def clean_max_uses_per_user(self):
+        uses = self.cleaned_data.get('max_uses_per_user')
+        if uses is not None and uses < 0:
+            raise forms.ValidationError("Maximum uses per user cannot be negative.")
+        return uses
+
     def clean(self):
         cleaned_data = super().clean()
         valid_from = cleaned_data.get('valid_from')
         valid_until = cleaned_data.get('valid_until')
+        now = timezone.now()
 
-        if valid_from and valid_until and valid_until < valid_from:
-            self.add_error('valid_until', "End date cannot be before start date.")
+        if valid_from and valid_until:
+            if valid_until <= valid_from:
+                self.add_error('valid_until', "Expiry date must be after the start date.")
+            
+            if valid_until <= now:
+                self.add_error('valid_until', "Expiry date must be in the future.")
 
         return cleaned_data
