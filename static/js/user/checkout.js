@@ -187,7 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const couponDiscount = appliedCoupon ? parseFloat(appliedCoupon.discount_amount) : 0;
         
         // Show loading
-        loadingOverlay?.classList.remove('hidden');
+        if (window.showPageLoader) window.showPageLoader();
+        else loadingOverlay?.classList.remove('hidden');
         
         // Create Razorpay order via AJAX
         fetch(config.createRazorpayOrderUrl, {
@@ -202,7 +203,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            loadingOverlay?.classList.add('hidden');
+            if (window.hidePageLoader) window.hidePageLoader();
+            else loadingOverlay?.classList.add('hidden');
             
             if (data.success) {
                 const options = {
@@ -262,7 +264,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     checkoutForm.appendChild(failureReasonInput);
                     
                     // Show loading and submit form to create order with failed status
-                    loadingOverlay?.classList.remove('hidden');
+                    if (window.showPageLoader) window.showPageLoader();
+                    else loadingOverlay?.classList.remove('hidden');
                     
                     // Add slight delay to ensure loading is visible
                     setTimeout(() => {
@@ -280,7 +283,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            loadingOverlay?.classList.add('hidden');
+            if (window.hidePageLoader) window.hidePageLoader();
+            else loadingOverlay?.classList.add('hidden');
             console.error('Error:', error);
             alert('Failed to initialize payment. Please try again.');
         });
@@ -288,7 +292,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function submitOrder() {
         // Show loading overlay
-        loadingOverlay?.classList.remove('hidden');
+        if (window.showPageLoader) window.showPageLoader();
+        else loadingOverlay?.classList.remove('hidden');
         
         // Submit form
         checkoutForm.submit();
@@ -316,7 +321,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            loadingOverlay?.classList.add('hidden');
+            if (window.hidePageLoader) window.hidePageLoader();
+            else loadingOverlay?.classList.add('hidden');
             if (data.success) {
                 appliedCoupon = data;
                 showAppliedCoupon(data);
@@ -343,7 +349,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            loadingOverlay?.classList.add('hidden');
+            if (window.hidePageLoader) window.hidePageLoader();
+            else loadingOverlay?.classList.add('hidden');
             console.error('Coupon error:', error);
             alert('Error applying coupon. Please try again.');
         });

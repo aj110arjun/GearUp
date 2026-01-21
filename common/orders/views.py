@@ -248,10 +248,12 @@ def process_checkout(request, cart, cart_items, wallet):
         )
         order.save()
         
-        # Decrement stock quantity
+        # Decrement stock quantity atomically
         if order.variant:
-            order.variant.stock_quantity -= order.quantity
-            order.variant.save()
+            from django.db.models import F
+            order.variant.__class__.objects.filter(pk=order.variant.pk).update(
+                stock_quantity=F('stock_quantity') - order.quantity
+            )
             
         created_orders.append(order)
 
@@ -509,8 +511,9 @@ def cancel_order(request, order_id):
     
     # Increment stock quantity back
     if order.variant:
-        order.variant.stock_quantity += order.quantity
-        order.variant.save()
+        order.variant.__class__.objects.filter(pk=order.variant.pk).update(
+            stock_quantity=F('stock_quantity') + order.quantity
+        )
     
     messages.success(request, 'Order cancelled successfully.')
     return redirect('orders:order_list')
@@ -769,6 +772,7 @@ def create_razorpay_order(request):
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @require_POST
+@transaction.atomic
 def admin_order_update_status(request, order_id):
     """Update order status - handles POST requests only"""
     order = get_object_or_404(Order, order_id=order_id)
@@ -886,10 +890,17 @@ def admin_order_update_status(request, order_id):
     
     order.save()
     
-    # Increment stock quantity back if cancelled
-    if new_status == 'cancelled' and order.variant:
-        order.variant.stock_quantity += order.quantity
-        order.variant.save()
+    # Increment stock quantity back if cancelled or returned (and not already so)
+    if new_status in ['cancelled', 'returned'] and old_status not in ['cancelled', 'returned'] and order.variant:
+        order.variant.__class__.objects.filter(pk=order.variant.pk).update(
+            stock_quantity=F('stock_quantity') + order.quantity
+        )
+    
+    # If moving FROM cancelled/returned to something else, decrement stock
+    elif old_status in ['cancelled', 'returned'] and new_status not in ['cancelled', 'returned', 'return_requested', 'return_approved'] and order.variant:
+        order.variant.__class__.objects.filter(pk=order.variant.pk).update(
+            stock_quantity=F('stock_quantity') - order.quantity
+        )
     
     # Create order status history (optional but recommended)
     try:
@@ -983,6 +994,7 @@ def admin_order_update_payment_status(request, order_id):
 
 @staff_member_required(login_url='auth_dashboard:signin')
 @require_POST
+@transaction.atomic
 def admin_order_cancel(request, order_id):
     """Cancel an order"""
     order = get_object_or_404(Order, order_id=order_id)
@@ -1015,8 +1027,9 @@ def admin_order_cancel(request, order_id):
     
     # Increment stock quantity back
     if order.variant:
-        order.variant.stock_quantity += order.quantity
-        order.variant.save()
+        order.variant.__class__.objects.filter(pk=order.variant.pk).update(
+            stock_quantity=F('stock_quantity') + order.quantity
+        )
     
     # Here you could:
     # 1. Create cancellation record
@@ -1241,8 +1254,9 @@ def admin_reject_return(request, order_id):
     
     return render(request, 'admin/orders/reject_return.html', context)
 
-@staff_member_required
+@staff_member_required(login_url='auth_dashboard:signin')
 @require_POST
+@transaction.atomic
 def admin_complete_return(request, order_id):
     """Admin marks return as completed and processes refund"""
     order = get_object_or_404(Order, order_id=order_id)
@@ -1286,10 +1300,11 @@ def admin_complete_return(request, order_id):
             
             messages.success(request, f'Return marked as completed for order #{order.order_number}.')
             
-            # Restock product variant
+            # Restock product variant atomically
             if order.variant:
-                order.variant.stock_quantity += order.quantity
-                order.variant.save()
+                order.variant.__class__.objects.filter(pk=order.variant.pk).update(
+                    stock_quantity=F('stock_quantity') + order.quantity
+                )
             
             # Send notification to user about completed return
             # send_return_completed_email(order.user.email, order)
